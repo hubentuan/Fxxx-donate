@@ -696,7 +696,12 @@ app.get('/donate', c => {
   <header class="mb-8 flex items-start justify-between gap-4">
     <div>
       <h1 class="grad-title text-3xl md:text-4xl font-bold">风萧萧公益机场 · VPS 投喂榜</h1>
-      <p class="mt-3 text-sm muted leading-relaxed">这是一个完全非盈利的公益项目，没有运营团队，只有我一个人维护。榜单仅展示「国家 / 区域 + IP 归属地 + 流量 + 到期时间 + 投喂备注」，不会公开任何 IP 或端口信息。</p>
+      <p class="mt-3 text-sm muted leading-relaxed">
+        这是一个完全非盈利的公益项目，没有运营团队，只有我一个人维护。榜单仅展示「国家 / 区域 + IP 归属地 + 流量 + 到期时间 + 投喂备注」，不会公开任何 IP 或端口信息。
+      </p>
+      <p class="mt-2 text-sm text-amber-200 leading-relaxed">
+        感谢大家的投喂，🤝 这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，是大家的共同成果，共荣！🚀
+      </p>
       <button onclick="gotoDonatePage()" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold shadow-lg hover:bg-cyan-400">
         🧡 我要投喂 VPS
       </button>
@@ -838,6 +843,9 @@ app.get('/donate/vps', c => {
     <div>
       <h1 class="grad-title text-2xl md:text-3xl font-bold">风萧萧公益机场 · VPS 投喂榜</h1>
       <p class="mt-1 text-xs muted">当前：投喂中心（提交新 VPS / 查看我的投喂记录）</p>
+      <p class="mt-2 text-sm text-amber-200 leading-relaxed">
+        感谢大家的投喂，🤝 这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，是大家的共同成果，共荣！🚀
+      </p>
     </div>
     <div class="flex items-center gap-3">
       <div id="user-info" class="text-sm"></div>
@@ -1432,6 +1440,7 @@ function renderVpsList(){
       (v.adminNote?'<div class="text-[11px] text-cyan-300/90">管理员备注：'+v.adminNote+'</div>':'')+
       (t?'<div class="text-[11px] muted">投喂时间：'+t+'</div>':'')+
       '<div class="flex flex-wrap gap-2 mt-1">'+
+        '<button class="px-2 py-1 rounded-full border" data-act="view" data-id="'+v.id+'">查看信息</button>'+
         '<button class="px-2 py-1 rounded-full border" data-act="mark" data-id="'+v.id+'">标记通过</button>'+
         '<button class="px-2 py-1 rounded-full border" data-act="inactive" data-id="'+v.id+'">设为未启用</button>'+
         '<button class="px-2 py-1 rounded-full border" data-act="failed" data-id="'+v.id+'">设为失败</button>'+
@@ -1445,6 +1454,31 @@ function renderVpsList(){
       btn.addEventListener('click', async()=>{
         if(!id) return;
 
+        if(act==='view'){
+          const html =
+            '<div class="text-xs md:text-sm space-y-2">'+
+            '<p><strong>IP / 端口：</strong>'+v.ip+':'+v.port+'</p>'+
+            '<p><strong>系统用户名：</strong>'+(v.username||'未填写')+'</p>'+
+            '<p><strong>认证方式：</strong>'+(v.authType==='key'?'SSH 密钥':'密码')+'</p>'+
+            '<p><strong>登录密码：</strong>'+(
+              v.authType==='password'
+                ? (v.password||'未填写')
+                : '当前为密钥登录，无单独密码'
+            )+'</p>'+
+            (v.authType==='key'
+              ? '<div><strong>SSH 私钥：</strong><pre class="mt-1 p-2 rounded bg-slate-900 text-xs overflow-x-auto whitespace-pre-wrap">'+
+                (v.privateKey||'未填写')+
+                '</pre></div>'
+              : '')+
+            '<p><strong>验证状态：</strong>'+ (v.verifyStatus||'未知') + (v.verifyErrorMsg ? ' · 错误：'+v.verifyErrorMsg : '') +'</p>'+
+            (v.verifyCode ? '<p><strong>验证代码：</strong>'+v.verifyCode+'</p>' : '')+
+            (v.verifyFilePath ? '<p><strong>验证文件路径：</strong>'+v.verifyFilePath+'</p>' : '')+
+            (v.sshFingerprint ? '<p><strong>SSH 指纹：</strong>'+v.sshFingerprint+'</p>' : '')+
+            '</div>';
+          modalView('VPS 登录信息（仅管理员可见）', html);
+          return;
+        }
+
         if(act==='mark'){
           try{
             const r=await fetch('/api/admin/vps/'+id+'/mark-verified',{method:'POST',credentials:'same-origin'});
@@ -1453,6 +1487,8 @@ function renderVpsList(){
           }catch{
             toast('操作失败','error');
           }
+          await loadVps();
+          await loadStats();
         }
         else if(act==='inactive'||act==='failed'){
           try{
@@ -1463,10 +1499,12 @@ function renderVpsList(){
               body:JSON.stringify({status:act})
             });
             const j=await r.json();
-            toast(j.message||'已更新','success');
+            toast(j.message||'已更新', r.ok?'success':'error');
           }catch{
             toast('更新失败','error');
           }
+          await loadVps();
+          await loadStats();
         }
         else if(act==='del'){
           try{
@@ -1476,6 +1514,8 @@ function renderVpsList(){
           }catch{
             toast('删除失败','error');
           }
+          await loadVps();
+          await loadStats();
         }
         else if(act==='edit'){
           modalEdit('编辑 VPS 信息（用户备注前台可见）',[
@@ -1500,15 +1540,13 @@ function renderVpsList(){
                 toast('已保存','success');
                 close();
                 await loadVps();
+                await loadStats();
               }
             }catch{
               toast('保存异常','error');
             }
           });
         }
-
-        await loadVps();
-        await loadStats();
       });
     });
 
@@ -1541,7 +1579,7 @@ function commonHead(title: string): string {
 }
 html,body{
   font-family: system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   -webkit-font-smoothing: antialiased;
 }
 body{
@@ -1643,8 +1681,10 @@ body[data-theme="light"] .stat-card .stat-value{
   color:#0f766e;
 }
 
-.text-xs{ font-size:0.8rem; line-height:1.4; }
-.text-sm{ font-size:0.9rem; line-height:1.45; }
+/* 调整基础字号，让手机上更清晰 */
+.text-xs{ font-size:0.9rem; line-height:1.4; }
+.text-sm{ font-size:1rem; line-height:1.45; }
+.text-[11px]{ font-size:0.85rem; line-height:1.5 !important; }
 
 input,textarea,select{
   background:#020617;
@@ -1672,6 +1712,22 @@ button{
 }
 button:active{
   transform:translateY(1px);
+}
+
+/* 小屏适配：容器铺满，卡片更适合手机比例 */
+@media (max-width:768px){
+  html,body{
+    font-size:15px;
+  }
+  .max-w-5xl,
+  .max-w-6xl,
+  .max-w-7xl{
+    max-width:100%;
+  }
+  .panel,
+  .card{
+    border-radius:18px;
+  }
 }
 </style>
 <script>
@@ -1760,6 +1816,27 @@ function modalEdit(title, fields, onOk){
   btn2.onclick=()=>{ const data={}; form.childNodes.forEach(n=>{ data[n._key]=n._get(); }); try{ onOk(data,()=>wrap.remove()); }catch(e){ console.error(e); } };
   actions.append(btn1,btn2);
   card.appendChild(actions);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+}
+
+function modalView(title, html){
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;';
+  const card=document.createElement('div');
+  card.className='panel rounded-2xl border p-4';
+  card.style.width='min(720px,94vw)';
+  card.innerHTML =
+    '<div class="flex items-center justify-between mb-3">'+
+      '<h2 class="text-sm md:text-base font-semibold">'+title+'</h2>'+
+      '<button class="px-2 py-1 text-[11px] rounded-full border">关闭</button>'+
+    '</div>'+
+    '<div class="text-xs md:text-sm leading-relaxed vps-detail-body"></div>';
+  const closeBtn=card.querySelector('button');
+  const body=card.querySelector('.vps-detail-body');
+  body.innerHTML=html;
+  closeBtn.addEventListener('click',()=>wrap.remove());
+  wrap.addEventListener('click',e=>{ if(e.target===wrap) wrap.remove(); });
   wrap.appendChild(card);
   document.body.appendChild(wrap);
 }
