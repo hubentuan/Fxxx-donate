@@ -635,17 +635,21 @@ app.put('/api/admin/config/password', requireAdmin, async c => {
   return c.json({ success: true, message: '管理员密码已更新' });
 });
 
-/* 后端统计：今日新增只看“同一天” */
+/* 后端统计：今日新增按“东八区自然日”统计 */
 app.get('/api/admin/stats', requireAdmin, async c => {
   try {
     const all = await getAllVPS();
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    const d = now.getDate();
+
+    // 统一按 UTC+8 计算“今天”
+    const TZ_OFFSET_HOURS = 8;
+    const nowLocal = new Date(Date.now() + TZ_OFFSET_HOURS * 3600 * 1000);
+    const y = nowLocal.getFullYear();
+    const m = nowLocal.getMonth();
+    const d = nowLocal.getDate();
+
     const isToday = (ts: number | undefined) => {
       if (!ts) return false;
-      const t = new Date(ts);
+      const t = new Date(ts + TZ_OFFSET_HOURS * 3600 * 1000);
       return t.getFullYear() === y && t.getMonth() === m && t.getDate() === d;
     };
 
@@ -1974,6 +1978,7 @@ function guessCountryFlag(v){
   return '';
 }
 
+/* 这里重新实现 modalLoginInfo：长密钥用多行块显示 + 可滚动，不会被截断 */
 function modalLoginInfo(v){
   const wrap=document.createElement('div');
   wrap.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;';
@@ -1989,45 +1994,67 @@ function modalLoginInfo(v){
   const rows=document.createElement('div');
   rows.className='space-y-2 text-xs';
 
-  function addRow(label,value,canCopy=true){
+  function addRow(label,value,canCopy=true,isMultiline=false){
     const row=document.createElement('div');
-    row.className='flex items-center justify-between gap-2';
-    const left=document.createElement('div');
-    left.className='muted flex-1 break-words';
-    left.textContent=label+'：'+(value||'-');
-    row.appendChild(left);
+    row.className='flex items-start justify-between gap-2';
+
+    const labelEl=document.createElement('div');
+    labelEl.className='muted text-[11px] whitespace-nowrap mt-[2px]';
+    labelEl.textContent=label+'：';
+
+    const valBox=document.createElement('div');
+    valBox.className='flex-1';
+
+    if(isMultiline){
+      const pre=document.createElement('pre');
+      pre.className='bg-black/30 rounded-lg px-2 py-1.5 text-[11px] leading-relaxed whitespace-pre-wrap break-words max-h-48 overflow-auto';
+      pre.textContent=value||'-';
+      valBox.appendChild(pre);
+    }else{
+      const span=document.createElement('div');
+      span.className='muted break-words';
+      span.textContent=value||'-';
+      valBox.appendChild(span);
+    }
+
+    row.appendChild(labelEl);
+    row.appendChild(valBox);
+
     if(canCopy && value){
       const btn=document.createElement('button');
-      btn.className='px-2 py-1 rounded-full border text-[11px] whitespace-nowrap';
+      btn.className='px-2 py-1 rounded-full border text-[11px] whitespace-nowrap self-start';
       btn.textContent='复制';
       btn.onclick=()=>copyToClipboard(value);
       row.appendChild(btn);
     }
+
     rows.appendChild(row);
   }
 
   const sponsor=v.donatedByUsername||'';
   if(sponsor){
-    addRow('赞助人','@'+sponsor,true);
+    addRow('赞助人','@'+sponsor,true,false);
   }
 
   const flag=guessCountryFlag(v);
   const ipLoc=(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'');
-  addRow('IP 归属',(flag?flag+' ':'')+ipLoc,true);
+  addRow('IP 归属',(flag?flag+' ':'')+ipLoc,true,false);
 
-  addRow('IP 地址', v.ip || '');
-  addRow('端口', String(v.port||''), true);
+  addRow('IP 地址', v.ip || '', true,false);
+  addRow('端口', String(v.port||''), true,false);
+  addRow('系统用户名', v.username || '', true,false);
+  addRow('认证方式', v.authType==='key'?'密钥':'密码', false,false);
 
-  addRow('系统用户名', v.username || '', true);
-  addRow('认证方式', v.authType==='key'?'密钥':'密码', false);
   if(v.authType==='password'){
-    addRow('登录密码', v.password || '');
+    addRow('登录密码', v.password || '', true,false);
   }else{
-    addRow('SSH 私钥', v.privateKey || '');
+    // 私钥基本都很长，强制多行显示，带滚动条
+    addRow('SSH 私钥', v.privateKey || '', true,true);
   }
+
   const statusText = v.verifyStatus || 'unknown';
   const extra = v.verifyErrorMsg ? ('（'+v.verifyErrorMsg+'）') : '';
-  addRow('验证状态', statusText+extra, false);
+  addRow('验证状态', statusText+extra, false,false);
 
   card.appendChild(rows);
 
