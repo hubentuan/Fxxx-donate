@@ -1009,7 +1009,6 @@ async function submitDonate(e){
   btn.disabled=true; const t=btn.textContent; btn.textContent='提交中...';
   try{
     const r=await fetch('/api/donate',{
-
       method:'POST',
       credentials:'same-origin',
       headers:{'Content-Type':'application/json'},
@@ -1197,9 +1196,6 @@ async function renderAdmin(root, name){
     '<div id="oauth-body" class="mt-3 hidden">'+
       '<form id="oauth-form" class="grid md:grid-cols-3 gap-3 text-[11px]">'+
         '<div><label class="block mb-1 muted text-xs">Client ID</label><input name="clientId" class="w-full rounded-lg border px-2 py-1 text-xs focus:ring-1 focus:ring-cyan-500"/></div>'+
-
-
-
         '<div><label class="block mb-1 muted text-xs">Client Secret</label><input name="clientSecret" class="w-full rounded-lg border px-2 py-1 text-xs focus:ring-1 focus:ring-cyan-500"/></div>'+
         '<div><label class="block mb-1 muted text-xs">Redirect URI</label><input name="redirectUri" class="w-full rounded-lg border px-2 py-1 text-xs focus:ring-1 focus:ring-cyan-500"/></div>'+
       '</form><div class="mt-2 flex gap-2"><button id="btn-save-oauth" class="text-[11px] rounded-xl bg-cyan-500 px-3 py-1 font-semibold">保存 OAuth</button></div>'+
@@ -1207,18 +1203,9 @@ async function renderAdmin(root, name){
     '<div class="panel rounded-2xl border p-4">'+
       '<h2 class="text-sm font-semibold mb-3">管理员密码</h2>'+
       '<p class="text-[11px] muted mb-2">仅用于 <code>/admin</code> 后台登录，至少 6 位，建议与 Linux.do 账号密码不同。</p>'+
-
-
-
       '<div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center text-[11px]">'+
         '<input id="admin-pass-input" type="password" placeholder="输入新的管理员密码" class="flex-1 rounded-lg border px-3 py-2 text-xs focus:ring-1 focus:ring-cyan-500"/>'+
-
-
-
         '<button id="btn-save-admin-pass" class="rounded-xl bg-emerald-500 px-4 py-2 text-[11px] font-semibold hover:bg-emerald-400">保存密码</button>'+
-
-
-
       '</div>'+
       '<p class="text-[11px] muted mt-2">修改成功后立即生效，下次登录需要使用新密码。</p>'+
     '</div>';
@@ -1260,19 +1247,19 @@ async function renderAdmin(root, name){
     userFilter='';
     renderVpsList();
   }));
+
   document.getElementById('filter-btn').addEventListener('click',()=>{
-
-
-    searchFilter=(document.getElementById('filter-input') as HTMLInputElement).value.trim();
+    const input = document.getElementById('filter-input');
+    const val = input ? input.value.trim() : '';
+    searchFilter = val;
     userFilter='';
     renderVpsList();
   });
+
   document.getElementById('filter-clear-btn').addEventListener('click',()=>{
-
-
-
+    const input = document.getElementById('filter-input');
+    if (input) input.value = '';
     searchFilter='';
-    (document.getElementById('filter-input') as HTMLInputElement).value='';
     userFilter='';
     renderVpsList();
   });
@@ -1328,9 +1315,13 @@ async function loadConfig(){
     const j=await res.json();
     const cfg=j.data||{};
     const f=document.getElementById('oauth-form');
-    (f.querySelector('input[name="clientId"]') as HTMLInputElement).value=cfg.clientId||'';
-    (f.querySelector('input[name="clientSecret"]') as HTMLInputElement).value=cfg.clientSecret||'';
-    (f.querySelector('input[name="redirectUri"]') as HTMLInputElement).value=cfg.redirectUri||'';
+    if (!f) return;
+    const cid = f.querySelector('input[name="clientId"]');
+    const cs  = f.querySelector('input[name="clientSecret"]');
+    const ru  = f.querySelector('input[name="redirectUri"]');
+    if (cid) cid.value = cfg.clientId || '';
+    if (cs)  cs.value  = cfg.clientSecret || '';
+    if (ru)  ru.value  = cfg.redirectUri || '';
   } catch(err) {
     console.error('Config load error:', err);
   }
@@ -1338,10 +1329,14 @@ async function loadConfig(){
 
 async function saveOAuth(){
   const f=document.getElementById('oauth-form');
+  if (!f) return;
+  const cid = f.querySelector('input[name="clientId"]');
+  const cs  = f.querySelector('input[name="clientSecret"]');
+  const ru  = f.querySelector('input[name="redirectUri"]');
   const payload={
-    clientId:(f.querySelector('input[name="clientId"]') as HTMLInputElement).value.trim(),
-    clientSecret:(f.querySelector('input[name="clientSecret"]') as HTMLInputElement).value.trim(),
-    redirectUri:(f.querySelector('input[name="redirectUri"]') as HTMLInputElement).value.trim()
+    clientId: cid ? cid.value.trim() : '',
+    clientSecret: cs ? cs.value.trim() : '',
+    redirectUri: ru ? ru.value.trim() : ''
   };
   try{
     const r=await fetch('/api/admin/config/oauth',{
@@ -1363,8 +1358,8 @@ async function saveOAuth(){
 }
 
 async function saveAdminPassword(){
-  const input=document.getElementById('admin-pass-input') as HTMLInputElement;
-  const pwd=input.value.trim();
+  const input=document.getElementById('admin-pass-input');
+  const pwd = input ? input.value.trim() : '';
   if(!pwd){
     toast('请输入新密码','warn');
     return;
@@ -1381,7 +1376,7 @@ async function saveAdminPassword(){
       toast(j.message||'保存失败','error');
     } else {
       toast('管理员密码已更新','success');
-      input.value='';
+      if (input) input.value='';
     }
   }catch(err){
     console.error('Save admin password error:', err);
@@ -1611,9 +1606,6 @@ body[data-theme="light"] .muted{ color:#6b7280; }
 
 .grad-title{
   background-image:linear-gradient(115deg,#22d3ee 0%,#38bdf8 25%,#a855f7 50%,#ec4899 75%,#f97316 100%);
-
-
-
   background-size:320% 100%;
   -webkit-background-clip:text;
   background-clip:text;
@@ -1753,7 +1745,9 @@ function toggleTheme(){
   document.body.setAttribute('data-theme', nxt);
   document.documentElement.setAttribute('data-theme', nxt);
   localStorage.setItem('theme', nxt);
-  updateThemeBtn && updateThemeBtn();
+  if (typeof updateThemeBtn === 'function') {
+    updateThemeBtn();
+  }
 }
 
 function updateThemeBtn(){
@@ -1830,10 +1824,10 @@ function modalEdit(title, fields, onOk){
     inp.placeholder=f.placeholder||'';
     if(f.type==='textarea') inp.rows=3;
     inp.className='w-full rounded-lg border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500';
+    (box as any)._get=()=>inp.value;
+    (box as any)._key=f.key;
     box.appendChild(lab);
     box.appendChild(inp);
-    box._get=()=>inp.value;
-    box._key=f.key;
     form.appendChild(box);
   });
   card.appendChild(form);
@@ -1846,7 +1840,11 @@ function modalEdit(title, fields, onOk){
   const btn2=document.createElement('button');
   btn2.textContent='保存';
   btn2.className='px-3 py-1 rounded-full bg-cyan-500 text-black font-semibold';
-  btn2.onclick=()=>{ const data={}; form.childNodes.forEach(n=>{ data[n._key]=n._get(); }); try{ onOk(data,()=>wrap.remove()); }catch(e){ console.error(e); } };
+  btn2.onclick=()=>{
+    const data:any={};
+    form.childNodes.forEach((n:any)=>{ data[n._key]=n._get(); });
+    try{ onOk(data,()=>wrap.remove()); }catch(e){ console.error(e); }
+  };
   actions.append(btn1,btn2);
   card.appendChild(actions);
   wrap.appendChild(card);
