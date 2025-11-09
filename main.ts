@@ -27,7 +27,7 @@ interface VPSServer {
   adminNote?: string;
   country: string;
   traffic: string;      // 流量/带宽描述
-  expiryDate: string;   // 到期日期描述（前端以字符串展示）
+  expiryDate: string;   // 到期日期（字符串）
   specs: string;        // 配置描述
   ipLocation?: string;  // IP 归属地
   verifyStatus: 'pending' | 'verified' | 'failed';
@@ -57,6 +57,7 @@ interface Session {
 
 const kv = await Deno.openKv();
 
+// ==================== 工具函数 ====================
 function generateId(): string {
   return crypto.randomUUID();
 }
@@ -68,11 +69,11 @@ function generateSessionId(): string {
 // ==================== IP 归属地查询 ====================
 async function getIPLocation(ip: string): Promise<string> {
   try {
-    const response = await fetch(
+    const res = await fetch(
       `http://ip-api.com/json/${ip}?fields=country,regionName,city`,
     );
-    if (response.ok) {
-      const data = await response.json();
+    if (res.ok) {
+      const data = await res.json();
       if (data.country) {
         const parts = [data.country];
         if (data.regionName) parts.push(data.regionName);
@@ -152,8 +153,8 @@ async function batchVerifyVPS(): Promise<{
 
   for (const vps of pendingVPS) {
     try {
-      const portReachable = await checkPortReachable(vps.ip, vps.port);
-      if (portReachable) {
+      const ok = await checkPortReachable(vps.ip, vps.port);
+      if (ok) {
         vps.verifyStatus = 'verified';
         vps.status = 'active';
         vps.lastVerifyAt = Date.now();
@@ -175,11 +176,11 @@ async function batchVerifyVPS(): Promise<{
           error: vps.verifyErrorMsg,
         });
       }
-    } catch (error: any) {
+    } catch (err: any) {
       vps.verifyStatus = 'failed';
       vps.status = 'failed';
       vps.lastVerifyAt = Date.now();
-      vps.verifyErrorMsg = error.message || '验证过程中发生错误';
+      vps.verifyErrorMsg = err.message || '验证过程中发生错误';
       await kv.set(['vps', vps.id], vps);
       failedCount++;
       details.push({
@@ -190,12 +191,8 @@ async function batchVerifyVPS(): Promise<{
       });
     }
   }
-  return {
-    total: pendingVPS.length,
-    success: successCount,
-    failed: failedCount,
-    details,
-  };
+
+  return { total: pendingVPS.length, success: successCount, failed: failedCount, details };
 }
 
 // ==================== 配置 & 用户 & 会话 ====================
@@ -247,8 +244,8 @@ async function createSession(
 }
 
 async function getUser(linuxDoId: string): Promise<User | null> {
-  const result = await kv.get<User>(['users', linuxDoId]);
-  return result.value;
+  const res = await kv.get<User>(['users', linuxDoId]);
+  return res.value;
 }
 
 async function createOrUpdateUser(
@@ -285,11 +282,11 @@ async function addVPSServer(
 
 async function getUserDonations(linuxDoId: string): Promise<VPSServer[]> {
   const userDonations = await kv.get<string[]>(['user_donations', linuxDoId]);
-  const donationIds = userDonations.value || [];
+  const ids = userDonations.value || [];
   const servers: VPSServer[] = [];
-  for (const id of donationIds) {
-    const result = await kv.get<VPSServer>(['vps', id]);
-    if (result.value) servers.push(result.value);
+  for (const id of ids) {
+    const res = await kv.get<VPSServer>(['vps', id]);
+    if (res.value) servers.push(res.value);
   }
   return servers.sort((a, b) => b.donatedAt - a.donatedAt);
 }
@@ -298,10 +295,9 @@ async function deleteVPS(id: string): Promise<boolean> {
   const vps = await kv.get<VPSServer>(['vps', id]);
   if (!vps.value) return false;
   await kv.delete(['vps', id]);
-
-  const userDonations = await kv.get<string[]>(['user_donations', vps.value.donatedBy]);
-  if (userDonations.value) {
-    const filtered = userDonations.value.filter((vid) => vid !== id);
+  const ud = await kv.get<string[]>(['user_donations', vps.value.donatedBy]);
+  if (ud.value) {
+    const filtered = ud.value.filter((x) => x !== id);
     await kv.set(['user_donations', vps.value.donatedBy], filtered);
   }
   return true;
@@ -311,10 +307,10 @@ async function updateVPSStatus(
   id: string,
   status: 'active' | 'inactive' | 'failed',
 ): Promise<boolean> {
-  const result = await kv.get<VPSServer>(['vps', id]);
-  if (!result.value) return false;
-  result.value.status = status;
-  await kv.set(['vps', id], result.value);
+  const res = await kv.get<VPSServer>(['vps', id]);
+  if (!res.value) return false;
+  res.value.status = status;
+  await kv.set(['vps', id], res.value);
   return true;
 }
 
@@ -329,7 +325,7 @@ async function exchangeCodeForToken(
     body: new URLSearchParams({
       client_id: config.clientId,
       client_secret: config.clientSecret,
-      code: code,
+      code,
       redirect_uri: config.redirectUri,
       grant_type: 'authorization_code',
     }),
@@ -369,10 +365,9 @@ async function requireAdmin(c: any, next: any) {
 const app = new Hono();
 app.use('*', cors());
 
-// -------- 根路径：重定向到 /donate --------
 app.get('/', (c) => c.redirect('/donate'));
 
-// -------- OAuth 登录入口（重定向到 Linux.do）---------
+// ==================== OAuth 入口 & 回调 ====================
 app.get('/oauth/login', async (c) => {
   const redirectPath = c.req.query('redirect') || '/donate/vps';
   const config = await getOAuthConfig();
@@ -381,7 +376,6 @@ app.get('/oauth/login', async (c) => {
       '<!DOCTYPE html><html><body><h1>配置错误</h1><p>OAuth 配置未设置</p><a href="/donate">返回首页</a></body></html>',
     );
   }
-
   const state = typeof redirectPath === 'string' ? redirectPath : '/donate/vps';
   const authUrl = new URL('https://connect.linux.do/oauth2/authorize');
   authUrl.searchParams.set('client_id', config.clientId);
@@ -389,11 +383,9 @@ app.get('/oauth/login', async (c) => {
   authUrl.searchParams.set('redirect_uri', config.redirectUri);
   authUrl.searchParams.set('scope', 'openid profile');
   authUrl.searchParams.set('state', state);
-
   return c.redirect(authUrl.toString());
 });
 
-// -------- OAuth 回调 --------
 app.get('/oauth/callback', async (c) => {
   const code = c.req.query('code');
   const error = c.req.query('error');
@@ -437,12 +429,11 @@ app.get('/oauth/callback', async (c) => {
       user.avatarUrl,
       user.isAdmin,
     );
-
-    const isProduction = Deno.env.get('DENO_DEPLOYMENT_ID') !== undefined;
+    const isProd = Deno.env.get('DENO_DEPLOYMENT_ID') !== undefined;
     setCookie(c, 'session_id', sessionId, {
       maxAge: 7 * 24 * 60 * 60,
       httpOnly: true,
-      secure: isProduction,
+      secure: isProd,
       sameSite: 'Lax',
       path: '/',
     });
@@ -482,8 +473,8 @@ app.get('/api/user/info', requireAuth, async (c) => {
 app.get('/api/user/donations', requireAuth, async (c) => {
   const session = c.get('session');
   const donations = await getUserDonations(session.userId);
-  // 登录用户可以看到自己的 IP 和端口
-  const safeDonations = donations.map((d) => ({
+
+  const safe = donations.map((d) => ({
     id: d.id,
     ip: d.ip,
     port: d.port,
@@ -502,35 +493,29 @@ app.get('/api/user/donations', requireAuth, async (c) => {
     lastVerifyAt: d.lastVerifyAt,
     verifyErrorMsg: d.verifyErrorMsg,
   }));
-  return c.json({ success: true, data: safeDonations });
+  return c.json({ success: true, data: safe });
 });
 
 app.put('/api/user/donations/:id/note', requireAuth, async (c) => {
   const session = c.get('session');
   const id = c.req.param('id');
   const { note } = await c.req.json();
-  const result = await kv.get<VPSServer>(['vps', id]);
-  if (!result.value) {
-    return c.json({ success: false, message: 'VPS 不存在' }, 404);
+  const res = await kv.get<VPSServer>(['vps', id]);
+  if (!res.value) return c.json({ success: false, message: 'VPS 不存在' }, 404);
+  if (res.value.donatedBy !== session.userId) {
+    return c.json({ success: false, message: '无权修改此 VPS' }, 403);
   }
-  if (result.value.donatedBy !== session.userId) {
-    return c.json({ success: false, message: '无权修改此VPS' }, 403);
-  }
-  result.value.note = note || '';
-  await kv.set(['vps', id], result.value);
+  res.value.note = note || '';
+  await kv.set(['vps', id], res.value);
   return c.json({ success: true, message: '备注已更新' });
 });
 
-// ==================== 公共榜单 API（不暴露 IP/端口） ====================
+// ==================== 公共榜单 API ====================
 app.get('/api/leaderboard', async (c) => {
   const allVPS = await getAllVPS();
   const userStats = new Map<
     string,
-    {
-      username: string;
-      count: number;
-      servers: any[];
-    }
+    { username: string; count: number; servers: any[] }
   >();
 
   for (const vps of allVPS) {
@@ -541,7 +526,6 @@ app.get('/api/leaderboard', async (c) => {
     };
     stats.count++;
     stats.servers.push({
-      // 不返回 ip 与 port
       ipLocation: vps.ipLocation || '未知地区',
       country: vps.country || '未填写',
       traffic: vps.traffic || '未填写',
@@ -561,13 +545,11 @@ app.get('/api/leaderboard', async (c) => {
   return c.json({ success: true, data: leaderboard });
 });
 
-// 公共用户详情接口（同样不暴露 IP，仅展示归属地等信息，可以保留/按需使用）
 app.get('/api/user/:username/donations', async (c) => {
   const username = c.req.param('username');
   const allVPS = await getAllVPS();
   const userVPS = allVPS.filter((vps) => vps.donatedByUsername === username);
   const donations = userVPS.map((vps) => ({
-    // 不返回 ip/port
     ipLocation: vps.ipLocation || '未知地区',
     country: vps.country || '未填写',
     traffic: vps.traffic || '未填写',
@@ -637,16 +619,16 @@ app.post('/api/donate', requireAuth, async (c) => {
     );
   }
 
-  const ipExists = await checkIPExists(ip, portNum);
-  if (ipExists) {
+  const exists = await checkIPExists(ip, portNum);
+  if (exists) {
     return c.json(
       { success: false, message: '该 IP 和端口已经被投喂过了' },
       400,
     );
   }
 
-  const portReachable = await checkPortReachable(ip, portNum);
-  if (!portReachable) {
+  const reachable = await checkPortReachable(ip, portNum);
+  if (!reachable) {
     return c.json(
       { success: false, message: '无法连接到该服务器' },
       400,
@@ -695,9 +677,9 @@ app.post('/api/donate', requireAuth, async (c) => {
 
 // ==================== 管理员 API ====================
 app.get('/api/admin/check-session', async (c) => {
-  const sessionId = getCookie(c, 'admin_session_id');
-  if (!sessionId) return c.json({ success: false, isAdmin: false });
-  const session = await getSession(sessionId);
+  const sid = getCookie(c, 'admin_session_id');
+  if (!sid) return c.json({ success: false, isAdmin: false });
+  const session = await getSession(sid);
   if (!session || session.expiresAt < Date.now()) {
     return c.json({ success: false, isAdmin: false });
   }
@@ -714,21 +696,21 @@ app.post('/api/admin/login', async (c) => {
   if (password !== adminPassword) {
     return c.json({ success: false, message: '密码错误' }, 401);
   }
-  const sessionId = generateSessionId();
-  const adminSession: Session = {
-    id: sessionId,
+  const sid = generateSessionId();
+  const session: Session = {
+    id: sid,
     userId: 'admin',
     username: 'Administrator',
     avatarUrl: undefined,
     isAdmin: true,
     expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
   };
-  await kv.set(['sessions', sessionId], adminSession);
-  const isProduction = Deno.env.get('DENO_DEPLOYMENT_ID') !== undefined;
-  setCookie(c, 'admin_session_id', sessionId, {
+  await kv.set(['sessions', sid], session);
+  const isProd = Deno.env.get('DENO_DEPLOYMENT_ID') !== undefined;
+  setCookie(c, 'admin_session_id', sid, {
     maxAge: 7 * 24 * 60 * 60,
     httpOnly: true,
-    secure: isProduction,
+    secure: isProd,
     sameSite: 'Lax',
     path: '/',
   });
@@ -736,8 +718,8 @@ app.post('/api/admin/login', async (c) => {
 });
 
 app.get('/api/admin/logout', async (c) => {
-  const sessionId = getCookie(c, 'admin_session_id');
-  if (sessionId) await kv.delete(['sessions', sessionId]);
+  const sid = getCookie(c, 'admin_session_id');
+  if (sid) await kv.delete(['sessions', sid]);
   setCookie(c, 'admin_session_id', '', { maxAge: 0, path: '/' });
   return c.json({ success: true });
 });
@@ -749,8 +731,8 @@ app.get('/api/admin/vps', requireAdmin, async (c) => {
 
 app.delete('/api/admin/vps/:id', requireAdmin, async (c) => {
   const id = c.req.param('id');
-  const success = await deleteVPS(id);
-  if (success) return c.json({ success: true, message: 'VPS 已删除' });
+  const ok = await deleteVPS(id);
+  if (ok) return c.json({ success: true, message: 'VPS 已删除' });
   return c.json({ success: false, message: 'VPS 不存在' }, 404);
 });
 
@@ -760,8 +742,8 @@ app.put('/api/admin/vps/:id/status', requireAdmin, async (c) => {
   if (status !== 'active' && status !== 'inactive' && status !== 'failed') {
     return c.json({ success: false, message: '无效的状态' }, 400);
   }
-  const success = await updateVPSStatus(id, status);
-  if (success) return c.json({ success: true, message: '状态已更新' });
+  const ok = await updateVPSStatus(id, status);
+  if (ok) return c.json({ success: true, message: '状态已更新' });
   return c.json({ success: false, message: 'VPS 不存在' }, 404);
 });
 
@@ -769,17 +751,15 @@ app.put('/api/admin/vps/:id/notes', requireAdmin, async (c) => {
   const id = c.req.param('id');
   const { note, adminNote, country, traffic, expiryDate, specs } =
     await c.req.json();
-  const result = await kv.get<VPSServer>(['vps', id]);
-  if (!result.value) {
-    return c.json({ success: false, message: 'VPS 不存在' }, 404);
-  }
-  if (note !== undefined) result.value.note = note;
-  if (adminNote !== undefined) result.value.adminNote = adminNote;
-  if (country !== undefined) result.value.country = country;
-  if (traffic !== undefined) result.value.traffic = traffic;
-  if (expiryDate !== undefined) result.value.expiryDate = expiryDate;
-  if (specs !== undefined) result.value.specs = specs;
-  await kv.set(['vps', id], result.value);
+  const res = await kv.get<VPSServer>(['vps', id]);
+  if (!res.value) return c.json({ success: false, message: 'VPS 不存在' }, 404);
+  if (note !== undefined) res.value.note = note;
+  if (adminNote !== undefined) res.value.adminNote = adminNote;
+  if (country !== undefined) res.value.country = country;
+  if (traffic !== undefined) res.value.traffic = traffic;
+  if (expiryDate !== undefined) res.value.expiryDate = expiryDate;
+  if (specs !== undefined) res.value.specs = specs;
+  await kv.set(['vps', id], res.value);
   return c.json({ success: true, message: '信息已更新' });
 });
 
@@ -813,21 +793,19 @@ app.put('/api/admin/config/password', requireAdmin, async (c) => {
 });
 
 app.get('/api/admin/stats', requireAdmin, async (c) => {
-  const allVPS = await getAllVPS();
-  const activeVPS = allVPS.filter((v) => v.status === 'active');
-  const failedVPS = allVPS.filter((v) => v.status === 'failed');
-  const pendingVPS = allVPS.filter((v) => v.verifyStatus === 'pending');
+  const all = await getAllVPS();
+  const active = all.filter((v) => v.status === 'active');
+  const failed = all.filter((v) => v.status === 'failed');
+  const pending = all.filter((v) => v.verifyStatus === 'pending');
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
-  const todayNewVPS = allVPS.filter(
-    (v) => v.donatedAt >= todayStart.getTime(),
-  );
+  const todayNew = all.filter((v) => v.donatedAt >= todayStart.getTime());
 
   const userStats = new Map<string, number>();
-  for (const vps of allVPS) {
-    const count = userStats.get(vps.donatedByUsername) || 0;
-    userStats.set(vps.donatedByUsername, count + 1);
+  for (const v of all) {
+    const count = userStats.get(v.donatedByUsername) || 0;
+    userStats.set(v.donatedByUsername, count + 1);
   }
   const topDonors = Array.from(userStats.entries())
     .map(([username, count]) => ({ username, count }))
@@ -837,15 +815,13 @@ app.get('/api/admin/stats', requireAdmin, async (c) => {
   return c.json({
     success: true,
     data: {
-      totalVPS: allVPS.length,
-      activeVPS: activeVPS.length,
-      failedVPS: failedVPS.length,
-      inactiveVPS:
-        allVPS.length - activeVPS.length - failedVPS.length,
-      pendingVPS: pendingVPS.length,
-      verifiedVPS: allVPS.filter((v) => v.verifyStatus === 'verified')
-        .length,
-      todayNewVPS: todayNewVPS.length,
+      totalVPS: all.length,
+      activeVPS: active.length,
+      failedVPS: failed.length,
+      inactiveVPS: all.length - active.length - failed.length,
+      pendingVPS: pending.length,
+      verifiedVPS: all.filter((v) => v.verifyStatus === 'verified').length,
+      todayNewVPS: todayNew.length,
       topDonors,
     },
   });
@@ -853,15 +829,12 @@ app.get('/api/admin/stats', requireAdmin, async (c) => {
 
 app.post('/api/admin/vps/:id/mark-verified', requireAdmin, async (c) => {
   const id = c.req.param('id');
-  const result = await kv.get<VPSServer>(['vps', id]);
-  if (!result.value) {
-    return c.json({ success: false, message: 'VPS 不存在' }, 404);
-  }
-  const vps = result.value;
-  vps.verifyStatus = 'verified';
-  vps.status = 'active';
-  vps.lastVerifyAt = Date.now();
-  await kv.set(['vps', id], vps);
+  const res = await kv.get<VPSServer>(['vps', id]);
+  if (!res.value) return c.json({ success: false, message: 'VPS 不存在' }, 404);
+  res.value.verifyStatus = 'verified';
+  res.value.status = 'active';
+  res.value.lastVerifyAt = Date.now();
+  await kv.set(['vps', id], res.value);
   return c.json({ success: true, message: 'VPS 已标记为验证通过' });
 });
 
@@ -873,42 +846,72 @@ app.post('/api/admin/vps/batch-verify', requireAdmin, async (c) => {
       message: `验证完成！成功: ${result.success}，失败: ${result.failed}`,
       data: result,
     });
-  } catch (error: any) {
+  } catch (e: any) {
     return c.json(
-      { success: false, message: '批量验证失败: ' + error.message },
+      { success: false, message: '批量验证失败: ' + e.message },
       500,
     );
   }
 });
 
-// ==================== 前端页面：/donate ====================
+// =============== 公共页面 /donate ===============
 app.get('/donate', (c) => {
   const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <title>风萧萧兮公益 VPS 投喂 · 捐赠榜单</title>
+  <title>风萧萧兮公益机场 · VPS 投喂榜</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { color-scheme: dark; }
+    body[data-theme="light"] { background-color:#f8fafc; color:#020617; color-scheme: light; }
+    .panel, .card, .stat-card {
+      transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+    }
+    body[data-theme="light"] .panel,
+    body[data-theme="light"] .card {
+      background-color: #ffffff;
+      border-color: #e2e8f0;
+      color: #0f172a;
+    }
+    body[data-theme="light"] .stat-card {
+      background-color:#f1f5f9;
+      border-color:#e2e8f0;
+      color:#0f172a;
+    }
+  </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-100">
+<body class="min-h-screen bg-slate-950 text-slate-100" data-theme="dark">
+<script>
+(function initTheme(){
+  const saved = localStorage.getItem('theme') || 'dark';
+  document.body.setAttribute('data-theme', saved);
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+</script>
   <div class="max-w-5xl mx-auto px-4 py-10">
-    <header class="mb-8">
-      <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 bg-clip-text text-transparent">
-        风萧萧兮公益机场 · VPS 投喂榜
-      </h1>
-      <p class="mt-3 text-sm md:text-base text-slate-300 leading-relaxed">
-        这是一个完全非盈利的公益项目，没有运营团队，只有我一个人维护。<br/>
-        感谢所有愿意投喂 VPS 的朋友，你们让更多人可以免费、安全地使用网络。<br/>
-        榜单中仅展示国家 / 区域、IP 归属地、流量与到期时间，不会公开任何 IP 或端口信息。
-      </p>
-
+    <header class="mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 bg-clip-text text-transparent">
+          风萧萧兮公益机场 · VPS 投喂榜
+        </h1>
+        <p class="mt-3 text-sm md:text-base text-slate-300 leading-relaxed">
+          这是一个完全非盈利的公益项目，没有运营团队，只有我一个人维护。<br/>
+          榜单仅展示「国家 / 区域 + IP 归属地 + 流量 + 到期时间」，不会公开任何 IP 或端口信息。
+        </p>
+        <button
+          onclick="gotoDonatePage()"
+          class="mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold shadow-lg shadow-cyan-500/30 hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950"
+        >
+          🧡 我要投喂 VPS
+        </button>
+      </div>
       <button
-        onclick="gotoDonatePage()"
-        class="mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold shadow-lg shadow-cyan-500/30 hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950"
-      >
-        🧡 我要投喂 VPS
-      </button>
+        id="theme-toggle"
+        class="text-xs rounded-lg border border-slate-700 px-3 py-1 hover:bg-slate-800 self-start"
+        onclick="toggleTheme()"
+      >浅色模式</button>
     </header>
 
     <section class="mb-6">
@@ -917,9 +920,7 @@ app.get('/donate', (c) => {
         <span id="leaderboard-count" class="text-sm font-normal text-slate-400"></span>
       </h2>
       <div id="leaderboard" class="space-y-4">
-        <div class="text-slate-400 text-sm">
-          正在加载榜单...
-        </div>
+        <div class="text-slate-400 text-sm">正在加载榜单...</div>
       </div>
     </section>
 
@@ -929,6 +930,22 @@ app.get('/donate', (c) => {
   </div>
 
 <script>
+function updateThemeToggleText(){
+  const btn = document.getElementById('theme-toggle');
+  if(!btn) return;
+  const theme = document.body.getAttribute('data-theme') || 'dark';
+  btn.textContent = theme === 'dark' ? '浅色模式' : '深色模式';
+}
+function toggleTheme(){
+  const cur = document.body.getAttribute('data-theme') || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.body.setAttribute('data-theme', next);
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  updateThemeToggleText();
+}
+updateThemeToggleText();
+
 async function gotoDonatePage() {
   try {
     const res = await fetch('/api/user/info');
@@ -958,7 +975,6 @@ async function loadLeaderboard() {
     }
     const data = json.data || [];
     countEl.textContent = data.length ? (' · 共 ' + data.length + ' 位投喂者') : '';
-
     if (!data.length) {
       container.innerHTML = '<div class="text-slate-400 text-sm">暂时还没有投喂记录，成为第一个投喂者吧～</div>';
       return;
@@ -967,14 +983,15 @@ async function loadLeaderboard() {
     container.innerHTML = '';
     data.forEach((item, idx) => {
       const wrapper = document.createElement('div');
-      wrapper.className = 'rounded-2xl border border-slate-800 bg-slate-900/60 p-4 shadow-sm shadow-slate-900/60';
+      wrapper.className = 'card rounded-2xl border border-slate-800 bg-slate-900/60 p-4 shadow-sm shadow-slate-900/60';
 
       const titleRow = document.createElement('div');
       titleRow.className = 'flex items-center justify-between gap-2 mb-2';
 
       const left = document.createElement('div');
       left.className = 'flex items-center gap-2';
-      left.innerHTML = '<span class="text-lg">' + (idx < 3 ? ['🥇','🥈','🥉'][idx] : '🏅') + '</span>' +
+      const medal = idx < 3 ? ['🥇','🥈','🥉'][idx] : '🏅';
+      left.innerHTML = '<span class="text-lg">' + medal + '</span>' +
                        '<span class="font-semibold">@' + item.username + '</span>';
 
       const right = document.createElement('div');
@@ -996,7 +1013,6 @@ async function loadLeaderboard() {
           srv.status === 'active' ? 'text-emerald-400' :
           srv.status === 'failed' ? 'text-red-400' :
           'text-slate-300';
-
         const statusText =
           srv.status === 'active' ? '已激活' :
           srv.status === 'failed' ? '验证失败' :
@@ -1024,7 +1040,6 @@ async function loadLeaderboard() {
       container.appendChild(wrapper);
     });
   } catch (e) {
-    console.error(e);
     container.innerHTML = '<div class="text-red-400 text-sm">加载异常，请稍后重试。</div>';
   }
 }
@@ -1036,17 +1051,37 @@ loadLeaderboard();
   return c.html(html);
 });
 
-// ==================== 前端页面：/donate/vps（投喂表单 + 我的投喂） ====================
+// =============== 页面 /donate/vps ===============
 app.get('/donate/vps', (c) => {
   const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <title>风萧萧兮公益 VPS 投喂面板</title>
+  <title>风萧萧兮公益机场 · VPS 投喂中心</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { color-scheme: dark; }
+    body[data-theme="light"] { background-color:#f8fafc; color:#020617; color-scheme: light; }
+    .panel, .card, .stat-card {
+      transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+    }
+    body[data-theme="light"] .panel,
+    body[data-theme="light"] .card {
+      background-color: #ffffff;
+      border-color: #e2e8f0;
+      color: #0f172a;
+    }
+  </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-100">
+<body class="min-h-screen bg-slate-950 text-slate-100" data-theme="dark">
+<script>
+(function initTheme(){
+  const saved = localStorage.getItem('theme') || 'dark';
+  document.body.setAttribute('data-theme', saved);
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+</script>
   <div class="max-w-6xl mx-auto px-4 py-8">
     <header class="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
       <div>
@@ -1054,7 +1089,7 @@ app.get('/donate/vps', (c) => {
           VPS 投喂中心
         </h1>
         <p class="mt-2 text-sm text-slate-300">
-          这里是已登录用户的投喂面板，可以提交新的 VPS，也可以查看和管理自己的投喂记录。
+          仅已登录用户可见，可以提交新的 VPS 投喂，也可以查看和管理自己的投喂记录。
         </p>
       </div>
       <div class="flex items-center gap-3">
@@ -1065,15 +1100,19 @@ app.get('/donate/vps', (c) => {
         >
           退出登录
         </button>
+        <button
+          id="theme-toggle"
+          class="text-xs rounded-lg border border-slate-700 px-3 py-1 hover:bg-slate-800"
+          onclick="toggleTheme()"
+        >浅色模式</button>
       </div>
     </header>
 
     <main class="grid md:grid-cols-2 gap-6 items-start">
-      <!-- 投喂表单 -->
-      <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-slate-900/70">
+      <section class="panel rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-slate-900/70">
         <h2 class="text-lg font-semibold mb-2">🧡 提交新的 VPS 投喂</h2>
         <p class="text-xs text-slate-400 mb-4 leading-relaxed">
-          请确保是你有控制权的服务器，且允许我们用于公益节点。禁止恶意占用宽带、长时间跑满或刷流量、分享/售卖账号等行为。
+          请确保服务器是你有控制权的机器，并允许用于公益节点。禁止长时间占满带宽、刷流量、倒卖账号等行为。
         </p>
 
         <form id="donate-form" class="space-y-3 text-sm">
@@ -1150,8 +1189,7 @@ app.get('/donate/vps', (c) => {
         </form>
       </section>
 
-      <!-- 我的投喂记录 -->
-      <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-slate-900/70">
+      <section class="panel rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-slate-900/70">
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-lg font-semibold">📦 我的投喂记录</h2>
           <button
@@ -1173,6 +1211,22 @@ app.get('/donate/vps', (c) => {
   </div>
 
 <script>
+function updateThemeToggleText(){
+  const btn = document.getElementById('theme-toggle');
+  if(!btn) return;
+  const theme = document.body.getAttribute('data-theme') || 'dark';
+  btn.textContent = theme === 'dark' ? '浅色模式' : '深色模式';
+}
+function toggleTheme(){
+  const cur = document.body.getAttribute('data-theme') || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.body.setAttribute('data-theme', next);
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  updateThemeToggleText();
+}
+updateThemeToggleText();
+
 async function ensureLogin() {
   try {
     const res = await fetch('/api/user/info');
@@ -1194,9 +1248,7 @@ async function ensureLogin() {
 }
 
 async function logout() {
-  try {
-    await fetch('/api/logout');
-  } catch (e) {}
+  try { await fetch('/api/logout'); } catch(e) {}
   window.location.href = '/donate';
 }
 
@@ -1222,19 +1274,19 @@ async function submitDonateForm(e) {
   msgEl.textContent = '';
   msgEl.className = 'text-xs mt-1 h-4';
 
-  const formData = new FormData(form);
+  const fd = new FormData(form);
   const payload = {
-    ip: formData.get('ip')?.toString().trim(),
-    port: Number(formData.get('port')?.toString().trim()),
-    username: formData.get('username')?.toString().trim(),
-    authType: formData.get('authType')?.toString(),
-    password: formData.get('password')?.toString(),
-    privateKey: formData.get('privateKey')?.toString(),
-    country: formData.get('country')?.toString().trim(),
-    traffic: formData.get('traffic')?.toString().trim(),
-    expiryDate: formData.get('expiryDate')?.toString().trim(),
-    specs: formData.get('specs')?.toString().trim(),
-    note: formData.get('note')?.toString().trim(),
+    ip: fd.get('ip')?.toString().trim(),
+    port: Number(fd.get('port')?.toString().trim()),
+    username: fd.get('username')?.toString().trim(),
+    authType: fd.get('authType')?.toString(),
+    password: fd.get('password')?.toString(),
+    privateKey: fd.get('privateKey')?.toString(),
+    country: fd.get('country')?.toString().trim(),
+    traffic: fd.get('traffic')?.toString().trim(),
+    expiryDate: fd.get('expiryDate')?.toString().trim(),
+    specs: fd.get('specs')?.toString().trim(),
+    note: fd.get('note')?.toString().trim(),
   };
 
   try {
@@ -1281,7 +1333,7 @@ async function loadDonations() {
     container.innerHTML = '';
     data.forEach((vps) => {
       const div = document.createElement('div');
-      div.className = 'rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2';
+      div.className = 'card rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2';
 
       const statusColor =
         vps.status === 'active' ? 'text-emerald-400' :
@@ -1326,17 +1378,41 @@ loadDonations();
   return c.html(html);
 });
 
-// ==================== 管理后台页面：/admin （卡片 + 筛选） ====================
+// =============== 管理后台页面 /admin ===============
 app.get('/admin', (c) => {
   const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <title>风萧萧兮公益 VPS 管理后台</title>
+  <title>风萧萧兮公益机场 · VPS 管理后台</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { color-scheme: dark; }
+    body[data-theme="light"] { background-color:#f8fafc; color:#020617; color-scheme: light; }
+    .panel, .card, .stat-card {
+      transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+    }
+    body[data-theme="light"] .panel,
+    body[data-theme="light"] .card,
+    body[data-theme="light"] .stat-card {
+      background-color:#ffffff;
+      border-color:#e2e8f0;
+      color:#0f172a;
+    }
+    body[data-theme="light"] .stat-card-dark {
+      background-color:#f1f5f9;
+    }
+  </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-100">
+<body class="min-h-screen bg-slate-950 text-slate-100" data-theme="dark">
+<script>
+(function initTheme(){
+  const saved = localStorage.getItem('theme') || 'dark';
+  document.body.setAttribute('data-theme', saved);
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+</script>
   <div class="max-w-7xl mx-auto px-4 py-8" id="app-root">
     <div class="text-slate-300 text-sm">正在检测管理员登录状态...</div>
   </div>
@@ -1345,6 +1421,21 @@ app.get('/admin', (c) => {
 let allVpsList = [];
 let statusFilter = 'all';
 let userFilter = '';
+
+function updateThemeToggleText(){
+  const btn = document.getElementById('theme-toggle');
+  if(!btn) return;
+  const theme = document.body.getAttribute('data-theme') || 'dark';
+  btn.textContent = theme === 'dark' ? '浅色模式' : '深色模式';
+}
+function toggleTheme(){
+  const cur = document.body.getAttribute('data-theme') || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.body.setAttribute('data-theme', next);
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  updateThemeToggleText();
+}
 
 async function checkAdmin() {
   const root = document.getElementById('app-root');
@@ -1366,7 +1457,7 @@ async function checkAdmin() {
 function renderLogin(root) {
   root.innerHTML = '';
   const wrap = document.createElement('div');
-  wrap.className = 'max-w-sm mx-auto rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-lg shadow-slate-900/80';
+  wrap.className = 'panel max-w-sm mx-auto rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-lg shadow-slate-900/80';
 
   wrap.innerHTML =
     '<h1 class="text-xl font-semibold mb-4">管理员登录</h1>' +
@@ -1416,13 +1507,18 @@ function renderAdmin(root, adminName) {
   header.innerHTML =
     '<div>' +
       '<h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">VPS 管理后台</h1>' +
-      '<p class="mt-2 text-xs text-slate-400">仅管理员可见 · 可查看全部投喂 VPS 与认证信息。</p>' +
+      '<p class="mt-2 text-xs text-slate-400">仅管理员可见，可查看全部投喂 VPS 与认证信息。</p>' +
     '</div>' +
     '<div class="flex items-center gap-3">' +
       '<span class="text-xs text-slate-300">管理员：' + adminName + '</span>' +
-      '<button onclick="adminLogout()" class="text-[11px] rounded-lg border border-slate-700 px-2 py-1 hover:bg-slate-800">退出</button>' +
+      '<button id="theme-toggle" class="text-[11px] rounded-lg border border-slate-700 px-2 py-1 hover:bg-slate-800 mr-1">浅色模式</button>' +
+      '<button id="btn-admin-logout" class="text-[11px] rounded-lg border border-slate-700 px-2 py-1 hover:bg-slate-800">退出</button>' +
     '</div>';
   root.appendChild(header);
+  updateThemeToggleText();
+
+  document.getElementById('btn-admin-logout').addEventListener('click', adminLogout);
+  document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
   const statsWrap = document.createElement('section');
   statsWrap.id = 'admin-stats';
@@ -1434,21 +1530,27 @@ function renderAdmin(root, adminName) {
     '<div class="flex items-center justify-between mb-2">' +
       '<h2 class="text-lg font-semibold">VPS 列表</h2>' +
       '<div class="flex items-center gap-2 text-[11px] text-slate-400">' +
-        '<span>筛选：</span>' +
-        '<button onclick="setStatusFilter(\\'all\\')" class="px-2 py-1 rounded-lg border border-slate-700 hover:bg-slate-800" data-status="all">全部</button>' +
-        '<button onclick="setStatusFilter(\\'active\\')" class="px-2 py-1 rounded-lg border border-emerald-500/40 text-emerald-300 hover:bg-slate-800" data-status="active">活跃</button>' +
-        '<button onclick="setStatusFilter(\\'failed\\')" class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-800" data-status="failed">失败</button>' +
-        '<button onclick="setStatusFilter(\\'inactive\\')" class="px-2 py-1 rounded-lg border border-slate-500/40 text-slate-200 hover:bg-slate-800" data-status="inactive">未激活</button>' +
+        '<span>状态筛选：</span>' +
+        '<button data-status-filter="all" class="px-2 py-1 rounded-lg border border-slate-700 hover:bg-slate-800">全部</button>' +
+        '<button data-status-filter="active" class="px-2 py-1 rounded-lg border border-emerald-500/40 text-emerald-300 hover:bg-slate-800">活跃</button>' +
+        '<button data-status-filter="failed" class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-800">失败</button>' +
+        '<button data-status-filter="inactive" class="px-2 py-1 rounded-lg border border-slate-500/40 text-slate-200 hover:bg-slate-800">未激活</button>' +
       '</div>' +
     '</div>' +
     '<div id="vps-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>';
   root.appendChild(listWrap);
+
+  listWrap.querySelectorAll('button[data-status-filter]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      statusFilter = btn.getAttribute('data-status-filter') || 'all';
+      userFilter = '';
+      renderVpsList();
+    });
+  });
 }
 
 async function adminLogout() {
-  try {
-    await fetch('/api/admin/logout');
-  } catch (e) {}
+  try { await fetch('/api/admin/logout'); } catch(e) {}
   location.reload();
 }
 
@@ -1464,44 +1566,58 @@ async function loadStats() {
     }
     const d = json.data || {};
     wrap.innerHTML =
-      '<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">' +
-        statCard('total', '总投喂数', d.totalVPS || 0, 'all') +
-        statCard('active', '活跃服务器', d.activeVPS || 0, 'active') +
-        statCard('inactive', '未激活', d.inactiveVPS || 0, 'inactive') +
-        statCard('failed', '验证失败', d.failedVPS || 0, 'failed') +
-        statCard('pending', '待验证', d.pendingVPS || 0, 'pending') +
-        statCard('today', '今日新增', d.todayNewVPS || 0, 'today') +
+      '<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">' +
+        statCard('总投喂数', d.totalVPS || 0, 'all') +
+        statCard('活跃服务器', d.activeVPS || 0, 'active') +
+        statCard('未激活', d.inactiveVPS || 0, 'inactive') +
+        statCard('验证失败', d.failedVPS || 0, 'failed') +
+        statCard('待验证', d.pendingVPS || 0, 'pending') +
+        statCard('今日新增', d.todayNewVPS || 0, 'today') +
+      '</div>' +
+      '<div class="flex justify-end mb-2">' +
+        '<button id="btn-batch-verify" class="text-[11px] rounded-lg border border-cyan-500/60 text-cyan-300 px-3 py-1 hover:bg-slate-900">🛠 一键验证 VPS 状态</button>' +
       '</div>';
+
+    wrap.querySelectorAll('button[data-stat-filter]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-stat-filter');
+        if (key === 'active' || key === 'inactive' || key === 'failed' || key === 'pending') {
+          statusFilter = key === 'pending' ? 'pending' : key;
+        } else {
+          statusFilter = 'all';
+        }
+        userFilter = '';
+        renderVpsList();
+      });
+    });
+
+    const batchBtn = document.getElementById('btn-batch-verify');
+    if (batchBtn) {
+      batchBtn.addEventListener('click', async () => {
+        if (!confirm('确认对所有待验证 VPS 执行一键验证？')) return;
+        try {
+          const res2 = await fetch('/api/admin/vps/batch-verify', { method: 'POST' });
+          const j2 = await res2.json();
+          alert(j2.message || '批量验证完成');
+        } catch (e) {
+          alert('批量验证失败');
+        }
+        await loadVps();
+        await loadStats();
+      });
+    }
   } catch (e) {
     wrap.innerHTML = '<div class="text-red-400 text-xs mb-3">统计信息加载异常</div>';
   }
 }
 
-function statCard(id, label, value, filterKey) {
+function statCard(label, value, filterKey) {
   return (
-    '<button onclick="clickStatFilter(\\'' + filterKey + '\\')" class="rounded-2xl border border-slate-800 bg-slate-900/70 px-3 py-2 text-left hover:bg-slate-900">' +
+    '<button data-stat-filter="' + filterKey + '" class="stat-card stat-card-dark rounded-2xl border border-slate-800 bg-slate-900/70 px-3 py-2 text-left hover:bg-slate-900">' +
       '<div class="text-[11px] text-slate-400">' + label + '</div>' +
       '<div class="text-lg font-semibold mt-1">' + value + '</div>' +
     '</button>'
   );
-}
-
-function clickStatFilter(key) {
-  if (key === 'all' || key === 'today') {
-    statusFilter = 'all';
-  } else if (key === 'active' || key === 'inactive' || key === 'failed') {
-    statusFilter = key;
-  } else if (key === 'pending') {
-    statusFilter = 'pending';
-  }
-  userFilter = '';
-  renderVpsList();
-}
-
-function setStatusFilter(status) {
-  statusFilter = status;
-  userFilter = '';
-  renderVpsList();
 }
 
 async function loadVps() {
@@ -1527,6 +1643,7 @@ function renderVpsList() {
     listEl.innerHTML = '<div class="text-xs text-slate-400 col-span-full">暂无 VPS 记录</div>';
     return;
   }
+
   const filtered = allVpsList.filter((v) => {
     let ok = true;
     if (statusFilter === 'active') ok = v.status === 'active';
@@ -1545,13 +1662,12 @@ function renderVpsList() {
   listEl.innerHTML = '';
   filtered.forEach((v) => {
     const card = document.createElement('div');
-    card.className = 'rounded-2xl border border-slate-800 bg-slate-900/80 p-3 flex flex-col gap-2 text-xs';
+    card.className = 'card rounded-2xl border border-slate-800 bg-slate-900/80 p-3 flex flex-col gap-2 text-xs';
 
     const statusColor =
       v.status === 'active' ? 'text-emerald-400' :
       v.status === 'failed' ? 'text-red-400' :
       'text-slate-300';
-
     const statusText =
       v.status === 'active' ? '已激活' :
       v.status === 'failed' ? '验证失败' :
@@ -1566,7 +1682,7 @@ function renderVpsList() {
         '<div class="' + statusColor + ' text-[11px]">' + statusText + '</div>' +
       '</div>' +
       '<div class="flex flex-wrap gap-2 text-[11px] text-slate-300">' +
-        '<span>投喂者：<button class="underline hover:text-cyan-400" onclick="filterByUser(\\'' + v.donatedByUsername + '\\')">@' + v.donatedByUsername + '</button></span>' +
+        '<span>投喂者：<button class="underline hover:text-cyan-400" data-user-filter="' + v.donatedByUsername + '">@' + v.donatedByUsername + '</button></span>' +
         '<span>地区：' + (v.country || '未填写') + (v.ipLocation ? ' · ' + v.ipLocation : '') + '</span>' +
       '</div>' +
       '<div class="flex flex-wrap gap-2 text-[11px] text-slate-300">' +
@@ -1584,46 +1700,61 @@ function renderVpsList() {
           '<div>认证方式：' + v.authType + '</div>' +
           '<div>验证状态：' + (v.verifyStatus || 'unknown') + (v.verifyErrorMsg ? ' · ' + v.verifyErrorMsg : '') + '</div>' +
           '<div class="flex flex-wrap gap-2 mt-1">' +
-            '<button onclick="markVerified(\\'' + v.id + '\\')" class="px-2 py-1 rounded-lg border border-emerald-500/40 text-emerald-300 hover:bg-slate-800">标记通过</button>' +
-            '<button onclick="setStatus(\\'' + v.id + '\\', \\'inactive\\')" class="px-2 py-1 rounded-lg border border-slate-500/40 text-slate-200 hover:bg-slate-800">设为未激活</button>' +
-            '<button onclick="setStatus(\\'' + v.id + '\\', \\'failed\\')" class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-800">设为失败</button>' +
-            '<button onclick="deleteVps(\\'' + v.id + '\\')" class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-900">删除</button>' +
+            '<button class="px-2 py-1 rounded-lg border border-emerald-500/40 text-emerald-300 hover:bg-slate-800" data-action="mark" data-id="' + v.id + '">标记通过</button>' +
+            '<button class="px-2 py-1 rounded-lg border border-slate-500/40 text-slate-200 hover:bg-slate-800" data-action="inactive" data-id="' + v.id + '">设为未激活</button>' +
+            '<button class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-800" data-action="failed" data-id="' + v.id + '">设为失败</button>' +
+            '<button class="px-2 py-1 rounded-lg border border-amber-500/40 text-amber-300 hover:bg-slate-800" data-action="edit-notes" data-id="' + v.id + '" data-note="' + (v.note || '').replace(/"/g, '&quot;') + '" data-adminnote="' + (v.adminNote || '').replace(/"/g, '&quot;') + '">编辑备注</button>' +
+            '<button class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-900" data-action="delete" data-id="' + v.id + '">删除</button>' +
           '</div>' +
         '</div>' +
       '</details>';
 
+    const userBtn = card.querySelector('button[data-user-filter]');
+    if (userBtn) {
+      userBtn.addEventListener('click', () => {
+        userFilter = userBtn.getAttribute('data-user-filter') || '';
+        renderVpsList();
+      });
+    }
+
+    card.querySelectorAll('button[data-action]').forEach((btn) => {
+      const id = btn.getAttribute('data-id');
+      const action = btn.getAttribute('data-action');
+      btn.addEventListener('click', async () => {
+        if (!id) return;
+        if (action === 'mark') {
+          if (!confirm('确定将此 VPS 标记为验证通过并激活？')) return;
+          await fetch('/api/admin/vps/' + id + '/mark-verified', { method: 'POST' });
+        } else if (action === 'inactive' || action === 'failed') {
+          if (!confirm('确定修改状态为 ' + action + ' ？')) return;
+          await fetch('/api/admin/vps/' + id + '/status', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: action }),
+          });
+        } else if (action === 'delete') {
+          if (!confirm('确定删除此 VPS 记录？')) return;
+          await fetch('/api/admin/vps/' + id, { method: 'DELETE' });
+        } else if (action === 'edit-notes') {
+          const curNote = btn.getAttribute('data-note') || '';
+          const curAdminNote = btn.getAttribute('data-adminnote') || '';
+          const newNote = prompt('用户备注（留空表示不修改）：', curNote);
+          if (newNote === null) return;
+          const newAdminNote = prompt('管理员备注（留空表示不修改）：', curAdminNote);
+          if (newAdminNote === null) return;
+          await fetch('/api/admin/vps/' + id + '/notes', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ note: newNote, adminNote: newAdminNote }),
+          });
+        }
+        await loadVps();
+        await loadStats();
+      });
+    });
+
     listEl.appendChild(card);
   });
-}
-
-function filterByUser(u) {
-  userFilter = u;
-  renderVpsList();
-}
-
-async function markVerified(id) {
-  if (!confirm('确定将此 VPS 标记为验证通过并激活？')) return;
-  await fetch('/api/admin/vps/' + id + '/mark-verified', { method: 'POST' });
-  await loadVps();
-  await loadStats();
-}
-
-async function setStatus(id, status) {
-  if (!confirm('确定修改状态为 ' + status + ' ？')) return;
-  await fetch('/api/admin/vps/' + id + '/status', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status }),
-  });
-  await loadVps();
-  await loadStats();
-}
-
-async function deleteVps(id) {
-  if (!confirm('确定删除此 VPS 记录？')) return;
-  await fetch('/api/admin/vps/' + id, { method: 'DELETE' });
-  await loadVps();
-  await loadStats();
 }
 
 checkAdmin();
