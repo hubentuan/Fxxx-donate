@@ -24,6 +24,7 @@ interface VPSServer {
   donatedAt: number;
   status: 'active' | 'inactive' | 'failed'; // 新增 failed 状态
   note?: string;
+  adminNote?: string; // 新增：管理员备注
   // 验证相关字段
   verifyStatus: 'pending' | 'verified' | 'failed';
   verifyCode?: string;
@@ -564,6 +565,7 @@ app.get('/api/user/donations', requireAuth, async (c) => {
     donatedAt: d.donatedAt,
     status: d.status,
     note: d.note,
+    adminNote: d.adminNote, // 显示管理员备注
     verifyStatus: d.verifyStatus,
     verifyCode: d.verifyCode,
     verifyFilePath: d.verifyFilePath,
@@ -572,6 +574,76 @@ app.get('/api/user/donations', requireAuth, async (c) => {
   }));
 
   return c.json({ success: true, data: safeDonations });
+});
+
+// 用户更新自己VPS的备注
+app.put('/api/user/donations/:id/note', requireAuth, async (c) => {
+  const session = c.get('session');
+  const id = c.req.param('id');
+  const { note } = await c.req.json();
+
+  const result = await kv.get<VPSServer>(['vps', id]);
+  if (!result.value) {
+    return c.json({ success: false, message: 'VPS 不存在' }, 404);
+  }
+
+  // 检查是否是该用户的VPS
+  if (result.value.donatedBy !== session.userId) {
+    return c.json({ success: false, message: '无权修改此VPS' }, 403);
+  }
+
+  result.value.note = note || '';
+  await kv.set(['vps', id], result.value);
+
+  return c.json({ success: true, message: '备注已更新' });
+});
+
+// 获取捐赠榜单（公开API）
+app.get('/api/leaderboard', async (c) => {
+  const allVPS = await getAllVPS();
+  
+  // 统计每个用户的捐赠
+  const userStats = new Map<string, {
+    username: string;
+    count: number;
+    servers: Array<{
+      ip: string;
+      port: number;
+      note?: string;
+      adminNote?: string;
+      status: string;
+      donatedAt: number;
+    }>;
+  }>();
+
+  for (const vps of allVPS) {
+    const stats = userStats.get(vps.donatedBy) || {
+      username: vps.donatedByUsername,
+      count: 0,
+      servers: []
+    };
+
+    stats.count++;
+    stats.servers.push({
+      ip: vps.ip,
+      port: vps.port,
+      note: vps.note,
+      adminNote: vps.adminNote,
+      status: vps.status,
+      donatedAt: vps.donatedAt
+    });
+
+    userStats.set(vps.donatedBy, stats);
+  }
+
+  // 转换为数组并排序
+  const leaderboard = Array.from(userStats.values())
+    .sort((a, b) => b.count - a.count);
+
+  return c.json({
+    success: true,
+    data: leaderboard
+  });
 });
 
 // 投喂 VPS
@@ -643,6 +715,7 @@ app.post('/api/donate', requireAuth, async (c) => {
       donatedAt: Date.now(),
       status: 'active', // 端口可达自动激活
       note: note || '',
+      adminNote: '', // 初始管理员备注为空
       verifyStatus: 'verified', // 自动验证通过
       verifyCode: undefined,
       verifyFilePath: undefined,
@@ -787,6 +860,28 @@ app.put('/api/admin/vps/:id/status', requireAdmin, async (c) => {
   }
 });
 
+// 管理员更新VPS备注（包括用户备注和管理员备注）
+app.put('/api/admin/vps/:id/notes', requireAdmin, async (c) => {
+  const id = c.req.param('id');
+  const { note, adminNote } = await c.req.json();
+
+  const result = await kv.get<VPSServer>(['vps', id]);
+  if (!result.value) {
+    return c.json({ success: false, message: 'VPS 不存在' }, 404);
+  }
+
+  if (note !== undefined) {
+    result.value.note = note;
+  }
+  if (adminNote !== undefined) {
+    result.value.adminNote = adminNote;
+  }
+
+  await kv.set(['vps', id], result.value);
+
+  return c.json({ success: true, message: '备注已更新' });
+});
+
 // 获取 OAuth 配置（管理员）
 app.get('/api/admin/config/oauth', requireAdmin, async (c) => {
   const config = await getOAuthConfig();
@@ -825,6 +920,11 @@ app.get('/api/admin/stats', requireAdmin, async (c) => {
   const pendingVPS = allVPS.filter(v => v.verifyStatus === 'pending');
   const verifiedVPS = allVPS.filter(v => v.verifyStatus === 'verified');
 
+  // 今日新增（今天0点到现在）
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayNewVPS = allVPS.filter(v => v.donatedAt >= todayStart.getTime());
+
   // 统计用户投喂数量
   const userStats = new Map<string, number>();
   for (const vps of allVPS) {
@@ -846,6 +946,7 @@ app.get('/api/admin/stats', requireAdmin, async (c) => {
       inactiveVPS: allVPS.length - activeVPS.length - failedVPS.length,
       pendingVPS: pendingVPS.length,
       verifiedVPS: verifiedVPS.length,
+      todayNewVPS: todayNewVPS.length,
       topDonors,
     },
   });
@@ -1075,7 +1176,7 @@ function generateDonateHTML(clientId: string): string {
     .modal-content {
       background: white;
       border-radius: 16px;
-      max-width: 800px;
+      max-width: 900px;
       width: 90%;
       max-height: 80vh;
       overflow: hidden;
@@ -1178,6 +1279,21 @@ function generateDonateHTML(clientId: string): string {
       <p class="text-base text-slate-600">分享您的闲置小鸡，让资源得到更好的利用 💝</p>
     </div>
 
+    <!-- 捐赠榜单 -->
+    <div class="bg-white rounded-xl p-6 mb-4 animate-in card-hover" style="border: 1px solid #F3F4F6;">
+      <h3 class="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+        🏆 捐赠榜单
+        <button onclick="loadLeaderboard()" class="text-sm font-normal text-slate-500 hover:text-slate-700">
+          <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+        </button>
+      </h3>
+      <div id="leaderboardList" class="space-y-3">
+        <div class="text-center py-8 text-slate-400">加载中...</div>
+      </div>
+    </div>
+
     <!-- 投喂表单 -->
     <div id="donateForm" class="hidden bg-white rounded-xl p-6 animate-in card-hover mb-4" style="border: 1px solid #F3F4F6;">
       <h3 class="text-xl font-bold text-slate-900 mb-5">💝 投喂你的闲置小鸡</h3>
@@ -1269,12 +1385,39 @@ function generateDonateHTML(clientId: string): string {
     </div>
   </div>
 
+  <!-- 编辑备注模态框 -->
+  <div id="editNoteModal" class="modal-overlay" onclick="closeEditNoteModal(event)">
+    <div class="modal-content" style="max-width: 500px;" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="text-xl font-bold text-slate-900">✏️ 编辑备注</h3>
+        <button onclick="closeEditNoteModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input id="editNoteInput" type="text" placeholder="输入新的备注"
+          class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm">
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeEditNoteModal()" class="btn-secondary px-6 py-2 rounded-lg font-semibold mr-2">
+          取消
+        </button>
+        <button onclick="saveNote()" class="btn-primary text-white px-6 py-2 rounded-lg font-semibold">
+          保存
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const CLIENT_ID = '${clientId}';
     const AUTH_URL = 'https://connect.linux.do/oauth2/authorize';
     const REDIRECT_URI = window.location.origin + '/oauth/callback';
 
     let currentUser = null;
+    let editingVPSId = null;
 
     async function checkAuth() {
       console.log('[前端] 检查登录状态...');
@@ -1367,6 +1510,94 @@ function generateDonateHTML(clientId: string): string {
     function closeDonationsModal(event) {
       const modal = document.getElementById('donationsModal');
       modal.classList.remove('show');
+    }
+
+    function showEditNoteModal(vpsId, currentNote) {
+      editingVPSId = vpsId;
+      document.getElementById('editNoteInput').value = currentNote || '';
+      document.getElementById('editNoteModal').classList.add('show');
+    }
+
+    function closeEditNoteModal(event) {
+      document.getElementById('editNoteModal').classList.remove('show');
+      editingVPSId = null;
+    }
+
+    async function saveNote() {
+      if (!editingVPSId) return;
+
+      const note = document.getElementById('editNoteInput').value.trim();
+
+      try {
+        const res = await fetch(\`/api/user/donations/\${editingVPSId}/note\`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ note }),
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          showToast('备注已更新', 'success');
+          closeEditNoteModal();
+          loadDonations(); // 重新加载投喂记录
+        } else {
+          showToast(data.message, 'error');
+        }
+      } catch (e) {
+        showToast('更新失败: ' + e.message, 'error');
+      }
+    }
+
+    async function loadLeaderboard() {
+      try {
+        const res = await fetch('/api/leaderboard');
+        const data = await res.json();
+
+        if (data.success && data.data.length > 0) {
+          const html = data.data.map((user, index) => {
+            const medals = ['🥇', '🥈', '🥉'];
+            const medal = index < 3 ? medals[index] : \`<span class="text-slate-400 text-sm">\${index + 1}</span>\`;
+
+            return \`
+              <div class="p-4 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors" style="border: 1px solid #E5E7EB;">
+                <div class="flex justify-between items-start mb-2">
+                  <div class="flex items-center gap-3 flex-1">
+                    <span class="text-2xl">\${medal}</span>
+                    <div class="flex-1">
+                      <p class="font-bold text-lg text-slate-900">@\${user.username}</p>
+                      <p class="text-sm text-slate-600">投喂了 <span class="font-bold text-indigo-600">\${user.count}</span> 台小鸡</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-3 space-y-2">
+                  \${user.servers.slice(0, 3).map(s => \`
+                    <div class="text-xs bg-white p-2 rounded border border-slate-200">
+                      <span class="font-mono text-slate-700">\${s.ip}:\${s.port}</span>
+                      \${s.note ? \`<span class="text-slate-500 ml-2">- \${s.note}</span>\` : ''}
+                      \${s.adminNote ? \`<span class="text-blue-600 ml-2">🔖 \${s.adminNote}</span>\` : ''}
+                      <span class="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold \${
+                        s.status === 'active' ? 'bg-green-100 text-green-700' :
+                        s.status === 'failed' ? 'bg-red-100 text-red-700' :
+                        'bg-slate-200 text-slate-600'
+                      }">
+                        \${s.status === 'active' ? '✓' : s.status === 'failed' ? '✕' : '○'}
+                      </span>
+                    </div>
+                  \`).join('')}
+                  \${user.servers.length > 3 ? \`<p class="text-xs text-slate-400 text-center">还有 \${user.servers.length - 3} 台...</p>\` : ''}
+                </div>
+              </div>
+            \`;
+          }).join('');
+          document.getElementById('leaderboardList').innerHTML = html;
+        } else {
+          document.getElementById('leaderboardList').innerHTML = '<div class="text-center py-8 text-slate-400">暂无捐赠记录</div>';
+        }
+      } catch (e) {
+        console.error('加载捐赠榜单失败', e);
+        document.getElementById('leaderboardList').innerHTML = '<div class="text-center py-8 text-red-400">加载失败</div>';
+      }
     }
 
     function login() {
@@ -1469,6 +1700,9 @@ function generateDonateHTML(clientId: string): string {
             document.getElementById('donationCount').textContent = \`已投喂 \${currentUser.donationCount} 台\`;
             document.getElementById('dropdownDonationCount').textContent = \`已投喂 \${currentUser.donationCount} 台\`;
           }
+
+          // 重新加载捐赠榜单
+          loadLeaderboard();
         } else {
           console.error('投喂失败:', data.message);
           showToast(data.message, 'error');
@@ -1520,8 +1754,13 @@ function generateDonateHTML(clientId: string): string {
                       </span>
                     </div>
                   </div>
+                  <button onclick="showEditNoteModal('\${d.id}', '\${(d.note || '').replace(/'/g, "\\'")}'); event.stopPropagation();" 
+                    class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold">
+                    ✏️ 编辑
+                  </button>
                 </div>
-                \${d.note ? \`<p class="text-xs text-slate-500 mb-1">📝 \${d.note}</p>\` : ''}
+                \${d.note ? \`<p class="text-xs text-slate-500 mb-1">📝 我的备注：\${d.note}</p>\` : ''}
+                \${d.adminNote ? \`<p class="text-xs text-blue-600 mb-1">🔖 管理员备注：\${d.adminNote}</p>\` : ''}
                 <p class="text-xs text-slate-400">\${new Date(d.donatedAt).toLocaleString('zh-CN')}</p>
               </div>
             \`;
@@ -1568,8 +1807,9 @@ function generateDonateHTML(clientId: string): string {
       }, 3000);
     }
 
-    // 页面加载时检查登录状态
+    // 页面加载时检查登录状态和加载捐赠榜单
     checkAuth();
+    loadLeaderboard();
   </script>
 </body>
 </html>`;
@@ -1693,6 +1933,58 @@ function generateAdminHTML(): string {
     .animate-spin {
       animation: spin 1s linear infinite;
     }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow: hidden;
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    .modal-overlay.show .modal-content {
+      transform: scale(1);
+    }
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #F3F4F6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-body {
+      padding: 24px;
+      max-height: calc(80vh - 140px);
+      overflow-y: auto;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #F3F4F6;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
   </style>
 </head>
 <body class="min-h-screen" style="background-color: #FAF9F8;">
@@ -1738,7 +2030,7 @@ function generateAdminHTML(): string {
     <div id="adminPanel" class="hidden">
 
       <!-- 统计卡片 -->
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-6 gap-6 mb-6">
         <div class="bg-white rounded-xl p-6 animate-in card-hover" style="border: 1px solid #F3F4F6;">
           <p class="text-sm text-slate-500 mb-1">总投喂数</p>
           <p id="totalVPS" class="text-3xl font-bold text-slate-900">0</p>
@@ -1754,6 +2046,10 @@ function generateAdminHTML(): string {
         <div class="bg-white rounded-xl p-6 animate-in card-hover" style="border: 1px solid #F3F4F6;">
           <p class="text-sm text-slate-500 mb-1">待验证</p>
           <p id="pendingVPS" class="text-3xl font-bold" style="color: #F59E0B;">0</p>
+        </div>
+        <div class="bg-white rounded-xl p-6 animate-in card-hover" style="border: 1px solid #F3F4F6;">
+          <p class="text-sm text-slate-500 mb-1">今日新增</p>
+          <p id="todayNewVPS" class="text-3xl font-bold" style="color: #3B82F6;">0</p>
         </div>
         <div class="bg-white rounded-xl p-6 animate-in card-hover" style="border: 1px solid #F3F4F6;">
           <p class="text-sm text-slate-500 mb-1">投喂用户</p>
@@ -1838,8 +2134,43 @@ function generateAdminHTML(): string {
     </div>
   </div>
 
+  <!-- 编辑备注模态框 -->
+  <div id="editNoteModal" class="modal-overlay" onclick="closeEditNoteModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="text-xl font-bold text-slate-900">✏️ 编辑备注</h3>
+        <button onclick="closeEditNoteModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">用户备注</label>
+          <input id="editUserNoteInput" type="text" placeholder="用户的备注"
+            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">管理员备注</label>
+          <input id="editAdminNoteInput" type="text" placeholder="管理员的备注（将在前端显示）"
+            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeEditNoteModal()" class="btn-secondary px-6 py-2 rounded-lg font-semibold">
+          取消
+        </button>
+        <button onclick="saveAdminNote()" class="btn-primary text-white px-6 py-2 rounded-lg font-semibold">
+          保存
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let isAdmin = false;
+    let editingVPSId = null;
 
     // 页面加载时检查会话
     async function checkAdminSession() {
@@ -1906,10 +2237,50 @@ function generateAdminHTML(): string {
           document.getElementById('activeVPS').textContent = data.data.activeVPS;
           document.getElementById('failedVPS').textContent = data.data.failedVPS;
           document.getElementById('pendingVPS').textContent = data.data.pendingVPS;
+          document.getElementById('todayNewVPS').textContent = data.data.todayNewVPS;
           document.getElementById('totalUsers').textContent = data.data.topDonors.length;
         }
       } catch (e) {
         console.error('加载统计失败', e);
+      }
+    }
+
+    function showEditNoteModal(vpsId, userNote, adminNote) {
+      editingVPSId = vpsId;
+      document.getElementById('editUserNoteInput').value = userNote || '';
+      document.getElementById('editAdminNoteInput').value = adminNote || '';
+      document.getElementById('editNoteModal').classList.add('show');
+    }
+
+    function closeEditNoteModal(event) {
+      document.getElementById('editNoteModal').classList.remove('show');
+      editingVPSId = null;
+    }
+
+    async function saveAdminNote() {
+      if (!editingVPSId) return;
+
+      const note = document.getElementById('editUserNoteInput').value.trim();
+      const adminNote = document.getElementById('editAdminNoteInput').value.trim();
+
+      try {
+        const res = await fetch(\`/api/admin/vps/\${editingVPSId}/notes\`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ note, adminNote }),
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          showToast('备注已更新', 'success');
+          closeEditNoteModal();
+          loadVPSList();
+        } else {
+          showToast(data.message, 'error');
+        }
+      } catch (e) {
+        showToast('更新失败: ' + e.message, 'error');
       }
     }
 
@@ -1962,7 +2333,8 @@ function generateAdminHTML(): string {
                     </div>
                     <p class="text-sm text-slate-600">投喂者: <span class="font-semibold">\${v.donatedByUsername}</span></p>
                     <p class="text-sm text-slate-600">认证方式: \${v.authType === 'password' ? '🔑 密码' : '🔐 密钥'}</p>
-                    \${v.note ? \`<p class="text-sm text-slate-500 mt-1">备注: \${v.note}</p>\` : ''}
+                    \${v.note ? \`<p class="text-sm text-slate-500 mt-1">📝 用户备注: \${v.note}</p>\` : ''}
+                    \${v.adminNote ? \`<p class="text-sm text-blue-600 mt-1">🔖 管理员备注: \${v.adminNote}</p>\` : ''}
                     \${v.verifyStatus === 'pending' && v.verifyCode ? \`
                       <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
                         <p class="text-yellow-800">验证文件: <code class="bg-yellow-100 px-1 rounded">\${v.verifyFilePath}</code></p>
@@ -1975,6 +2347,10 @@ function generateAdminHTML(): string {
                     <p class="text-xs text-slate-400 mt-2">\${new Date(v.donatedAt).toLocaleString('zh-CN')}</p>
                   </div>
                   <div class="flex flex-col gap-2">
+                    <button onclick="showEditNoteModal('\${v.id}', '\${(v.note || '').replace(/'/g, "\\'")}', '\${(v.adminNote || '').replace(/'/g, "\\'")}'); event.stopPropagation();" 
+                      class="px-3 py-1 text-xs bg-white text-indigo-700 rounded-lg font-semibold hover:bg-indigo-50 transition-all border border-indigo-200">
+                      ✏️ 编辑备注
+                    </button>
                     \${verifyButton}
                     <button onclick="toggleVPSStatus('\${v.id}', '\${v.status}')"
                       class="px-3 py-1 text-xs rounded-lg font-semibold transition-all \${v.status === 'active' ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200' : 'bg-white text-green-700 hover:bg-green-50 border border-green-200'}">
