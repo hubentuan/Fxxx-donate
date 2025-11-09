@@ -24,7 +24,7 @@ interface VPSServer {
   donatedAt: number;
   status: 'active' | 'inactive' | 'failed';
   note?: string;        // 用户备注（前台可见）
-  adminNote?: string;   // 管理员备注（前台不可见）
+  adminNote?: string;   // 管理员备注（仅后台可见）
   country: string;
   traffic: string;
   expiryDate: string;
@@ -68,7 +68,9 @@ function generateSessionId(): string {
 // ==================== IP 归属地 ====================
 async function getIPLocation(ip: string): Promise<string> {
   try {
-    const res = await fetch(`http://ip-api.com/json/${ip}?fields=country,regionName,city`);
+    const res = await fetch(
+      `http://ip-api.com/json/${ip}?fields=country,regionName,city`,
+    );
     if (res.ok) {
       const data = await res.json();
       if (data.country) {
@@ -128,7 +130,7 @@ async function checkPortReachable(ip: string, port: number): Promise<boolean> {
   }
 }
 
-// 一键验证
+// 一键验证：对所有 VPS 检测
 async function batchVerifyVPS(): Promise<{ total: number; success: number; failed: number; details: any[] }> {
   const allVPS = await getAllVPS();
   const toCheck = allVPS;
@@ -442,7 +444,6 @@ app.get('/api/user/donations', requireAuth, async (c) => {
   const s = c.get('session');
   const donations = await getUserDonations(s.userId);
 
-  // 前台安全数据（不包含 adminNote / 密钥等）
   const safe = donations.map((d) => ({
     id: d.id,
     ip: d.ip,
@@ -451,7 +452,7 @@ app.get('/api/user/donations', requireAuth, async (c) => {
     authType: d.authType,
     donatedAt: d.donatedAt,
     status: d.status,
-    note: d.note, // 用户备注：前台可见
+    note: d.note,          // 用户自己和前端可见
     country: d.country,
     traffic: d.traffic,
     expiryDate: d.expiryDate,
@@ -499,6 +500,7 @@ app.get('/api/leaderboard', async (c) => {
       specs: v.specs || '未填写',
       status: v.status,
       donatedAt: v.donatedAt,
+      note: v.note || '',          // 用户备注对前台可见
     });
     stats.set(v.donatedBy, s);
   }
@@ -519,6 +521,7 @@ app.get('/api/user/:username/donations', async (c) => {
     specs: v.specs || '未填写',
     status: v.status,
     donatedAt: v.donatedAt,
+    note: v.note || '',        // 用户备注
   }));
   return c.json({
     success: true,
@@ -701,7 +704,8 @@ app.put('/api/admin/vps/:id/status', requireAdmin, async (c) => {
 
 app.put('/api/admin/vps/:id/notes', requireAdmin, async (c) => {
   const id = c.req.param('id');
-  const { note, adminNote, country, traffic, expiryDate, specs } = await c.req.json();
+  const { note, adminNote, country, traffic, expiryDate, specs } =
+    await c.req.json();
   const r = await kv.get<VPSServer>(['vps', id]);
   if (!r.value) return c.json({ success: false, message: 'VPS 不存在' }, 404);
   if (note !== undefined) r.value.note = note;
@@ -722,7 +726,10 @@ app.get('/api/admin/config/oauth', requireAdmin, async (c) => {
 app.put('/api/admin/config/oauth', requireAdmin, async (c) => {
   const { clientId, clientSecret, redirectUri } = await c.req.json();
   if (!clientId || !clientSecret || !redirectUri) {
-    return c.json({ success: false, message: '所有字段都是必填的' }, 400);
+    return c.json(
+      { success: false, message: '所有字段都是必填的' },
+      400,
+    );
   }
   await setOAuthConfig({ clientId, clientSecret, redirectUri });
   return c.json({ success: true, message: 'OAuth 配置已更新' });
@@ -731,7 +738,10 @@ app.put('/api/admin/config/oauth', requireAdmin, async (c) => {
 app.put('/api/admin/config/password', requireAdmin, async (c) => {
   const { password } = await c.req.json();
   if (!password || password.length < 6) {
-    return c.json({ success: false, message: '密码至少需要 6 个字符' }, 400);
+    return c.json(
+      { success: false, message: '密码至少需要 6 个字符' },
+      400,
+    );
   }
   await setAdminPassword(password);
   return c.json({ success: true, message: '管理员密码已更新' });
@@ -792,7 +802,10 @@ app.post('/api/admin/vps/batch-verify', requireAdmin, async (c) => {
       data: result,
     });
   } catch (e: any) {
-    return c.json({ success: false, message: '批量验证失败: ' + e.message }, 500);
+    return c.json(
+      { success: false, message: '批量验证失败: ' + e.message },
+      500,
+    );
   }
 });
 
@@ -839,7 +852,7 @@ body[data-theme="light"] .stat-card{
       </h1>
       <p class="mt-3 text-sm md:text-base text-slate-300 leading-relaxed">
         这是一个完全非盈利的公益项目，没有运营团队，只有我一个人维护。<br/>
-        榜单仅展示「国家 / 区域 + IP 归属地 + 流量 + 到期时间」，不会公开任何 IP 或端口信息。
+        榜单仅展示「国家 / 区域 + IP 归属地 + 流量 + 到期时间 + 投喂备注」，不会公开任何 IP 或端口信息。
       </p>
       <button onclick="gotoDonatePage()"
         class="mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold shadow-lg shadow-cyan-500/30 hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950">
@@ -968,7 +981,8 @@ async function loadLeaderboard(){
             '<span>流量/带宽：'+(srv.traffic||'未填写')+'</span>'+
             '<span>到期：'+(srv.expiryDate||'未填写')+'</span>'+
           '</div>'+
-          (srv.specs?'<div class="text-[11px] text-slate-400 mt-1">配置：'+srv.specs+'</div>':'');
+          (srv.specs?'<div class="text-[11px] text-slate-400 mt-1">配置：'+srv.specs+'</div>':'')+
+          (srv.note?'<div class="text-[11px] text-amber-300/90 mt-1">投喂者备注：'+srv.note+'</div>':'');
         list.appendChild(d);
       });
 
@@ -1007,9 +1021,6 @@ body[data-theme="light"]{background-color:#f8fafc;color:#020617;color-scheme:lig
 .panel,.card,.stat-card{transition:background-color .2s ease,color .2s ease,border-color .2s ease;}
 body[data-theme="light"] .panel,
 body[data-theme="light"] .card{background-color:#ffffff;border-color:#e2e8f0;color:#0f172a;}
-/* 站内弹窗 */
-#modal-overlay{display:none}
-#modal-overlay.show{display:flex}
 </style>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100" data-theme="dark">
@@ -1020,17 +1031,6 @@ body[data-theme="light"] .card{background-color:#ffffff;border-color:#e2e8f0;col
   document.documentElement.setAttribute('data-theme', saved);
 })();
 </script>
-
-<!-- 站内弹窗组件 -->
-<div id="modal-overlay" class="fixed inset-0 z-50 items-center justify-center bg-black/60">
-  <div class="w-11/12 max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-4 shadow-xl">
-    <h3 id="modal-title" class="text-base font-semibold mb-2">提示</h3>
-    <div id="modal-content" class="text-sm text-slate-300 leading-6">内容</div>
-    <div class="mt-3 flex justify-end gap-2">
-      <button id="modal-ok" class="rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-semibold hover:bg-cyan-400">知道了</button>
-    </div>
-  </div>
-</div>
 
 <div class="max-w-6xl mx-auto px-4 py-8">
   <header class="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -1113,7 +1113,7 @@ body[data-theme="light"] .card{background-color:#ffffff;border-color:#e2e8f0;col
         </div>
 
         <div>
-          <label class="block mb-1 text-xs text-slate-300">投喂备注（可选，仅自己 & 管理员可见）</label>
+          <label class="block mb-1 text-xs text-slate-300">投喂备注（可选，将在前台展示）</label>
           <textarea name="note" rows="2" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500"></textarea>
         </div>
 
@@ -1143,21 +1143,6 @@ body[data-theme="light"] .card{background-color:#ffffff;border-color:#e2e8f0;col
 </div>
 
 <script>
-// 站内弹窗
-(function(){
-  const overlay = document.getElementById('modal-overlay');
-  const ok = document.getElementById('modal-ok');
-  ok.addEventListener('click', ()=> overlay.classList.remove('show'));
-})();
-function showModal(title, content){
-  const overlay = document.getElementById('modal-overlay');
-  const t = document.getElementById('modal-title');
-  const c = document.getElementById('modal-content');
-  t.textContent = title || '提示';
-  c.textContent = content || '';
-  overlay.classList.add('show');
-}
-
 function updateThemeToggleText(){
   const btn = document.getElementById('theme-toggle');
   if(!btn) return;
@@ -1187,9 +1172,9 @@ async function ensureLogin(){
       return;
     }
     const u = json.data;
-    const profileUrl = 'https://linux.do/u/' + encodeURIComponent(u.username || '');
+    const profileUrl = 'https://linux.do/u/' + encodeURIComponent(u.username);
     const el = document.getElementById('user-info');
-    el.innerHTML = '投喂者：<a href="'+profileUrl+'" target="_blank" class="underline text-sky-300 hover:text-cyan-300">@'+(u.username||'')+'</a> · 已投喂 '+(u.donationCount||0)+' 台';
+    el.innerHTML = '投喂者：<a href="'+profileUrl+'" target="_blank" class="underline text-sky-300 hover:text-cyan-300">@'+u.username+'</a> · 已投喂 '+(u.donationCount||0)+' 台';
   }catch(e){
     location.href = '/donate';
   }
@@ -1202,7 +1187,6 @@ function bindAuthTypeSwitch(){
   const sel = document.querySelector('select[name="authType"]');
   const pwd = document.getElementById('password-field');
   const key = document.getElementById('key-field');
-  if(!sel) return;
   sel.addEventListener('change',()=>{
     if(sel.value === 'password'){
       pwd.classList.remove('hidden');
@@ -1223,17 +1207,17 @@ async function submitDonateForm(e){
 
   const fd = new FormData(form);
   const payload = {
-    ip: (fd.get('ip')||'').toString().trim(),
-    port: Number((fd.get('port')||'').toString().trim()),
-    username: (fd.get('username')||'').toString().trim(),
-    authType: (fd.get('authType')||'').toString(),
-    password: (fd.get('password')||'').toString(),
-    privateKey: (fd.get('privateKey')||'').toString(),
-    country: (fd.get('country')||'').toString().trim(),
-    traffic: (fd.get('traffic')||'').toString().trim(),
-    expiryDate: (fd.get('expiryDate')||'').toString().trim(),
-    specs: (fd.get('specs')||'').toString().trim(),
-    note: (fd.get('note')||'').toString().trim(),
+    ip: fd.get('ip')?.toString().trim(),
+    port: Number(fd.get('port')?.toString().trim()),
+    username: fd.get('username')?.toString().trim(),
+    authType: fd.get('authType')?.toString(),
+    password: fd.get('password')?.toString(),
+    privateKey: fd.get('privateKey')?.toString(),
+    country: fd.get('country')?.toString().trim(),
+    traffic: fd.get('traffic')?.toString().trim(),
+    expiryDate: fd.get('expiryDate')?.toString().trim(),
+    specs: fd.get('specs')?.toString().trim(),
+    note: fd.get('note')?.toString().trim(),
   };
 
   btn.disabled = true;
@@ -1250,18 +1234,15 @@ async function submitDonateForm(e){
     if(!res.ok || !json.success){
       msg.textContent = json.message || '提交失败';
       msg.classList.add('text-red-400');
-      showModal('提交失败', json.message || '请检查 IP、端口、密码/私钥是否正确');
     }else{
       msg.textContent = json.message || '投喂成功';
       msg.classList.add('text-emerald-400');
-      showModal('投喂成功', json.message || '已提交成功');
       form.reset();
       loadDonations();
     }
   }catch(e){
     msg.textContent = '提交异常，请稍后重试';
     msg.classList.add('text-red-400');
-    showModal('提交异常', String(e||'网络异常'));
   }finally{
     btn.disabled = false;
     btn.textContent = originText;
@@ -1398,7 +1379,7 @@ async function checkAdmin(){
     if(!json.success || !json.isAdmin){
       renderLogin(root);
     }else{
-      renderAdmin(root, json.username || 'Administrator');
+      renderAdmin(root, json.username);
       await loadStats();
       await loadConfig();
       await loadVps();
@@ -1431,7 +1412,7 @@ function renderLogin(root){
     msg.textContent = '';
     msg.className = 'text-[11px] h-4';
     const fd = new FormData(e.target);
-    const password = (fd.get('password')||'').toString();
+    const password = fd.get('password')?.toString() || '';
     try{
       const res = await fetch('/api/admin/login',{
         method:'POST',
@@ -1510,16 +1491,16 @@ function renderAdmin(root, adminName){
   });
 
   document.getElementById('filter-btn').addEventListener('click',()=>{
-    const el = document.getElementById('filter-input');
-    const val = el && 'value' in el ? (el as any).value.toString().trim() : '';
+    const inputEl = document.getElementById('filter-input');
+    const val = inputEl ? inputEl.value.trim() : '';
     searchFilter = val;
     userFilter = '';
     renderVpsList();
   });
   document.getElementById('filter-clear-btn').addEventListener('click',()=>{
     searchFilter = '';
-    const el = document.getElementById('filter-input');
-    if(el && 'value' in el){ (el as any).value = ''; }
+    const inputEl = document.getElementById('filter-input');
+    if(inputEl){ inputEl.value = ''; }
     userFilter = '';
     renderVpsList();
   });
@@ -1613,7 +1594,7 @@ async function loadConfig(){
             '<div>'+
               '<label class="block mb-1 text-slate-300">Client Secret</label>'+
               '<input name="clientSecret" value="'+(cfg.clientSecret||'')+'" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
-            </div>'+
+            '</div>'+
             '<div>'+
               '<label class="block mb-1 text-slate-300">Redirect URI</label>'+
               '<input name="redirectUri" value="'+(cfg.redirectUri||'')+'" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
@@ -1642,9 +1623,9 @@ async function loadConfig(){
       msg.className = 'text-[10px] h-4 mt-1';
       const fd = new FormData(e.target);
       const payload = {
-        clientId: (fd.get('clientId')||'').toString().trim(),
-        clientSecret: (fd.get('clientSecret')||'').toString().trim(),
-        redirectUri: (fd.get('redirectUri')||'').toString().trim(),
+        clientId: fd.get('clientId')?.toString().trim(),
+        clientSecret: fd.get('clientSecret')?.toString().trim(),
+        redirectUri: fd.get('redirectUri')?.toString().trim(),
       };
       try{
         const res2 = await fetch('/api/admin/config/oauth',{
@@ -1672,7 +1653,7 @@ async function loadConfig(){
       msg.textContent = '';
       msg.className = 'text-[10px] h-4 mt-1';
       const fd = new FormData(e.target);
-      const payload = { password: (fd.get('password')||'').toString().trim() };
+      const payload = { password: fd.get('password')?.toString().trim() };
       try{
         const res2 = await fetch('/api/admin/config/password',{
           method:'PUT',
@@ -1865,7 +1846,9 @@ function renderVpsList(){
     if(nameLink){
       nameLink.addEventListener('click',(e)=>{
         e.stopPropagation();
-        userFilter = v.donatedByUsername || '';
+      });
+      nameLink.addEventListener('click',(e)=>{
+        userFilter = v.donatedByUsername;
         renderVpsList();
       });
     }
