@@ -635,11 +635,19 @@ app.put('/api/admin/config/password', requireAdmin, async c => {
   return c.json({ success: true, message: '管理员密码已更新' });
 });
 
+/* 后端统计：今日新增只看“同一天” */
 app.get('/api/admin/stats', requireAdmin, async c => {
   try {
     const all = await getAllVPS();
-    const today0 = new Date();
-    today0.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const d = now.getDate();
+    const isToday = (ts: number | undefined) => {
+      if (!ts) return false;
+      const t = new Date(ts);
+      return t.getFullYear() === y && t.getMonth() === m && t.getDate() === d;
+    };
 
     const userStats = new Map<string, number>();
     for (const v of all) {
@@ -663,7 +671,7 @@ app.get('/api/admin/stats', requireAdmin, async c => {
         inactiveVPS: all.filter(v => v.status === 'inactive').length,
         pendingVPS: all.filter(v => v.verifyStatus === 'pending').length,
         verifiedVPS: all.filter(v => v.verifyStatus === 'verified').length,
-        todayNewVPS: all.filter(v => v.donatedAt >= today0.getTime()).length,
+        todayNewVPS: all.filter(v => isToday(v.donatedAt)).length,
         topDonors: top
       }
     });
@@ -687,7 +695,7 @@ app.post('/api/admin/vps/:id/mark-verified', requireAdmin, async c => {
   return c.json({ success: true, message: '已标记为验证通过' });
 });
 
-/* 一键验证接口：尝试连接 VPS 端口，成功则标记 active + verified，失败则 failed */
+/* 单个一键验证接口 */
 app.post('/api/admin/vps/:id/verify', requireAdmin, async c => {
   const id = c.req.param('id');
   const r = await kv.get<VPSServer>(['vps', id]);
@@ -714,6 +722,41 @@ app.post('/api/admin/vps/:id/verify', requireAdmin, async c => {
       data: { error: v.verifyErrorMsg }
     });
   }
+});
+
+/* 一键验证全部 VPS */
+app.post('/api/admin/verify-all', requireAdmin, async c => {
+  const all = await getAllVPS();
+  let total = 0;
+  let success = 0;
+  let failed = 0;
+
+  for (const v of all) {
+    total++;
+    const ok = await portOK(v.ip, v.port);
+    const r = await kv.get<VPSServer>(['vps', v.id]);
+    if (!r.value) continue;
+    const cur = r.value;
+    cur.lastVerifyAt = Date.now();
+    if (ok) {
+      cur.status = 'active';
+      cur.verifyStatus = 'verified';
+      cur.verifyErrorMsg = '';
+      success++;
+    } else {
+      cur.status = 'failed';
+      cur.verifyStatus = 'failed';
+      cur.verifyErrorMsg = '无法连接 VPS，请检查服务器是否在线、防火墙/安全组端口放行';
+      failed++;
+    }
+    await kv.set(['vps', cur.id], cur);
+  }
+
+  return c.json({
+    success: true,
+    message: `批量验证完成：成功 ${success} 台，失败 ${failed} 台`,
+    data: { total, success, failed }
+  });
 });
 
 /* ==================== /donate 榜单页 ==================== */
@@ -1126,6 +1169,14 @@ let allVpsList=[]; let statusFilter='all'; let searchFilter=''; let userFilter='
 
 function stxt(s){ return s==='active'?'运行中':(s==='failed'?'失败':'未启用'); }
 function scls(s){ return s==='active'?'badge-ok':(s==='failed'?'badge-fail':'badge-idle'); }
+function isTodayLocal(ts){
+  if(!ts) return false;
+  const d=new Date(ts);
+  const now=new Date();
+  return d.getFullYear()===now.getFullYear() &&
+         d.getMonth()===now.getMonth() &&
+         d.getDate()===now.getDate();
+}
 
 async function checkAdmin(){
   const root=document.getElementById('app-root');
@@ -1178,6 +1229,7 @@ function renderLogin(root){
     const pwd=fd.get('password')?.toString()||'';
     try{
       const r=await fetch('/api/admin/login',{
+
         method:'POST',
         credentials:'same-origin',
         headers:{'Content-Type':'application/json'},
@@ -1258,7 +1310,7 @@ async function renderAdmin(root, name){
   const listWrap=document.createElement('section');
   listWrap.className='mt-6';
   listWrap.innerHTML='<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-2">'+
-    '<h2 class="text-lg font-semibold">VPS 列表</h2>'+
+    '<div class="flex items-center gap-3"><h2 class="text-lg font-semibold">VPS 列表</h2><button id="btn-verify-all" class="px-3 py-1 rounded-full border text-[11px]">一键验证全部</button></div>'+
     '<div class="flex flex-wrap items-center gap-2 text-[11px]">'+
       '<span>状态筛选：</span>'+
       '<button data-status="all" class="px-2 py-1 rounded-full border">全部</button>'+
@@ -1286,6 +1338,7 @@ async function renderAdmin(root, name){
     userFilter='';
     renderVpsList();
   });
+  document.getElementById('btn-verify-all').addEventListener('click', verifyAll);
 
   await loadStats();
   await loadConfig();
@@ -1428,6 +1481,30 @@ async function loadVps(){
   }
 }
 
+async function verifyAll(){
+  if(!allVpsList.length){
+    toast('当前没有 VPS 可以验证','warn');
+    return;
+  }
+  if(!confirm('确定要对全部 VPS 执行连通性检测吗？这可能会持续数十秒。')) return;
+  try{
+    const r=await fetch('/api/admin/verify-all',{method:'POST',credentials:'same-origin'});
+    const j=await r.json();
+    if(!r.ok||!j.success){
+      toast(j.message||'批量验证失败','error');
+    }else{
+      const d=j.data||{};
+      const msg=j.message||('批量验证完成：成功 '+(d.success||0)+' 台，失败 '+(d.failed||0)+' 台');
+      toast(msg,'success',4000);
+    }
+  }catch(err){
+    console.error('Verify all error:',err);
+    toast('批量验证异常','error');
+  }
+  await loadVps();
+  await loadStats();
+}
+
 function renderVpsList(){
   const list=document.getElementById('vps-list');
   if(!allVpsList.length){
@@ -1436,13 +1513,12 @@ function renderVpsList(){
   }
 
   const kw=(searchFilter||'').toLowerCase();
-  const today0=new Date(); today0.setHours(0,0,0,0);
 
   const arr=allVpsList.filter(v=>{
     let ok=true;
     if(statusFilter==='active') ok=v.status==='active';
     else if(statusFilter==='failed') ok=v.status==='failed';
-    else if(statusFilter==='today') ok=v.donatedAt && v.donatedAt>=today0.getTime();
+    else if(statusFilter==='today') ok=v.donatedAt && isTodayLocal(v.donatedAt);
     if(userFilter) ok=ok && v.donatedByUsername===userFilter;
     if(kw){
       const hay=[v.ip,String(v.port),v.donatedByUsername,v.country,v.traffic,v.specs,v.note,v.adminNote].join(' ').toLowerCase();
@@ -1712,6 +1788,10 @@ body[data-theme="light"] .stat-card{
 body[data-theme="light"] .stat-card .stat-value{
   color:#0f766e;
 }
+/* 浅色模式下仍保持不同颜色，失败依旧红色 */
+body[data-theme="light"] .stat-card.stat-active .stat-value{ color:#16a34a; }
+body[data-theme="light"] .stat-card.stat-failed .stat-value{ color:#ef4444; }
+body[data-theme="light"] .stat-card.stat-today .stat-value{ color:#0284c7; }
 
 .text-xs{ font-size:0.8rem; line-height:1.4; }
 .text-sm{ font-size:0.9rem; line-height:1.45; }
@@ -1872,72 +1952,28 @@ function modalEdit(title, fields, onOk){
   document.body.appendChild(wrap);
 }
 
-/* ====== 国旗 emoji 工具 ====== */
-function isoToFlag(iso){
-  if(!iso) return '';
-  iso=iso.toUpperCase();
-  if(iso.length!==2) return '';
-  const A=0x1F1E6;
-  const cp1=A + (iso.charCodeAt(0)-65);
-  const cp2=A + (iso.charCodeAt(1)-65);
-  return String.fromCodePoint(cp1,cp2);
-}
-function guessCountryCodeFromText(text){
-  if(!text) return '';
-  const t=text.toLowerCase();
-  const map={
-    '中国':'CN','大陆':'CN','china':'CN','prc':'CN',
-    '香港':'HK','hong kong':'HK',
-    '澳门':'MO','macau':'MO',
-    '台湾':'TW','taiwan':'TW',
-    '日本':'JP','japan':'JP',
-    '韩国':'KR','south korea':'KR','korea':'KR',
-    '美国':'US','usa':'US','united states':'US',
-    '英国':'GB','united kingdom':'GB','uk':'GB','britain':'GB',
-    '德国':'DE','germany':'DE',
-    '法国':'FR','france':'FR',
-    '加拿大':'CA','canada':'CA',
-    '新加坡':'SG','singapore':'SG',
-    '澳大利亚':'AU','澳洲':'AU','australia':'AU',
-    '印度':'IN','india':'IN',
-    '俄罗斯':'RU','russia':'RU',
-    '荷兰':'NL','netherlands':'NL',
-    '瑞士':'CH','switzerland':'CH',
-    '瑞典':'SE','sweden':'SE',
-    '挪威':'NO','norway':'NO',
-    '芬兰':'FI','finland':'FI',
-    '西班牙':'ES','spain':'ES',
-    '意大利':'IT','italy':'IT',
-    '巴西':'BR','brazil':'BR',
-    '阿根廷':'AR','argentina':'AR',
-    '墨西哥':'MX','mexico':'MX',
-    '土耳其':'TR','turkey':'TR',
-    '泰国':'TH','thailand':'TH',
-    '马来西亚':'MY','malaysia':'MY',
-    '菲律宾':'PH','philippines':'PH',
-    '印度尼西亚':'ID','印尼':'ID','indonesia':'ID',
-    '越南':'VN','vietnam':'VN',
-    '阿联酋':'AE','dubai':'AE','united arab emirates':'AE'
-  };
-  for(const k in map){
-    if(t.includes(k)) return map[k];
+function guessCountryFlag(v){
+  const txt=((v.country||'')+' '+(v.ipLocation||'')).toLowerCase();
+  const rules=[
+    {k:['hong kong','hk','香港'],f:'🇭🇰'},
+    {k:['japan','tokyo','日本'],f:'🇯🇵'},
+    {k:['united states','usa','los angeles','san jose','美国'],f:'🇺🇸'},
+    {k:['germany','德国'],f:'🇩🇪'},
+    {k:['united kingdom','uk','london','英国'],f:'🇬🇧'},
+    {k:['singapore','新加坡'],f:'🇸🇬'},
+    {k:['korea','韩国'],f:'🇰🇷'},
+    {k:['taiwan','台湾'],f:'🇹🇼'},
+    {k:['canada','加拿大'],f:'🇨🇦'},
+    {k:['australia','澳大利亚'],f:'🇦🇺'},
+    {k:['netherlands','荷兰'],f:'🇳🇱'},
+    {k:['india','印度'],f:'🇮🇳'}
+  ];
+  for(const r of rules){
+    if(r.k.some(k=>txt.includes(k.toLowerCase()))) return r.f;
   }
-  // 如果字符串里本身就是两位国家码
-  const m=t.match(/\b[a-z]{2}\b/);
-  if(m) return m[0].toUpperCase();
   return '';
 }
-function countryTextWithFlag(text){
-  if(!text) return '';
-  // 已经有国旗 emoji 就直接返回
-  if(/[\uD83C][\uDDE6-\uDDFF]/.test(text)) return text;
-  const code=guessCountryCodeFromText(text);
-  if(!code) return text;
-  const flag=isoToFlag(code);
-  return flag ? (flag + ' ' + text) : text;
-}
 
-/* ====== 登录信息弹窗：带国旗 emoji、可复制 ====== */
 function modalLoginInfo(v){
   const wrap=document.createElement('div');
   wrap.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;';
@@ -1953,66 +1989,42 @@ function modalLoginInfo(v){
   const rows=document.createElement('div');
   rows.className='space-y-2 text-xs';
 
-  // copyOrBool:
-  //   - 不传 / true：复制 value
-  //   - false：不显示复制按钮
-  //   - 字符串：复制指定内容
-  function addRow(label,value,copyOrBool){
+  function addRow(label,value,canCopy=true){
     const row=document.createElement('div');
-    row.className='flex items-start justify-between gap-2';
+    row.className='flex items-center justify-between gap-2';
     const left=document.createElement('div');
     left.className='muted flex-1 break-words';
-
-    if(value && value.length>200){
-      left.textContent=label+'：';
-      const box=document.createElement('pre');
-      box.textContent=value;
-      box.className='mt-1 whitespace-pre-wrap max-h-40 overflow-auto border border-slate-700/60 rounded-md px-2 py-1 bg-black/30';
-      left.appendChild(box);
-    }else{
-      left.textContent=label+'：'+(value||'-');
-    }
+    left.textContent=label+'：'+(value||'-');
     row.appendChild(left);
-
-    const hasCopyParam = typeof copyOrBool !== 'undefined';
-    const canCopy = hasCopyParam ? !!copyOrBool : true;
-    const copyVal = typeof copyOrBool === 'string' ? copyOrBool : value;
-
-    if(canCopy && copyVal){
+    if(canCopy && value){
       const btn=document.createElement('button');
       btn.className='px-2 py-1 rounded-full border text-[11px] whitespace-nowrap';
       btn.textContent='复制';
-      btn.onclick=()=>copyToClipboard(copyVal);
+      btn.onclick=()=>copyToClipboard(value);
       row.appendChild(btn);
     }
     rows.appendChild(row);
   }
 
-  // 赞助人（复制纯用户名）
-  if(v.donatedByUsername){
-    addRow('赞助人','@'+v.donatedByUsername, v.donatedByUsername);
+  const sponsor=v.donatedByUsername||'';
+  if(sponsor){
+    addRow('赞助人','@'+sponsor,true);
   }
 
-  // IP 归属（自动加上国旗 emoji）
-  const ipLocRaw = v.country || v.ipLocation || '';
-  const ipLocDisplay = ipLocRaw ? countryTextWithFlag(ipLocRaw) : '';
-  if(ipLocDisplay){
-    addRow('IP 归属', ipLocDisplay);
-  }
+  const flag=guessCountryFlag(v);
+  const ipLoc=(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'');
+  addRow('IP 归属',(flag?flag+' ':'')+ipLoc,true);
 
-  // IP 地址 & 端口分开
   addRow('IP 地址', v.ip || '');
-  addRow('端口', String(v.port ?? ''), !!v.port);
+  addRow('端口', String(v.port||''), true);
 
-  addRow('系统用户名', v.username || '');
+  addRow('系统用户名', v.username || '', true);
   addRow('认证方式', v.authType==='key'?'密钥':'密码', false);
-
   if(v.authType==='password'){
     addRow('登录密码', v.password || '');
   }else{
     addRow('SSH 私钥', v.privateKey || '');
   }
-
   const statusText = v.verifyStatus || 'unknown';
   const extra = v.verifyErrorMsg ? ('（'+v.verifyErrorMsg+'）') : '';
   addRow('验证状态', statusText+extra, false);
