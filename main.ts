@@ -441,7 +441,7 @@ app.post('/api/donate', requireAuth, async c => {
   } = body;
 
   if (!ip || !port || !username || !authType) {
-    return c.json({ success: false, message: 'IP/端口/用户名/认证方式 必填' }, 400);
+    return c.json({ success: false, message: 'IP / 端口 / 用户名 / 认证方式 必填' }, 400);
   }
   if (!country || !traffic || !expiryDate || !specs) {
     return c.json(
@@ -461,13 +461,13 @@ app.post('/api/donate', requireAuth, async c => {
 
   const p = parseInt(String(port), 10);
   if (p < 1 || p > 65535) {
-    return c.json({ success: false, message: '端口 1~65535' }, 400);
+    return c.json({ success: false, message: '端口范围 1 ~ 65535' }, 400);
   }
   if (await ipDup(ip, p)) {
     return c.json({ success: false, message: '该 IP:端口 已被投喂' }, 400);
   }
   if (!(await portOK(ip, p))) {
-    return c.json({ success: false, message: '无法连接到该服务器' }, 400);
+    return c.json({ success: false, message: '无法连接到该服务器，请确认 IP / 端口 是否正确、且对外开放' }, 400);
   }
 
   const ipLoc = await getIPLocation(ip);
@@ -495,7 +495,7 @@ app.post('/api/donate', requireAuth, async c => {
 
   return c.json({
     success: true,
-    message: '✅ 投喂成功，已自动验证并标记运行中',
+    message: '✅ 投喂成功，已通过连通性验证，感谢支持！',
     data: { id: v.id, ipLocation: v.ipLocation }
   });
 });
@@ -692,21 +692,23 @@ app.get('/donate', c => {
   const head = commonHead('风萧萧公益机场 · VPS 投喂榜');
   const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
 <body class="min-h-screen" data-theme="dark">
-<div class="max-w-5xl mx-auto px-4 py-10">
-  <header class="mb-8 flex items-start justify-between gap-4">
-    <div>
-      <h1 class="grad-title text-3xl md:text-4xl font-bold">风萧萧公益机场 · VPS 投喂榜</h1>
-      <p class="mt-3 text-sm muted leading-relaxed">
-        这是一个完全非盈利的公益项目，没有运营团队，只有我一个人维护。榜单仅展示「国家 / 区域 + IP 归属地 + 流量 + 到期时间 + 投喂备注」，不会公开任何 IP 或端口信息。
+<div class="max-w-5xl mx-auto px-4 py-8">
+  <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="space-y-2">
+      <h1 class="grad-title text-2xl md:text-4xl font-bold">风萧萧公益机场 · VPS 投喂榜</h1>
+      <p class="mt-1 text-sm sm:text-base muted leading-relaxed">
+        这是一个完全非盈利的公益项目，没有运营团队，只有我一个人维护。榜单仅展示「国家 / 区域 + IP 归属地 + 流量 + 到期时间 + 投喂备注」。
       </p>
-      <p class="mt-2 text-sm text-amber-200 leading-relaxed">
-        感谢大家的投喂，🤝 这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，是大家的共同成果，共荣！🚀
+      <p class="text-xs sm:text-sm text-amber-200 leading-relaxed">
+        感谢大家的投喂，🤝 这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，是大家的共同成果！共荣！🚀🤝
       </p>
-      <button onclick="gotoDonatePage()" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold shadow-lg hover:bg-cyan-400">
+      <button onclick="gotoDonatePage()" class="mt-3 inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold shadow-lg hover:bg-cyan-400">
         🧡 我要投喂 VPS
       </button>
     </div>
-    <button id="theme-toggle" class="text-xs" onclick="toggleTheme()">浅色模式</button>
+    <div class="flex sm:flex-col items-center sm:items-end gap-2">
+      <button id="theme-toggle" class="text-xs" onclick="toggleTheme()">浅色模式</button>
+    </div>
   </header>
 
   <section class="mb-6">
@@ -785,10 +787,10 @@ async function loadLeaderboard(){
       wrap.className='card rounded-2xl border p-4 shadow-sm';
 
       const head=document.createElement('div');
-      head.className='flex items-center justify-between mb-2';
-      head.innerHTML='<div class="flex items-center gap-2"><span style="font-size:18px">'+medalByRank(idx)+'</span>'+
-      '<a class="font-semibold text-sky-300 hover:text-cyan-300" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a></div>'+
-      '<div class="muted text-xs">共投喂 '+it.count+' 台 VPS</div>';
+      head.className='flex items-center justify-between mb-2 gap-2';
+      head.innerHTML='<div class="flex items-center gap-2 flex-1 min-w-0"><span style="font-size:18px">'+medalByRank(idx)+'</span>'+
+      '<a class="font-semibold text-sky-300 hover:text-cyan-300 truncate" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a></div>'+
+      '<div class="muted text-xs whitespace-nowrap">共投喂 '+it.count+' 台 VPS</div>';
       wrap.appendChild(head);
 
       const list=document.createElement('div');
@@ -797,13 +799,13 @@ async function loadLeaderboard(){
         const d=document.createElement('div');
         d.className='rounded-xl border px-3 py-2';
         d.innerHTML = '<div class="flex items-center justify-between gap-2">'+
-          '<span class="text-slate-100 text-xs">'+(srv.country||'未填写')+(srv.ipLocation?' · '+srv.ipLocation:'')+'</span>'+
+          '<span class="text-slate-100 text-xs truncate">'+(srv.country||'未填写')+(srv.ipLocation?' · '+srv.ipLocation:'')+'</span>'+
           '<span class="'+statusCls(srv.status)+' text-[11px]">'+statusText(srv.status)+'</span></div>'+
           '<div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] mt-1">'+
           '<span>流量/带宽：'+(srv.traffic||'未填写')+'</span>'+
           '<span>到期：'+(srv.expiryDate||'未填写')+'</span></div>'+
-          (srv.specs?'<div class="text-[11px] muted mt-1">配置：'+srv.specs+'</div>':'')+
-          (srv.note?'<div class="text-[11px] text-amber-300/90 mt-1">投喂备注：'+srv.note+'</div>':'');
+          (srv.specs?'<div class="text-[11px] muted mt-1 break-words">配置：'+srv.specs+'</div>':'')+
+          (srv.note?'<div class="text-[11px] text-amber-300/90 mt-1 break-words">投喂备注：'+srv.note+'</div>':'');
         list.appendChild(d);
       });
       wrap.appendChild(list);
@@ -839,13 +841,10 @@ app.get('/donate/vps', c => {
   const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
 <body class="min-h-screen" data-theme="dark">
 <div class="max-w-6xl mx-auto px-4 py-8">
-  <header class="mb-6 flex items-start justify-between gap-4">
+  <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <h1 class="grad-title text-2xl md:text-3xl font-bold">风萧萧公益机场 · VPS 投喂榜</h1>
       <p class="mt-1 text-xs muted">当前：投喂中心（提交新 VPS / 查看我的投喂记录）</p>
-      <p class="mt-2 text-sm text-amber-200 leading-relaxed">
-        感谢大家的投喂，🤝 这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，是大家的共同成果，共荣！🚀
-      </p>
     </div>
     <div class="flex items-center gap-3">
       <div id="user-info" class="text-sm"></div>
@@ -864,7 +863,7 @@ app.get('/donate/vps', c => {
           <div>
             <label class="block mb-1 text-xs">服务器 IP（必填）</label>
             <input name="ip" required placeholder="示例：203.0.113.8 或 [2001:db8::1]" class="w-full rounded-lg border px-2 py-1.5 text-xs focus:ring-1 focus:ring-cyan-500" />
-            <div class="help">支持 IPv4/IPv6</div>
+            <div class="help">支持 IPv4 / IPv6</div>
           </div>
           <div>
             <label class="block mb-1 text-xs">端口（必填）</label>
@@ -1010,6 +1009,7 @@ async function submitDonate(e){
   btn.disabled=true; const t=btn.textContent; btn.textContent='提交中...';
   try{
     const r=await fetch('/api/donate',{
+
       method:'POST',
       credentials:'same-origin',
       headers:{'Content-Type':'application/json'},
@@ -1057,13 +1057,13 @@ async function loadDonations(){
       const dt=v.donatedAt?new Date(v.donatedAt):null, t=dt?dt.toLocaleString():'';
       const uname=v.donatedByUsername||'';
       const p='https://linux.do/u/'+encodeURIComponent(uname);
-      div.innerHTML='<div class="flex items-center justify-between gap-2 mb-1"><div class="text-[11px]">IP：'+v.ip+':'+v.port+
+      div.innerHTML='<div class="flex items-center justify-between gap-2 mb-1"><div class="text-[11px] break-words">IP：'+v.ip+':'+v.port+
         '</div><div class="'+scls(v.status)+' text-[11px]">'+stxt(v.status)+'</div></div>'+
         '<div class="text-[11px]">投喂者：<a href="'+p+'" target="_blank" class="underline text-sky-300">@'+uname+'</a></div>'+
         '<div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] mt-1"><span>地区：'+(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'')+
         '</span><span>流量/带宽：'+(v.traffic||'未填写')+'</span><span>到期：'+(v.expiryDate||'未填写')+'</span></div>'+
-        '<div class="text-[11px] muted mt-1">配置：'+(v.specs||'未填写')+'</div>'+
-        (v.note?'<div class="text-[11px] text-amber-300/90 mt-1">我的备注：'+v.note+'</div>':'')+
+        '<div class="text-[11px] muted mt-1 break-words">配置：'+(v.specs||'未填写')+'</div>'+
+        (v.note?'<div class="text-[11px] text-amber-300/90 mt-1 break-words">我的备注：'+v.note+'</div>':'')+
         (t?'<div class="text-[11px] muted mt-1">投喂时间：'+t+'</div>':'');
       box.appendChild(div);
     });
@@ -1172,7 +1172,7 @@ function renderLogin(root){
 async function renderAdmin(root, name){
   root.innerHTML='';
   const header=document.createElement('header');
-  header.className='mb-6 flex items-start justify-between gap-4';
+  header.className='mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between';
   header.innerHTML='<div><h1 class="grad-title text-2xl md:text-3xl font-bold">VPS 管理后台</h1><p class="mt-2 text-xs muted">仅管理员可见，可查看全部投喂 VPS 与认证信息。</p></div>'+
     '<div class="flex items-center gap-3"><span class="text-xs">管理员：'+name+'</span><button id="theme-toggle" class="text-[11px] rounded-full border px-2 py-1 mr-1">浅色模式</button><button id="btn-admin-logout" class="text-[11px] rounded-full border px-2 py-1">退出</button></div>';
   root.appendChild(header);
@@ -1197,6 +1197,9 @@ async function renderAdmin(root, name){
     '<div id="oauth-body" class="mt-3 hidden">'+
       '<form id="oauth-form" class="grid md:grid-cols-3 gap-3 text-[11px]">'+
         '<div><label class="block mb-1 muted text-xs">Client ID</label><input name="clientId" class="w-full rounded-lg border px-2 py-1 text-xs focus:ring-1 focus:ring-cyan-500"/></div>'+
+
+
+
         '<div><label class="block mb-1 muted text-xs">Client Secret</label><input name="clientSecret" class="w-full rounded-lg border px-2 py-1 text-xs focus:ring-1 focus:ring-cyan-500"/></div>'+
         '<div><label class="block mb-1 muted text-xs">Redirect URI</label><input name="redirectUri" class="w-full rounded-lg border px-2 py-1 text-xs focus:ring-1 focus:ring-cyan-500"/></div>'+
       '</form><div class="mt-2 flex gap-2"><button id="btn-save-oauth" class="text-[11px] rounded-xl bg-cyan-500 px-3 py-1 font-semibold">保存 OAuth</button></div>'+
@@ -1204,9 +1207,18 @@ async function renderAdmin(root, name){
     '<div class="panel rounded-2xl border p-4">'+
       '<h2 class="text-sm font-semibold mb-3">管理员密码</h2>'+
       '<p class="text-[11px] muted mb-2">仅用于 <code>/admin</code> 后台登录，至少 6 位，建议与 Linux.do 账号密码不同。</p>'+
+
+
+
       '<div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center text-[11px]">'+
         '<input id="admin-pass-input" type="password" placeholder="输入新的管理员密码" class="flex-1 rounded-lg border px-3 py-2 text-xs focus:ring-1 focus:ring-cyan-500"/>'+
+
+
+
         '<button id="btn-save-admin-pass" class="rounded-xl bg-emerald-500 px-4 py-2 text-[11px] font-semibold hover:bg-emerald-400">保存密码</button>'+
+
+
+
       '</div>'+
       '<p class="text-[11px] muted mt-2">修改成功后立即生效，下次登录需要使用新密码。</p>'+
     '</div>';
@@ -1249,13 +1261,18 @@ async function renderAdmin(root, name){
     renderVpsList();
   }));
   document.getElementById('filter-btn').addEventListener('click',()=>{
-    searchFilter=(document.getElementById('filter-input')).value.trim();
+
+
+    searchFilter=(document.getElementById('filter-input') as HTMLInputElement).value.trim();
     userFilter='';
     renderVpsList();
   });
   document.getElementById('filter-clear-btn').addEventListener('click',()=>{
+
+
+
     searchFilter='';
-    document.getElementById('filter-input').value='';
+    (document.getElementById('filter-input') as HTMLInputElement).value='';
     userFilter='';
     renderVpsList();
   });
@@ -1284,8 +1301,8 @@ async function loadStats(){
 
     const d=j.data||{};
     function card(label,value,key){
-      return '<button data-gok="'+key+'" class="stat-card rounded-2xl border px-3 py-2 text-left">'+
-        '<div class="stat-label text-[11px] muted">'+label+'</div><div class="stat-value text-lg font-semibold mt-1">'+value+'</div></button>';
+      return '<button data-gok="'+key+'" class="stat-card stat-'+key+' rounded-2xl border px-3 py-2 text-left">'+
+        '<div class="stat-label text-[11px] muted">'+label+'</div><div class="stat-value mt-1">'+value+'</div></button>';
     }
     wrap.innerHTML='<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">'+
       card('总投喂数',d.totalVPS||0,'all')+
@@ -1293,7 +1310,7 @@ async function loadStats(){
       card('未启用',d.inactiveVPS||0,'inactive')+
       card('失败',d.failedVPS||0,'failed')+
       card('待验证',d.pendingVPS||0,'pending')+
-      card('今日新增',d.todayNewVPS||0,'all')+'</div>';
+      card('今日新增',d.todayNewVPS||0,'today')+'</div>';
     wrap.querySelectorAll('button[data-gok]').forEach(b=> b.addEventListener('click',()=>{
       statusFilter=b.getAttribute('data-gok');
       userFilter='';
@@ -1311,9 +1328,9 @@ async function loadConfig(){
     const j=await res.json();
     const cfg=j.data||{};
     const f=document.getElementById('oauth-form');
-    f.querySelector('input[name="clientId"]').value=cfg.clientId||'';
-    f.querySelector('input[name="clientSecret"]').value=cfg.clientSecret||'';
-    f.querySelector('input[name="redirectUri"]').value=cfg.redirectUri||'';
+    (f.querySelector('input[name="clientId"]') as HTMLInputElement).value=cfg.clientId||'';
+    (f.querySelector('input[name="clientSecret"]') as HTMLInputElement).value=cfg.clientSecret||'';
+    (f.querySelector('input[name="redirectUri"]') as HTMLInputElement).value=cfg.redirectUri||'';
   } catch(err) {
     console.error('Config load error:', err);
   }
@@ -1322,9 +1339,9 @@ async function loadConfig(){
 async function saveOAuth(){
   const f=document.getElementById('oauth-form');
   const payload={
-    clientId:f.querySelector('input[name="clientId"]').value.trim(),
-    clientSecret:f.querySelector('input[name="clientSecret"]').value.trim(),
-    redirectUri:f.querySelector('input[name="redirectUri"]').value.trim()
+    clientId:(f.querySelector('input[name="clientId"]') as HTMLInputElement).value.trim(),
+    clientSecret:(f.querySelector('input[name="clientSecret"]') as HTMLInputElement).value.trim(),
+    redirectUri:(f.querySelector('input[name="redirectUri"]') as HTMLInputElement).value.trim()
   };
   try{
     const r=await fetch('/api/admin/config/oauth',{
@@ -1346,7 +1363,7 @@ async function saveOAuth(){
 }
 
 async function saveAdminPassword(){
-  const input=document.getElementById('admin-pass-input');
+  const input=document.getElementById('admin-pass-input') as HTMLInputElement;
   const pwd=input.value.trim();
   if(!pwd){
     toast('请输入新密码','warn');
@@ -1432,15 +1449,15 @@ function renderVpsList(){
     const uname=v.donatedByUsername||'';
     const p='https://linux.do/u/'+encodeURIComponent(uname);
 
-    card.innerHTML='<div class="flex items-center justify-between gap-2"><div class="text-[11px]">IP：'+v.ip+':'+v.port+'</div><div class="'+scls(v.status)+' text-[11px]">'+stxt(v.status)+'</div></div>'+
+    card.innerHTML='<div class="flex items-center justify-between gap-2"><div class="text-[11px] break-words">IP：'+v.ip+':'+v.port+'</div><div class="'+scls(v.status)+' text-[11px]">'+stxt(v.status)+'</div></div>'+
       '<div class="flex flex-wrap gap-2 text-[11px]"><span>投喂者：<a href="'+p+'" target="_blank" class="underline">@'+uname+'</a></span><span>地区：'+(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'')+'</span></div>'+
       '<div class="flex flex-wrap gap-2 text-[11px]"><span>流量/带宽：'+(v.traffic||'未填写')+'</span><span>到期：'+(v.expiryDate||'未填写')+'</span></div>'+
-      '<div class="text-[11px] muted">配置：'+(v.specs||'未填写')+'</div>'+
-      (v.note?'<div class="text-[11px] text-amber-300/90">用户备注：'+v.note+'</div>':'')+
-      (v.adminNote?'<div class="text-[11px] text-cyan-300/90">管理员备注：'+v.adminNote+'</div>':'')+
+      '<div class="text-[11px] muted break-words">配置：'+(v.specs||'未填写')+'</div>'+
+      (v.note?'<div class="text-[11px] text-amber-300/90 break-words">用户备注：'+v.note+'</div>':'')+
+      (v.adminNote?'<div class="text-[11px] text-cyan-300/90 break-words">管理员备注：'+v.adminNote+'</div>':'')+
       (t?'<div class="text-[11px] muted">投喂时间：'+t+'</div>':'')+
       '<div class="flex flex-wrap gap-2 mt-1">'+
-        '<button class="px-2 py-1 rounded-full border" data-act="view" data-id="'+v.id+'">查看信息</button>'+
+        '<button class="px-2 py-1 rounded-full border" data-act="login" data-id="'+v.id+'">查看信息</button>'+
         '<button class="px-2 py-1 rounded-full border" data-act="mark" data-id="'+v.id+'">标记通过</button>'+
         '<button class="px-2 py-1 rounded-full border" data-act="inactive" data-id="'+v.id+'">设为未启用</button>'+
         '<button class="px-2 py-1 rounded-full border" data-act="failed" data-id="'+v.id+'">设为失败</button>'+
@@ -1454,28 +1471,8 @@ function renderVpsList(){
       btn.addEventListener('click', async()=>{
         if(!id) return;
 
-        if(act==='view'){
-          const html =
-            '<div class="text-xs md:text-sm space-y-2">'+
-            '<p><strong>IP / 端口：</strong>'+v.ip+':'+v.port+'</p>'+
-            '<p><strong>系统用户名：</strong>'+(v.username||'未填写')+'</p>'+
-            '<p><strong>认证方式：</strong>'+(v.authType==='key'?'SSH 密钥':'密码')+'</p>'+
-            '<p><strong>登录密码：</strong>'+(
-              v.authType==='password'
-                ? (v.password||'未填写')
-                : '当前为密钥登录，无单独密码'
-            )+'</p>'+
-            (v.authType==='key'
-              ? '<div><strong>SSH 私钥：</strong><pre class="mt-1 p-2 rounded bg-slate-900 text-xs overflow-x-auto whitespace-pre-wrap">'+
-                (v.privateKey||'未填写')+
-                '</pre></div>'
-              : '')+
-            '<p><strong>验证状态：</strong>'+ (v.verifyStatus||'未知') + (v.verifyErrorMsg ? ' · 错误：'+v.verifyErrorMsg : '') +'</p>'+
-            (v.verifyCode ? '<p><strong>验证代码：</strong>'+v.verifyCode+'</p>' : '')+
-            (v.verifyFilePath ? '<p><strong>验证文件路径：</strong>'+v.verifyFilePath+'</p>' : '')+
-            (v.sshFingerprint ? '<p><strong>SSH 指纹：</strong>'+v.sshFingerprint+'</p>' : '')+
-            '</div>';
-          modalView('VPS 登录信息（仅管理员可见）', html);
+        if(act==='login'){
+          modalLoginInfo(v);
           return;
         }
 
@@ -1487,8 +1484,6 @@ function renderVpsList(){
           }catch{
             toast('操作失败','error');
           }
-          await loadVps();
-          await loadStats();
         }
         else if(act==='inactive'||act==='failed'){
           try{
@@ -1499,12 +1494,10 @@ function renderVpsList(){
               body:JSON.stringify({status:act})
             });
             const j=await r.json();
-            toast(j.message||'已更新', r.ok?'success':'error');
+            toast(j.message||'已更新','success');
           }catch{
             toast('更新失败','error');
           }
-          await loadVps();
-          await loadStats();
         }
         else if(act==='del'){
           try{
@@ -1514,8 +1507,6 @@ function renderVpsList(){
           }catch{
             toast('删除失败','error');
           }
-          await loadVps();
-          await loadStats();
         }
         else if(act==='edit'){
           modalEdit('编辑 VPS 信息（用户备注前台可见）',[
@@ -1546,16 +1537,22 @@ function renderVpsList(){
               toast('保存异常','error');
             }
           });
+          return;
         }
+
+        await loadVps();
+        await loadStats();
       });
     });
 
     const link=card.querySelector('a[href^="https://linux.do/u/"]');
-    link?.addEventListener('click',e=>{
-      e.preventDefault();
-      userFilter=v.donatedByUsername;
-      renderVpsList();
-    });
+    if(link){
+      link.addEventListener('click',e=>{
+        e.preventDefault();
+        userFilter=v.donatedByUsername;
+        renderVpsList();
+      });
+    }
     list.appendChild(card);
   });
 }
@@ -1579,8 +1576,9 @@ function commonHead(title: string): string {
 }
 html,body{
   font-family: system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 body{
   background:#020617;
@@ -1604,17 +1602,23 @@ body[data-theme="light"] .card{
   box-shadow:0 12px 35px rgba(148,163,184,.25);
 }
 
+.card{
+  word-break:break-word;
+}
+
 .muted{ color:#94a3b8; }
 body[data-theme="light"] .muted{ color:#6b7280; }
 
 .grad-title{
   background-image:linear-gradient(115deg,#22d3ee 0%,#38bdf8 25%,#a855f7 50%,#ec4899 75%,#f97316 100%);
+
+
+
   background-size:320% 100%;
   -webkit-background-clip:text;
   background-clip:text;
   color:transparent;
   display:inline-block;
-  white-space:nowrap;
   animation:grad-loop 10s ease-in-out infinite alternate;
 }
 @keyframes grad-loop{
@@ -1672,7 +1676,16 @@ body[data-theme="light"] #theme-toggle{
   background:linear-gradient(135deg,rgba(15,23,42,1),rgba(30,64,175,.8));
   border-color:rgba(56,189,248,.4);
 }
-.stat-card .stat-value{ color:#7dd3fc; }
+.stat-card .stat-value{
+  font-size:1.4rem;
+  font-weight:700;
+  color:#7dd3fc;
+}
+.stat-card.stat-active .stat-value{ color:#22c55e; }
+.stat-card.stat-failed .stat-value{ color:#f97373; }
+.stat-card.stat-inactive .stat-value{ color:#eab308; }
+.stat-card.stat-pending .stat-value{ color:#facc15; }
+.stat-card.stat-today .stat-value{ color:#38bdf8; }
 body[data-theme="light"] .stat-card{
   background:linear-gradient(135deg,#eff6ff,#e0f2fe);
   border-color:#bfdbfe;
@@ -1681,10 +1694,8 @@ body[data-theme="light"] .stat-card .stat-value{
   color:#0f766e;
 }
 
-/* 调整基础字号，让手机上更清晰 */
-.text-xs{ font-size:0.9rem; line-height:1.4; }
-.text-sm{ font-size:1rem; line-height:1.45; }
-.text-[11px]{ font-size:0.85rem; line-height:1.5 !important; }
+.text-xs{ font-size:0.8rem; line-height:1.4; }
+.text-sm{ font-size:0.9rem; line-height:1.45; }
 
 input,textarea,select{
   background:#020617;
@@ -1714,19 +1725,16 @@ button:active{
   transform:translateY(1px);
 }
 
-/* 小屏适配：容器铺满，卡片更适合手机比例 */
-@media (max-width:768px){
+@media (max-width: 640px){
   html,body{
-    font-size:15px;
+    font-size:14px;
   }
-  .max-w-5xl,
-  .max-w-6xl,
-  .max-w-7xl{
-    max-width:100%;
+  .grad-title{
+    font-size:1.6rem;
+    line-height:1.3;
   }
-  .panel,
-  .card{
-    border-radius:18px;
+  .panel,.card{
+    border-radius:16px;
   }
 }
 </style>
@@ -1772,6 +1780,31 @@ function toast(msg,type='info',ms=2600){
     el.classList.remove('show');
     setTimeout(()=>el.remove(),250);
   },ms);
+}
+
+function copyToClipboard(text){
+  if(!text){
+    toast('没有可复制的内容','warn');
+    return;
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>toast('已复制到剪贴板','success')).catch(()=>toast('复制失败','error'));
+  }else{
+    const ta=document.createElement('textarea');
+    ta.value=text;
+    ta.style.position='fixed';
+    ta.style.left='-9999px';
+    ta.style.top='-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try{
+      document.execCommand('copy');
+      toast('已复制到剪贴板','success');
+    }catch(e){
+      toast('复制失败','error');
+    }
+    document.body.removeChild(ta);
+  }
 }
 
 function modalEdit(title, fields, onOk){
@@ -1820,23 +1853,61 @@ function modalEdit(title, fields, onOk){
   document.body.appendChild(wrap);
 }
 
-function modalView(title, html){
+function modalLoginInfo(v){
   const wrap=document.createElement('div');
   wrap.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;';
   const card=document.createElement('div');
   card.className='panel rounded-2xl border p-4';
-  card.style.width='min(720px,94vw)';
-  card.innerHTML =
-    '<div class="flex items-center justify-between mb-3">'+
-      '<h2 class="text-sm md:text-base font-semibold">'+title+'</h2>'+
-      '<button class="px-2 py-1 text-[11px] rounded-full border">关闭</button>'+
-    '</div>'+
-    '<div class="text-xs md:text-sm leading-relaxed vps-detail-body"></div>';
-  const closeBtn=card.querySelector('button');
-  const body=card.querySelector('.vps-detail-body');
-  body.innerHTML=html;
-  closeBtn.addEventListener('click',()=>wrap.remove());
-  wrap.addEventListener('click',e=>{ if(e.target===wrap) wrap.remove(); });
+  card.style.width='min(480px,92vw)';
+
+  const title=document.createElement('div');
+  title.className='text-base font-semibold mb-3';
+  title.textContent='VPS 登录信息（仅管理员可见）';
+  card.appendChild(title);
+
+  const rows=document.createElement('div');
+  rows.className='space-y-2 text-xs';
+
+  function addRow(label,value,canCopy=true){
+    const row=document.createElement('div');
+    row.className='flex items-center justify-between gap-2';
+    const left=document.createElement('div');
+    left.className='muted flex-1 break-words';
+    left.textContent=label+'：'+(value||'-');
+    row.appendChild(left);
+    if(canCopy && value){
+      const btn=document.createElement('button');
+      btn.className='px-2 py-1 rounded-full border text-[11px] whitespace-nowrap';
+      btn.textContent='复制';
+      btn.onclick=()=>copyToClipboard(value);
+      row.appendChild(btn);
+    }
+    rows.appendChild(row);
+  }
+
+  addRow('IP / 端口', v.ip+':'+v.port);
+  addRow('系统用户名', v.username);
+  addRow('认证方式', v.authType==='key'?'密钥':'密码', false);
+  if(v.authType==='password'){
+    addRow('登录密码', v.password || '');
+  }else{
+    addRow('SSH 私钥', v.privateKey || '');
+  }
+  const statusText = v.verifyStatus || 'unknown';
+  const extra = v.verifyErrorMsg ? ('（'+v.verifyErrorMsg+'）') : '';
+  addRow('验证状态', statusText+extra, false);
+
+  card.appendChild(rows);
+
+  const footer=document.createElement('div');
+  footer.className='mt-4 flex justify-end';
+  const closeBtn=document.createElement('button');
+  closeBtn.textContent='关闭';
+  closeBtn.className='px-3 py-1 rounded-full border';
+  closeBtn.onclick=()=>wrap.remove();
+  footer.appendChild(closeBtn);
+  card.appendChild(footer);
+
   wrap.appendChild(card);
   document.body.appendChild(wrap);
 }
