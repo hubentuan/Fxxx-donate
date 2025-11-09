@@ -133,16 +133,6 @@ async function updVPSStatus(id: string, s: VPSServer['status']) {
   return true;
 }
 
-/** 以北京时区（UTC+8）计算当天 0 点的时间戳，保证「今日新增」统计准确 */
-function getBeijingTodayStartTs(): number {
-  const now = new Date();
-  const utcMillis = now.getTime() + now.getTimezoneOffset() * 60000;
-  const beijingOffsetMillis = 8 * 60 * 60000;
-  const bj = new Date(utcMillis + beijingOffsetMillis);
-  bj.setHours(0, 0, 0, 0);
-  return bj.getTime() - beijingOffsetMillis;
-}
-
 /* ==================== 配置 & 会话 ==================== */
 const getOAuth = async () =>
   (await kv.get<OAuthConfig>(['config', 'oauth'])).value || null;
@@ -648,7 +638,8 @@ app.put('/api/admin/config/password', requireAdmin, async c => {
 app.get('/api/admin/stats', requireAdmin, async c => {
   try {
     const all = await getAllVPS();
-    const todayStart = getBeijingTodayStartTs();
+    const today0 = new Date();
+    today0.setHours(0, 0, 0, 0);
 
     const userStats = new Map<string, number>();
     for (const v of all) {
@@ -672,8 +663,7 @@ app.get('/api/admin/stats', requireAdmin, async c => {
         inactiveVPS: all.filter(v => v.status === 'inactive').length,
         pendingVPS: all.filter(v => v.verifyStatus === 'pending').length,
         verifiedVPS: all.filter(v => v.verifyStatus === 'verified').length,
-        todayNewVPS: all.filter(v => v.donatedAt >= todayStart).length,
-        todayStart,
+        todayNewVPS: all.filter(v => v.donatedAt >= today0.getTime()).length,
         topDonors: top
       }
     });
@@ -697,7 +687,7 @@ app.post('/api/admin/vps/:id/mark-verified', requireAdmin, async c => {
   return c.json({ success: true, message: '已标记为验证通过' });
 });
 
-/* 单个一键验证 */
+/* 一键验证接口：尝试连接 VPS 端口，成功则标记 active + verified，失败则 failed */
 app.post('/api/admin/vps/:id/verify', requireAdmin, async c => {
   const id = c.req.param('id');
   const r = await kv.get<VPSServer>(['vps', id]);
@@ -723,45 +713,6 @@ app.post('/api/admin/vps/:id/verify', requireAdmin, async c => {
       message: '❌ 验证失败：无法连接 VPS',
       data: { error: v.verifyErrorMsg }
     });
-  }
-});
-
-/* 批量一键验证全部 */
-app.post('/api/admin/verify-all', requireAdmin, async c => {
-  try {
-    const all = await getAllVPS();
-    let success = 0;
-    let failed = 0;
-    const total = all.length;
-
-    for (const v of all) {
-      const r = await kv.get<VPSServer>(['vps', v.id]);
-      if (!r.value) continue;
-      const cur = r.value;
-      const ok = await portOK(cur.ip, cur.port);
-      cur.lastVerifyAt = Date.now();
-      if (ok) {
-        cur.status = 'active';
-        cur.verifyStatus = 'verified';
-        cur.verifyErrorMsg = '';
-        success++;
-      } else {
-        cur.status = 'failed';
-        cur.verifyStatus = 'failed';
-        cur.verifyErrorMsg = '无法连接 VPS，请检查服务器是否在线、防火墙/安全组端口放行';
-        failed++;
-      }
-      await kv.set(['vps', cur.id], cur);
-    }
-
-    return c.json({
-      success: true,
-      message: '批量验证完成',
-      data: { total, success, failed }
-    });
-  } catch (err) {
-    console.error('verify-all error:', err);
-    return c.json({ success: false, message: '批量验证失败' }, 500);
   }
 });
 
@@ -1171,7 +1122,7 @@ app.get('/admin', c => {
 <script>
 updateThemeBtn();
 
-let allVpsList=[]; let statusFilter='all'; let searchFilter=''; let userFilter=''; let todayStartTs=null;
+let allVpsList=[]; let statusFilter='all'; let searchFilter=''; let userFilter='';
 
 function stxt(s){ return s==='active'?'运行中':(s==='failed'?'失败':'未启用'); }
 function scls(s){ return s==='active'?'badge-ok':(s==='failed'?'badge-fail':'badge-idle'); }
@@ -1310,7 +1261,6 @@ async function renderAdmin(root, name){
   listWrap.innerHTML='<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-2">'+
     '<h2 class="text-lg font-semibold">VPS 列表</h2>'+
     '<div class="flex flex-wrap items-center gap-2 text-[11px]">'+
-      '<button id="btn-verify-all" class="px-3 py-1 rounded-full border border-cyan-500 mr-1">一键验证全部</button>'+
       '<span>状态筛选：</span>'+
       '<button data-status="all" class="px-2 py-1 rounded-full border">全部</button>'+
       '<button data-status="active" class="px-2 py-1 rounded-full border">运行中</button>'+
@@ -1337,7 +1287,6 @@ async function renderAdmin(root, name){
     userFilter='';
     renderVpsList();
   });
-  document.getElementById('btn-verify-all').addEventListener('click', verifyAll);
 
   await loadStats();
   await loadConfig();
@@ -1362,8 +1311,6 @@ async function loadStats(){
     }
 
     const d=j.data||{};
-    todayStartTs = typeof d.todayStart === 'number' ? d.todayStart : null;
-
     function card(label,value,key){
       return '<button data-gok="'+key+'" class="stat-card stat-'+key+' rounded-2xl border px-3 py-2 text-left">'+
         '<div class="stat-label text-[11px] muted">'+label+'</div><div class="stat-value mt-1">'+value+'</div></button>';
@@ -1458,32 +1405,6 @@ async function saveAdminPassword(){
   }
 }
 
-async function verifyAll(){
-  const btn=document.getElementById('btn-verify-all');
-  if(!btn) return;
-  btn.disabled=true;
-  const old=btn.textContent;
-  btn.textContent='验证中...';
-  try{
-    const r=await fetch('/api/admin/verify-all',{method:'POST',credentials:'same-origin'});
-    const j=await r.json();
-    if(!r.ok||!j.success){
-      toast(j.message||'批量验证失败','error');
-    }else{
-      const d=j.data||{};
-      modalCenter('批量验证完成','共检测 '+(d.total||0)+' 台 VPS，其中 <span class="text-emerald-400">通过 '+(d.success||0)+'</span> · <span class="text-red-400">失败 '+(d.failed||0)+'</span>');
-    }
-  }catch(err){
-    console.error('Verify all error:', err);
-    toast('批量验证异常','error');
-  }finally{
-    btn.disabled=false;
-    btn.textContent=old;
-    await loadVps();
-    await loadStats();
-  }
-}
-
 async function loadVps(){
   const list=document.getElementById('vps-list');
   list.innerHTML='<div class="muted text-xs col-span-full">正在加载 VPS...</div>';
@@ -1516,15 +1437,13 @@ function renderVpsList(){
   }
 
   const kw=(searchFilter||'').toLowerCase();
-  const todayStart = typeof todayStartTs === 'number'
-    ? todayStartTs
-    : (function(){ const t=new Date(); t.setHours(0,0,0,0); return t.getTime(); })();
+  const today0=new Date(); today0.setHours(0,0,0,0);
 
   const arr=allVpsList.filter(v=>{
     let ok=true;
     if(statusFilter==='active') ok=v.status==='active';
     else if(statusFilter==='failed') ok=v.status==='failed';
-    else if(statusFilter==='today') ok=v.donatedAt && v.donatedAt>=todayStart;
+    else if(statusFilter==='today') ok=v.donatedAt && v.donatedAt>=today0.getTime();
     if(userFilter) ok=ok && v.donatedByUsername===userFilter;
     if(kw){
       const hay=[v.ip,String(v.port),v.donatedByUsername,v.country,v.traffic,v.specs,v.note,v.adminNote].join(' ').toLowerCase();
@@ -1548,7 +1467,7 @@ function renderVpsList(){
     const p='https://linux.do/u/'+encodeURIComponent(uname);
 
     card.innerHTML='<div class="flex items-center justify-between gap-2"><div class="text-[11px] break-words">IP：'+v.ip+':'+v.port+'</div><div class="'+scls(v.status)+' text-[11px]">'+stxt(v.status)+'</div></div>'+
-      '<div class="flex flex-wrap gap-2 text-[11px]"><span>投喂者：<a href="'+p+'" target="_blank" class="underline">@'+uname+'</a><button class="ml-1 px-2 py-0.5 rounded-full border border-dashed" data-act="filter-user" data-user="'+uname+'">筛选此用户</button></span><span>地区：'+(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'')+'</span></div>'+
+      '<div class="flex flex-wrap gap-2 text-[11px]"><span>投喂者：<a href="'+p+'" target="_blank" class="underline">@'+uname+'</a></span><span>地区：'+(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'')+'</span></div>'+
       '<div class="flex flex-wrap gap-2 text-[11px]"><span>流量/带宽：'+(v.traffic||'未填写')+'</span><span>到期：'+(v.expiryDate||'未填写')+'</span></div>'+
       '<div class="text-[11px] muted break-words">配置：'+(v.specs||'未填写')+'</div>'+
       (v.note?'<div class="text-[11px] text-amber-300/90 break-words">用户备注：'+v.note+'</div>':'')+
@@ -1566,11 +1485,6 @@ function renderVpsList(){
       const id=btn.getAttribute('data-id');
       const act=btn.getAttribute('data-act');
       btn.addEventListener('click', async()=>{
-        if(act==='filter-user'){
-          userFilter=v.donatedByUsername;
-          renderVpsList();
-          return;
-        }
         if(!id) return;
 
         if(act==='login'){
@@ -1582,8 +1496,7 @@ function renderVpsList(){
           try{
             const r=await fetch('/api/admin/vps/'+id+'/verify',{method:'POST',credentials:'same-origin'});
             const j=await r.json();
-            const d=j.data||{};
-            modalCenter('单台验证结果',(j.message|| (j.success?'验证成功':'验证失败')) + (d.error?'<br/><span class="text-xs muted">'+d.error+'</span>':''));
+            toast(j.message || (j.success ? '验证成功' : '验证失败'), j.success ? 'success' : 'error');
           }catch{
             toast('验证异常','error');
           }
@@ -1652,6 +1565,14 @@ function renderVpsList(){
       });
     });
 
+    const link=card.querySelector('a[href^="https://linux.do/u/"]');
+    if(link){
+      link.addEventListener('click',e=>{
+        e.preventDefault();
+        userFilter=v.donatedByUsername;
+        renderVpsList();
+      });
+    }
     list.appendChild(card);
   });
 }
@@ -1786,27 +1707,11 @@ body[data-theme="light"] #theme-toggle{
 .stat-card.stat-pending .stat-value{ color:#facc15; }
 .stat-card.stat-today .stat-value{ color:#38bdf8; }
 body[data-theme="light"] .stat-card{
-  border-color:#e5e7eb;
+  background:linear-gradient(135deg,#eff6ff,#e0f2fe);
+  border-color:#bfdbfe;
 }
 body[data-theme="light"] .stat-card .stat-value{
-  color:#0f172a;
-}
-/* 浅色模式下不同统计卡片使用不同暖色背景，区分含义 */
-body[data-theme="light"] .stat-card.stat-all{
-  background:linear-gradient(135deg,#fef3c7,#fee2e2);
-  border-color:#fed7aa;
-}
-body[data-theme="light"] .stat-card.stat-active{
-  background:linear-gradient(135deg,#dcfce7,#bbf7d0);
-  border-color:#86efac;
-}
-body[data-theme="light"] .stat-card.stat-failed{
-  background:linear-gradient(135deg,#fee2e2,#fecaca);
-  border-color:#fecaca;
-}
-body[data-theme="light"] .stat-card.stat-today{
-  background:linear-gradient(135deg,#e0f2fe,#dbeafe);
-  border-color:#bfdbfe;
+  color:#0f766e;
 }
 
 .text-xs{ font-size:0.8rem; line-height:1.4; }
@@ -1968,7 +1873,7 @@ function modalEdit(title, fields, onOk){
   document.body.appendChild(wrap);
 }
 
-/* === 这里改动：IP 与端口分开显示且分别复制 === */
+/* 这里是你要的新版 modalLoginInfo：赞助人 + IP 归属 + IP/端口分开复制 */
 function modalLoginInfo(v){
   const wrap=document.createElement('div');
   wrap.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;';
@@ -1984,11 +1889,16 @@ function modalLoginInfo(v){
   const rows=document.createElement('div');
   rows.className='space-y-2 text-xs';
 
-  function addRow(label,value,canCopy=true){
+  // copyOrBool:
+  //   - 不传 / true：复制 value
+  //   - false：不显示复制按钮
+  //   - 字符串：复制指定内容
+  function addRow(label,value,copyOrBool){
     const row=document.createElement('div');
     row.className='flex items-start justify-between gap-2';
     const left=document.createElement('div');
     left.className='muted flex-1 break-words';
+
     if(value && value.length>200){
       left.textContent=label+'：';
       const box=document.createElement('pre');
@@ -1999,19 +1909,36 @@ function modalLoginInfo(v){
       left.textContent=label+'：'+(value||'-');
     }
     row.appendChild(left);
-    if(canCopy && value){
+
+    const hasCopyParam = typeof copyOrBool !== 'undefined';
+    const canCopy = hasCopyParam ? !!copyOrBool : true;
+    const copyVal = typeof copyOrBool === 'string' ? copyOrBool : value;
+
+    if(canCopy && copyVal){
       const btn=document.createElement('button');
       btn.className='px-2 py-1 rounded-full border text-[11px] whitespace-nowrap';
       btn.textContent='复制';
-      btn.onclick=()=>copyToClipboard(value);
+      btn.onclick=()=>copyToClipboard(copyVal);
       row.appendChild(btn);
     }
     rows.appendChild(row);
   }
 
-  // 分开显示与复制
+  // 赞助人（复制纯用户名）
+  if(v.donatedByUsername){
+    addRow('赞助人','@'+v.donatedByUsername, v.donatedByUsername);
+  }
+
+  // IP 归属（带 emoji 的 country 或 ipLocation）
+  const ipLocText = v.country || v.ipLocation || '';
+  if(ipLocText){
+    addRow('IP 归属', ipLocText);
+  }
+
+  // IP 地址 & 端口分开
   addRow('IP 地址', v.ip || '');
   addRow('端口', String(v.port ?? ''), !!v.port);
+
   addRow('系统用户名', v.username || '');
   addRow('认证方式', v.authType==='key'?'密钥':'密码', false);
 
@@ -2036,32 +1963,6 @@ function modalLoginInfo(v){
   footer.appendChild(closeBtn);
   card.appendChild(footer);
 
-  wrap.appendChild(card);
-  document.body.appendChild(wrap);
-}
-
-function modalCenter(title, html){
-  const wrap=document.createElement('div');
-  wrap.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;';
-  const card=document.createElement('div');
-  card.className='panel rounded-2xl border p-4';
-  card.style.width='min(420px,92vw)';
-  const h=document.createElement('div');
-  h.className='text-base font-semibold mb-2';
-  h.textContent=title;
-  const body=document.createElement('div');
-  body.className='text-sm mb-4';
-  body.innerHTML=html;
-  const footer=document.createElement('div');
-  footer.className='flex justify-end';
-  const btn=document.createElement('button');
-  btn.textContent='知道了';
-  btn.className='px-3 py-1 rounded-full border text-xs';
-  btn.onclick=()=>wrap.remove();
-  footer.appendChild(btn);
-  card.appendChild(h);
-  card.appendChild(body);
-  card.appendChild(footer);
   wrap.appendChild(card);
   document.body.appendChild(wrap);
 }
