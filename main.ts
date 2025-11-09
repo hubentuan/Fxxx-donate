@@ -15,16 +15,21 @@ interface VPSServer {
   id: string;
   ip: string;
   port: number;
-  username: string; // SSH登录用户名
+  username: string;
   authType: 'password' | 'key';
   password?: string;
   privateKey?: string;
   donatedBy: string;
   donatedByUsername: string;
   donatedAt: number;
-  status: 'active' | 'inactive' | 'failed'; // 新增 failed 状态
+  status: 'active' | 'inactive' | 'failed';
   note?: string;
-  // 验证相关字段
+  adminNote?: string;
+  country: string;
+  traffic: string;      // 流量/带宽描述
+  expiryDate: string;   // 到期日期（字符串展示）
+  specs: string;        // 配置描述
+  ipLocation?: string;  // IP 归属地
   verifyStatus: 'pending' | 'verified' | 'failed';
   verifyCode?: string;
   verifyFilePath?: string;
@@ -50,10 +55,9 @@ interface Session {
   expiresAt: number;
 }
 
-// ==================== Deno KV 初始化 ====================
 const kv = await Deno.openKv();
 
-// ==================== 工具函数 ====================
+// ==================== 基础工具函数 ====================
 function generateId(): string {
   return crypto.randomUUID();
 }
@@ -62,39 +66,42 @@ function generateSessionId(): string {
   return crypto.randomUUID();
 }
 
-function generateVerifyCode(): string {
-  // 生成8位随机验证码
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let code = '';
-  for (let i = 0; i < 8; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
+// ==================== IP 归属地查询 ====================
+async function getIPLocation(ip: string): Promise<string> {
+  try {
+    const res = await fetch(
+      `http://ip-api.com/json/${ip}?fields=country,regionName,city`,
+    );
+    if (res.ok) {
+      const data = await res.json();
+      if (data.country) {
+        const parts = [data.country];
+        if (data.regionName) parts.push(data.regionName);
+        if (data.city) parts.push(data.city);
+        return parts.join(', ');
+      }
+    }
+  } catch (e) {
+    console.error('IP location query failed:', e);
   }
-  return code;
+  return '未知地区';
 }
 
-function getVerifyFilePath(verifyCode: string): string {
-  return `/tmp/vps-feeding-verify-${verifyCode}.txt`;
-}
-
-// IP 地址验证函数
+// ==================== IP 校验 ====================
 function isValidIPv4(ip: string): boolean {
   const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
   if (!ipv4Regex.test(ip)) return false;
-
   const parts = ip.split('.');
-  return parts.every(part => {
+  return parts.every((part) => {
     const num = parseInt(part, 10);
     return num >= 0 && num <= 255;
   });
 }
 
 function isValidIPv6(ip: string): boolean {
-  // 移除方括号（如果存在）
   const cleanIp = ip.replace(/^\[|\]$/g, '');
-
-  // IPv6 正则表达式（支持完整格式和缩写格式）
-  const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
-
+  const ipv6Regex =
+    /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
   return ipv6Regex.test(cleanIp);
 }
 
@@ -102,59 +109,28 @@ function isValidIP(ip: string): boolean {
   return isValidIPv4(ip) || isValidIPv6(ip);
 }
 
-// 检查SSH指纹是否已存在（防止重复投喂）
-async function checkSSHFingerprintExists(fingerprint: string): Promise<boolean> {
-  const result = await kv.get(['ssh_fingerprints', fingerprint]);
-  return result.value !== null;
+// ==================== VPS 工具函数 ====================
+async function getAllVPS(): Promise<VPSServer[]> {
+  const entries = kv.list<VPSServer>({ prefix: ['vps'] });
+  const servers: VPSServer[] = [];
+  for await (const entry of entries) {
+    servers.push(entry.value);
+  }
+  return servers.sort((a, b) => b.donatedAt - a.donatedAt);
 }
 
-// 保存SSH指纹
-async function saveSSHFingerprint(fingerprint: string, vpsId: string): Promise<void> {
-  await kv.set(['ssh_fingerprints', fingerprint], vpsId);
-}
-
-// 检查IP是否已存在
 async function checkIPExists(ip: string, port: number): Promise<boolean> {
   const allVPS = await getAllVPS();
-  return allVPS.some(vps => vps.ip === ip && vps.port === port);
+  return allVPS.some((vps) => vps.ip === ip && vps.port === port);
 }
 
-// SSH验证函数
-async function verifyVPSBySSH(vps: VPSServer): Promise<{ success: boolean; fingerprint?: string; error?: string }> {
-  try {
-    // 使用Deno的Command API执行SSH命令
-    // 这需要系统有ssh客户端，或者使用SSH库
-
-    const verifyCommand = vps.authType === 'password'
-      ? `sshpass -p '${vps.password}' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 root@${vps.ip} -p ${vps.port} "cat ${vps.verifyFilePath}"`
-      : `ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i <(echo '${vps.privateKey}') root@${vps.ip} -p ${vps.port} "cat ${vps.verifyFilePath}"`;
-
-    // 注意：以上方案需要系统环境支持
-    // 在Deno Deploy上可能不可用，需要改用纯JavaScript SSH客户端
-
-    // 临时方案：标记为需要手动验证
-    return {
-      success: false,
-      error: 'SSH验证需要管理员手动触发'
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-}
-
-// 简单的端口可达性检测（支持 IPv4 和 IPv6）
 async function checkPortReachable(ip: string, port: number): Promise<boolean> {
   try {
-    // 清理 IPv6 地址（移除方括号，如果有的话）
     const cleanIp = ip.replace(/^\[|\]$/g, '');
-
     const conn = await Deno.connect({
       hostname: cleanIp,
       port,
-      transport: 'tcp'
+      transport: 'tcp',
     });
     conn.close();
     return true;
@@ -163,63 +139,63 @@ async function checkPortReachable(ip: string, port: number): Promise<boolean> {
   }
 }
 
-// 批量验证VPS
-async function batchVerifyVPS(): Promise<{ total: number; success: number; failed: number; details: any[] }> {
+async function batchVerifyVPS(): Promise<{
+  total: number;
+  success: number;
+  failed: number;
+  details: any[];
+}> {
   const allVPS = await getAllVPS();
-  const pendingVPS = allVPS.filter(v => v.verifyStatus === 'pending');
-
+  const pendingVPS = allVPS.filter((v) => v.verifyStatus === 'pending');
   let successCount = 0;
   let failedCount = 0;
-  const details = [];
+  const details: any[] = [];
 
   for (const vps of pendingVPS) {
     try {
-      // 检查端口是否可达
-      const portReachable = await checkPortReachable(vps.ip, vps.port);
-
-      if (portReachable) {
-        // 端口可达，标记为验证通过
+      const ok = await checkPortReachable(vps.ip, vps.port);
+      if (ok) {
         vps.verifyStatus = 'verified';
         vps.status = 'active';
         vps.lastVerifyAt = Date.now();
         vps.verifyErrorMsg = undefined;
         await kv.set(['vps', vps.id], vps);
-
         successCount++;
         details.push({ id: vps.id, ip: vps.ip, status: 'success' });
       } else {
-        // 端口不可达，标记为验证失败
         vps.verifyStatus = 'failed';
-        vps.status = 'failed'; // 使用 failed 状态
+        vps.status = 'failed';
         vps.lastVerifyAt = Date.now();
         vps.verifyErrorMsg = '端口不可达，无法建立连接';
         await kv.set(['vps', vps.id], vps);
-
         failedCount++;
-        details.push({ id: vps.id, ip: vps.ip, status: 'failed', error: vps.verifyErrorMsg });
+        details.push({
+          id: vps.id,
+          ip: vps.ip,
+          status: 'failed',
+          error: vps.verifyErrorMsg,
+        });
       }
-    } catch (error: any) {
-      // 验证过程出错
+    } catch (err: any) {
       vps.verifyStatus = 'failed';
-      vps.status = 'failed'; // 使用 failed 状态
+      vps.status = 'failed';
       vps.lastVerifyAt = Date.now();
-      vps.verifyErrorMsg = error.message || '验证过程中发生错误';
+      vps.verifyErrorMsg = err.message || '验证过程中发生错误';
       await kv.set(['vps', vps.id], vps);
-
       failedCount++;
-      details.push({ id: vps.id, ip: vps.ip, status: 'failed', error: vps.verifyErrorMsg });
+      details.push({
+        id: vps.id,
+        ip: vps.ip,
+        status: 'failed',
+        error: vps.verifyErrorMsg,
+      });
     }
   }
 
-  return {
-    total: pendingVPS.length,
-    success: successCount,
-    failed: failedCount,
-    details
-  };
+  return { total: pendingVPS.length, success: successCount, failed: failedCount, details };
 }
 
-// ==================== KV 数据操作 ====================
+// ==================== 配置 & 用户 & 会话 ====================
 async function getOAuthConfig(): Promise<OAuthConfig | null> {
   const result = await kv.get<OAuthConfig>(['config', 'oauth']);
   return result.value;
@@ -241,17 +217,19 @@ async function setAdminPassword(password: string): Promise<void> {
 async function getSession(sessionId: string): Promise<Session | null> {
   const result = await kv.get<Session>(['sessions', sessionId]);
   if (!result.value) return null;
-
-  // 检查是否过期
   if (result.value.expiresAt < Date.now()) {
     await kv.delete(['sessions', sessionId]);
     return null;
   }
-
   return result.value;
 }
 
-async function createSession(userId: string, username: string, avatarUrl: string | undefined, isAdmin: boolean): Promise<string> {
+async function createSession(
+  userId: string,
+  username: string,
+  avatarUrl: string | undefined,
+  isAdmin: boolean,
+): Promise<string> {
   const sessionId = generateSessionId();
   const session: Session = {
     id: sessionId,
@@ -259,21 +237,23 @@ async function createSession(userId: string, username: string, avatarUrl: string
     username,
     avatarUrl,
     isAdmin,
-    expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7天
+    expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
   };
-
   await kv.set(['sessions', sessionId], session);
   return sessionId;
 }
 
 async function getUser(linuxDoId: string): Promise<User | null> {
-  const result = await kv.get<User>(['users', linuxDoId]);
-  return result.value;
+  const res = await kv.get<User>(['users', linuxDoId]);
+  return res.value;
 }
 
-async function createOrUpdateUser(linuxDoId: string, username: string, avatarUrl?: string): Promise<User> {
+async function createOrUpdateUser(
+  linuxDoId: string,
+  username: string,
+  avatarUrl?: string,
+): Promise<User> {
   const existing = await getUser(linuxDoId);
-
   const user: User = {
     linuxDoId,
     username,
@@ -281,18 +261,17 @@ async function createOrUpdateUser(linuxDoId: string, username: string, avatarUrl
     isAdmin: existing?.isAdmin || false,
     createdAt: existing?.createdAt || Date.now(),
   };
-
   await kv.set(['users', linuxDoId], user);
   return user;
 }
 
-async function addVPSServer(server: Omit<VPSServer, 'id'>): Promise<VPSServer> {
+async function addVPSServer(
+  server: Omit<VPSServer, 'id'>,
+): Promise<VPSServer> {
   const id = generateId();
   const vps: VPSServer = { id, ...server };
-
   await kv.set(['vps', id], vps);
 
-  // 添加到用户的投喂列表
   const userDonations = await kv.get<string[]>(['user_donations', server.donatedBy]);
   const donations = userDonations.value || [];
   donations.push(id);
@@ -301,71 +280,56 @@ async function addVPSServer(server: Omit<VPSServer, 'id'>): Promise<VPSServer> {
   return vps;
 }
 
-async function getAllVPS(): Promise<VPSServer[]> {
-  const entries = kv.list<VPSServer>({ prefix: ['vps'] });
-  const servers: VPSServer[] = [];
-
-  for await (const entry of entries) {
-    servers.push(entry.value);
-  }
-
-  return servers.sort((a, b) => b.donatedAt - a.donatedAt);
-}
-
 async function getUserDonations(linuxDoId: string): Promise<VPSServer[]> {
   const userDonations = await kv.get<string[]>(['user_donations', linuxDoId]);
-  const donationIds = userDonations.value || [];
-
+  const ids = userDonations.value || [];
   const servers: VPSServer[] = [];
-  for (const id of donationIds) {
-    const result = await kv.get<VPSServer>(['vps', id]);
-    if (result.value) {
-      servers.push(result.value);
-    }
+  for (const id of ids) {
+    const res = await kv.get<VPSServer>(['vps', id]);
+    if (res.value) servers.push(res.value);
   }
-
   return servers.sort((a, b) => b.donatedAt - a.donatedAt);
 }
 
 async function deleteVPS(id: string): Promise<boolean> {
   const vps = await kv.get<VPSServer>(['vps', id]);
   if (!vps.value) return false;
-
   await kv.delete(['vps', id]);
-
-  // 从用户投喂列表中移除
-  const userDonations = await kv.get<string[]>(['user_donations', vps.value.donatedBy]);
-  if (userDonations.value) {
-    const filtered = userDonations.value.filter(vid => vid !== id);
+  const ud = await kv.get<string[]>(['user_donations', vps.value.donatedBy]);
+  if (ud.value) {
+    const filtered = ud.value.filter((x) => x !== id);
     await kv.set(['user_donations', vps.value.donatedBy], filtered);
   }
-
   return true;
 }
 
-async function updateVPSStatus(id: string, status: 'active' | 'inactive' | 'failed'): Promise<boolean> {
-  const result = await kv.get<VPSServer>(['vps', id]);
-  if (!result.value) return false;
-
-  result.value.status = status;
-  await kv.set(['vps', id], result.value);
+async function updateVPSStatus(
+  id: string,
+  status: 'active' | 'inactive' | 'failed',
+): Promise<boolean> {
+  const res = await kv.get<VPSServer>(['vps', id]);
+  if (!res.value) return false;
+  res.value.status = status;
+  await kv.set(['vps', id], res.value);
   return true;
 }
 
-// ==================== OAuth 函数 ====================
-async function exchangeCodeForToken(code: string, config: OAuthConfig): Promise<any> {
+// ==================== OAuth 请求 ====================
+async function exchangeCodeForToken(
+  code: string,
+  config: OAuthConfig,
+): Promise<any> {
   const response = await fetch('https://connect.linux.do/oauth2/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       client_id: config.clientId,
       client_secret: config.clientSecret,
-      code: code,
+      code,
       redirect_uri: config.redirectUri,
       grant_type: 'authorization_code',
     }),
   });
-
   return await response.json();
 }
 
@@ -373,104 +337,84 @@ async function getLinuxDoUserInfo(accessToken: string): Promise<any> {
   const response = await fetch('https://connect.linux.do/api/user', {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-
   return await response.json();
 }
 
 // ==================== 中间件 ====================
 async function requireAuth(c: any, next: any) {
   const sessionId = getCookie(c, 'session_id');
-
-  console.log(`[Auth] 检查认证，sessionId: ${sessionId ? '存在' : '不存在'}`);
-
-  if (!sessionId) {
-    console.log(`[Auth] 认证失败：无sessionId`);
-    return c.json({ success: false, message: '未登录' }, 401);
-  }
-
+  if (!sessionId) return c.json({ success: false, message: '未登录' }, 401);
   const session = await getSession(sessionId);
-  if (!session) {
-    console.log(`[Auth] 认证失败：会话不存在或已过期`);
-    return c.json({ success: false, message: '会话已过期' }, 401);
-  }
-
-  console.log(`[Auth] 认证成功：用户 ${session.username}`);
+  if (!session) return c.json({ success: false, message: '会话已过期' }, 401);
   c.set('session', session);
   await next();
 }
 
 async function requireAdmin(c: any, next: any) {
-  const sessionId = getCookie(c, 'admin_session_id'); // 使用独立的cookie名称
-
-  console.log(`[Admin Auth] 检查管理员权限，admin_session_id: ${sessionId ? '存在' : '不存在'}`);
-
-  if (!sessionId) {
-    console.log(`[Admin Auth] 认证失败：无admin_session_id`);
-    return c.json({ success: false, message: '未登录' }, 401);
-  }
-
+  const sessionId = getCookie(c, 'admin_session_id');
+  if (!sessionId) return c.json({ success: false, message: '未登录' }, 401);
   const session = await getSession(sessionId);
   if (!session || !session.isAdmin) {
-    console.log(`[Admin Auth] 认证失败：${!session ? '会话不存在' : '非管理员'}`);
     return c.json({ success: false, message: '需要管理员权限' }, 403);
   }
-
-  console.log(`[Admin Auth] 认证成功：管理员 ${session.username}`);
   c.set('session', session);
   await next();
 }
 
-// ==================== 创建应用 ====================
+// ==================== Hono 应用 ====================
 const app = new Hono();
-
 app.use('*', cors());
 
-// ==================== API 路由 ====================
+// 根路径 => /donate
+app.get('/', (c) => c.redirect('/donate'));
 
-// OAuth 回调
+// ==================== OAuth 入口 & 回调 ====================
+app.get('/oauth/login', async (c) => {
+  const redirectPath = c.req.query('redirect') || '/donate/vps';
+  const config = await getOAuthConfig();
+  if (!config) {
+    return c.html(
+      '<!DOCTYPE html><html><body><h1>配置错误</h1><p>OAuth 配置未设置</p><a href="/donate">返回首页</a></body></html>',
+    );
+  }
+  const state = typeof redirectPath === 'string' ? redirectPath : '/donate/vps';
+  const authUrl = new URL('https://connect.linux.do/oauth2/authorize');
+  authUrl.searchParams.set('client_id', config.clientId);
+  authUrl.searchParams.set('response_type', 'code');
+  authUrl.searchParams.set('redirect_uri', config.redirectUri);
+  authUrl.searchParams.set('scope', 'openid profile');
+  authUrl.searchParams.set('state', state);
+  return c.redirect(authUrl.toString());
+});
+
 app.get('/oauth/callback', async (c) => {
   const code = c.req.query('code');
   const error = c.req.query('error');
+  const state = c.req.query('state') || '/donate';
 
   if (error) {
-    return c.html(`
-      <!DOCTYPE html>
-      <html><body>
-        <h1>登录失败</h1>
-        <p>OAuth 认证失败: ${error}</p>
-        <a href="/donate">返回首页</a>
-      </body></html>
-    `);
+    return c.html(
+      `<!DOCTYPE html><html><body><h1>登录失败</h1><p>OAuth 认证失败: ${error}</p><a href="/donate">返回首页</a></body></html>`,
+    );
   }
-
-  if (!code) {
-    return c.text('Missing code', 400);
-  }
+  if (!code) return c.text('Missing code', 400);
 
   try {
     const config = await getOAuthConfig();
     if (!config) {
-      return c.html(`
-        <!DOCTYPE html>
-        <html><body>
-          <h1>配置错误</h1>
-          <p>OAuth 配置未设置，请联系管理员</p>
-          <a href="/donate">返回首页</a>
-        </body></html>
-      `);
+      return c.html(
+        '<!DOCTYPE html><html><body><h1>配置错误</h1><p>OAuth 配置未设置</p><a href="/donate">返回首页</a></body></html>',
+      );
     }
 
     const tokenData = await exchangeCodeForToken(code, config);
     const userInfo = await getLinuxDoUserInfo(tokenData.access_token);
 
-    // LinuxDo 返回的是 avatar_template，需要替换尺寸参数
     let avatarUrl = userInfo.avatar_template;
     if (avatarUrl) {
-      // 将 {size} 替换为实际尺寸，并确保是完整URL
       avatarUrl = avatarUrl.replace('{size}', '120');
-      if (avatarUrl.startsWith('//')) {
-        avatarUrl = 'https:' + avatarUrl;
-      } else if (avatarUrl.startsWith('/')) {
+      if (avatarUrl.startsWith('//')) avatarUrl = 'https:' + avatarUrl;
+      else if (avatarUrl.startsWith('/')) {
         avatarUrl = 'https://connect.linux.do' + avatarUrl;
       }
     }
@@ -478,66 +422,44 @@ app.get('/oauth/callback', async (c) => {
     const user = await createOrUpdateUser(
       userInfo.id.toString(),
       userInfo.username,
-      avatarUrl
+      avatarUrl,
     );
-
     const sessionId = await createSession(
       user.linuxDoId,
       user.username,
       user.avatarUrl,
-      user.isAdmin
+      user.isAdmin,
     );
-
-    console.log(`[OAuth] 用户 ${user.username} 登录成功，创建会话: ${sessionId}`);
-
-    // 根据环境判断是否使用secure
-    const isProduction = Deno.env.get('DENO_DEPLOYMENT_ID') !== undefined;
-
+    const isProd = Deno.env.get('DENO_DEPLOYMENT_ID') !== undefined;
     setCookie(c, 'session_id', sessionId, {
       maxAge: 7 * 24 * 60 * 60,
       httpOnly: true,
-      secure: isProduction, // 只在生产环境使用secure
+      secure: isProd,
       sameSite: 'Lax',
       path: '/',
     });
 
-    console.log(`[OAuth] Cookie已设置，跳转到 /donate`);
-
-    return c.redirect('/donate');
+    const redirectTo =
+      typeof state === 'string' && state.startsWith('/') ? state : '/donate';
+    return c.redirect(redirectTo);
   } catch (e: any) {
-    console.error('OAuth callback failed:', e);
-    return c.html(`
-      <!DOCTYPE html>
-      <html><body>
-        <h1>登录失败</h1>
-        <p>错误详情: ${e.message}</p>
-        <a href="/donate">返回首页</a>
-      </body></html>
-    `);
+    return c.html(
+      `<!DOCTYPE html><html><body><h1>登录失败</h1><p>${e.message}</p><a href="/donate">返回首页</a></body></html>`,
+    );
   }
 });
 
-// 登出
+// ==================== 用户相关 API ====================
 app.get('/api/logout', async (c) => {
   const sessionId = getCookie(c, 'session_id');
-  console.log(`[Logout] 用户登出，session_id: ${sessionId ? '存在' : '不存在'}`);
-
-  if (sessionId) {
-    await kv.delete(['sessions', sessionId]);
-    console.log(`[Logout] 已删除会话: ${sessionId}`);
-  }
-
+  if (sessionId) await kv.delete(['sessions', sessionId]);
   setCookie(c, 'session_id', '', { maxAge: 0, path: '/' });
-  console.log(`[Logout] 已清除cookie`);
-
   return c.json({ success: true });
 });
 
-// 获取当前用户信息
 app.get('/api/user/info', requireAuth, async (c) => {
   const session = c.get('session');
   const donations = await getUserDonations(session.userId);
-
   return c.json({
     success: true,
     data: {
@@ -549,13 +471,12 @@ app.get('/api/user/info', requireAuth, async (c) => {
   });
 });
 
-// 获取用户的投喂记录
 app.get('/api/user/donations', requireAuth, async (c) => {
   const session = c.get('session');
   const donations = await getUserDonations(session.userId);
 
-  // 隐藏敏感信息，但保留验证相关信息
-  const safeDonations = donations.map(d => ({
+  // 登录用户可以看到自己 VPS 的 IP / 端口
+  const safe = donations.map((d) => ({
     id: d.id,
     ip: d.ip,
     port: d.port,
@@ -564,76 +485,164 @@ app.get('/api/user/donations', requireAuth, async (c) => {
     donatedAt: d.donatedAt,
     status: d.status,
     note: d.note,
+    adminNote: d.adminNote,
+    country: d.country,
+    traffic: d.traffic,
+    expiryDate: d.expiryDate,
+    specs: d.specs,
+    ipLocation: d.ipLocation,
     verifyStatus: d.verifyStatus,
-    verifyCode: d.verifyCode,
-    verifyFilePath: d.verifyFilePath,
     lastVerifyAt: d.lastVerifyAt,
     verifyErrorMsg: d.verifyErrorMsg,
   }));
-
-  return c.json({ success: true, data: safeDonations });
+  return c.json({ success: true, data: safe });
 });
 
-// 投喂 VPS
+app.put('/api/user/donations/:id/note', requireAuth, async (c) => {
+  const session = c.get('session');
+  const id = c.req.param('id');
+  const { note } = await c.req.json();
+  const res = await kv.get<VPSServer>(['vps', id]);
+  if (!res.value) return c.json({ success: false, message: 'VPS 不存在' }, 404);
+  if (res.value.donatedBy !== session.userId) {
+    return c.json({ success: false, message: '无权修改此 VPS' }, 403);
+  }
+  res.value.note = note || '';
+  await kv.set(['vps', id], res.value);
+  return c.json({ success: true, message: '备注已更新' });
+});
+
+// ==================== 公共榜单 API（不暴露 IP/端口） ====================
+app.get('/api/leaderboard', async (c) => {
+  const allVPS = await getAllVPS();
+  const userStats = new Map<
+    string,
+    { username: string; count: number; servers: any[] }
+  >();
+
+  for (const vps of allVPS) {
+    const stats = userStats.get(vps.donatedBy) || {
+      username: vps.donatedByUsername,
+      count: 0,
+      servers: [],
+    };
+    stats.count++;
+    stats.servers.push({
+      ipLocation: vps.ipLocation || '未知地区',
+      country: vps.country || '未填写',
+      traffic: vps.traffic || '未填写',
+      expiryDate: vps.expiryDate || '未填写',
+      specs: vps.specs || '未填写',
+      note: vps.note,
+      adminNote: vps.adminNote,
+      status: vps.status,
+      donatedAt: vps.donatedAt,
+    });
+    userStats.set(vps.donatedBy, stats);
+  }
+
+  const leaderboard = Array.from(userStats.values()).sort(
+    (a, b) => b.count - a.count,
+  );
+  return c.json({ success: true, data: leaderboard });
+});
+
+// 公共用户详情（可选）：同样不暴露 IP
+app.get('/api/user/:username/donations', async (c) => {
+  const username = c.req.param('username');
+  const allVPS = await getAllVPS();
+  const userVPS = allVPS.filter((vps) => vps.donatedByUsername === username);
+  const donations = userVPS.map((vps) => ({
+    ipLocation: vps.ipLocation || '未知地区',
+    country: vps.country || '未填写',
+    traffic: vps.traffic || '未填写',
+    expiryDate: vps.expiryDate || '未填写',
+    specs: vps.specs || '未填写',
+    note: vps.note,
+    adminNote: vps.adminNote,
+    status: vps.status,
+    donatedAt: vps.donatedAt,
+  }));
+  return c.json({
+    success: true,
+    data: { username, count: donations.length, donations },
+  });
+});
+
+// ==================== 投喂 API ====================
 app.post('/api/donate', requireAuth, async (c) => {
   const session = c.get('session');
   const body = await c.req.json();
+  const {
+    ip,
+    port,
+    username,
+    authType,
+    password,
+    privateKey,
+    note,
+    country,
+    traffic,
+    expiryDate,
+    specs,
+  } = body;
 
-  const { ip, port, username, authType, password, privateKey, note } = body;
-
-  console.log(`[Donate] 用户 ${session.username} 尝试投喂 VPS: ${username}@${ip}:${port}`);
-
-  // 验证必填字段
   if (!ip || !port || !username || !authType) {
-    console.log(`[Donate] 验证失败：缺少必填字段`);
-    return c.json({ success: false, message: 'IP、端口、用户名和认证类型为必填项' }, 400);
+    return c.json(
+      { success: false, message: 'IP、端口、用户名和认证类型为必填项' },
+      400,
+    );
   }
-
+  if (!country || !traffic || !expiryDate || !specs) {
+    return c.json(
+      { success: false, message: '国家、流量、到期时间和配置为必填项' },
+      400,
+    );
+  }
   if (authType === 'password' && !password) {
-    console.log(`[Donate] 验证失败：缺少密码`);
-    return c.json({ success: false, message: '密码认证需要提供密码' }, 400);
+    return c.json(
+      { success: false, message: '密码认证需要提供密码' },
+      400,
+    );
   }
-
   if (authType === 'key' && !privateKey) {
-    console.log(`[Donate] 验证失败：缺少私钥`);
-    return c.json({ success: false, message: '密钥认证需要提供私钥' }, 400);
+    return c.json(
+      { success: false, message: '密钥认证需要提供私钥' },
+      400,
+    );
   }
-
-  // 验证 IP 格式（支持 IPv4 和 IPv6）
   if (!isValidIP(ip)) {
-    console.log(`[Donate] 验证失败：IP格式不正确 - ${ip}`);
-    return c.json({ success: false, message: 'IP 地址格式不正确（支持 IPv4 和 IPv6）' }, 400);
+    return c.json({ success: false, message: 'IP 地址格式不正确' }, 400);
+  }
+  const portNum = parseInt(String(port), 10);
+  if (portNum < 1 || portNum > 65535) {
+    return c.json(
+      { success: false, message: '端口号必须在 1-65535 之间' },
+      400,
+    );
   }
 
-  // 验证端口范围
-  if (port < 1 || port > 65535) {
-    console.log(`[Donate] 验证失败：端口范围错误 - ${port}`);
-    return c.json({ success: false, message: '端口号必须在 1-65535 之间' }, 400);
+  const exists = await checkIPExists(ip, portNum);
+  if (exists) {
+    return c.json(
+      { success: false, message: '该 IP 和端口已经被投喂过了' },
+      400,
+    );
   }
 
-  // 检查IP+端口是否已存在
-  console.log(`[Donate] 检查IP是否已存在...`);
-  const ipExists = await checkIPExists(ip, parseInt(port));
-  if (ipExists) {
-    console.log(`[Donate] 验证失败：IP已存在 - ${ip}:${port}`);
-    return c.json({ success: false, message: '该 IP 和端口已经被投喂过了' }, 400);
-  }
-
-  // 检查端口可达性
-  console.log(`[Donate] 检查端口可达性...`);
-  const portReachable = await checkPortReachable(ip, parseInt(port));
-  if (!portReachable) {
-    console.log(`[Donate] 验证失败：端口不可达 - ${ip}:${port}`);
-    return c.json({ success: false, message: '无法连接到该服务器，请检查 IP 和端口是否正确' }, 400);
+  const reachable = await checkPortReachable(ip, portNum);
+  if (!reachable) {
+    return c.json(
+      { success: false, message: '无法连接到该服务器' },
+      400,
+    );
   }
 
   try {
-    // 端口可达即视为验证通过
-    console.log(`[Donate] 端口可达，自动验证通过`);
-
+    const ipLocation = await getIPLocation(ip);
     const vps = await addVPSServer({
       ip,
-      port: parseInt(port),
+      port: portNum,
       username,
       authType,
       password: authType === 'password' ? password : undefined,
@@ -641,197 +650,166 @@ app.post('/api/donate', requireAuth, async (c) => {
       donatedBy: session.userId,
       donatedByUsername: session.username,
       donatedAt: Date.now(),
-      status: 'active', // 端口可达自动激活
+      status: 'active',
       note: note || '',
-      verifyStatus: 'verified', // 自动验证通过
+      adminNote: '',
+      country,
+      traffic,
+      expiryDate,
+      specs,
+      ipLocation,
+      verifyStatus: 'verified',
+      lastVerifyAt: Date.now(),
       verifyCode: undefined,
       verifyFilePath: undefined,
-      lastVerifyAt: Date.now(),
+      sshFingerprint: undefined,
+      verifyErrorMsg: undefined,
     });
-
-    console.log(`[Donate] ✅ 投喂成功 - 用户: ${session.username}, VPS: ${username}@${ip}:${port}`);
-
     return c.json({
       success: true,
       message: '✅ 投喂成功！VPS 已自动验证并激活',
-      data: {
-        id: vps.id,
-        ip: vps.ip,
-        port: vps.port,
-      },
+      data: { id: vps.id, ipLocation: vps.ipLocation },
     });
   } catch (e: any) {
-    console.error('[Donate] ❌ 投喂失败:', e);
-    return c.json({ success: false, message: '投喂失败: ' + e.message }, 500);
+    return c.json(
+      { success: false, message: '投喂失败: ' + e.message },
+      500,
+    );
   }
 });
 
 // ==================== 管理员 API ====================
-
-// 检查管理员会话
 app.get('/api/admin/check-session', async (c) => {
-  const sessionId = getCookie(c, 'admin_session_id'); // 使用独立的cookie名称
-  console.log(`[Admin] 检查管理员会话，admin_session_id: ${sessionId ? '存在' : '不存在'}`);
-
-  if (!sessionId) {
-    return c.json({ success: false, isAdmin: false });
-  }
-
-  const session = await getSession(sessionId);
+  const sid = getCookie(c, 'admin_session_id');
+  if (!sid) return c.json({ success: false, isAdmin: false });
+  const session = await getSession(sid);
   if (!session || session.expiresAt < Date.now()) {
-    console.log(`[Admin] 会话不存在或已过期`);
     return c.json({ success: false, isAdmin: false });
   }
-
-  console.log(`[Admin] 会话有效：${session.username}, isAdmin: ${session.isAdmin}`);
   return c.json({
     success: true,
     isAdmin: session.isAdmin || false,
-    username: session.username
+    username: session.username,
   });
 });
 
-// 管理员登录
 app.post('/api/admin/login', async (c) => {
   const { password } = await c.req.json();
   const adminPassword = await getAdminPassword();
-
-  console.log(`[Admin] 管理员登录尝试`);
-
   if (password !== adminPassword) {
-    console.log(`[Admin] 密码错误`);
     return c.json({ success: false, message: '密码错误' }, 401);
   }
-
-  // 创建管理员专用会话（不需要 LinuxDo 登录）
-  const sessionId = generateSessionId();
-  const adminSession: Session = {
-    id: sessionId,
+  const sid = generateSessionId();
+  const session: Session = {
+    id: sid,
     userId: 'admin',
     username: 'Administrator',
     avatarUrl: undefined,
     isAdmin: true,
-    expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7天
+    expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
   };
-
-  await kv.set(['sessions', sessionId], adminSession);
-
-  console.log(`[Admin] 管理员登录成功，创建会话: ${sessionId}`);
-
-  // 根据环境判断是否使用secure
-  const isProduction = Deno.env.get('DENO_DEPLOYMENT_ID') !== undefined;
-
-  // 使用独立的cookie名称 admin_session_id
-  setCookie(c, 'admin_session_id', sessionId, {
+  await kv.set(['sessions', sid], session);
+  const isProd = Deno.env.get('DENO_DEPLOYMENT_ID') !== undefined;
+  setCookie(c, 'admin_session_id', sid, {
     maxAge: 7 * 24 * 60 * 60,
     httpOnly: true,
-    secure: isProduction, // 只在生产环境使用secure
+    secure: isProd,
     sameSite: 'Lax',
     path: '/',
   });
-
-  console.log(`[Admin] Cookie已设置（admin_session_id）`);
-
   return c.json({ success: true, message: '登录成功' });
 });
 
-// 管理员登出
 app.get('/api/admin/logout', async (c) => {
-  const sessionId = getCookie(c, 'admin_session_id');
-  console.log(`[Admin] 管理员登出，admin_session_id: ${sessionId ? '存在' : '不存在'}`);
-
-  if (sessionId) {
-    await kv.delete(['sessions', sessionId]);
-    console.log(`[Admin] 已删除会话: ${sessionId}`);
-  }
-
+  const sid = getCookie(c, 'admin_session_id');
+  if (sid) await kv.delete(['sessions', sid]);
   setCookie(c, 'admin_session_id', '', { maxAge: 0, path: '/' });
-  console.log(`[Admin] 已清除cookie`);
-
   return c.json({ success: true });
 });
 
-// 获取所有 VPS（管理员）
 app.get('/api/admin/vps', requireAdmin, async (c) => {
   const servers = await getAllVPS();
   return c.json({ success: true, data: servers });
 });
 
-// 删除 VPS（管理员）
 app.delete('/api/admin/vps/:id', requireAdmin, async (c) => {
   const id = c.req.param('id');
-  const success = await deleteVPS(id);
-
-  if (success) {
-    return c.json({ success: true, message: 'VPS 已删除' });
-  } else {
-    return c.json({ success: false, message: 'VPS 不存在' }, 404);
-  }
+  const ok = await deleteVPS(id);
+  if (ok) return c.json({ success: true, message: 'VPS 已删除' });
+  return c.json({ success: false, message: 'VPS 不存在' }, 404);
 });
 
-// 更新 VPS 状态（管理员）
 app.put('/api/admin/vps/:id/status', requireAdmin, async (c) => {
   const id = c.req.param('id');
   const { status } = await c.req.json();
-
   if (status !== 'active' && status !== 'inactive' && status !== 'failed') {
     return c.json({ success: false, message: '无效的状态' }, 400);
   }
-
-  const success = await updateVPSStatus(id, status);
-
-  if (success) {
-    return c.json({ success: true, message: '状态已更新' });
-  } else {
-    return c.json({ success: false, message: 'VPS 不存在' }, 404);
-  }
+  const ok = await updateVPSStatus(id, status);
+  if (ok) return c.json({ success: true, message: '状态已更新' });
+  return c.json({ success: false, message: 'VPS 不存在' }, 404);
 });
 
-// 获取 OAuth 配置（管理员）
+app.put('/api/admin/vps/:id/notes', requireAdmin, async (c) => {
+  const id = c.req.param('id');
+  const { note, adminNote, country, traffic, expiryDate, specs } =
+    await c.req.json();
+  const res = await kv.get<VPSServer>(['vps', id]);
+  if (!res.value) return c.json({ success: false, message: 'VPS 不存在' }, 404);
+  if (note !== undefined) res.value.note = note;
+  if (adminNote !== undefined) res.value.adminNote = adminNote;
+  if (country !== undefined) res.value.country = country;
+  if (traffic !== undefined) res.value.traffic = traffic;
+  if (expiryDate !== undefined) res.value.expiryDate = expiryDate;
+  if (specs !== undefined) res.value.specs = specs;
+  await kv.set(['vps', id], res.value);
+  return c.json({ success: true, message: '信息已更新' });
+});
+
 app.get('/api/admin/config/oauth', requireAdmin, async (c) => {
   const config = await getOAuthConfig();
   return c.json({ success: true, data: config || {} });
 });
 
-// 更新 OAuth 配置（管理员）
 app.put('/api/admin/config/oauth', requireAdmin, async (c) => {
   const { clientId, clientSecret, redirectUri } = await c.req.json();
-
   if (!clientId || !clientSecret || !redirectUri) {
-    return c.json({ success: false, message: '所有字段都是必填的' }, 400);
+    return c.json(
+      { success: false, message: '所有字段都是必填的' },
+      400,
+    );
   }
-
   await setOAuthConfig({ clientId, clientSecret, redirectUri });
   return c.json({ success: true, message: 'OAuth 配置已更新' });
 });
 
-// 更新管理员密码
 app.put('/api/admin/config/password', requireAdmin, async (c) => {
   const { password } = await c.req.json();
-
   if (!password || password.length < 6) {
-    return c.json({ success: false, message: '密码至少需要 6 个字符' }, 400);
+    return c.json(
+      { success: false, message: '密码至少需要 6 个字符' },
+      400,
+    );
   }
-
   await setAdminPassword(password);
   return c.json({ success: true, message: '管理员密码已更新' });
 });
 
-// 获取统计信息（管理员）
 app.get('/api/admin/stats', requireAdmin, async (c) => {
-  const allVPS = await getAllVPS();
-  const activeVPS = allVPS.filter(v => v.status === 'active');
-  const failedVPS = allVPS.filter(v => v.status === 'failed');
-  const pendingVPS = allVPS.filter(v => v.verifyStatus === 'pending');
-  const verifiedVPS = allVPS.filter(v => v.verifyStatus === 'verified');
+  const all = await getAllVPS();
+  const active = all.filter((v) => v.status === 'active');
+  const failed = all.filter((v) => v.status === 'failed');
+  const pending = all.filter((v) => v.verifyStatus === 'pending');
 
-  // 统计用户投喂数量
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayNew = all.filter((v) => v.donatedAt >= todayStart.getTime());
+
   const userStats = new Map<string, number>();
-  for (const vps of allVPS) {
-    const count = userStats.get(vps.donatedByUsername) || 0;
-    userStats.set(vps.donatedByUsername, count + 1);
+  for (const v of all) {
+    const count = userStats.get(v.donatedByUsername) || 0;
+    userStats.set(v.donatedByUsername, count + 1);
   }
-
   const topDonors = Array.from(userStats.entries())
     .map(([username, count]) => ({ username, count }))
     .sort((a, b) => b.count - a.count)
@@ -840,1439 +818,798 @@ app.get('/api/admin/stats', requireAdmin, async (c) => {
   return c.json({
     success: true,
     data: {
-      totalVPS: allVPS.length,
-      activeVPS: activeVPS.length,
-      failedVPS: failedVPS.length,
-      inactiveVPS: allVPS.length - activeVPS.length - failedVPS.length,
-      pendingVPS: pendingVPS.length,
-      verifiedVPS: verifiedVPS.length,
+      totalVPS: all.length,
+      activeVPS: active.length,
+      failedVPS: failed.length,
+      inactiveVPS: all.length - active.length - failed.length,
+      pendingVPS: pending.length,
+      verifiedVPS: all.filter((v) => v.verifyStatus === 'verified').length,
+      todayNewVPS: todayNew.length,
       topDonors,
     },
   });
 });
 
-// 标记VPS为已验证（管理员手动通过）
 app.post('/api/admin/vps/:id/mark-verified', requireAdmin, async (c) => {
   const id = c.req.param('id');
-  const result = await kv.get<VPSServer>(['vps', id]);
-
-  if (!result.value) {
-    return c.json({ success: false, message: 'VPS 不存在' }, 404);
-  }
-
-  const vps = result.value;
-  vps.verifyStatus = 'verified';
-  vps.status = 'active';
-  vps.lastVerifyAt = Date.now();
-  await kv.set(['vps', id], vps);
-
+  const res = await kv.get<VPSServer>(['vps', id]);
+  if (!res.value) return c.json({ success: false, message: 'VPS 不存在' }, 404);
+  res.value.verifyStatus = 'verified';
+  res.value.status = 'active';
+  res.value.lastVerifyAt = Date.now();
+  await kv.set(['vps', id], res.value);
   return c.json({ success: true, message: 'VPS 已标记为验证通过' });
 });
 
-// 批量验证VPS（管理员）
 app.post('/api/admin/vps/batch-verify', requireAdmin, async (c) => {
-  console.log('[Admin] 开始批量验证 VPS...');
-
   try {
     const result = await batchVerifyVPS();
-
-    console.log(`[Admin] 批量验证完成 - 总数: ${result.total}, 成功: ${result.success}, 失败: ${result.failed}`);
-
     return c.json({
       success: true,
       message: `验证完成！成功: ${result.success}，失败: ${result.failed}`,
-      data: result
+      data: result,
     });
-  } catch (error: any) {
-    console.error('[Admin] 批量验证失败:', error);
-    return c.json({ success: false, message: '批量验证失败: ' + error.message }, 500);
+  } catch (e: any) {
+    return c.json(
+      { success: false, message: '批量验证失败: ' + e.message },
+      500,
+    );
   }
 });
 
-// ==================== 页面路由 ====================
-
-// 首页 - 投喂界面
-app.get('/donate', async (c) => {
-  const config = await getOAuthConfig();
-  const html = generateDonateHTML(config?.clientId || '');
-  return c.html(html);
-});
-
-// 管理员界面
-app.get('/admin', async (c) => {
-  const html = generateAdminHTML();
-  return c.html(html);
-});
-
-// 根路径重定向到投喂页面
-app.get('/', (c) => c.redirect('/donate'));
-
-// ==================== HTML 生成函数 ====================
-function generateDonateHTML(clientId: string): string {
-  return `<!DOCTYPE html>
+// ==================== 页面：/donate（公共榜单 + 我要投喂） ====================
+app.get('/donate', (c) => {
+  const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>风萧萧公益-闲置小鸡投喂站</title>
+  <meta charset="utf-8" />
+  <title>风萧萧兮公益机场 · VPS 投喂榜</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes slideInRight {
-      from {
-        opacity: 0;
-        transform: translateX(100%);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-    @keyframes slideOutRight {
-      from {
-        opacity: 1;
-        transform: translateX(0);
-      }
-      to {
-        opacity: 0;
-        transform: translateX(100%);
-      }
-    }
-    .animate-in { animation: fadeIn 0.5s ease-out; }
-    .toast-container {
-      position: fixed;
-      top: 80px;
-      right: 20px;
-      z-index: 9999;
-      pointer-events: none;
-    }
-    .toast {
-      pointer-events: auto;
-      min-width: 300px;
-      max-width: 500px;
-      margin-bottom: 12px;
-      padding: 16px 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
-      animation: slideInRight 0.3s ease-out;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 14px;
-      font-weight: 500;
-    }
-    .toast.hiding {
-      animation: slideOutRight 0.3s ease-out forwards;
-    }
-    .toast-icon {
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-    .toast-success {
-      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-      color: white;
-    }
-    .toast-error {
-      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-      color: white;
-    }
-    .toast-info {
-      background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-      color: white;
-    }
-    .card-hover {
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    }
-    .card-hover:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    }
-    .btn-primary {
-      background-color: #1a1a1a;
-      transition: all 0.2s;
-    }
-    .btn-primary:hover {
-      background-color: #000000;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-    .btn-secondary {
-      background-color: white;
-      border: 1px solid #e5e5e5;
-      transition: all 0.2s;
-    }
-    .btn-secondary:hover {
-      border-color: #1a1a1a;
-    }
-    .user-dropdown {
-      position: absolute;
-      top: 100%;
-      right: 0;
-      margin-top: 8px;
-      background: white;
-      border: 1px solid #F3F4F6;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      min-width: 200px;
-      overflow: hidden;
-      opacity: 0;
-      transform: translateY(-10px);
-      pointer-events: none;
-      transition: all 0.2s ease;
-      z-index: 100;
-    }
-    .user-dropdown.show {
-      opacity: 1;
-      transform: translateY(0);
-      pointer-events: auto;
-    }
-    .dropdown-item {
-      padding: 12px 16px;
-      cursor: pointer;
-      transition: background 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-    }
-    .dropdown-item:hover {
-      background: #F9FAFB;
-    }
-    .dropdown-divider {
-      height: 1px;
-      background: #F3F4F6;
-      margin: 4px 0;
-    }
-    .dropdown-header {
-      padding: 12px 16px;
-      background: #F9FAFB;
-      font-weight: 600;
-      font-size: 14px;
-    }
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-    .modal-overlay.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .modal-content {
-      background: white;
-      border-radius: 16px;
-      max-width: 800px;
-      width: 90%;
-      max-height: 80vh;
-      overflow: hidden;
-      transform: scale(0.9);
-      transition: transform 0.3s ease;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
-    .modal-overlay.show .modal-content {
-      transform: scale(1);
-    }
-    .modal-header {
-      padding: 20px 24px;
-      border-bottom: 1px solid #F3F4F6;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .modal-body {
-      padding: 24px;
-      max-height: calc(80vh - 140px);
-      overflow-y: auto;
-    }
-    .modal-footer {
-      padding: 16px 24px;
-      border-top: 1px solid #F3F4F6;
-      display: flex;
-      justify-content: flex-end;
-    }
-    @keyframes spin {
-      from {
-        transform: rotate(0deg);
-      }
-      to {
-        transform: rotate(360deg);
-      }
-    }
-    .animate-spin {
-      animation: spin 1s linear infinite;
-    }
-  </style>
 </head>
-<body class="min-h-screen" style="background-color: #FAF9F8;">
-
-  <!-- Toast 容器 -->
-  <div id="toastContainer" class="toast-container"></div>
-
-  <!-- 导航栏 -->
-  <nav class="bg-white fixed top-0 left-0 right-0 z-50" style="border-bottom: 1px solid #F3F4F6; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);">
-    <div class="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
-      <h1 class="text-2xl font-bold text-slate-900">
-        风萧萧公益-闲置小鸡投喂站
+<body class="min-h-screen bg-slate-950 text-slate-100">
+  <div class="max-w-5xl mx-auto px-4 py-10">
+    <header class="mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 bg-clip-text text-transparent">
+        风萧萧兮公益机场 · VPS 投喂榜
       </h1>
-      <div id="userInfo" class="hidden items-center gap-4 relative">
-        <div class="flex items-center gap-2 cursor-pointer" onclick="toggleUserDropdown()">
-          <div id="userAvatar" class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-700 font-bold">
-            <span id="userInitial">U</span>
-          </div>
-          <div>
-            <p id="userName" class="text-sm font-semibold text-slate-900"></p>
-            <p id="donationCount" class="text-xs text-slate-500"></p>
-          </div>
-          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </div>
-
-        <!-- 用户下拉菜单 -->
-        <div id="userDropdown" class="user-dropdown">
-          <div class="dropdown-header">
-            <div class="flex items-center gap-2">
-              <span>👤</span>
-              <span id="dropdownUserName"></span>
-            </div>
-            <div id="dropdownDonationCount" class="text-xs text-slate-500 mt-1"></div>
-          </div>
-          <div class="dropdown-divider"></div>
-          <div class="dropdown-item" onclick="showDonationsModal()">
-            <span>📋</span>
-            <span>投喂记录</span>
-          </div>
-          <div class="dropdown-divider"></div>
-          <div class="dropdown-item" onclick="logout()" style="color: #DC2626;">
-            <span>🚪</span>
-            <span>退出登录</span>
-          </div>
-        </div>
-      </div>
-      <button id="loginBtn" onclick="login()" class="btn-primary text-white px-6 py-2 rounded-lg font-semibold">
-        LinuxDo 登录
+      <p class="mt-3 text-sm md:text-base text-slate-300 leading-relaxed">
+        这是一个完全非盈利的公益项目，没有运营团队，只有我一个人维护。<br/>
+        感谢每一位愿意投喂 VPS 的朋友，让更多人可以安全、免费地使用网络。<br/>
+        榜单中仅展示国家 / 区域、IP 归属地、流量与到期时间，不会公开任何 IP 或端口信息。
+      </p>
+      <button
+        onclick="gotoDonatePage()"
+        class="mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold shadow-lg shadow-cyan-500/30 hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950"
+      >
+        🧡 我要投喂 VPS
       </button>
-    </div>
-  </nav>
+    </header>
 
-  <!-- 主内容 -->
-  <div class="max-w-4xl mx-auto p-6 pt-24">
-
-    <!-- 欢迎卡片 -->
-    <div class="bg-white rounded-xl p-5 mb-4 animate-in card-hover" style="border: 1px solid #F3F4F6;">
-      <h2 class="text-2xl font-bold mb-1 text-slate-900">欢迎来到 风萧萧公益-闲置小鸡投喂站！</h2>
-      <p class="text-base text-slate-600">分享您的闲置小鸡，让资源得到更好的利用 💝</p>
-    </div>
-
-    <!-- 投喂表单 -->
-    <div id="donateForm" class="hidden bg-white rounded-xl p-6 animate-in card-hover mb-4" style="border: 1px solid #F3F4F6;">
-      <h3 class="text-xl font-bold text-slate-900 mb-5">💝 投喂你的闲置小鸡</h3>
-
-      <div class="space-y-3.5">
-        <div class="grid grid-cols-3 gap-3">
-          <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-1.5">服务器 IP *</label>
-            <input id="ipInput" type="text" placeholder="192.168.1.100 或 2001:db8::1"
-              class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm">
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-1.5">SSH 端口 *</label>
-            <input id="portInput" type="number" placeholder="22" value="22"
-              class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm">
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-1.5">登录用户名 *</label>
-            <input id="usernameInput" type="text" placeholder="root" value="root"
-              class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-1.5">认证方式 *</label>
-          <select id="authTypeSelect" onchange="toggleAuthFields()"
-            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm">
-            <option value="password">密码认证</option>
-            <option value="key">密钥认证</option>
-          </select>
-        </div>
-
-        <div id="passwordField">
-          <label class="block text-sm font-semibold text-slate-700 mb-1.5">SSH 密码 *</label>
-          <input id="passwordInput" type="password" placeholder="请输入 SSH 密码"
-            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm">
-        </div>
-
-        <div id="keyField" class="hidden">
-          <label class="block text-sm font-semibold text-slate-700 mb-1.5">SSH 私钥 *</label>
-          <textarea id="keyInput" placeholder="请粘贴完整的 SSH 私钥内容" rows="4"
-            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-xs"></textarea>
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-1.5">备注（可选）</label>
-          <input id="noteInput" type="text" placeholder="例如: 阿里云香港 2C4G"
-            class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm">
-        </div>
-
-        <button onclick="submitDonation()"
-          class="w-full btn-primary text-white py-3.5 rounded-lg font-bold text-base mt-2">
-          🚀 提交投喂
-        </button>
+    <section class="mb-6">
+      <h2 class="text-xl font-semibold mb-3 flex items-center gap-2">
+        🏆 捐赠榜单
+        <span id="leaderboard-count" class="text-sm font-normal text-slate-400"></span>
+      </h2>
+      <div id="leaderboard" class="space-y-4">
+        <div class="text-slate-400 text-sm">正在加载榜单...</div>
       </div>
-    </div>
+    </section>
 
-    <!-- 未登录提示 -->
-    <div id="loginPrompt" class="bg-white rounded-xl p-12 text-center animate-in card-hover" style="border: 1px solid #F3F4F6;">
-      <div class="text-6xl mb-4">🔐</div>
-      <h3 class="text-2xl font-bold text-slate-900 mb-3">请先登录</h3>
-      <p class="text-slate-600 mb-6">使用 LinuxDo 账号登录后即可投喂 VPS 服务器</p>
-      <button onclick="login()"
-        class="btn-primary text-white px-8 py-3 rounded-lg font-semibold">
-        LinuxDo 登录
-      </button>
-    </div>
+    <footer class="mt-10 border-t border-slate-800 pt-4 text-xs text-slate-500">
+      <p>说明：本项目仅作公益用途，请勿滥用资源（长时间占满带宽、刷流量、倒卖账号等）。</p>
+    </footer>
   </div>
 
-  <!-- 投喂记录模态框 -->
-  <div id="donationsModal" class="modal-overlay" onclick="closeDonationsModal(event)">
-    <div class="modal-content" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        <h3 class="text-xl font-bold text-slate-900">📋 我的投喂记录</h3>
-        <button onclick="closeDonationsModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div id="donationsList" class="space-y-3"></div>
-      </div>
-      <div class="modal-footer">
-        <button onclick="closeDonationsModal()" class="btn-primary text-white px-6 py-2 rounded-lg font-semibold">
-          关闭
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const CLIENT_ID = '${clientId}';
-    const AUTH_URL = 'https://connect.linux.do/oauth2/authorize';
-    const REDIRECT_URI = window.location.origin + '/oauth/callback';
-
-    let currentUser = null;
-
-    async function checkAuth() {
-      console.log('[前端] 检查登录状态...');
-      try {
-        const res = await fetch('/api/user/info', {
-          credentials: 'same-origin' // 确保发送cookie
-        });
-        console.log('[前端] 收到认证响应，状态码:', res.status);
-        const data = await res.json();
-        console.log('[前端] 认证数据:', data);
-
-        if (data.success) {
-          console.log('[前端] 用户已登录:', data.data.username);
-          currentUser = data.data;
-          showUserInfo(data.data);
-        } else {
-          console.log('[前端] 用户未登录，显示登录提示');
-          showLoginPrompt();
-        }
-      } catch (e) {
-        console.error('[前端] 检查登录状态失败:', e);
-        showLoginPrompt();
-      }
+<script>
+async function gotoDonatePage() {
+  try {
+    const res = await fetch('/api/user/info');
+    if (res.ok) {
+      window.location.href = '/donate/vps';
+    } else {
+      window.location.href = '/oauth/login?redirect=' + encodeURIComponent('/donate/vps');
     }
-
-    function showUserInfo(user) {
-      document.getElementById('loginBtn').classList.add('hidden');
-      document.getElementById('userInfo').classList.remove('hidden');
-      document.getElementById('userInfo').classList.add('flex');
-      document.getElementById('userName').textContent = '@' + user.username;
-      document.getElementById('donationCount').textContent = \`已投喂 \${user.donationCount} 台\`;
-
-      // 更新下拉菜单中的信息
-      document.getElementById('dropdownUserName').textContent = '@' + user.username;
-      document.getElementById('dropdownDonationCount').textContent = \`已投喂 \${user.donationCount} 台\`;
-
-      // 设置头像
-      const avatarDiv = document.getElementById('userAvatar');
-      const initialSpan = document.getElementById('userInitial');
-
-      if (user.avatarUrl) {
-        // 有头像URL，显示图片
-        avatarDiv.style.backgroundImage = \`url(\${user.avatarUrl})\`;
-        avatarDiv.style.backgroundSize = 'cover';
-        avatarDiv.style.backgroundPosition = 'center';
-        initialSpan.style.display = 'none';
-      } else {
-        // 没有头像，显示首字母
-        initialSpan.textContent = user.username[0].toUpperCase();
-        initialSpan.style.display = 'block';
-      }
-
-      document.getElementById('loginPrompt').classList.add('hidden');
-      document.getElementById('donateForm').classList.remove('hidden');
-    }
-
-    function showLoginPrompt() {
-      document.getElementById('loginBtn').classList.remove('hidden');
-      document.getElementById('userInfo').classList.add('hidden');
-      document.getElementById('loginPrompt').classList.remove('hidden');
-      document.getElementById('donateForm').classList.add('hidden');
-    }
-
-    function toggleUserDropdown() {
-      const dropdown = document.getElementById('userDropdown');
-      dropdown.classList.toggle('show');
-    }
-
-    // 点击页面其他地方关闭下拉菜单
-    document.addEventListener('click', (e) => {
-      const userInfo = document.getElementById('userInfo');
-      const dropdown = document.getElementById('userDropdown');
-      if (userInfo && !userInfo.contains(e.target)) {
-        dropdown.classList.remove('show');
-      }
-    });
-
-    function showDonationsModal() {
-      // 关闭下拉菜单
-      document.getElementById('userDropdown').classList.remove('show');
-
-      // 显示模态框
-      const modal = document.getElementById('donationsModal');
-      modal.classList.add('show');
-
-      // 加载投喂记录
-      loadDonations();
-    }
-
-    function closeDonationsModal(event) {
-      const modal = document.getElementById('donationsModal');
-      modal.classList.remove('show');
-    }
-
-    function login() {
-      if (!CLIENT_ID) {
-        showToast('OAuth 配置未设置，请联系管理员', 'error');
-        return;
-      }
-      const url = \`\${AUTH_URL}?client_id=\${CLIENT_ID}&redirect_uri=\${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=read\`;
-      window.location.href = url;
-    }
-
-    async function logout() {
-      console.log('[用户前端] 登出...');
-
-      // 关闭下拉菜单
-      const dropdown = document.getElementById('userDropdown');
-      if (dropdown) {
-        dropdown.classList.remove('show');
-      }
-
-      await fetch('/api/logout');
-      window.location.reload();
-    }
-
-    function toggleAuthFields() {
-      const authType = document.getElementById('authTypeSelect').value;
-      const passwordField = document.getElementById('passwordField');
-      const keyField = document.getElementById('keyField');
-
-      if (authType === 'password') {
-        passwordField.classList.remove('hidden');
-        keyField.classList.add('hidden');
-      } else {
-        passwordField.classList.add('hidden');
-        keyField.classList.remove('hidden');
-      }
-    }
-
-    async function submitDonation() {
-      const ip = document.getElementById('ipInput').value.trim();
-      const port = document.getElementById('portInput').value.trim();
-      const username = document.getElementById('usernameInput').value.trim();
-      const authType = document.getElementById('authTypeSelect').value;
-      const password = document.getElementById('passwordInput').value;
-      const privateKey = document.getElementById('keyInput').value;
-      const note = document.getElementById('noteInput').value.trim();
-
-      console.log('提交投喂，IP:', ip, 'Port:', port, 'Username:', username);
-
-      if (!ip || !port || !username) {
-        showToast('请填写 IP 地址、端口和用户名', 'error');
-        return;
-      }
-
-      if (authType === 'password' && !password) {
-        showToast('请填写 SSH 密码', 'error');
-        return;
-      }
-
-      if (authType === 'key' && !privateKey) {
-        showToast('请填写 SSH 私钥', 'error');
-        return;
-      }
-
-      // 禁用提交按钮，显示加载状态
-      const submitBtn = document.querySelector('[onclick="submitDonation()"]');
-      const originalText = submitBtn.textContent;
-      submitBtn.disabled = true;
-      submitBtn.textContent = '⏳ 提交中...';
-      submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-
-      try {
-        console.log('发送投喂请求...');
-        const res = await fetch('/api/donate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ip, port, username, authType, password, privateKey, note }),
-          credentials: 'same-origin', // 确保发送cookie
-        });
-
-        console.log('收到响应，状态码:', res.status);
-        const data = await res.json();
-        console.log('响应数据:', data);
-
-        if (data.success) {
-          // 显示简洁的成功消息
-          showToast('✅ 投喂成功！VPS 已自动验证并激活', 'success');
-
-          // 清空表单
-          document.getElementById('ipInput').value = '';
-          document.getElementById('portInput').value = '22';
-          document.getElementById('usernameInput').value = 'root';
-          document.getElementById('passwordInput').value = '';
-          document.getElementById('keyInput').value = '';
-          document.getElementById('noteInput').value = '';
-
-          // 更新投喂数量
-          if (currentUser) {
-            currentUser.donationCount += 1;
-            document.getElementById('donationCount').textContent = \`已投喂 \${currentUser.donationCount} 台\`;
-            document.getElementById('dropdownDonationCount').textContent = \`已投喂 \${currentUser.donationCount} 台\`;
-          }
-        } else {
-          console.error('投喂失败:', data.message);
-          showToast(data.message, 'error');
-        }
-      } catch (e) {
-        console.error('提交投喂异常:', e);
-        showToast('提交失败: ' + e.message + '。请检查网络连接并重试', 'error');
-      } finally {
-        // 恢复按钮状态
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
-        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-      }
-    }
-
-    async function loadDonations() {
-      try {
-        const res = await fetch('/api/user/donations');
-        const data = await res.json();
-
-        if (data.success && data.data.length > 0) {
-          const html = data.data.map(d => {
-            // 验证状态显示 - 简化版本，不显示验证码
-            let verifyStatusHTML = '';
-            if (d.verifyStatus === 'pending') {
-              verifyStatusHTML = \`<span class="text-xs text-yellow-600">⏳ 待验证</span>\`;
-            } else if (d.verifyStatus === 'verified') {
-              verifyStatusHTML = \`<span class="text-xs text-green-600">✅ 已验证</span>\`;
-            } else if (d.verifyStatus === 'failed') {
-              verifyStatusHTML = \`<span class="text-xs text-red-600">❌ 验证失败</span>\`;
-            }
-
-            return \`
-              <div class="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors" style="border: 1px solid #E5E7EB;">
-                <div class="flex justify-between items-start mb-2">
-                  <div class="flex-1">
-                    <p class="font-semibold text-slate-900 text-sm">\${d.username}@\${d.ip}:\${d.port}</p>
-                    <div class="flex items-center gap-2 mt-1">
-                      <span class="text-xs text-slate-600">\${d.authType === 'password' ? '🔑 密码' : '🔐 密钥'}</span>
-                      <span class="text-xs text-slate-400">|</span>
-                      \${verifyStatusHTML}
-                      <span class="text-xs text-slate-400">|</span>
-                      <span class="px-2 py-0.5 rounded-full text-xs font-semibold \${
-                        d.status === 'active' ? 'bg-green-100 text-green-700' :
-                        d.status === 'failed' ? 'bg-red-100 text-red-700' :
-                        'bg-slate-200 text-slate-600'
-                      }">
-                        \${d.status === 'active' ? '✓ 活跃' : d.status === 'failed' ? '✕ 失败' : '○ 停用'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                \${d.note ? \`<p class="text-xs text-slate-500 mb-1">📝 \${d.note}</p>\` : ''}
-                <p class="text-xs text-slate-400">\${new Date(d.donatedAt).toLocaleString('zh-CN')}</p>
-              </div>
-            \`;
-          }).join('');
-          document.getElementById('donationsList').innerHTML = html;
-        } else {
-          document.getElementById('donationsList').innerHTML = '<div class="text-center py-12"><p class="text-slate-400 text-sm">暂无投喂记录</p><p class="text-slate-300 text-xs mt-2">投喂您的第一台闲置VPS吧！</p></div>';
-        }
-      } catch (e) {
-        console.error('加载投喂记录失败', e);
-        document.getElementById('donationsList').innerHTML = '<div class="text-center py-12"><p class="text-red-400 text-sm">加载失败，请稍后重试</p></div>';
-      }
-    }
-
-    function showToast(message, type = 'info') {
-      const container = document.getElementById('toastContainer');
-
-      // 创建toast元素
-      const toast = document.createElement('div');
-      toast.className = \`toast toast-\${type}\`;
-
-      // 图标
-      const icon = document.createElement('div');
-      icon.className = 'toast-icon';
-      icon.textContent = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
-
-      // 消息文本
-      const text = document.createElement('div');
-      text.textContent = message;
-      text.style.flex = '1';
-
-      toast.appendChild(icon);
-      toast.appendChild(text);
-      container.appendChild(toast);
-
-      // 自动移除
-      setTimeout(() => {
-        toast.classList.add('hiding');
-        setTimeout(() => {
-          if (toast.parentNode) {
-            toast.parentNode.removeChild(toast);
-          }
-        }, 300);
-      }, 3000);
-    }
-
-    // 页面加载时检查登录状态
-    checkAuth();
-  </script>
-</body>
-</html>`;
+  } catch (e) {
+    window.location.href = '/oauth/login?redirect=' + encodeURIComponent('/donate/vps');
+  }
 }
 
-function generateAdminHTML(): string {
-  return `<!DOCTYPE html>
+async function loadLeaderboard() {
+  const container = document.getElementById('leaderboard');
+  const countEl = document.getElementById('leaderboard-count');
+  try {
+    const res = await fetch('/api/leaderboard');
+    if (!res.ok) {
+      container.innerHTML = '<div class="text-red-400 text-sm">加载失败，请稍后重试。</div>';
+      return;
+    }
+    const json = await res.json();
+    if (!json.success) {
+      container.innerHTML = '<div class="text-red-400 text-sm">' + (json.message || '加载失败') + '</div>';
+      return;
+    }
+    const data = json.data || [];
+    countEl.textContent = data.length ? (' · 共 ' + data.length + ' 位投喂者') : '';
+    if (!data.length) {
+      container.innerHTML = '<div class="text-slate-400 text-sm">暂时还没有投喂记录，成为第一个投喂者吧～</div>';
+      return;
+    }
+
+    container.innerHTML = '';
+    data.forEach((item, idx) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'rounded-2xl border border-slate-800 bg-slate-900/60 p-4 shadow-sm shadow-slate-900/60';
+
+      const titleRow = document.createElement('div');
+      titleRow.className = 'flex items-center justify-between gap-2 mb-2';
+
+      const left = document.createElement('div');
+      left.className = 'flex items-center gap-2';
+      const medal = idx < 3 ? ['🥇','🥈','🥉'][idx] : '🏅';
+      left.innerHTML = '<span class="text-lg">' + medal + '</span>' +
+                       '<span class="font-semibold">@' + item.username + '</span>';
+
+      const right = document.createElement('div');
+      right.className = 'text-xs text-slate-400';
+      right.textContent = '共投喂 ' + item.count + ' 台 VPS';
+
+      titleRow.appendChild(left);
+      titleRow.appendChild(right);
+      wrapper.appendChild(titleRow);
+
+      const list = document.createElement('div');
+      list.className = 'space-y-2 mt-2 text-xs';
+
+      (item.servers || []).forEach((srv) => {
+        const div = document.createElement('div');
+        div.className = 'rounded-xl bg-slate-950/60 border border-slate-800 px-3 py-2 flex flex-col gap-1';
+
+        const statusColor =
+          srv.status === 'active' ? 'text-emerald-400' :
+          srv.status === 'failed' ? 'text-red-400' :
+          'text-slate-300';
+        const statusText =
+          srv.status === 'active' ? '已激活' :
+          srv.status === 'failed' ? '验证失败' :
+          '未激活';
+
+        div.innerHTML =
+          '<div class="flex items-center justify-between gap-2">' +
+            '<span class="font-medium text-slate-100 text-xs">' +
+              (srv.country || '未填写') +
+              (srv.ipLocation ? ' · ' + srv.ipLocation : '') +
+            '</span>' +
+            '<span class="' + statusColor + ' text-[11px]">' + statusText + '</span>' +
+          '</div>' +
+          '<div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-300 mt-1">' +
+            '<span>流量/带宽：' + (srv.traffic || '未填写') + '</span>' +
+            '<span>到期：' + (srv.expiryDate || '未填写') + '</span>' +
+          '</div>' +
+          (srv.specs ? '<div class="text-[11px] text-slate-400 mt-1">配置：' + srv.specs + '</div>' : '') +
+          (srv.note ? '<div class="text-[11px] text-amber-300/80 mt-1">投喂者备注：' + srv.note + '</div>' : '');
+
+        list.appendChild(div);
+      });
+
+      wrapper.appendChild(list);
+      container.appendChild(wrapper);
+    });
+  } catch (e) {
+    console.error(e);
+    container.innerHTML = '<div class="text-red-400 text-sm">加载异常，请稍后重试。</div>';
+  }
+}
+
+loadLeaderboard();
+</script>
+</body>
+</html>`;
+  return c.html(html);
+});
+
+// ==================== 页面：/donate/vps（投喂面板） ====================
+app.get('/donate/vps', (c) => {
+  const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>管理员后台 - VPS 投喂站</title>
+  <meta charset="utf-8" />
+  <title>风萧萧兮公益机场 · VPS 投喂中心</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes slideInRight {
-      from {
-        opacity: 0;
-        transform: translateX(100%);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-    @keyframes slideOutRight {
-      from {
-        opacity: 1;
-        transform: translateX(0);
-      }
-      to {
-        opacity: 0;
-        transform: translateX(100%);
-      }
-    }
-    .animate-in { animation: fadeIn 0.5s ease-out; }
-    .toast-container {
-      position: fixed;
-      top: 80px;
-      right: 20px;
-      z-index: 9999;
-      pointer-events: none;
-    }
-    .toast {
-      pointer-events: auto;
-      min-width: 300px;
-      max-width: 500px;
-      margin-bottom: 12px;
-      padding: 16px 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
-      animation: slideInRight 0.3s ease-out;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 14px;
-      font-weight: 500;
-    }
-    .toast.hiding {
-      animation: slideOutRight 0.3s ease-out forwards;
-    }
-    .toast-icon {
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-    .toast-success {
-      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-      color: white;
-    }
-    .toast-error {
-      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-      color: white;
-    }
-    .toast-info {
-      background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-      color: white;
-    }
-    .card-hover {
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    }
-    .card-hover:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    }
-    .btn-primary {
-      background-color: #1a1a1a;
-      transition: all 0.2s;
-    }
-    .btn-primary:hover {
-      background-color: #000000;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-    .btn-secondary {
-      background-color: white;
-      border: 1px solid #e5e5e5;
-      transition: all 0.2s;
-    }
-    .btn-secondary:hover {
-      border-color: #1a1a1a;
-    }
-    .tab-button {
-      transition: all 0.2s;
-    }
-    .tab-button.active {
-      background-color: #1a1a1a;
-      color: white;
-    }
-    @keyframes spin {
-      from {
-        transform: rotate(0deg);
-      }
-      to {
-        transform: rotate(360deg);
-      }
-    }
-    .animate-spin {
-      animation: spin 1s linear infinite;
-    }
-  </style>
 </head>
-<body class="min-h-screen" style="background-color: #FAF9F8;">
-
-  <!-- Toast 容器 -->
-  <div id="toastContainer" class="toast-container"></div>
-
-  <!-- 导航栏 -->
-  <nav class="bg-white fixed top-0 left-0 right-0 z-50" style="border-bottom: 1px solid #F3F4F6; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-      <h1 class="text-2xl font-bold text-slate-900">
-        🔧 管理员后台
-      </h1>
-      <div class="flex gap-4">
-        <a href="/donate" class="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">返回投喂站</a>
-        <button onclick="logout()" class="text-sm font-medium hover:text-slate-900 transition-colors" style="color: #DC2626;">登出</button>
+<body class="min-h-screen bg-slate-950 text-slate-100">
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <header class="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">
+          VPS 投喂中心
+        </h1>
+        <p class="mt-2 text-sm text-slate-300">
+          仅已登录用户可见，可以提交新的 VPS 投喂，也可以查看和管理自己的投喂记录。
+        </p>
       </div>
-    </div>
-  </nav>
-
-  <!-- 主内容 -->
-  <div class="max-w-7xl mx-auto p-6 pt-24">
-
-    <!-- 登录表单 -->
-    <div id="loginForm" class="max-w-md mx-auto bg-white rounded-xl p-8 animate-in card-hover" style="border: 1px solid #F3F4F6;">
-      <h2 class="text-2xl font-bold text-slate-900 mb-6 text-center">🔐 管理员登录</h2>
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-2">管理员密码</label>
-          <input id="adminPassword" type="password" placeholder="请输入管理员密码"
-            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-400 focus:border-transparent"
-            onkeypress="if(event.key==='Enter') adminLogin()">
-        </div>
-        <button onclick="adminLogin()"
-          class="w-full btn-primary text-white py-3 rounded-lg font-semibold">
-          登录
+      <div class="flex items-center gap-3">
+        <div id="user-info" class="text-sm text-slate-300"></div>
+        <button
+          onclick="logout()"
+          class="text-xs rounded-lg border border-slate-700 px-3 py-1 hover:bg-slate-800"
+        >
+          退出登录
         </button>
-        <p class="text-sm text-slate-500 text-center">默认密码: admin123（首次登录后请立即修改）</p>
       </div>
-    </div>
+    </header>
 
-    <!-- 管理面板 -->
-    <div id="adminPanel" class="hidden">
+    <main class="grid md:grid-cols-2 gap-6 items-start">
+      <!-- 左侧：投喂表单 -->
+      <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-slate-900/70">
+        <h2 class="text-lg font-semibold mb-2">🧡 提交新的 VPS 投喂</h2>
+        <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+          请确保服务器是你有控制权的机器，并允许用于公益节点。禁止长时间占满带宽、刷流量、倒卖账号等行为。
+        </p>
 
-      <!-- 统计卡片 -->
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
-        <div class="bg-white rounded-xl p-6 animate-in card-hover" style="border: 1px solid #F3F4F6;">
-          <p class="text-sm text-slate-500 mb-1">总投喂数</p>
-          <p id="totalVPS" class="text-3xl font-bold text-slate-900">0</p>
-        </div>
-        <div class="bg-white rounded-xl p-6 animate-in card-hover" style="border: 1px solid #F3F4F6;">
-          <p class="text-sm text-slate-500 mb-1">活跃服务器</p>
-          <p id="activeVPS" class="text-3xl font-bold" style="color: #10B981;">0</p>
-        </div>
-        <div class="bg-white rounded-xl p-6 animate-in card-hover" style="border: 1px solid #F3F4F6;">
-          <p class="text-sm text-slate-500 mb-1">验证失败</p>
-          <p id="failedVPS" class="text-3xl font-bold" style="color: #EF4444;">0</p>
-        </div>
-        <div class="bg-white rounded-xl p-6 animate-in card-hover" style="border: 1px solid #F3F4F6;">
-          <p class="text-sm text-slate-500 mb-1">待验证</p>
-          <p id="pendingVPS" class="text-3xl font-bold" style="color: #F59E0B;">0</p>
-        </div>
-        <div class="bg-white rounded-xl p-6 animate-in card-hover" style="border: 1px solid #F3F4F6;">
-          <p class="text-sm text-slate-500 mb-1">投喂用户</p>
-          <p id="totalUsers" class="text-3xl font-bold text-slate-900">0</p>
-        </div>
-      </div>
-
-      <!-- 标签页 -->
-      <div class="bg-white rounded-xl p-6 animate-in" style="border: 1px solid #F3F4F6;">
-        <div class="flex justify-between items-center mb-6" style="border-bottom: 1px solid #F3F4F6; padding-bottom: 12px;">
-          <div class="flex gap-2">
-            <button onclick="showTab('vps')" class="tab-button tab-btn px-4 py-2 font-semibold rounded-t-lg active">
-              VPS 列表
-            </button>
-            <button onclick="showTab('config')" class="tab-button tab-btn px-4 py-2 font-semibold rounded-t-lg text-slate-600 hover:text-slate-900">
-              系统配置
-            </button>
+        <form id="donate-form" class="space-y-3 text-sm">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block mb-1 text-xs text-slate-300">服务器 IP</label>
+              <input name="ip" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" placeholder="例如 1.2.3.4" />
+            </div>
+            <div>
+              <label class="block mb-1 text-xs text-slate-300">端口</label>
+              <input name="port" required type="number" min="1" max="65535" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" placeholder="1-65535" />
+            </div>
           </div>
-          <button id="batchVerifyBtn" onclick="batchVerifyVPS()" class="btn-primary text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            一键验证
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block mb-1 text-xs text-slate-300">系统用户名</label>
+              <input name="username" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" placeholder="root / ubuntu / ..." />
+            </div>
+            <div>
+              <label class="block mb-1 text-xs text-slate-300">认证方式</label>
+              <select name="authType" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500">
+                <option value="password">密码</option>
+                <option value="key">SSH 私钥</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="password-field">
+            <label class="block mb-1 text-xs text-slate-300">密码</label>
+            <input name="password" type="password" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
+          </div>
+
+          <div id="key-field" class="hidden">
+            <label class="block mb-1 text-xs text-slate-300">SSH 私钥</label>
+            <textarea name="privateKey" rows="4" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block mb-1 text-xs text-slate-300">国家 / 区域</label>
+              <input name="country" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" placeholder="例如：日本、香港、美国" />
+            </div>
+            <div>
+              <label class="block mb-1 text-xs text-slate-300">流量 / 带宽</label>
+              <input name="traffic" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" placeholder="例：1T/月 · 100M 带宽" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block mb-1 text-xs text-slate-300">到期日期</label>
+              <input name="expiryDate" required type="date" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
+            </div>
+            <div>
+              <label class="block mb-1 text-xs text-slate-300">配置描述</label>
+              <input name="specs" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" placeholder="例：2C4G · 40G SSD" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block mb-1 text-xs text-slate-300">投喂备注（可选）</label>
+            <textarea name="note" rows="2" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" placeholder="写点想对项目说的话吧～"></textarea>
+          </div>
+
+          <div id="donate-message" class="text-xs mt-1 h-4"></div>
+
+          <button
+            type="submit"
+            class="mt-2 inline-flex items-center justify-center rounded-xl bg-cyan-500 px-4 py-2 text-xs font-semibold shadow-lg shadow-cyan-500/30 hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950"
+          >
+            提交投喂
+          </button>
+        </form>
+      </section>
+
+      <!-- 右侧：我的投喂记录 -->
+      <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-slate-900/70">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-lg font-semibold">📦 我的投喂记录</h2>
+          <button
+            onclick="loadDonations()"
+            class="text-[11px] rounded-lg border border-slate-700 px-2 py-1 hover:bg-slate-800"
+          >
+            刷新
           </button>
         </div>
-
-        <!-- VPS 列表 -->
-        <div id="vpsTab" class="tab-content">
-          <div id="vpsList" class="space-y-3"></div>
+        <div id="donations-list" class="space-y-3 text-xs text-slate-200">
+          <div class="text-slate-400 text-xs">正在加载...</div>
         </div>
+      </section>
+    </main>
 
-        <!-- 系统配置 -->
-        <div id="configTab" class="tab-content hidden">
-          <div class="space-y-6">
-
-            <!-- OAuth 配置 -->
-            <div class="border border-slate-200 rounded-lg p-6">
-              <h3 class="text-lg font-bold text-slate-900 mb-4">LinuxDo OAuth 配置</h3>
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">Client ID</label>
-                  <input id="clientId" type="text" placeholder="你的 Client ID"
-                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">Client Secret</label>
-                  <input id="clientSecret" type="password" placeholder="你的 Client Secret"
-                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">Redirect URI</label>
-                  <input id="redirectUri" type="text" placeholder="你的回调地址"
-                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                  <p class="text-xs text-slate-500 mt-1">通常为: https://your-domain.deno.dev/oauth/callback</p>
-                </div>
-                <button onclick="saveOAuthConfig()"
-                  class="btn-primary text-white px-6 py-2 rounded-lg font-semibold">
-                  保存 OAuth 配置
-                </button>
-              </div>
-            </div>
-
-            <!-- 管理员密码 -->
-            <div class="border border-slate-200 rounded-lg p-6">
-              <h3 class="text-lg font-bold text-slate-900 mb-4">修改管理员密码</h3>
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">新密码</label>
-                  <input id="newPassword" type="password" placeholder="至少 6 个字符"
-                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-400">
-                </div>
-                <button onclick="changePassword()"
-                  class="btn-primary text-white px-6 py-2 rounded-lg font-semibold">
-                  修改密码
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </div>
+    <footer class="mt-8 text-[11px] text-slate-500 border-t border-slate-800 pt-3">
+      <p>友情提示：投喂即视为同意将该 VPS 用于公益机场中转节点。请勿提交有敏感业务的生产机器。</p>
+    </footer>
   </div>
 
-  <script>
-    let isAdmin = false;
-
-    // 页面加载时检查会话
-    async function checkAdminSession() {
-      try {
-        const res = await fetch('/api/admin/check-session');
-        const data = await res.json();
-
-        if (data.success && data.isAdmin) {
-          isAdmin = true;
-          document.getElementById('loginForm').classList.add('hidden');
-          document.getElementById('adminPanel').classList.remove('hidden');
-          loadAdminData();
-        }
-      } catch (e) {
-        console.log('未登录或会话已过期');
-      }
+<script>
+async function ensureLogin() {
+  try {
+    const res = await fetch('/api/user/info');
+    if (!res.ok) {
+      window.location.href = '/donate';
+      return;
     }
-
-    // 页面加载时执行
-    window.addEventListener('DOMContentLoaded', checkAdminSession);
-
-    async function adminLogin() {
-      const password = document.getElementById('adminPassword').value;
-
-      if (!password) {
-        showToast('请输入密码', 'error');
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password }),
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          isAdmin = true;
-          document.getElementById('loginForm').classList.add('hidden');
-          document.getElementById('adminPanel').classList.remove('hidden');
-          loadAdminData();
-          showToast('登录成功', 'success');
-        } else {
-          showToast(data.message, 'error');
-        }
-      } catch (e) {
-        showToast('登录失败: ' + e.message, 'error');
-      }
+    const json = await res.json();
+    if (!json.success) {
+      window.location.href = '/donate';
+      return;
     }
-
-    async function loadAdminData() {
-      await Promise.all([loadStats(), loadVPSList(), loadOAuthConfig()]);
-    }
-
-    async function loadStats() {
-      try {
-        const res = await fetch('/api/admin/stats');
-        const data = await res.json();
-
-        if (data.success) {
-          document.getElementById('totalVPS').textContent = data.data.totalVPS;
-          document.getElementById('activeVPS').textContent = data.data.activeVPS;
-          document.getElementById('failedVPS').textContent = data.data.failedVPS;
-          document.getElementById('pendingVPS').textContent = data.data.pendingVPS;
-          document.getElementById('totalUsers').textContent = data.data.topDonors.length;
-        }
-      } catch (e) {
-        console.error('加载统计失败', e);
-      }
-    }
-
-    async function loadVPSList() {
-      try {
-        const res = await fetch('/api/admin/vps');
-        const data = await res.json();
-
-        if (data.success && data.data.length > 0) {
-          const html = data.data.map(v => {
-            // 验证状态徽章
-            let verifyBadge = '';
-            if (v.verifyStatus === 'pending') {
-              verifyBadge = '<span class="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-50 border border-yellow-200" style="color: #F59E0B;">⏳ 待验证</span>';
-            } else if (v.verifyStatus === 'verified') {
-              verifyBadge = '<span class="px-2 py-1 rounded-full text-xs font-semibold bg-green-50 border border-green-200" style="color: #10B981;">✅ 已验证</span>';
-            } else if (v.verifyStatus === 'failed') {
-              verifyBadge = '<span class="px-2 py-1 rounded-full text-xs font-semibold bg-red-50 border border-red-200" style="color: #EF4444;">❌ 验证失败</span>';
-            }
-
-            // 验证按钮
-            let verifyButton = '';
-            if (v.verifyStatus === 'pending' || v.verifyStatus === 'failed') {
-              verifyButton = \`
-                <button onclick="markVerified('\${v.id}')"
-                  class="px-3 py-1 text-xs bg-white text-green-700 rounded-lg font-semibold hover:bg-green-50 transition-all border border-green-200">
-                  ✓ 标记通过
-                </button>
-              \`;
-            }
-
-            return \`
-              <div class="p-4 rounded-lg card-hover bg-white" style="border: 1px solid #F3F4F6;">
-                <div class="flex justify-between items-start mb-3">
-                  <div class="flex-1">
-                    <div class="flex items-center gap-3 mb-2">
-                      <p class="font-bold text-lg text-slate-900">\${v.username}@\${v.ip}:\${v.port}</p>
-                      <span class="px-2 py-1 rounded-full text-xs font-semibold \${
-                        v.status === 'active' ? 'bg-green-50 border border-green-200' :
-                        v.status === 'failed' ? 'bg-red-50 border border-red-200' :
-                        'bg-slate-50 border border-slate-200'
-                      }" style="color: \${
-                        v.status === 'active' ? '#10B981' :
-                        v.status === 'failed' ? '#EF4444' :
-                        '#64748B'
-                      };">
-                        \${v.status === 'active' ? '✓ 活跃' : v.status === 'failed' ? '✕ 失败' : '○ 停用'}
-                      </span>
-                      \${verifyBadge}
-                    </div>
-                    <p class="text-sm text-slate-600">投喂者: <span class="font-semibold">\${v.donatedByUsername}</span></p>
-                    <p class="text-sm text-slate-600">认证方式: \${v.authType === 'password' ? '🔑 密码' : '🔐 密钥'}</p>
-                    \${v.note ? \`<p class="text-sm text-slate-500 mt-1">备注: \${v.note}</p>\` : ''}
-                    \${v.verifyStatus === 'pending' && v.verifyCode ? \`
-                      <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                        <p class="text-yellow-800">验证文件: <code class="bg-yellow-100 px-1 rounded">\${v.verifyFilePath}</code></p>
-                        <p class="text-yellow-800">验证码: <code class="bg-yellow-100 px-1 rounded">\${v.verifyCode}</code></p>
-                      </div>
-                    \` : ''}
-                    \${v.verifyStatus === 'failed' && v.verifyErrorMsg ? \`
-                      <p class="text-xs text-red-600 mt-2">验证失败原因: \${v.verifyErrorMsg}</p>
-                    \` : ''}
-                    <p class="text-xs text-slate-400 mt-2">\${new Date(v.donatedAt).toLocaleString('zh-CN')}</p>
-                  </div>
-                  <div class="flex flex-col gap-2">
-                    \${verifyButton}
-                    <button onclick="toggleVPSStatus('\${v.id}', '\${v.status}')"
-                      class="px-3 py-1 text-xs rounded-lg font-semibold transition-all \${v.status === 'active' ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200' : 'bg-white text-green-700 hover:bg-green-50 border border-green-200'}">
-                      \${v.status === 'active' ? '停用' : '启用'}
-                    </button>
-                    <button onclick="showVPSDetails('\${v.id}')"
-                      class="px-3 py-1 text-xs bg-white text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-all border border-slate-200">
-                      查看详情
-                    </button>
-                    <button onclick="deleteVPS('\${v.id}')"
-                      class="px-3 py-1 text-xs bg-white rounded-lg font-semibold hover:bg-red-50 transition-all border border-red-200" style="color: #DC2626;">
-                      删除
-                    </button>
-                  </div>
-                </div>
-                <div id="details-\${v.id}" class="hidden mt-3 p-3 bg-slate-50 rounded-lg">
-                  <p class="text-sm font-mono text-slate-700 mb-2"><strong>用户名:</strong> \${v.username}</p>
-                  <p class="text-sm font-mono text-slate-700 mb-2"><strong>IP:</strong> \${v.ip}</p>
-                  <p class="text-sm font-mono text-slate-700 mb-2"><strong>端口:</strong> \${v.port}</p>
-                  \${v.authType === 'password' ?
-                    \`<p class="text-sm font-mono text-slate-700 mb-2"><strong>密码:</strong> \${v.password || '***'}</p>\` :
-                    \`<p class="text-sm font-mono text-slate-700 mb-2"><strong>私钥:</strong><br><textarea readonly class="w-full mt-1 p-2 bg-white border rounded text-xs" rows="4">\${v.privateKey || ''}</textarea></p>\`
-                  }
-                </div>
-              </div>
-            \`;
-          }).join('');
-          document.getElementById('vpsList').innerHTML = html;
-        } else {
-          document.getElementById('vpsList').innerHTML = '<p class="text-center text-slate-500 py-8">暂无 VPS 投喂记录</p>';
-        }
-      } catch (e) {
-        console.error('加载 VPS 列表失败', e);
-      }
-    }
-
-    function showVPSDetails(id) {
-      const detailsDiv = document.getElementById('details-' + id);
-      detailsDiv.classList.toggle('hidden');
-    }
-
-    async function toggleVPSStatus(id, currentStatus) {
-      // 状态循环：active -> inactive -> active 或 failed -> active
-      let newStatus;
-      if (currentStatus === 'active') {
-        newStatus = 'inactive';
-      } else {
-        newStatus = 'active';
-      }
-
-      try {
-        const res = await fetch(\`/api/admin/vps/\${id}/status\`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: newStatus }),
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          showToast('状态已更新', 'success');
-          loadVPSList();
-          loadStats();
-        } else {
-          showToast(data.message, 'error');
-        }
-      } catch (e) {
-        showToast('更新失败: ' + e.message, 'error');
-      }
-    }
-
-    async function deleteVPS(id) {
-      if (!confirm('确定要删除这个 VPS 吗？此操作不可恢复！')) {
-        return;
-      }
-
-      try {
-        const res = await fetch(\`/api/admin/vps/\${id}\`, {
-          method: 'DELETE',
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          showToast('VPS 已删除', 'success');
-          loadVPSList();
-          loadStats();
-        } else {
-          showToast(data.message, 'error');
-        }
-      } catch (e) {
-        showToast('删除失败: ' + e.message, 'error');
-      }
-    }
-
-    async function markVerified(id) {
-      if (!confirm('确定要手动标记这个 VPS 为验证通过吗？')) {
-        return;
-      }
-
-      try {
-        const res = await fetch(\`/api/admin/vps/\${id}/mark-verified\`, {
-          method: 'POST',
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          showToast('VPS 已标记为验证通过', 'success');
-          loadVPSList();
-          loadStats();
-        } else {
-          showToast(data.message, 'error');
-        }
-      } catch (e) {
-        showToast('标记失败: ' + e.message, 'error');
-      }
-    }
-
-    async function batchVerifyVPS() {
-      const btn = document.getElementById('batchVerifyBtn');
-      const originalHTML = btn.innerHTML;
-
-      // 禁用按钮，显示加载状态
-      btn.disabled = true;
-      btn.innerHTML = \`
-        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-        </svg>
-        验证中...
-      \`;
-
-      try {
-        const res = await fetch('/api/admin/vps/batch-verify', {
-          method: 'POST',
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          showToast(data.message, 'success');
-
-          // 显示详细结果
-          if (data.data.total > 0) {
-            const details = \`总计: \${data.data.total} | 成功: \${data.data.success} | 失败: \${data.data.failed}\`;
-            console.log('[批量验证] ' + details);
-          } else {
-            showToast('没有待验证的 VPS', 'info');
-          }
-
-          // 刷新列表和统计
-          loadVPSList();
-          loadStats();
-        } else {
-          showToast(data.message, 'error');
-        }
-      } catch (e) {
-        showToast('批量验证失败: ' + e.message, 'error');
-      } finally {
-        // 恢复按钮状态
-        btn.disabled = false;
-        btn.innerHTML = originalHTML;
-      }
-    }
-
-    async function loadOAuthConfig() {
-      try {
-        const res = await fetch('/api/admin/config/oauth');
-        const data = await res.json();
-
-        if (data.success && data.data) {
-          document.getElementById('clientId').value = data.data.clientId || '';
-          document.getElementById('clientSecret').value = data.data.clientSecret || '';
-          document.getElementById('redirectUri').value = data.data.redirectUri || '';
-        }
-      } catch (e) {
-        console.error('加载 OAuth 配置失败', e);
-      }
-    }
-
-    async function saveOAuthConfig() {
-      const clientId = document.getElementById('clientId').value.trim();
-      const clientSecret = document.getElementById('clientSecret').value.trim();
-      const redirectUri = document.getElementById('redirectUri').value.trim();
-
-      if (!clientId || !clientSecret || !redirectUri) {
-        showToast('所有字段都是必填的', 'error');
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/admin/config/oauth', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ clientId, clientSecret, redirectUri }),
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          showToast('OAuth 配置已保存', 'success');
-        } else {
-          showToast(data.message, 'error');
-        }
-      } catch (e) {
-        showToast('保存失败: ' + e.message, 'error');
-      }
-    }
-
-    async function changePassword() {
-      const password = document.getElementById('newPassword').value;
-
-      if (!password || password.length < 6) {
-        showToast('密码至少需要 6 个字符', 'error');
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/admin/config/password', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password }),
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          showToast('密码已更新', 'success');
-          document.getElementById('newPassword').value = '';
-        } else {
-          showToast(data.message, 'error');
-        }
-      } catch (e) {
-        showToast('更新失败: ' + e.message, 'error');
-      }
-    }
-
-    function showTab(tab) {
-      // 更新标签按钮样式
-      document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.remove('active');
-        btn.className = 'tab-button tab-btn px-4 py-2 font-semibold rounded-t-lg text-slate-600 hover:text-slate-900';
-      });
-      event.target.classList.add('active');
-
-      // 切换内容
-      document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.add('hidden');
-      });
-
-      if (tab === 'vps') {
-        document.getElementById('vpsTab').classList.remove('hidden');
-      } else if (tab === 'config') {
-        document.getElementById('configTab').classList.remove('hidden');
-      }
-    }
-
-    async function logout() {
-      console.log('[管理员前端] 登出...');
-      await fetch('/api/admin/logout');
-      window.location.reload();
-    }
-
-    function showToast(message, type = 'info') {
-      const container = document.getElementById('toastContainer');
-
-      // 创建toast元素
-      const toast = document.createElement('div');
-      toast.className = \`toast toast-\${type}\`;
-
-      // 图标
-      const icon = document.createElement('div');
-      icon.className = 'toast-icon';
-      icon.textContent = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
-
-      // 消息文本
-      const text = document.createElement('div');
-      text.textContent = message;
-      text.style.flex = '1';
-
-      toast.appendChild(icon);
-      toast.appendChild(text);
-      container.appendChild(toast);
-
-      // 自动移除
-      setTimeout(() => {
-        toast.classList.add('hiding');
-        setTimeout(() => {
-          if (toast.parentNode) {
-            toast.parentNode.removeChild(toast);
-          }
-        }, 300);
-      }, 3000);
-    }
-  </script>
-</body>
-</html>`;
+    const u = json.data;
+    const el = document.getElementById('user-info');
+    el.textContent = '@' + u.username + ' · 已投喂 ' + (u.donationCount || 0) + ' 台';
+  } catch (e) {
+    window.location.href = '/donate';
+  }
 }
 
-// 启动服务器
-Deno.serve(app.fetch);
+async function logout() {
+  try { await fetch('/api/logout'); } catch(e) {}
+  window.location.href = '/donate';
+}
+
+function bindAuthTypeSwitch() {
+  const select = document.querySelector('select[name="authType"]');
+  const pwdField = document.getElementById('password-field');
+  const keyField = document.getElementById('key-field');
+  select.addEventListener('change', () => {
+    if (select.value === 'password') {
+      pwdField.classList.remove('hidden');
+      keyField.classList.add('hidden');
+    } else {
+      pwdField.classList.add('hidden');
+      keyField.classList.remove('hidden');
+    }
+  });
+}
+
+async function submitDonateForm(e) {
+  e.preventDefault();
+  const form = e.target;
+  const msgEl = document.getElementById('donate-message');
+  msgEl.textContent = '';
+  msgEl.className = 'text-xs mt-1 h-4';
+
+  const fd = new FormData(form);
+  const payload = {
+    ip: fd.get('ip')?.toString().trim(),
+    port: Number(fd.get('port')?.toString().trim()),
+    username: fd.get('username')?.toString().trim(),
+    authType: fd.get('authType')?.toString(),
+    password: fd.get('password')?.toString(),
+    privateKey: fd.get('privateKey')?.toString(),
+    country: fd.get('country')?.toString().trim(),
+    traffic: fd.get('traffic')?.toString().trim(),
+    expiryDate: fd.get('expiryDate')?.toString().trim(),
+    specs: fd.get('specs')?.toString().trim(),
+    note: fd.get('note')?.toString().trim(),
+  };
+
+  try {
+    const res = await fetch('/api/donate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      msgEl.textContent = json.message || '提交失败';
+      msgEl.classList.add('text-red-400');
+    } else {
+      msgEl.textContent = json.message || '投喂成功';
+      msgEl.classList.add('text-emerald-400');
+      form.reset();
+      loadDonations();
+    }
+  } catch (e) {
+    msgEl.textContent = '提交异常，请稍后重试';
+    msgEl.classList.add('text-red-400');
+  }
+}
+
+async function loadDonations() {
+  const container = document.getElementById('donations-list');
+  container.innerHTML = '<div class="text-slate-400 text-xs">正在加载...</div>';
+  try {
+    const res = await fetch('/api/user/donations');
+    if (!res.ok) {
+      container.innerHTML = '<div class="text-red-400 text-xs">加载失败</div>';
+      return;
+    }
+    const json = await res.json();
+    if (!json.success) {
+      container.innerHTML = '<div class="text-red-400 text-xs">' + (json.message || '加载失败') + '</div>';
+      return;
+    }
+    const data = json.data || [];
+    if (!data.length) {
+      container.innerHTML = '<div class="text-slate-400 text-xs">还没有投喂记录，先在左侧提交一台吧～</div>';
+      return;
+    }
+    container.innerHTML = '';
+    data.forEach((vps) => {
+      const div = document.createElement('div');
+      div.className = 'rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2';
+
+      const statusColor =
+        vps.status === 'active' ? 'text-emerald-400' :
+        vps.status === 'failed' ? 'text-red-400' :
+        'text-slate-300';
+      const statusText =
+        vps.status === 'active' ? '已激活' :
+        vps.status === 'failed' ? '验证失败' :
+        '未激活';
+
+      const dt = vps.donatedAt ? new Date(vps.donatedAt) : null;
+      const donatedAtText = dt ? dt.toLocaleString() : '';
+
+      div.innerHTML =
+        '<div class="flex items-center justify-between gap-2 mb-1">' +
+          '<div class="text-[11px] text-slate-200">IP：' + vps.ip + ':' + vps.port + '</div>' +
+          '<div class="' + statusColor + ' text-[11px]">' + statusText + '</div>' +
+        '</div>' +
+        '<div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-300">' +
+          '<span>地区：' + (vps.country || '未填写') + (vps.ipLocation ? ' · ' + vps.ipLocation : '') + '</span>' +
+          '<span>流量/带宽：' + (vps.traffic || '未填写') + '</span>' +
+          '<span>到期：' + (vps.expiryDate || '未填写') + '</span>' +
+        '</div>' +
+        '<div class="text-[11px] text-slate-400 mt-1">配置：' + (vps.specs || '未填写') + '</div>' +
+        (vps.note ? '<div class="text-[11px] text-amber-300/80 mt-1">我的备注：' + vps.note + '</div>' : '') +
+        (donatedAtText ? '<div class="text-[11px] text-slate-500 mt-1">投喂时间：' + donatedAtText + '</div>' : '');
+
+      container.appendChild(div);
+    });
+  } catch (e) {
+    container.innerHTML = '<div class="text-red-400 text-xs">加载异常</div>';
+  }
+}
+
+ensureLogin();
+bindAuthTypeSwitch();
+document.getElementById('donate-form').addEventListener('submit', submitDonateForm);
+loadDonations();
+</script>
+</body>
+</html>`;
+  return c.html(html);
+});
+
+// ==================== 管理后台页面：/admin ====================
+app.get('/admin', (c) => {
+  const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>风萧萧兮公益机场 · VPS 管理后台</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100">
+  <div class="max-w-7xl mx-auto px-4 py-8" id="app-root">
+    <div class="text-slate-300 text-sm">正在检测管理员登录状态...</div>
+  </div>
+
+<script>
+let allVpsList = [];
+let statusFilter = 'all';
+let userFilter = '';
+
+async function checkAdmin() {
+  const root = document.getElementById('app-root');
+  try {
+    const res = await fetch('/api/admin/check-session');
+    const json = await res.json();
+    if (!json.success || !json.isAdmin) {
+      renderLogin(root);
+    } else {
+      renderAdmin(root, json.username);
+      await loadStats();
+      await loadVps();
+    }
+  } catch (e) {
+    root.innerHTML = '<div class="text-red-400 text-sm">加载失败</div>';
+  }
+}
+
+function renderLogin(root) {
+  root.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'max-w-sm mx-auto rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-lg shadow-slate-900/80';
+
+  wrap.innerHTML =
+    '<h1 class="text-xl font-semibold mb-4">管理员登录</h1>' +
+    '<p class="text-xs text-slate-400 mb-4">请输入在后端配置的管理员密码。</p>' +
+    '<form id="admin-login-form" class="space-y-3 text-sm">' +
+      '<div>' +
+        '<label class="block mb-1 text-xs text-slate-300">密码</label>' +
+        '<input type="password" name="password" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />' +
+      '</div>' +
+      '<div id="admin-login-msg" class="text-[11px] h-4"></div>' +
+      '<button type="submit" class="mt-1 inline-flex items-center justify-center rounded-xl bg-cyan-500 px-4 py-2 text-xs font-semibold hover:bg-cyan-400">登录</button>' +
+    '</form>';
+
+  root.appendChild(wrap);
+
+  document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('admin-login-msg');
+    msg.textContent = '';
+    msg.className = 'text-[11px] h-4';
+    const fd = new FormData(e.target);
+    const password = fd.get('password')?.toString() || '';
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        msg.textContent = json.message || '登录失败';
+        msg.classList.add('text-red-400');
+      } else {
+        location.reload();
+      }
+    } catch (err) {
+      msg.textContent = '登录异常';
+      msg.classList.add('text-red-400');
+    }
+  });
+}
+
+function renderAdmin(root, adminName) {
+  root.innerHTML = '';
+  const header = document.createElement('header');
+  header.className = 'mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4';
+  header.innerHTML =
+    '<div>' +
+      '<h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">VPS 管理后台</h1>' +
+      '<p class="mt-2 text-xs text-slate-400">仅管理员可见 · 可查看全部投喂 VPS 与认证信息。</p>' +
+    '</div>' +
+    '<div class="flex items-center gap-3">' +
+      '<span class="text-xs text-slate-300">管理员：' + adminName + '</span>' +
+      '<button id="btn-admin-logout" class="text-[11px] rounded-lg border border-slate-700 px-2 py-1 hover:bg-slate-800">退出</button>' +
+    '</div>';
+  root.appendChild(header);
+
+  const statsWrap = document.createElement('section');
+  statsWrap.id = 'admin-stats';
+  root.appendChild(statsWrap);
+
+  const listWrap = document.createElement('section');
+  listWrap.className = 'mt-6';
+  listWrap.innerHTML =
+    '<div class="flex items-center justify-between mb-2">' +
+      '<h2 class="text-lg font-semibold">VPS 列表</h2>' +
+      '<div class="flex items-center gap-2 text-[11px] text-slate-400">' +
+        '<span>状态筛选：</span>' +
+        '<button data-status-filter="all" class="px-2 py-1 rounded-lg border border-slate-700 hover:bg-slate-800">全部</button>' +
+        '<button data-status-filter="active" class="px-2 py-1 rounded-lg border border-emerald-500/40 text-emerald-300 hover:bg-slate-800">活跃</button>' +
+        '<button data-status-filter="failed" class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-800">失败</button>' +
+        '<button data-status-filter="inactive" class="px-2 py-1 rounded-lg border border-slate-500/40 text-slate-200 hover:bg-slate-800">未激活</button>' +
+      '</div>' +
+    '</div>' +
+    '<div id="vps-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>';
+  root.appendChild(listWrap);
+
+  document.getElementById('btn-admin-logout').addEventListener('click', adminLogout);
+
+  // 绑定状态按钮
+  listWrap.querySelectorAll('button[data-status-filter]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      statusFilter = btn.getAttribute('data-status-filter') || 'all';
+      userFilter = '';
+      renderVpsList();
+    });
+  });
+}
+
+async function adminLogout() {
+  try { await fetch('/api/admin/logout'); } catch(e) {}
+  location.reload();
+}
+
+async function loadStats() {
+  const wrap = document.getElementById('admin-stats');
+  wrap.innerHTML = '<div class="text-xs text-slate-400 mb-3">正在加载统计信息...</div>';
+  try {
+    const res = await fetch('/api/admin/stats');
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      wrap.innerHTML = '<div class="text-red-400 text-xs mb-3">统计信息加载失败</div>';
+      return;
+    }
+    const d = json.data || {};
+    wrap.innerHTML =
+      '<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">' +
+        statCard('总投喂数', d.totalVPS || 0, 'all') +
+        statCard('活跃服务器', d.activeVPS || 0, 'active') +
+        statCard('未激活', d.inactiveVPS || 0, 'inactive') +
+        statCard('验证失败', d.failedVPS || 0, 'failed') +
+        statCard('待验证', d.pendingVPS || 0, 'pending') +
+        statCard('今日新增', d.todayNewVPS || 0, 'today') +
+      '</div>';
+    // 绑定卡片点击
+    wrap.querySelectorAll('button[data-stat-filter]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-stat-filter');
+        if (key === 'active' || key === 'inactive' || key === 'failed' || key === 'pending') {
+          statusFilter = key === 'pending' ? 'pending' : key;
+        } else {
+          statusFilter = 'all';
+        }
+        userFilter = '';
+        renderVpsList();
+      });
+    });
+  } catch (e) {
+    wrap.innerHTML = '<div class="text-red-400 text-xs mb-3">统计信息加载异常</div>';
+  }
+}
+
+function statCard(label, value, filterKey) {
+  return (
+    '<button data-stat-filter="' + filterKey + '" class="rounded-2xl border border-slate-800 bg-slate-900/70 px-3 py-2 text-left hover:bg-slate-900">' +
+      '<div class="text-[11px] text-slate-400">' + label + '</div>' +
+      '<div class="text-lg font-semibold mt-1">' + value + '</div>' +
+    '</button>'
+  );
+}
+
+async function loadVps() {
+  const listEl = document.getElementById('vps-list');
+  listEl.innerHTML = '<div class="text-xs text-slate-400">正在加载 VPS...</div>';
+  try {
+    const res = await fetch('/api/admin/vps');
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      listEl.innerHTML = '<div class="text-red-400 text-xs">加载失败</div>';
+      return;
+    }
+    allVpsList = json.data || [];
+    renderVpsList();
+  } catch (e) {
+    listEl.innerHTML = '<div class="text-red-400 text-xs">加载异常</div>';
+  }
+}
+
+function renderVpsList() {
+  const listEl = document.getElementById('vps-list');
+  if (!allVpsList.length) {
+    listEl.innerHTML = '<div class="text-xs text-slate-400 col-span-full">暂无 VPS 记录</div>';
+    return;
+  }
+
+  const filtered = allVpsList.filter((v) => {
+    let ok = true;
+    if (statusFilter === 'active') ok = v.status === 'active';
+    else if (statusFilter === 'inactive') ok = v.status === 'inactive';
+    else if (statusFilter === 'failed') ok = v.status === 'failed';
+    else if (statusFilter === 'pending') ok = v.verifyStatus === 'pending';
+    if (userFilter) ok = ok && v.donatedByUsername === userFilter;
+    return ok;
+  });
+
+  if (!filtered.length) {
+    listEl.innerHTML = '<div class="text-xs text-slate-400 col-span-full">当前筛选下没有 VPS</div>';
+    return;
+  }
+
+  listEl.innerHTML = '';
+  filtered.forEach((v) => {
+    const card = document.createElement('div');
+    card.className = 'rounded-2xl border border-slate-800 bg-slate-900/80 p-3 flex flex-col gap-2 text-xs';
+
+    const statusColor =
+      v.status === 'active' ? 'text-emerald-400' :
+      v.status === 'failed' ? 'text-red-400' :
+      'text-slate-300';
+    const statusText =
+      v.status === 'active' ? '已激活' :
+      v.status === 'failed' ? '验证失败' :
+      '未激活';
+
+    const dt = v.donatedAt ? new Date(v.donatedAt) : null;
+    const donatedAtText = dt ? dt.toLocaleString() : '';
+
+    card.innerHTML =
+      '<div class="flex items-center justify-between gap-2">' +
+        '<div class="text-[11px] text-slate-200">IP：' + v.ip + ':' + v.port + '</div>' +
+        '<div class="' + statusColor + ' text-[11px]">' + statusText + '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-2 text-[11px] text-slate-300">' +
+        '<span>投喂者：<button class="underline hover:text-cyan-400" data-user-filter="' + v.donatedByUsername + '">@' + v.donatedByUsername + '</button></span>' +
+        '<span>地区：' + (v.country || '未填写') + (v.ipLocation ? ' · ' + v.ipLocation : '') + '</span>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-2 text-[11px] text-slate-300">' +
+        '<span>流量/带宽：' + (v.traffic || '未填写') + '</span>' +
+        '<span>到期：' + (v.expiryDate || '未填写') + '</span>' +
+      '</div>' +
+      '<div class="text-[11px] text-slate-400">配置：' + (v.specs || '未填写') + '</div>' +
+      (v.note ? '<div class="text-[11px] text-amber-300/80">用户备注：' + v.note + '</div>' : '') +
+      (v.adminNote ? '<div class="text-[11px] text-cyan-300/80">管理员备注：' + v.adminNote + '</div>' : '') +
+      (donatedAtText ? '<div class="text-[11px] text-slate-500">投喂时间：' + donatedAtText + '</div>' : '') +
+      '<details class="mt-1">' +
+        '<summary class="cursor-pointer text-[11px] text-cyan-300">查看详情</summary>' +
+        '<div class="mt-1 space-y-1 text-[11px] text-slate-300">' +
+          '<div>SSH 用户：' + v.username + '</div>' +
+          '<div>认证方式：' + v.authType + '</div>' +
+          '<div>验证状态：' + (v.verifyStatus || 'unknown') + (v.verifyErrorMsg ? ' · ' + v.verifyErrorMsg : '') + '</div>' +
+          '<div class="flex flex-wrap gap-2 mt-1">' +
+            '<button class="px-2 py-1 rounded-lg border border-emerald-500/40 text-emerald-300 hover:bg-slate-800" data-action="mark" data-id="' + v.id + '">标记通过</button>' +
+            '<button class="px-2 py-1 rounded-lg border border-slate-500/40 text-slate-200 hover:bg-slate-800" data-action="inactive" data-id="' + v.id + '">设为未激活</button>' +
+            '<button class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-800" data-action="failed" data-id="' + v.id + '">设为失败</button>' +
+            '<button class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-900" data-action="delete" data-id="' + v.id + '">删除</button>' +
+          '</div>' +
+        '</div>' +
+      '</details>';
+
+    // 绑定投喂者过滤
+    const userBtn = card.querySelector('button[data-user-filter]');
+    if (userBtn) {
+      userBtn.addEventListener('click', () => {
+        userFilter = userBtn.getAttribute('data-user-filter') || '';
+        renderVpsList();
+      });
+    }
+
+    // 绑定操作按钮
+    card.querySelectorAll('button[data-action]').forEach((btn) => {
+      const id = btn.getAttribute('data-id');
+      const action = btn.getAttribute('data-action');
+      btn.addEventListener('click', async () => {
+        if (!id) return;
+        if (action === 'mark') {
+          if (!confirm('确定将此 VPS 标记为验证通过并激活？')) return;
+          await fetch('/api/admin/vps/' + id + '/mark-verified', { method: 'POST' });
+        } else if (action === 'inactive' || action === 'failed') {
+          if (!confirm('确定修改状态为 ' + action + ' ？')) return;
+          await fetch('/api/admin/vps/' + id + '/status', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: action }),
+          });
+        } else if (action === 'delete') {
+          if (!confirm('确定删除此 VPS 记录？')) return;
+          await fetch('/api/admin/vps/' + id, { method: 'DELETE' });
+        }
+        await loadVps();
+        await loadStats();
+      });
+    });
+
+    listEl.appendChild(card);
+  });
+}
+
+checkAdmin();
+</script>
+</body>
+</html>`;
+  return c.html(html);
+});
+
+// ==================== 导出应用 ====================
+export default app;
