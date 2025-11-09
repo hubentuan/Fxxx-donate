@@ -321,14 +321,24 @@ async function requireAuth(c: any, next: any) {
   await next();
 }
 async function requireAdmin(c: any, next: any) {
-  const sid = getCookie(c, 'admin_session_id');
-  if (!sid) return c.json({ success: false, message: '未登录' }, 401);
-  const s = await getSession(sid);
-  if (!s || !s.isAdmin) {
-    return c.json({ success: false, message: '需要管理员权限' }, 403);
+  try {
+    const sid = getCookie(c, 'admin_session_id');
+    if (!sid) {
+      return c.json({ success: false, message: '未登录' }, 401);
+    }
+    const s = await getSession(sid);
+    if (!s) {
+      return c.json({ success: false, message: '会话已过期，请重新登录' }, 401);
+    }
+    if (!s.isAdmin) {
+      return c.json({ success: false, message: '需要管理员权限' }, 403);
+    }
+    c.set('session', s);
+    await next();
+  } catch (e: any) {
+    console.error('requireAdmin error:', e);
+    return c.json({ success: false, message: '权限验证失败: ' + e.message }, 500);
   }
-  c.set('session', s);
-  await next();
 }
 
 // ==================== Hono 应用 ====================
@@ -632,44 +642,63 @@ app.post('/api/donate', requireAuth, async (c) => {
 
 // ==================== 管理员 API ====================
 app.get('/api/admin/check-session', async (c) => {
-  const sid = getCookie(c, 'admin_session_id');
-  if (!sid) return c.json({ success: false, isAdmin: false });
-  const s = await getSession(sid);
-  if (!s || s.expiresAt < Date.now()) {
-    return c.json({ success: false, isAdmin: false });
+  try {
+    const sid = getCookie(c, 'admin_session_id');
+    if (!sid) {
+      return c.json({ success: false, isAdmin: false });
+    }
+    const s = await getSession(sid);
+    if (!s) {
+      return c.json({ success: false, isAdmin: false });
+    }
+    // getSession 已经检查过期时间，这里只需要检查 isAdmin
+    if (!s.isAdmin) {
+      return c.json({ success: false, isAdmin: false });
+    }
+    return c.json({
+      success: true,
+      isAdmin: true,
+      username: s.username,
+    });
+  } catch (e: any) {
+    console.error('check-session error:', e);
+    return c.json({ success: false, isAdmin: false, error: e.message }, 500);
   }
-  return c.json({
-    success: true,
-    isAdmin: s.isAdmin || false,
-    username: s.username,
-  });
 });
 
 app.post('/api/admin/login', async (c) => {
-  const { password } = await c.req.json();
-  const adminPassword = await getAdminPassword();
-  if (password !== adminPassword) {
-    return c.json({ success: false, message: '密码错误' }, 401);
+  try {
+    const { password } = await c.req.json();
+    if (!password) {
+      return c.json({ success: false, message: '密码不能为空' }, 400);
+    }
+    const adminPassword = await getAdminPassword();
+    if (password !== adminPassword) {
+      return c.json({ success: false, message: '密码错误' }, 401);
+    }
+    const sid = generateSessionId();
+    const sess: Session = {
+      id: sid,
+      userId: 'admin',
+      username: 'Administrator',
+      avatarUrl: undefined,
+      isAdmin: true,
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    };
+    await kv.set(['sessions', sid], sess);
+    const isProd = Deno.env.get('DENO_DEPLOYMENT_ID') !== undefined;
+    setCookie(c, 'admin_session_id', sid, {
+      maxAge: 7 * 24 * 60 * 60,
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'Lax',
+      path: '/',
+    });
+    return c.json({ success: true, message: '登录成功' });
+  } catch (e: any) {
+    console.error('admin login error:', e);
+    return c.json({ success: false, message: '登录失败: ' + e.message }, 500);
   }
-  const sid = generateSessionId();
-  const sess: Session = {
-    id: sid,
-    userId: 'admin',
-    username: 'Administrator',
-    avatarUrl: undefined,
-    isAdmin: true,
-    expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-  };
-  await kv.set(['sessions', sid], sess);
-  const isProd = Deno.env.get('DENO_DEPLOYMENT_ID') !== undefined;
-  setCookie(c, 'admin_session_id', sid, {
-    maxAge: 7 * 24 * 60 * 60,
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'Lax',
-    path: '/',
-  });
-  return c.json({ success: true, message: '登录成功' });
 });
 
 app.get('/api/admin/logout', async (c) => {
@@ -1461,6 +1490,11 @@ async function checkAdmin(){
   const root = document.getElementById('app-root');
   try{
     const res = await fetch('/api/admin/check-session');
+    if(!res.ok){
+      console.error('check-session failed:', res.status, res.statusText);
+      renderLogin(root);
+      return;
+    }
     const json = await res.json();
     if(!json.success || !json.isAdmin){
       renderLogin(root);
@@ -1471,7 +1505,8 @@ async function checkAdmin(){
       await loadVps();
     }
   }catch(e){
-    root.innerHTML = '<div class="text-red-400 text-sm">加载失败</div>';
+    console.error('checkAdmin error:', e);
+    root.innerHTML = '<div class="text-red-400 text-sm">加载失败: ' + (e.message || '未知错误') + '</div>';
   }
 }
 
@@ -1495,10 +1530,17 @@ function renderLogin(root){
   document.getElementById('admin-login-form').addEventListener('submit', async (e)=>{
     e.preventDefault();
     const msg = document.getElementById('admin-login-msg');
+    const btn = e.target.querySelector('button[type="submit"]');
     msg.textContent = '';
     msg.className = 'text-[11px] h-4';
     const fd = new FormData(e.target);
     const password = (fd.get('password') || '').toString();
+    if(!password){
+      msg.textContent = '请输入密码';
+      msg.classList.add('text-red-400');
+      return;
+    }
+    if(btn) btn.disabled = true;
     try{
       const res = await fetch('/api/admin/login',{
         method:'POST',
@@ -1509,12 +1551,20 @@ function renderLogin(root){
       if(!res.ok || !json.success){
         msg.textContent = json.message || '登录失败';
         msg.classList.add('text-red-400');
+        console.error('Login failed:', json);
       }else{
-        location.reload();
+        msg.textContent = '登录成功，正在跳转...';
+        msg.classList.add('text-emerald-400');
+        setTimeout(()=>{
+          location.reload();
+        }, 500);
       }
     }catch(e){
-      msg.textContent = '登录异常';
+      console.error('Login error:', e);
+      msg.textContent = '登录异常: ' + (e.message || '网络错误');
       msg.classList.add('text-red-400');
+    }finally{
+      if(btn) btn.disabled = false;
     }
   });
 }
