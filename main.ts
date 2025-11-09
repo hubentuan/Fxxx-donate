@@ -635,21 +635,17 @@ app.put('/api/admin/config/password', requireAdmin, async c => {
   return c.json({ success: true, message: '管理员密码已更新' });
 });
 
-/* 后端统计：今日新增按“东八区自然日”统计 */
+/* 后端统计：今日新增只看“同一天” */
 app.get('/api/admin/stats', requireAdmin, async c => {
   try {
     const all = await getAllVPS();
-
-    // 统一按 UTC+8 计算“今天”
-    const TZ_OFFSET_HOURS = 8;
-    const nowLocal = new Date(Date.now() + TZ_OFFSET_HOURS * 3600 * 1000);
-    const y = nowLocal.getFullYear();
-    const m = nowLocal.getMonth();
-    const d = nowLocal.getDate();
-
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const d = now.getDate();
     const isToday = (ts: number | undefined) => {
       if (!ts) return false;
-      const t = new Date(ts + TZ_OFFSET_HOURS * 3600 * 1000);
+      const t = new Date(ts);
       return t.getFullYear() === y && t.getMonth() === m && t.getDate() === d;
     };
 
@@ -1705,6 +1701,22 @@ body[data-theme="light"] .card{
   word-break:break-word;
 }
 
+/* 新增：弹窗内大段文本（SSH 密钥等）样式 */
+.modal-text-block{
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 6px 8px;
+  border-radius: 0.5rem;
+  background: rgba(15,23,42,.85);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+body[data-theme="light"] .modal-text-block{
+  background:#f3f4f6;
+}
+
 .muted{ color:#94a3b8; }
 body[data-theme="light"] .muted{ color:#6b7280; }
 
@@ -1978,13 +1990,13 @@ function guessCountryFlag(v){
   return '';
 }
 
-/* 这里重新实现 modalLoginInfo：长密钥用多行块显示 + 可滚动，不会被截断 */
+/* 重要：重写的 VPS 登录信息弹窗，支持长密钥换行+滚动+复制 */
 function modalLoginInfo(v){
   const wrap=document.createElement('div');
   wrap.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;';
   const card=document.createElement('div');
   card.className='panel rounded-2xl border p-4';
-  card.style.width='min(520px,92vw)';
+  card.style.width='min(640px,96vw)';
 
   const title=document.createElement('div');
   title.className='text-base font-semibold mb-3';
@@ -1992,42 +2004,34 @@ function modalLoginInfo(v){
   card.appendChild(title);
 
   const rows=document.createElement('div');
-  rows.className='space-y-2 text-xs';
+  rows.className='space-y-3 text-xs';
 
-  function addRow(label,value,canCopy=true,isMultiline=false){
+  function addRow(label,value,canCopy=true,isCode=false){
     const row=document.createElement('div');
-    row.className='flex items-start justify-between gap-2';
+    row.className='space-y-1';
 
-    const labelEl=document.createElement('div');
-    labelEl.className='muted text-[11px] whitespace-nowrap mt-[2px]';
-    labelEl.textContent=label+'：';
+    const head=document.createElement('div');
+    head.className='muted text-xs';
+    head.textContent=label;
+    row.appendChild(head);
 
-    const valBox=document.createElement('div');
-    valBox.className='flex-1';
+    const body=document.createElement('div');
+    body.className='flex items-start gap-2';
 
-    if(isMultiline){
-      const pre=document.createElement('pre');
-      pre.className='bg-black/30 rounded-lg px-2 py-1.5 text-[11px] leading-relaxed whitespace-pre-wrap break-words max-h-48 overflow-auto';
-      pre.textContent=value||'-';
-      valBox.appendChild(pre);
-    }else{
-      const span=document.createElement('div');
-      span.className='muted break-words';
-      span.textContent=value||'-';
-      valBox.appendChild(span);
-    }
-
-    row.appendChild(labelEl);
-    row.appendChild(valBox);
+    const val=isCode?document.createElement('pre'):document.createElement('div');
+    val.className='flex-1 modal-text-block';
+    val.textContent=value || '-';
+    body.appendChild(val);
 
     if(canCopy && value){
       const btn=document.createElement('button');
       btn.className='px-2 py-1 rounded-full border text-[11px] whitespace-nowrap self-start';
       btn.textContent='复制';
       btn.onclick=()=>copyToClipboard(value);
-      row.appendChild(btn);
+      body.appendChild(btn);
     }
 
+    row.appendChild(body);
     rows.appendChild(row);
   }
 
@@ -2042,14 +2046,14 @@ function modalLoginInfo(v){
 
   addRow('IP 地址', v.ip || '', true,false);
   addRow('端口', String(v.port||''), true,false);
+
   addRow('系统用户名', v.username || '', true,false);
   addRow('认证方式', v.authType==='key'?'密钥':'密码', false,false);
 
   if(v.authType==='password'){
-    addRow('登录密码', v.password || '', true,false);
+    addRow('登录密码', v.password || '', true, true);
   }else{
-    // 私钥基本都很长，强制多行显示，带滚动条
-    addRow('SSH 私钥', v.privateKey || '', true,true);
+    addRow('SSH 私钥', v.privateKey || '', true, true);
   }
 
   const statusText = v.verifyStatus || 'unknown';
