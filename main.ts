@@ -775,7 +775,7 @@ app.get('/donate', c => {
     <div class="space-y-2">
       <h1 class="grad-title text-2xl md:text-4xl font-bold">风萧萧公益机场 · VPS 投喂榜</h1>
       <p class="mt-1 text-sm sm:text-base muted leading-relaxed">
-        这是一个完全非盈利的公益项目，没有运营团队，只有我一个人维护。榜单以赞助最多的佬为榜首，但您的一次投喂对公益站来说都至关重要。
+        这是一个完全非盈利的公益项目，没有运营团队，只有我一个人维护。榜单仅展示「国家 / 区域 + IP 归属地 + 流量 + 到期时间 + 投喂备注」。
       </p>
       <p class="text-xs sm:text-sm text-amber-200 leading-relaxed">
         感谢大家的投喂，🤝 这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，是大家的共同成果！共荣！🚀🤝
@@ -1968,6 +1968,7 @@ function modalEdit(title, fields, onOk){
   document.body.appendChild(wrap);
 }
 
+/* === 这里改动：IP 与端口分开显示且分别复制 === */
 function modalLoginInfo(v){
   const wrap=document.createElement('div');
   wrap.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;';
@@ -2008,14 +2009,18 @@ function modalLoginInfo(v){
     rows.appendChild(row);
   }
 
-  addRow('IP / 端口', v.ip+':'+v.port);
-  addRow('系统用户名', v.username);
+  // 分开显示与复制
+  addRow('IP 地址', v.ip || '');
+  addRow('端口', String(v.port ?? ''), !!v.port);
+  addRow('系统用户名', v.username || '');
   addRow('认证方式', v.authType==='key'?'密钥':'密码', false);
+
   if(v.authType==='password'){
     addRow('登录密码', v.password || '');
   }else{
     addRow('SSH 私钥', v.privateKey || '');
   }
+
   const statusText = v.verifyStatus || 'unknown';
   const extra = v.verifyErrorMsg ? ('（'+v.verifyErrorMsg+'）') : '';
   addRow('验证状态', statusText+extra, false);
