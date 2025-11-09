@@ -583,7 +583,7 @@ app.put('/api/admin/vps/:id/status', requireAdmin, async c => {
     return c.json({ success: false, message: '无效状态' }, 400);
   }
 
-  const ok = await updVPSStatus(id, status);
+  const ok = await updVPSStatus(id, status as VPSServer['status']);
   return c.json(
     ok ? { success: true, message: '状态已更新' } : { success: false, message: '不存在' },
     ok ? 200 : 404,
@@ -685,6 +685,35 @@ app.post('/api/admin/vps/:id/mark-verified', requireAdmin, async c => {
 
   await kv.set(['vps', id], r.value);
   return c.json({ success: true, message: '已标记为验证通过' });
+});
+
+/* 一键验证接口：尝试连接 VPS 端口，成功则标记 active + verified，失败则 failed */
+app.post('/api/admin/vps/:id/verify', requireAdmin, async c => {
+  const id = c.req.param('id');
+  const r = await kv.get<VPSServer>(['vps', id]);
+  if (!r.value) return c.json({ success: false, message: '不存在' }, 404);
+
+  const v = r.value;
+  const ok = await portOK(v.ip, v.port);
+  v.lastVerifyAt = Date.now();
+
+  if (ok) {
+    v.status = 'active';
+    v.verifyStatus = 'verified';
+    v.verifyErrorMsg = '';
+    await kv.set(['vps', id], v);
+    return c.json({ success: true, message: '✅ 验证成功，VPS 连通正常' });
+  } else {
+    v.status = 'failed';
+    v.verifyStatus = 'failed';
+    v.verifyErrorMsg = '无法连接 VPS，请检查服务器是否在线、防火墙/安全组端口放行';
+    await kv.set(['vps', id], v);
+    return c.json({
+      success: false,
+      message: '❌ 验证失败：无法连接 VPS',
+      data: { error: v.verifyErrorMsg }
+    });
+  }
 });
 
 /* ==================== /donate 榜单页 ==================== */
@@ -1149,6 +1178,7 @@ function renderLogin(root){
     const pwd=fd.get('password')?.toString()||'';
     try{
       const r=await fetch('/api/admin/login',{
+
         method:'POST',
         credentials:'same-origin',
         headers:{'Content-Type':'application/json'},
@@ -1205,6 +1235,7 @@ async function renderAdmin(root, name){
       '<p class="text-[11px] muted mb-2">仅用于 <code>/admin</code> 后台登录，至少 6 位，建议与 Linux.do 账号密码不同。</p>'+
       '<div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center text-[11px]">'+
         '<input id="admin-pass-input" type="password" placeholder="输入新的管理员密码" class="flex-1 rounded-lg border px-3 py-2 text-xs focus:ring-1 focus:ring-cyan-500"/>'+
+        '<input id="admin-pass-input2" type="password" placeholder="再次输入以确认" class="flex-1 rounded-lg border px-3 py-2 text-xs focus:ring-1 focus:ring-cyan-500"/>'+
         '<button id="btn-save-admin-pass" class="rounded-xl bg-emerald-500 px-4 py-2 text-[11px] font-semibold hover:bg-emerald-400">保存密码</button>'+
       '</div>'+
       '<p class="text-[11px] muted mt-2">修改成功后立即生效，下次登录需要使用新密码。</p>'+
@@ -1234,8 +1265,6 @@ async function renderAdmin(root, name){
       '<button data-status="all" class="px-2 py-1 rounded-full border">全部</button>'+
       '<button data-status="active" class="px-2 py-1 rounded-full border">运行中</button>'+
       '<button data-status="failed" class="px-2 py-1 rounded-full border">失败</button>'+
-      '<button data-status="inactive" class="px-2 py-1 rounded-full border">未启用</button>'+
-      '<button data-status="pending" class="px-2 py-1 rounded-full border">待验证</button>'+
       '<span class="ml-2">搜索：</span><input id="filter-input" placeholder="按 IP / 用户名 / 备注 ..." class="rounded-lg border px-2 py-1 text-[11px] focus:ring-1 focus:ring-cyan-500"/>'+
       '<button id="filter-btn" class="px-2 py-1 rounded-full border">搜索</button><button id="filter-clear-btn" class="px-2 py-1 rounded-full border">清除</button>'+
     '</div></div>'+
@@ -1286,12 +1315,10 @@ async function loadStats(){
       return '<button data-gok="'+key+'" class="stat-card stat-'+key+' rounded-2xl border px-3 py-2 text-left">'+
         '<div class="stat-label text-[11px] muted">'+label+'</div><div class="stat-value mt-1">'+value+'</div></button>';
     }
-    wrap.innerHTML='<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">'+
+    wrap.innerHTML='<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-3">'+
       card('总投喂数',d.totalVPS||0,'all')+
       card('运行中',d.activeVPS||0,'active')+
-      card('未启用',d.inactiveVPS||0,'inactive')+
       card('失败',d.failedVPS||0,'failed')+
-      card('待验证',d.pendingVPS||0,'pending')+
       card('今日新增',d.todayNewVPS||0,'today')+'</div>';
     wrap.querySelectorAll('button[data-gok]').forEach(b=> b.addEventListener('click',()=>{
       statusFilter=b.getAttribute('data-gok');
@@ -1346,9 +1373,15 @@ async function saveOAuth(){
 
 async function saveAdminPassword(){
   const input=document.getElementById('admin-pass-input');
+  const input2=document.getElementById('admin-pass-input2');
   const pwd=input.value.trim();
-  if(!pwd){
-    toast('请输入新密码','warn');
+  const pwd2=input2.value.trim();
+  if(!pwd || !pwd2){
+    toast('请填写两次新密码','warn');
+    return;
+  }
+  if(pwd!==pwd2){
+    toast('两次输入的密码不一致','error');
     return;
   }
   try{
@@ -1364,6 +1397,7 @@ async function saveAdminPassword(){
     } else {
       toast('管理员密码已更新','success');
       input.value='';
+      input2.value='';
     }
   }catch(err){
     console.error('Save admin password error:', err);
@@ -1403,12 +1437,13 @@ function renderVpsList(){
   }
 
   const kw=(searchFilter||'').toLowerCase();
+  const today0=new Date(); today0.setHours(0,0,0,0);
+
   const arr=allVpsList.filter(v=>{
     let ok=true;
     if(statusFilter==='active') ok=v.status==='active';
-    else if(statusFilter==='inactive') ok=v.status==='inactive';
     else if(statusFilter==='failed') ok=v.status==='failed';
-    else if(statusFilter==='pending') ok=v.verifyStatus==='pending';
+    else if(statusFilter==='today') ok=v.donatedAt && v.donatedAt>=today0.getTime();
     if(userFilter) ok=ok && v.donatedByUsername===userFilter;
     if(kw){
       const hay=[v.ip,String(v.port),v.donatedByUsername,v.country,v.traffic,v.specs,v.note,v.adminNote].join(' ').toLowerCase();
@@ -1440,8 +1475,7 @@ function renderVpsList(){
       (t?'<div class="text-[11px] muted">投喂时间：'+t+'</div>':'')+
       '<div class="flex flex-wrap gap-2 mt-1">'+
         '<button class="px-2 py-1 rounded-full border" data-act="login" data-id="'+v.id+'">查看信息</button>'+
-        '<button class="px-2 py-1 rounded-full border" data-act="mark" data-id="'+v.id+'">标记通过</button>'+
-        '<button class="px-2 py-1 rounded-full border" data-act="inactive" data-id="'+v.id+'">设为未启用</button>'+
+        '<button class="px-2 py-1 rounded-full border" data-act="verify" data-id="'+v.id+'">一键验证</button>'+
         '<button class="px-2 py-1 rounded-full border" data-act="failed" data-id="'+v.id+'">设为失败</button>'+
         '<button class="px-2 py-1 rounded-full border" data-act="edit" data-id="'+v.id+'">编辑信息</button>'+
         '<button class="px-2 py-1 rounded-full border" data-act="del" data-id="'+v.id+'">删除</button>'+
@@ -1458,22 +1492,26 @@ function renderVpsList(){
           return;
         }
 
-        if(act==='mark'){
+        if(act==='verify'){
           try{
-            const r=await fetch('/api/admin/vps/'+id+'/mark-verified',{method:'POST',credentials:'same-origin'});
+            const r=await fetch('/api/admin/vps/'+id+'/verify',{method:'POST',credentials:'same-origin'});
             const j=await r.json();
-            toast(j.message||'已标记','success');
+            toast(j.message || (j.success ? '验证成功' : '验证失败'), j.success ? 'success' : 'error');
           }catch{
-            toast('操作失败','error');
+            toast('验证异常','error');
           }
+          await loadVps();
+          await loadStats();
+          return;
         }
-        else if(act==='inactive'||act==='failed'){
+
+        if(act==='failed'){
           try{
             const r=await fetch('/api/admin/vps/'+id+'/status',{
               method:'PUT',
               credentials:'same-origin',
               headers:{'Content-Type':'application/json'},
-              body:JSON.stringify({status:act})
+              body:JSON.stringify({status:'failed'})
             });
             const j=await r.json();
             toast(j.message||'已更新','success');
@@ -1607,12 +1645,14 @@ body[data-theme="light"] .muted{ color:#6b7280; }
 
 #toast-root{
   position:fixed;
-  right:16px;
-  bottom:16px;
+  inset:0;
   z-index:9999;
   display:flex;
   flex-direction:column;
+  align-items:center;
+  justify-content:center;
   gap:10px;
+  pointer-events:none;
 }
 .toast{
   padding:10px 12px;
@@ -1624,6 +1664,7 @@ body[data-theme="light"] .muted{ color:#6b7280; }
   transform:translateY(10px);
   opacity:0;
   transition:all .25s ease;
+  pointer-events:auto;
 }
 .toast.show{ transform:translateY(0); opacity:1; }
 .toast.success{ border-color:#10b981; }
@@ -1825,7 +1866,7 @@ function modalEdit(title, fields, onOk){
   const btn2=document.createElement('button');
   btn2.textContent='保存';
   btn2.className='px-3 py-1 rounded-full bg-cyan-500 text-black font-semibold';
-  btn2.onclick=()=>{ const data={}; form.childNodes.forEach(n=>{ data[n._key]=n._get(); }); try{ onOk(data,()=>wrap.remove()); }catch(e){ console.error(e); } };
+  btn2.onclick=()=>{ const data={}; form.childNodes.forEach((n)=>{ data[n._key]=n._get(); }); try{ onOk(data,()=>wrap.remove()); }catch(e){ console.error(e); } };
   actions.append(btn1,btn2);
   card.appendChild(actions);
   wrap.appendChild(card);
