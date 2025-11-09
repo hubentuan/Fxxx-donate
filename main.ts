@@ -1009,6 +1009,7 @@ async function submitDonate(e){
   btn.disabled=true; const t=btn.textContent; btn.textContent='提交中...';
   try{
     const r=await fetch('/api/donate',{
+
       method:'POST',
       credentials:'same-origin',
       headers:{'Content-Type':'application/json'},
@@ -1196,6 +1197,9 @@ async function renderAdmin(root, name){
     '<div id="oauth-body" class="mt-3 hidden">'+
       '<form id="oauth-form" class="grid md:grid-cols-3 gap-3 text-[11px]">'+
         '<div><label class="block mb-1 muted text-xs">Client ID</label><input name="clientId" class="w-full rounded-lg border px-2 py-1 text-xs focus:ring-1 focus:ring-cyan-500"/></div>'+
+
+
+
         '<div><label class="block mb-1 muted text-xs">Client Secret</label><input name="clientSecret" class="w-full rounded-lg border px-2 py-1 text-xs focus:ring-1 focus:ring-cyan-500"/></div>'+
         '<div><label class="block mb-1 muted text-xs">Redirect URI</label><input name="redirectUri" class="w-full rounded-lg border px-2 py-1 text-xs focus:ring-1 focus:ring-cyan-500"/></div>'+
       '</form><div class="mt-2 flex gap-2"><button id="btn-save-oauth" class="text-[11px] rounded-xl bg-cyan-500 px-3 py-1 font-semibold">保存 OAuth</button></div>'+
@@ -1203,9 +1207,18 @@ async function renderAdmin(root, name){
     '<div class="panel rounded-2xl border p-4">'+
       '<h2 class="text-sm font-semibold mb-3">管理员密码</h2>'+
       '<p class="text-[11px] muted mb-2">仅用于 <code>/admin</code> 后台登录，至少 6 位，建议与 Linux.do 账号密码不同。</p>'+
+
+
+
       '<div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center text-[11px]">'+
         '<input id="admin-pass-input" type="password" placeholder="输入新的管理员密码" class="flex-1 rounded-lg border px-3 py-2 text-xs focus:ring-1 focus:ring-cyan-500"/>'+
+
+
+
         '<button id="btn-save-admin-pass" class="rounded-xl bg-emerald-500 px-4 py-2 text-[11px] font-semibold hover:bg-emerald-400">保存密码</button>'+
+
+
+
       '</div>'+
       '<p class="text-[11px] muted mt-2">修改成功后立即生效，下次登录需要使用新密码。</p>'+
     '</div>';
@@ -1248,17 +1261,18 @@ async function renderAdmin(root, name){
     renderVpsList();
   }));
   document.getElementById('filter-btn').addEventListener('click',()=>{
-    const input = document.getElementById('filter-input');
-    searchFilter = input && input.value ? input.value.trim() : '';
+
+
+    searchFilter=(document.getElementById('filter-input') as HTMLInputElement).value.trim();
     userFilter='';
     renderVpsList();
   });
   document.getElementById('filter-clear-btn').addEventListener('click',()=>{
+
+
+
     searchFilter='';
-    const input = document.getElementById('filter-input');
-    if (input && 'value' in input) {
-      input.value='';
-    }
+    (document.getElementById('filter-input') as HTMLInputElement).value='';
     userFilter='';
     renderVpsList();
   });
@@ -1314,13 +1328,9 @@ async function loadConfig(){
     const j=await res.json();
     const cfg=j.data||{};
     const f=document.getElementById('oauth-form');
-    if(!f) return;
-    const cid = f.querySelector('input[name="clientId"]');
-    const cs = f.querySelector('input[name="clientSecret"]');
-    const ru = f.querySelector('input[name="redirectUri"]');
-    if(cid) cid.value = cfg.clientId || '';
-    if(cs) cs.value = cfg.clientSecret || '';
-    if(ru) ru.value = cfg.redirectUri || '';
+    (f.querySelector('input[name="clientId"]') as HTMLInputElement).value=cfg.clientId||'';
+    (f.querySelector('input[name="clientSecret"]') as HTMLInputElement).value=cfg.clientSecret||'';
+    (f.querySelector('input[name="redirectUri"]') as HTMLInputElement).value=cfg.redirectUri||'';
   } catch(err) {
     console.error('Config load error:', err);
   }
@@ -1328,17 +1338,10 @@ async function loadConfig(){
 
 async function saveOAuth(){
   const f=document.getElementById('oauth-form');
-  if(!f){
-    toast('找不到 OAuth 表单','error');
-    return;
-  }
-  const cid = f.querySelector('input[name="clientId"]');
-  const cs = f.querySelector('input[name="clientSecret"]');
-  const ru = f.querySelector('input[name="redirectUri"]');
   const payload={
-    clientId:(cid && cid.value ? cid.value.trim() : ''),
-    clientSecret:(cs && cs.value ? cs.value.trim() : ''),
-    redirectUri:(ru && ru.value ? ru.value.trim() : '')
+    clientId:(f.querySelector('input[name="clientId"]') as HTMLInputElement).value.trim(),
+    clientSecret:(f.querySelector('input[name="clientSecret"]') as HTMLInputElement).value.trim(),
+    redirectUri:(f.querySelector('input[name="redirectUri"]') as HTMLInputElement).value.trim()
   };
   try{
     const r=await fetch('/api/admin/config/oauth',{
@@ -1360,8 +1363,8 @@ async function saveOAuth(){
 }
 
 async function saveAdminPassword(){
-  const input=document.getElementById('admin-pass-input');
-  const pwd = input && input.value ? input.value.trim() : '';
+  const input=document.getElementById('admin-pass-input') as HTMLInputElement;
+  const pwd=input.value.trim();
   if(!pwd){
     toast('请输入新密码','warn');
     return;
@@ -1378,7 +1381,7 @@ async function saveAdminPassword(){
       toast(j.message||'保存失败','error');
     } else {
       toast('管理员密码已更新','success');
-      if(input) input.value='';
+      input.value='';
     }
   }catch(err){
     console.error('Save admin password error:', err);
@@ -1428,13 +1431,6 @@ function renderVpsList(){
     if(kw){
       const hay=[v.ip,String(v.port),v.donatedByUsername,v.country,v.traffic,v.specs,v.note,v.adminNote].join(' ').toLowerCase();
       ok=ok && hay.includes(kw);
-    }
-    if(statusFilter==='today'){
-      try{
-        const today0=new Date();
-        today0.setHours(0,0,0,0);
-        ok = ok && v.donatedAt >= today0.getTime();
-      }catch(e){}
     }
     return ok;
   });
@@ -1615,6 +1611,9 @@ body[data-theme="light"] .muted{ color:#6b7280; }
 
 .grad-title{
   background-image:linear-gradient(115deg,#22d3ee 0%,#38bdf8 25%,#a855f7 50%,#ec4899 75%,#f97316 100%);
+
+
+
   background-size:320% 100%;
   -webkit-background-clip:text;
   background-clip:text;
@@ -1754,7 +1753,7 @@ function toggleTheme(){
   document.body.setAttribute('data-theme', nxt);
   document.documentElement.setAttribute('data-theme', nxt);
   localStorage.setItem('theme', nxt);
-  if(typeof updateThemeBtn === 'function') updateThemeBtn();
+  updateThemeBtn && updateThemeBtn();
 }
 
 function updateThemeBtn(){
@@ -1833,7 +1832,7 @@ function modalEdit(title, fields, onOk){
     inp.className='w-full rounded-lg border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500';
     box.appendChild(lab);
     box.appendChild(inp);
-    box._get=function(){ return inp.value; };
+    box._get=()=>inp.value;
     box._key=f.key;
     form.appendChild(box);
   });
@@ -1843,17 +1842,11 @@ function modalEdit(title, fields, onOk){
   const btn1=document.createElement('button');
   btn1.textContent='取消';
   btn1.className='px-3 py-1 rounded-full border';
-  btn1.onclick=function(){ wrap.remove(); };
+  btn1.onclick=()=>wrap.remove();
   const btn2=document.createElement('button');
   btn2.textContent='保存';
   btn2.className='px-3 py-1 rounded-full bg-cyan-500 text-black font-semibold';
-  btn2.onclick=function(){
-    const data={};
-    form.childNodes.forEach(function(n:any){
-      if(n._key) data[n._key]=n._get();
-    });
-    try{ onOk(data,function(){ wrap.remove(); }); }catch(e){ console.error(e); }
-  };
+  btn2.onclick=()=>{ const data={}; form.childNodes.forEach(n=>{ data[n._key]=n._get(); }); try{ onOk(data,()=>wrap.remove()); }catch(e){ console.error(e); } };
   actions.append(btn1,btn2);
   card.appendChild(actions);
   wrap.appendChild(card);
@@ -1875,7 +1868,7 @@ function modalLoginInfo(v){
   const rows=document.createElement('div');
   rows.className='space-y-2 text-xs';
 
-  function addRow(label,value,canCopy){
+  function addRow(label,value,canCopy=true){
     const row=document.createElement('div');
     row.className='flex items-center justify-between gap-2';
     const left=document.createElement('div');
@@ -1886,19 +1879,19 @@ function modalLoginInfo(v){
       const btn=document.createElement('button');
       btn.className='px-2 py-1 rounded-full border text-[11px] whitespace-nowrap';
       btn.textContent='复制';
-      btn.onclick=function(){ copyToClipboard(value); };
+      btn.onclick=()=>copyToClipboard(value);
       row.appendChild(btn);
     }
     rows.appendChild(row);
   }
 
-  addRow('IP / 端口', v.ip+':'+v.port,true);
-  addRow('系统用户名', v.username,true);
-  addRow('认证方式', v.authType==='key'?'密钥':'密码',false);
+  addRow('IP / 端口', v.ip+':'+v.port);
+  addRow('系统用户名', v.username);
+  addRow('认证方式', v.authType==='key'?'密钥':'密码', false);
   if(v.authType==='password'){
-    addRow('登录密码', v.password || '', true);
+    addRow('登录密码', v.password || '');
   }else{
-    addRow('SSH 私钥', v.privateKey || '', true);
+    addRow('SSH 私钥', v.privateKey || '');
   }
   const statusText = v.verifyStatus || 'unknown';
   const extra = v.verifyErrorMsg ? ('（'+v.verifyErrorMsg+'）') : '';
@@ -1911,7 +1904,7 @@ function modalLoginInfo(v){
   const closeBtn=document.createElement('button');
   closeBtn.textContent='关闭';
   closeBtn.className='px-3 py-1 rounded-full border';
-  closeBtn.onclick=function(){ wrap.remove(); };
+  closeBtn.onclick=()=>wrap.remove();
   footer.appendChild(closeBtn);
   card.appendChild(footer);
 
