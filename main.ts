@@ -471,6 +471,8 @@ app.post('/api/donate', requireAuth, async c => {
   }
 
   const ipLoc = await getIPLocation(ip);
+  const now = Date.now();
+
   const v = await addVPS({
     ip,
     port: p,
@@ -480,7 +482,7 @@ app.post('/api/donate', requireAuth, async c => {
     privateKey: authType === 'key' ? privateKey : undefined,
     donatedBy: s.userId,
     donatedByUsername: s.username,
-    donatedAt: Date.now(),
+    donatedAt: now,
     status: 'active',
     note: note || '',
     adminNote: '',
@@ -490,7 +492,8 @@ app.post('/api/donate', requireAuth, async c => {
     specs,
     ipLocation: ipLoc,
     verifyStatus: 'verified',
-    lastVerifyAt: Date.now()
+    lastVerifyAt: now,
+    verifyErrorMsg: ''
   });
 
   return c.json({
@@ -635,18 +638,30 @@ app.put('/api/admin/config/password', requireAdmin, async c => {
   return c.json({ success: true, message: '管理员密码已更新' });
 });
 
-/* 后端统计：今日新增只看“同一天” */
+/* 后端统计：今日新增按固定东八区日期判断 */
 app.get('/api/admin/stats', requireAdmin, async c => {
   try {
     const all = await getAllVPS();
+
+    // 用东八区（中国时间）来定义“今天”
+    const tzOffsetMinutes = 8 * 60; // UTC+8
     const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    const d = now.getDate();
-    const isToday = (ts: number | undefined) => {
+    const nowUtcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+    const cnNow = new Date(nowUtcMs + tzOffsetMinutes * 60000);
+    const cy = cnNow.getFullYear();
+    const cm = cnNow.getMonth();
+    const cd = cnNow.getDate();
+
+    const isTodayCN = (ts: number | undefined) => {
       if (!ts) return false;
-      const t = new Date(ts);
-      return t.getFullYear() === y && t.getMonth() === m && t.getDate() === d;
+      const d = new Date(ts);
+      const utcMs = d.getTime() + d.getTimezoneOffset() * 60000;
+      const cn = new Date(utcMs + tzOffsetMinutes * 60000);
+      return (
+        cn.getFullYear() === cy &&
+        cn.getMonth() === cm &&
+        cn.getDate() === cd
+      );
     };
 
     const userStats = new Map<string, number>();
@@ -671,7 +686,7 @@ app.get('/api/admin/stats', requireAdmin, async c => {
         inactiveVPS: all.filter(v => v.status === 'inactive').length,
         pendingVPS: all.filter(v => v.verifyStatus === 'pending').length,
         verifiedVPS: all.filter(v => v.verifyStatus === 'verified').length,
-        todayNewVPS: all.filter(v => isToday(v.donatedAt)).length,
+        todayNewVPS: all.filter(v => isTodayCN(v.donatedAt)).length,
         topDonors: top
       }
     });
@@ -690,6 +705,7 @@ app.post('/api/admin/vps/:id/mark-verified', requireAdmin, async c => {
   r.value.verifyStatus = 'verified';
   r.value.status = 'active';
   r.value.lastVerifyAt = Date.now();
+  r.value.verifyErrorMsg = '';
 
   await kv.set(['vps', id], r.value);
   return c.json({ success: true, message: '已标记为验证通过' });
@@ -710,7 +726,16 @@ app.post('/api/admin/vps/:id/verify', requireAdmin, async c => {
     v.verifyStatus = 'verified';
     v.verifyErrorMsg = '';
     await kv.set(['vps', id], v);
-    return c.json({ success: true, message: '✅ 验证成功，VPS 连通正常' });
+    return c.json({
+      success: true,
+      message: '✅ 验证成功，VPS 连通正常',
+      data: {
+        status: v.status,
+        verifyStatus: v.verifyStatus,
+        verifyErrorMsg: v.verifyErrorMsg,
+        lastVerifyAt: v.lastVerifyAt
+      }
+    });
   } else {
     v.status = 'failed';
     v.verifyStatus = 'failed';
@@ -719,7 +744,12 @@ app.post('/api/admin/vps/:id/verify', requireAdmin, async c => {
     return c.json({
       success: false,
       message: '❌ 验证失败：无法连接 VPS',
-      data: { error: v.verifyErrorMsg }
+      data: {
+        status: v.status,
+        verifyStatus: v.verifyStatus,
+        verifyErrorMsg: v.verifyErrorMsg,
+        lastVerifyAt: v.lastVerifyAt
+      }
     });
   }
 });
@@ -1572,10 +1602,29 @@ function renderVpsList(){
             const r=await fetch('/api/admin/vps/'+id+'/verify',{method:'POST',credentials:'same-origin'});
             const j=await r.json();
             toast(j.message || (j.success ? '验证成功' : '验证失败'), j.success ? 'success' : 'error');
+
+            // 本地就地更新，不再整页重新加载，避免列表抖动
+            const target = allVpsList.find(x => x.id === id);
+            if (target) {
+              const data = j.data || {};
+              const now = Date.now();
+              target.lastVerifyAt = data.lastVerifyAt || now;
+              if (j.success) {
+                target.status = data.status || 'active';
+                target.verifyStatus = data.verifyStatus || 'verified';
+                target.verifyErrorMsg = data.verifyErrorMsg || '';
+              } else {
+                target.status = data.status || 'failed';
+                target.verifyStatus = data.verifyStatus || 'failed';
+                target.verifyErrorMsg =
+                  data.verifyErrorMsg || '无法连接 VPS，请检查服务器是否在线、防火墙/安全组端口放行';
+              }
+              renderVpsList();
+            }
           }catch{
             toast('验证异常','error');
           }
-          await loadVps();
+          // 只刷新顶部统计，不再重新拉取全部 VPS 列表
           await loadStats();
           return;
         }
