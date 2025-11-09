@@ -1178,7 +1178,6 @@ function renderLogin(root){
     const pwd=fd.get('password')?.toString()||'';
     try{
       const r=await fetch('/api/admin/login',{
-
         method:'POST',
         credentials:'same-origin',
         headers:{'Content-Type':'application/json'},
@@ -1873,7 +1872,72 @@ function modalEdit(title, fields, onOk){
   document.body.appendChild(wrap);
 }
 
-/* 这里是你要的新版 modalLoginInfo：赞助人 + IP 归属 + IP/端口分开复制 */
+/* ====== 国旗 emoji 工具 ====== */
+function isoToFlag(iso){
+  if(!iso) return '';
+  iso=iso.toUpperCase();
+  if(iso.length!==2) return '';
+  const A=0x1F1E6;
+  const cp1=A + (iso.charCodeAt(0)-65);
+  const cp2=A + (iso.charCodeAt(1)-65);
+  return String.fromCodePoint(cp1,cp2);
+}
+function guessCountryCodeFromText(text){
+  if(!text) return '';
+  const t=text.toLowerCase();
+  const map={
+    '中国':'CN','大陆':'CN','china':'CN','prc':'CN',
+    '香港':'HK','hong kong':'HK',
+    '澳门':'MO','macau':'MO',
+    '台湾':'TW','taiwan':'TW',
+    '日本':'JP','japan':'JP',
+    '韩国':'KR','south korea':'KR','korea':'KR',
+    '美国':'US','usa':'US','united states':'US',
+    '英国':'GB','united kingdom':'GB','uk':'GB','britain':'GB',
+    '德国':'DE','germany':'DE',
+    '法国':'FR','france':'FR',
+    '加拿大':'CA','canada':'CA',
+    '新加坡':'SG','singapore':'SG',
+    '澳大利亚':'AU','澳洲':'AU','australia':'AU',
+    '印度':'IN','india':'IN',
+    '俄罗斯':'RU','russia':'RU',
+    '荷兰':'NL','netherlands':'NL',
+    '瑞士':'CH','switzerland':'CH',
+    '瑞典':'SE','sweden':'SE',
+    '挪威':'NO','norway':'NO',
+    '芬兰':'FI','finland':'FI',
+    '西班牙':'ES','spain':'ES',
+    '意大利':'IT','italy':'IT',
+    '巴西':'BR','brazil':'BR',
+    '阿根廷':'AR','argentina':'AR',
+    '墨西哥':'MX','mexico':'MX',
+    '土耳其':'TR','turkey':'TR',
+    '泰国':'TH','thailand':'TH',
+    '马来西亚':'MY','malaysia':'MY',
+    '菲律宾':'PH','philippines':'PH',
+    '印度尼西亚':'ID','印尼':'ID','indonesia':'ID',
+    '越南':'VN','vietnam':'VN',
+    '阿联酋':'AE','dubai':'AE','united arab emirates':'AE'
+  };
+  for(const k in map){
+    if(t.includes(k)) return map[k];
+  }
+  // 如果字符串里本身就是两位国家码
+  const m=t.match(/\b[a-z]{2}\b/);
+  if(m) return m[0].toUpperCase();
+  return '';
+}
+function countryTextWithFlag(text){
+  if(!text) return '';
+  // 已经有国旗 emoji 就直接返回
+  if(/[\uD83C][\uDDE6-\uDDFF]/.test(text)) return text;
+  const code=guessCountryCodeFromText(text);
+  if(!code) return text;
+  const flag=isoToFlag(code);
+  return flag ? (flag + ' ' + text) : text;
+}
+
+/* ====== 登录信息弹窗：带国旗 emoji、可复制 ====== */
 function modalLoginInfo(v){
   const wrap=document.createElement('div');
   wrap.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;';
@@ -1929,10 +1993,11 @@ function modalLoginInfo(v){
     addRow('赞助人','@'+v.donatedByUsername, v.donatedByUsername);
   }
 
-  // IP 归属（带 emoji 的 country 或 ipLocation）
-  const ipLocText = v.country || v.ipLocation || '';
-  if(ipLocText){
-    addRow('IP 归属', ipLocText);
+  // IP 归属（自动加上国旗 emoji）
+  const ipLocRaw = v.country || v.ipLocation || '';
+  const ipLocDisplay = ipLocRaw ? countryTextWithFlag(ipLocRaw) : '';
+  if(ipLocDisplay){
+    addRow('IP 归属', ipLocDisplay);
   }
 
   // IP 地址 & 端口分开
