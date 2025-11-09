@@ -23,8 +23,8 @@ interface VPSServer {
   donatedByUsername: string;
   donatedAt: number;
   status: 'active' | 'inactive' | 'failed';
-  note?: string;
-  adminNote?: string;
+  note?: string;        // 用户备注（前台可见）
+  adminNote?: string;   // 管理员备注（仅后台可见）
   country: string;
   traffic: string;
   expiryDate: string;
@@ -452,7 +452,7 @@ app.get('/api/user/donations', requireAuth, async (c) => {
     authType: d.authType,
     donatedAt: d.donatedAt,
     status: d.status,
-    note: d.note,          // 仅本人可见
+    note: d.note,          // 用户自己和前端可见
     country: d.country,
     traffic: d.traffic,
     expiryDate: d.expiryDate,
@@ -500,6 +500,7 @@ app.get('/api/leaderboard', async (c) => {
       specs: v.specs || '未填写',
       status: v.status,
       donatedAt: v.donatedAt,
+      note: v.note || '',          // 用户备注对前台可见
     });
     stats.set(v.donatedBy, s);
   }
@@ -520,6 +521,7 @@ app.get('/api/user/:username/donations', async (c) => {
     specs: v.specs || '未填写',
     status: v.status,
     donatedAt: v.donatedAt,
+    note: v.note || '',        // 用户备注
   }));
   return c.json({
     success: true,
@@ -850,7 +852,7 @@ body[data-theme="light"] .stat-card{
       </h1>
       <p class="mt-3 text-sm md:text-base text-slate-300 leading-relaxed">
         这是一个完全非盈利的公益项目，没有运营团队，只有我一个人维护。<br/>
-        榜单仅展示「国家 / 区域 + IP 归属地 + 流量 + 到期时间」，不会公开任何 IP 或端口信息。
+        榜单仅展示「国家 / 区域 + IP 归属地 + 流量 + 到期时间 + 投喂备注」，不会公开任何 IP 或端口信息。
       </p>
       <button onclick="gotoDonatePage()"
         class="mt-5 inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold shadow-lg shadow-cyan-500/30 hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950">
@@ -979,7 +981,8 @@ async function loadLeaderboard(){
             '<span>流量/带宽：'+(srv.traffic||'未填写')+'</span>'+
             '<span>到期：'+(srv.expiryDate||'未填写')+'</span>'+
           '</div>'+
-          (srv.specs?'<div class="text-[11px] text-slate-400 mt-1">配置：'+srv.specs+'</div>':'');
+          (srv.specs?'<div class="text-[11px] text-slate-400 mt-1">配置：'+srv.specs+'</div>':'')+
+          (srv.note?'<div class="text-[11px] text-amber-300/90 mt-1">投喂者备注：'+srv.note+'</div>':'');
         list.appendChild(d);
       });
 
@@ -1110,7 +1113,7 @@ body[data-theme="light"] .card{background-color:#ffffff;border-color:#e2e8f0;col
         </div>
 
         <div>
-          <label class="block mb-1 text-xs text-slate-300">投喂备注（可选，仅自己 & 管理员可见）</label>
+          <label class="block mb-1 text-xs text-slate-300">投喂备注（可选，将在前台展示）</label>
           <textarea name="note" rows="2" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500"></textarea>
         </div>
 
@@ -1231,18 +1234,15 @@ async function submitDonateForm(e){
     if(!res.ok || !json.success){
       msg.textContent = json.message || '提交失败';
       msg.classList.add('text-red-400');
-      alert('投喂失败：'+(json.message || '请检查 IP、端口、密码/私钥是否正确'));
     }else{
       msg.textContent = json.message || '投喂成功';
       msg.classList.add('text-emerald-400');
-      alert(json.message || '投喂成功');
       form.reset();
       loadDonations();
     }
   }catch(e){
     msg.textContent = '提交异常，请稍后重试';
     msg.classList.add('text-red-400');
-    alert('投喂异常：'+e);
   }finally{
     btn.disabled = false;
     btn.textContent = originText;
@@ -1491,14 +1491,16 @@ function renderAdmin(root, adminName){
   });
 
   document.getElementById('filter-btn').addEventListener('click',()=>{
-    const val = (document.getElementById('filter-input') as HTMLInputElement).value.trim();
+    const inputEl = document.getElementById('filter-input');
+    const val = inputEl ? inputEl.value.trim() : '';
     searchFilter = val;
     userFilter = '';
     renderVpsList();
   });
   document.getElementById('filter-clear-btn').addEventListener('click',()=>{
     searchFilter = '';
-    (document.getElementById('filter-input') as HTMLInputElement).value = '';
+    const inputEl = document.getElementById('filter-input');
+    if(inputEl){ inputEl.value = ''; }
     userFilter = '';
     renderVpsList();
   });
