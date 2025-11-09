@@ -686,18 +686,30 @@ function statusCls(s){ return s==='active'?'badge-ok':(s==='failed'?'badge-fail'
 
 async function loadLeaderboard(){
   const box = document.getElementById('leaderboard'), countEl=document.getElementById('leaderboard-count');
+  
+  // 设置超时
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('加载超时')), 8000)
+  );
+  
   try{
-    const res = await fetch('/api/leaderboard',{credentials:'same-origin',cache:'no-store'}); 
+    const fetchPromise = fetch('/api/leaderboard',{
+      credentials:'same-origin',
+      cache:'no-store'
+    });
+    
+    const res = await Promise.race([fetchPromise, timeoutPromise]);
     
     if(!res.ok) {
-      box.innerHTML='<div class="text-red-400 text-sm">加载失败: HTTP '+res.status+'</div>'; 
+      box.innerHTML='<div class="text-red-400 text-sm">加载失败: HTTP '+res.status+'<br><button onclick="loadLeaderboard()" class="mt-2 px-3 py-1 rounded-lg border">重试</button></div>'; 
       return; 
     }
     
     const j = await res.json();
+    console.log('Leaderboard data:', j);
     
     if(!j.success){ 
-      box.innerHTML='<div class="text-red-400 text-sm">加载失败: '+(j.message||'未知错误')+'</div>'; 
+      box.innerHTML='<div class="text-red-400 text-sm">加载失败: '+(j.message||'未知错误')+'<br><button onclick="loadLeaderboard()" class="mt-2 px-3 py-1 rounded-lg border">重试</button></div>'; 
       return; 
     }
     
@@ -741,7 +753,7 @@ async function loadLeaderboard(){
     });
   }catch(err){ 
     console.error('Leaderboard load error:', err);
-    box.innerHTML='<div class="text-red-400 text-sm">加载异常: '+err.message+'</div>'; 
+    box.innerHTML='<div class="text-red-400 text-sm">'+err.message+'<br><button onclick="loadLeaderboard()" class="mt-2 px-3 py-1 rounded-lg border">重试</button></div>'; 
   }
 }
 
@@ -1018,9 +1030,28 @@ function scls(s){ return s==='active'?'badge-ok':(s==='failed'?'badge-fail':'bad
 
 async function checkAdmin(){
   const root=document.getElementById('app-root');
+  
+  // 设置5秒超时，避免永久等待
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('请求超时')), 5000)
+  );
+  
   try{
-    const r = await fetch('/api/admin/check-session',{credentials:'same-origin',cache:'no-store'});
+    const fetchPromise = fetch('/api/admin/check-session',{
+      credentials:'same-origin',
+      cache:'no-store'
+    });
+    
+    const r = await Promise.race([fetchPromise, timeoutPromise]);
+    
+    if(!r.ok) {
+      console.error('Check session failed with status:', r.status);
+      renderLogin(root);
+      return;
+    }
+    
     const j = await r.json();
+    console.log('Session check result:', j);
     
     if(!j.success || !j.isAdmin){ 
       renderLogin(root); 
@@ -1029,6 +1060,7 @@ async function checkAdmin(){
     }
   }catch(err){ 
     console.error('Admin check error:', err);
+    // 超时或出错时显示登录界面
     renderLogin(root); 
   }
 }
