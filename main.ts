@@ -452,7 +452,7 @@ app.get('/api/user/donations', requireAuth, async (c) => {
     authType: d.authType,
     donatedAt: d.donatedAt,
     status: d.status,
-    note: d.note,          // 用户自己和前端可见
+    note: d.note,          // 前台显示用户备注
     country: d.country,
     traffic: d.traffic,
     expiryDate: d.expiryDate,
@@ -500,7 +500,7 @@ app.get('/api/leaderboard', async (c) => {
       specs: v.specs || '未填写',
       status: v.status,
       donatedAt: v.donatedAt,
-      note: v.note || '',          // 用户备注对前台可见
+      note: v.note || '',          // 榜单里显示的备注
     });
     stats.set(v.donatedBy, s);
   }
@@ -521,7 +521,7 @@ app.get('/api/user/:username/donations', async (c) => {
     specs: v.specs || '未填写',
     status: v.status,
     donatedAt: v.donatedAt,
-    note: v.note || '',        // 用户备注
+    note: v.note || '',
   }));
   return c.json({
     success: true,
@@ -833,6 +833,16 @@ body[data-theme="light"] .stat-card{
   border-color:#e2e8f0;
   color:#0f172a;
 }
+
+/* 浅色模式文字对比度增强 */
+body[data-theme="light"] .text-slate-300 { color:#475569; }
+body[data-theme="light"] .text-slate-400 { color:#64748b; }
+body[data-theme="light"] .text-slate-500 { color:#6b7280; }
+body[data-theme="light"] .text-sky-300 { color:#0369a1; }
+body[data-theme="light"] .text-emerald-400 { color:#047857; }
+body[data-theme="light"] .text-red-400 { color:#b91c1c; }
+body[data-theme="light"] .text-amber-300,
+body[data-theme="light"] .text-amber-300\\/90 { color:#b45309; }
 </style>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100" data-theme="dark">
@@ -861,7 +871,7 @@ body[data-theme="light"] .stat-card{
     </div>
     <button id="theme-toggle"
       class="text-xs rounded-lg border border-slate-700 px-3 py-1 hover:bg-slate-800 self-start"
-      onclick="toggleTheme()">浅色模式</button>
+      onclick="toggleTheme()">深色模式</button>
   </header>
 
   <section class="mb-6">
@@ -935,7 +945,7 @@ async function loadLeaderboard(){
       const profileUrl = 'https://linux.do/u/' + encodeURIComponent(uname);
 
       const wrap = document.createElement('div');
-      wrap.className = 'card rounded-2xl border border-slate-800 bg-slate-900/60 p-4 shadow-sm shadow-slate-900/60';
+      wrap.className = 'card rounded-2xl border border-slate-200/70 md:border-slate-300 bg-slate-900/60 md:bg-slate-50 p-4 shadow-sm shadow-slate-900/40 md:shadow-sm';
 
       const titleRow = document.createElement('div');
       titleRow.className = 'flex items-center justify-between gap-2 mb-2';
@@ -959,7 +969,7 @@ async function loadLeaderboard(){
       list.className = 'space-y-2 mt-2 text-xs';
       (item.servers||[]).forEach((srv)=>{
         const d = document.createElement('div');
-        d.className = 'rounded-xl bg-slate-950/60 border border-slate-800 px-3 py-2 flex flex-col gap-1';
+        d.className = 'rounded-xl bg-slate-950/60 md:bg-slate-100 border border-slate-700/80 md:border-slate-300 px-3 py-2 flex flex-col gap-1';
 
         const statusColor =
           srv.status==='active' ? 'text-emerald-400' :
@@ -972,17 +982,17 @@ async function loadLeaderboard(){
 
         d.innerHTML =
           '<div class="flex items-center justify-between gap-2">'+
-            '<span class="font-medium text-slate-100 text-xs">'+
+            '<span class="font-medium text-slate-100 md:text-slate-800 text-xs">'+
               (srv.country||'未填写') + (srv.ipLocation?' · '+srv.ipLocation:'')+
             '</span>'+
             '<span class="'+statusColor+' text-[11px]">'+statusText+'</span>'+
           '</div>'+
-          '<div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-300 mt-1">'+
+          '<div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-300 md:text-slate-600 mt-1">'+
             '<span>流量/带宽：'+(srv.traffic||'未填写')+'</span>'+
             '<span>到期：'+(srv.expiryDate||'未填写')+'</span>'+
           '</div>'+
-          (srv.specs?'<div class="text-[11px] text-slate-400 mt-1">配置：'+srv.specs+'</div>':'')+
-          (srv.note?'<div class="text-[11px] text-amber-300/90 mt-1">投喂者备注：'+srv.note+'</div>':'');
+          (srv.specs?'<div class="text-[11px] text-slate-400 md:text-slate-500 mt-1">配置：'+srv.specs+'</div>':'')+
+          (srv.note?'<div class="text-[11px] text-amber-300/90 md:text-amber-700 mt-1">投喂者备注：'+srv.note+'</div>':'');
         list.appendChild(d);
       });
 
@@ -1021,6 +1031,16 @@ body[data-theme="light"]{background-color:#f8fafc;color:#020617;color-scheme:lig
 .panel,.card,.stat-card{transition:background-color .2s ease,color .2s ease,border-color .2s ease;}
 body[data-theme="light"] .panel,
 body[data-theme="light"] .card{background-color:#ffffff;border-color:#e2e8f0;color:#0f172a;}
+
+/* 浅色模式文字对比度增强 */
+body[data-theme="light"] .text-slate-300 { color:#475569; }
+body[data-theme="light"] .text-slate-400 { color:#64748b; }
+body[data-theme="light"] .text-slate-500 { color:#6b7280; }
+body[data-theme="light"] .text-sky-300 { color:#0369a1; }
+body[data-theme="light"] .text-emerald-400 { color:#047857; }
+body[data-theme="light"] .text-red-400 { color:#b91c1c; }
+body[data-theme="light"] .text-amber-300,
+body[data-theme="light"] .text-amber-300\\/90 { color:#b45309; }
 </style>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100" data-theme="dark">
@@ -1048,32 +1068,32 @@ body[data-theme="light"] .card{background-color:#ffffff;border-color:#e2e8f0;col
   </header>
 
   <main class="grid md:grid-cols-2 gap-6 items-start">
-    <section class="panel rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-slate-900/70">
+    <section class="panel rounded-2xl border border-slate-800 bg-slate-900/70 md:bg-white p-4 shadow-lg shadow-slate-900/70 md:shadow">
       <h2 class="text-lg font-semibold mb-2">🧡 提交新的 VPS 投喂</h2>
-      <p class="text-xs text-slate-300 mb-4 leading-relaxed">
+      <p class="text-xs text-slate-300 md:text-slate-600 mb-4 leading-relaxed">
         请确保服务器是你有控制权的机器，并允许用于公益节点。禁止长时间占满带宽、刷流量、倒卖账号等行为。
       </p>
 
       <form id="donate-form" class="space-y-3 text-sm">
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block mb-1 text-xs text-slate-300">服务器 IP（必填）</label>
-            <input name="ip" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
+            <label class="block mb-1 text-xs text-slate-300 md:text-slate-700">服务器 IP（必填）</label>
+            <input name="ip" required class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1.5 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500" />
           </div>
           <div>
-            <label class="block mb-1 text-xs text-slate-300">端口（必填）</label>
-            <input name="port" required type="number" min="1" max="65535" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
+            <label class="block mb-1 text-xs text-slate-300 md:text-slate-700">端口（必填）</label>
+            <input name="port" required type="number" min="1" max="65535" class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1.5 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500" />
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block mb-1 text-xs text-slate-300">系统用户名（必填）</label>
-            <input name="username" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
+            <label class="block mb-1 text-xs text-slate-300 md:text-slate-700">系统用户名（必填）</label>
+            <input name="username" required class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1.5 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500" />
           </div>
           <div>
-            <label class="block mb-1 text-xs text-slate-300">认证方式</label>
-            <select name="authType" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500">
+            <label class="block mb-1 text-xs text-slate-300 md:text-slate-700">认证方式</label>
+            <select name="authType" class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1.5 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500">
               <option value="password">密码</option>
               <option value="key">SSH 私钥</option>
             </select>
@@ -1081,40 +1101,40 @@ body[data-theme="light"] .card{background-color:#ffffff;border-color:#e2e8f0;col
         </div>
 
         <div id="password-field">
-          <label class="block mb-1 text-xs text-slate-300">密码（密码登录必填）</label>
-          <input name="password" type="password" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
+          <label class="block mb-1 text-xs text-slate-300 md:text-slate-700">密码（密码登录必填）</label>
+          <input name="password" type="password" class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1.5 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500" />
         </div>
 
         <div id="key-field" class="hidden">
-          <label class="block mb-1 text-xs text-slate-300">SSH 私钥（密钥登录必填）</label>
-          <textarea name="privateKey" rows="4" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea>
+          <label class="block mb-1 text-xs text-slate-300 md:text-slate-700">SSH 私钥（密钥登录必填）</label>
+          <textarea name="privateKey" rows="4" class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1.5 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block mb-1 text-xs text-slate-300">国家 / 区域（必填）</label>
-            <input name="country" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
+            <label class="block mb-1 text-xs text-slate-300 md:text-slate-700">国家 / 区域（必填）</label>
+            <input name="country" required class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1.5 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500" />
           </div>
           <div>
-            <label class="block mb-1 text-xs text-slate-300">流量 / 带宽（必填）</label>
-            <input name="traffic" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
+            <label class="block mb-1 text-xs text-slate-300 md:text-slate-700">流量 / 带宽（必填）</label>
+            <input name="traffic" required class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1.5 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500" />
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block mb-1 text-xs text-slate-300">到期日期（必填）</label>
-            <input name="expiryDate" required type="date" min="${minDate}" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
+            <label class="block mb-1 text-xs text-slate-300 md:text-slate-700">到期日期（必填）</label>
+            <input name="expiryDate" required type="date" min="${minDate}" class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1.5 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500" />
           </div>
           <div>
-            <label class="block mb-1 text-xs text-slate-300">配置描述（必填）</label>
-            <input name="specs" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
+            <label class="block mb-1 text-xs text-slate-300 md:text-slate-700">配置描述（必填）</label>
+            <input name="specs" required class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1.5 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500" />
           </div>
         </div>
 
         <div>
-          <label class="block mb-1 text-xs text-slate-300">投喂备注（可选，将在前台展示）</label>
-          <textarea name="note" rows="2" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500"></textarea>
+          <label class="block mb-1 text-xs text-slate-300 md:text-slate-700">投喂备注（可选，将在前台展示）</label>
+          <textarea name="note" rows="2" class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1.5 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500"></textarea>
         </div>
 
         <div id="donate-message" class="text-xs mt-1 min-h-[1.5rem]"></div>
@@ -1126,12 +1146,12 @@ body[data-theme="light"] .card{background-color:#ffffff;border-color:#e2e8f0;col
       </form>
     </section>
 
-    <section class="panel rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-slate-900/70">
+    <section class="panel rounded-2xl border border-slate-800 bg-slate-900/70 md:bg-white p-4 shadow-lg shadow-slate-900/70 md:shadow">
       <div class="flex items-center justify-between mb-2">
         <h2 class="text-lg font-semibold">📦 我的投喂记录</h2>
-        <button onclick="loadDonations()" class="text-[11px] rounded-lg border border-slate-700 px-2 py-1 hover:bg-slate-800">刷新</button>
+        <button onclick="loadDonations()" class="text-[11px] rounded-lg border border-slate-700 px-2 py-1 hover:bg-slate-800 md:hover:bg-slate-100">刷新</button>
       </div>
-      <div id="donations-list" class="space-y-3 text-xs text-slate-200">
+      <div id="donations-list" class="space-y-3 text-xs text-slate-200 md:text-slate-700">
         <div class="text-slate-400 text-xs">正在加载...</div>
       </div>
     </section>
@@ -1143,7 +1163,7 @@ body[data-theme="light"] .card{background-color:#ffffff;border-color:#e2e8f0;col
 </div>
 
 <script>
-function updateThemeToggleText(){
+function updateThemeToggleText2(){
   const btn = document.getElementById('theme-toggle');
   if(!btn) return;
   const theme = document.body.getAttribute('data-theme') || 'dark';
@@ -1155,9 +1175,9 @@ function toggleTheme(){
   document.body.setAttribute('data-theme', next);
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('theme', next);
-  updateThemeToggleText();
+  updateThemeToggleText2();
 }
-updateThemeToggleText();
+updateThemeToggleText2();
 
 async function ensureLogin(){
   try{
@@ -1207,17 +1227,17 @@ async function submitDonateForm(e){
 
   const fd = new FormData(form);
   const payload = {
-    ip: fd.get('ip')?.toString().trim(),
-    port: Number(fd.get('port')?.toString().trim()),
-    username: fd.get('username')?.toString().trim(),
-    authType: fd.get('authType')?.toString(),
-    password: fd.get('password')?.toString(),
-    privateKey: fd.get('privateKey')?.toString(),
-    country: fd.get('country')?.toString().trim(),
-    traffic: fd.get('traffic')?.toString().trim(),
-    expiryDate: fd.get('expiryDate')?.toString().trim(),
-    specs: fd.get('specs')?.toString().trim(),
-    note: fd.get('note')?.toString().trim(),
+    ip: (fd.get('ip') || '').toString().trim(),
+    port: Number((fd.get('port') || '').toString().trim()),
+    username: (fd.get('username') || '').toString().trim(),
+    authType: (fd.get('authType') || '').toString(),
+    password: (fd.get('password') || '').toString(),
+    privateKey: (fd.get('privateKey') || '').toString(),
+    country: (fd.get('country') || '').toString().trim(),
+    traffic: (fd.get('traffic') || '').toString().trim(),
+    expiryDate: (fd.get('expiryDate') || '').toString().trim(),
+    specs: (fd.get('specs') || '').toString().trim(),
+    note: (fd.get('note') || '').toString().trim(),
   };
 
   btn.disabled = true;
@@ -1270,7 +1290,7 @@ async function loadDonations(){
     box.innerHTML = '';
     data.forEach((vps)=>{
       const div = document.createElement('div');
-      div.className = 'card rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2';
+      div.className = 'card rounded-xl border border-slate-800 md:border-slate-300 bg-slate-950/60 md:bg-slate-50 px-3 py-2';
 
       const statusColor =
         vps.status === 'active' ? 'text-emerald-400' :
@@ -1289,17 +1309,17 @@ async function loadDonations(){
 
       div.innerHTML =
         '<div class="flex items-center justify-between gap-2 mb-1">'+
-          '<div class="text-[11px] text-slate-200">IP：'+vps.ip+':'+vps.port+'</div>'+
+          '<div class="text-[11px] text-slate-200 md:text-slate-800">IP：'+vps.ip+':'+vps.port+'</div>'+
           '<div class="'+statusColor+' text-[11px]">'+statusText+'</div>'+
         '</div>'+
-        '<div class="text-[11px] text-slate-300 mb-0.5">投喂者：<a href="'+profileUrl+'" target="_blank" class="underline text-sky-300 hover:text-cyan-300">@'+uname+'</a></div>'+
-        '<div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-300">'+
+        '<div class="text-[11px] text-slate-300 md:text-slate-600 mb-0.5">投喂者：<a href="'+profileUrl+'" target="_blank" class="underline text-sky-300 hover:text-cyan-300">@'+uname+'</a></div>'+
+        '<div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-300 md:text-slate-600">'+
           '<span>地区：'+(vps.country||'未填写')+(vps.ipLocation?' · '+vps.ipLocation:'')+'</span>'+
           '<span>流量/带宽：'+(vps.traffic||'未填写')+'</span>'+
           '<span>到期：'+(vps.expiryDate||'未填写')+'</span>'+
         '</div>'+
-        '<div class="text-[11px] text-slate-400 mt-1">配置：'+(vps.specs||'未填写')+'</div>'+
-        (vps.note?'<div class="text-[11px] text-amber-300/90 mt-1">我的备注：'+vps.note+'</div>':'')+
+        '<div class="text-[11px] text-slate-400 md:text-slate-500 mt-1">配置：'+(vps.specs||'未填写')+'</div>'+
+        (vps.note?'<div class="text-[11px] text-amber-300/90 md:text-amber-700 mt-1">我的备注：'+vps.note+'</div>':'')+
         (donatedAtText?'<div class="text-[11px] text-slate-500 mt-1">投喂时间：'+donatedAtText+'</div>':'');
 
       box.appendChild(div);
@@ -1335,6 +1355,16 @@ body[data-theme="light"] .panel,
 body[data-theme="light"] .card,
 body[data-theme="light"] .stat-card{background-color:#ffffff;border-color:#e2e8f0;color:#0f172a;}
 body[data-theme="light"] .stat-card-dark{background-color:#f1f5f9;}
+
+/* 浅色模式文字对比度增强 */
+body[data-theme="light"] .text-slate-300 { color:#475569; }
+body[data-theme="light"] .text-slate-400 { color:#64748b; }
+body[data-theme="light"] .text-slate-500 { color:#6b7280; }
+body[data-theme="light"] .text-sky-300 { color:#0369a1; }
+body[data-theme="light"] .text-emerald-400 { color:#047857; }
+body[data-theme="light"] .text-red-400 { color:#b91c1c; }
+body[data-theme="light"] .text-amber-300,
+body[data-theme="light"] .text-amber-300\\/80 { color:#b45309; }
 </style>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100" data-theme="dark">
@@ -1356,7 +1386,7 @@ let statusFilter = 'all';
 let userFilter = '';
 let searchFilter = '';
 
-function updateThemeToggleText(){
+function updateThemeToggleTextAdmin(){
   const btn = document.getElementById('theme-toggle');
   if(!btn) return;
   const theme = document.body.getAttribute('data-theme') || 'dark';
@@ -1368,7 +1398,7 @@ function toggleTheme(){
   document.body.setAttribute('data-theme', next);
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('theme', next);
-  updateThemeToggleText();
+  updateThemeToggleTextAdmin();
 }
 
 async function checkAdmin(){
@@ -1412,7 +1442,7 @@ function renderLogin(root){
     msg.textContent = '';
     msg.className = 'text-[11px] h-4';
     const fd = new FormData(e.target);
-    const password = fd.get('password')?.toString() || '';
+    const password = (fd.get('password') || '').toString();
     try{
       const res = await fetch('/api/admin/login',{
         method:'POST',
@@ -1448,7 +1478,7 @@ function renderAdmin(root, adminName){
       '<button id="btn-admin-logout" class="text-[11px] rounded-lg border border-slate-700 px-2 py-1 hover:bg-slate-800">退出</button>'+
     '</div>';
   root.appendChild(header);
-  updateThemeToggleText();
+  updateThemeToggleTextAdmin();
   document.getElementById('theme-toggle').addEventListener('click',toggleTheme);
   document.getElementById('btn-admin-logout').addEventListener('click',adminLogout);
 
@@ -1582,39 +1612,57 @@ async function loadConfig(){
     const res = await fetch('/api/admin/config/oauth');
     const json = await res.json();
     const cfg = json.data || {};
+
     wrap.innerHTML =
+      '<div class="flex items-center justify-between mb-3">'+
+        '<h2 class="text-sm font-semibold text-slate-200 md:text-slate-800">系统配置</h2>'+
+        '<button id="btn-toggle-oauth" class="text-[11px] rounded-lg border border-slate-600 px-3 py-1 hover:bg-slate-800 md:hover:bg-slate-100 text-slate-200 md:text-slate-700">展开 OAuth 配置</button>'+
+      '</div>'+
       '<div class="grid md:grid-cols-2 gap-4">'+
-        '<div class="panel rounded-2xl border border-slate-800 bg-slate-900/80 p-4">'+
+        '<div id="oauth-panel" class="panel rounded-2xl border border-slate-800 bg-slate-900/80 md:bg-white p-4 hidden">'+
           '<h2 class="text-sm font-semibold mb-2">OAuth 配置</h2>'+
           '<form id="oauth-form" class="space-y-2 text-[11px]">'+
             '<div>'+
-              '<label class="block mb-1 text-slate-300">Client ID</label>'+
-              '<input name="clientId" value="'+(cfg.clientId||'')+'" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
+              '<label class="block mb-1 text-slate-300 md:text-slate-700">Client ID</label>'+
+              '<input name="clientId" value="'+(cfg.clientId||'')+'" class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
             '</div>'+
             '<div>'+
-              '<label class="block mb-1 text-slate-300">Client Secret</label>'+
-              '<input name="clientSecret" value="'+(cfg.clientSecret||'')+'" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
+              '<label class="block mb-1 text-slate-300 md:text-slate-700">Client Secret</label>'+
+              '<input name="clientSecret" value="'+(cfg.clientSecret||'')+'" class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
             '</div>'+
             '<div>'+
-              '<label class="block mb-1 text-slate-300">Redirect URI</label>'+
-              '<input name="redirectUri" value="'+(cfg.redirectUri||'')+'" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
+              '<label class="block mb-1 text-slate-300 md:text-slate-700">Redirect URI</label>'+
+              '<input name="redirectUri" value="'+(cfg.redirectUri||'')+'" class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
             '</div>'+
             '<div id="oauth-msg" class="text-[10px] h-4 mt-1"></div>'+
             '<button type="submit" class="mt-1 inline-flex items-center rounded-lg bg-cyan-500 px-3 py-1 text-[11px] font-semibold hover:bg-cyan-400">保存 OAuth</button>'+
           '</form>'+
         '</div>'+
-        '<div class="panel rounded-2xl border border-slate-800 bg-slate-900/80 p-4">'+
+        '<div class="panel rounded-2xl border border-slate-800 bg-slate-900/80 md:bg-white p-4">'+
           '<h2 class="text-sm font-semibold mb-2">管理员密码</h2>'+
           '<form id="pwd-form" class="space-y-2 text-[11px]">'+
             '<div>'+
-              '<label class="block mb-1 text-slate-300">新密码（至少 6 位）</label>'+
-              '<input name="password" type="password" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
+              '<label class="block mb-1 text-slate-300 md:text-slate-700">新密码（至少 6 位）</label>'+
+              '<input name="password" type="password" class="w-full rounded-lg bg-slate-950 md:bg-slate-50 border border-slate-700 md:border-slate-300 px-2 py-1 text-xs text-slate-100 md:text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
             '</div>'+
             '<div id="pwd-msg" class="text-[10px] h-4 mt-1"></div>'+
             '<button type="submit" class="mt-1 inline-flex items-center rounded-lg bg-slate-700 px-3 py-1 text-[11px] font-semibold hover:bg-slate-600">修改密码</button>'+
           '</form>'+
         '</div>'+
       '</div>';
+
+    const toggleBtn = document.getElementById('btn-toggle-oauth');
+    const oauthPanel = document.getElementById('oauth-panel');
+    toggleBtn.addEventListener('click', ()=>{
+      const hidden = oauthPanel.classList.contains('hidden');
+      if(hidden){
+        oauthPanel.classList.remove('hidden');
+        toggleBtn.textContent = '收起 OAuth 配置';
+      }else{
+        oauthPanel.classList.add('hidden');
+        toggleBtn.textContent = '展开 OAuth 配置';
+      }
+    });
 
     document.getElementById('oauth-form').addEventListener('submit', async (e)=>{
       e.preventDefault();
@@ -1623,9 +1671,9 @@ async function loadConfig(){
       msg.className = 'text-[10px] h-4 mt-1';
       const fd = new FormData(e.target);
       const payload = {
-        clientId: fd.get('clientId')?.toString().trim(),
-        clientSecret: fd.get('clientSecret')?.toString().trim(),
-        redirectUri: fd.get('redirectUri')?.toString().trim(),
+        clientId: (fd.get('clientId') || '').toString().trim(),
+        clientSecret: (fd.get('clientSecret') || '').toString().trim(),
+        redirectUri: (fd.get('redirectUri') || '').toString().trim(),
       };
       try{
         const res2 = await fetch('/api/admin/config/oauth',{
@@ -1653,7 +1701,7 @@ async function loadConfig(){
       msg.textContent = '';
       msg.className = 'text-[10px] h-4 mt-1';
       const fd = new FormData(e.target);
-      const payload = { password: fd.get('password')?.toString().trim() };
+      const payload = { password: (fd.get('password') || '').toString().trim() };
       try{
         const res2 = await fetch('/api/admin/config/password',{
           method:'PUT',
@@ -1673,6 +1721,7 @@ async function loadConfig(){
         msg.classList.add('text-red-400');
       }
     });
+
   }catch(e){
     wrap.innerHTML = '<div class="text-red-400 text-xs mb-3">系统配置加载异常</div>';
   }
@@ -1733,7 +1782,7 @@ function renderVpsList(){
   list.innerHTML = '';
   filtered.forEach((v)=>{
     const card = document.createElement('div');
-    card.className = 'card rounded-2xl border border-slate-800 bg-slate-900/80 p-3 flex flex-col gap-2 text-xs';
+    card.className = 'card rounded-2xl border border-slate-800 md:border-slate-300 bg-slate-900/80 md:bg-white p-3 flex flex-col gap-2 text-xs';
 
     const statusColor =
       v.status==='active' ? 'text-emerald-400' :
@@ -1752,35 +1801,35 @@ function renderVpsList(){
 
     card.innerHTML =
       '<div class="flex items-center justify-between gap-2">'+
-        '<div class="text-[11px] text-slate-200">IP：'+v.ip+':'+v.port+'</div>'+
+        '<div class="text-[11px] text-slate-200 md:text-slate-800">IP：'+v.ip+':'+v.port+'</div>'+
         '<div class="'+statusColor+' text-[11px]">'+statusText+'</div>'+
       '</div>'+
-      '<div class="flex flex-wrap gap-2 text-[11px] text-slate-300">'+
+      '<div class="flex flex-wrap gap-2 text-[11px] text-slate-300 md:text-slate-600">'+
         '<span>投喂者：<a href="'+profileUrl+'" target="_blank" class="underline hover:text-cyan-400">@'+uname+'</a></span>'+
         '<span>地区：'+(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'')+'</span>'+
       '</div>'+
-      '<div class="flex flex-wrap gap-2 text-[11px] text-slate-300">'+
+      '<div class="flex flex-wrap gap-2 text-[11px] text-slate-300 md:text-slate-600">'+
         '<span>流量/带宽：'+(v.traffic||'未填写')+'</span>'+
         '<span>到期：'+(v.expiryDate||'未填写')+'</span>'+
       '</div>'+
-      '<div class="text-[11px] text-slate-400">配置：'+(v.specs||'未填写')+'</div>'+
-      (v.note?'<div class="text-[11px] text-amber-300/80">用户备注：'+v.note+'</div>':'')+
-      (v.adminNote?'<div class="text-[11px] text-cyan-300/80">管理员备注：'+v.adminNote+'</div>':'')+
+      '<div class="text-[11px] text-slate-400 md:text-slate-500">配置：'+(v.specs||'未填写')+'</div>'+
+      (v.note?'<div class="text-[11px] text-amber-300/80 md:text-amber-700">用户备注：'+v.note+'</div>':'')+
+      (v.adminNote?'<div class="text-[11px] text-cyan-300/80 md:text-cyan-700">管理员备注：'+v.adminNote+'</div>':'')+
       (donatedAtText?'<div class="text-[11px] text-slate-500">投喂时间：'+donatedAtText+'</div>':'')+
       '<details class="mt-1">'+
-        '<summary class="cursor-pointer text-[11px] text-cyan-300">查看详情</summary>'+
-        '<div class="mt-1 space-y-1 text-[11px] text-slate-300">'+
+        '<summary class="cursor-pointer text-[11px] text-cyan-300 md:text-cyan-700">查看详情</summary>'+
+        '<div class="mt-1 space-y-1 text-[11px] text-slate-300 md:text-slate-700">'+
           '<div>SSH 用户：'+v.username+'</div>'+
           '<div>认证方式：'+v.authType+'</div>'+
           (v.authType==='password' && v.password ? '<div>密码：'+v.password+'</div>' : '')+
           (v.authType==='key' && v.privateKey ? '<div class="break-all whitespace-pre-wrap">私钥：<br>'+v.privateKey+'</div>' : '')+
           '<div>验证状态：'+(v.verifyStatus||'unknown')+(v.verifyErrorMsg?' · '+v.verifyErrorMsg:'')+'</div>'+
           '<div class="flex flex-wrap gap-2 mt-1">'+
-            '<button class="px-2 py-1 rounded-lg border border-emerald-500/40 text-emerald-300 hover:bg-slate-800" data-action="mark" data-id="'+v.id+'">标记通过</button>'+
-            '<button class="px-2 py-1 rounded-lg border border-slate-500/40 text-slate-200 hover:bg-slate-800" data-action="inactive" data-id="'+v.id+'">设为未激活</button>'+
-            '<button class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-800" data-action="failed" data-id="'+v.id+'">设为失败</button>'+
-            '<button class="px-2 py-1 rounded-lg border border-amber-500/40 text-amber-300 hover:bg-slate-800" data-action="edit-notes" data-id="'+v.id+'">编辑信息</button>'+
-            '<button class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-900" data-action="delete" data-id="'+v.id+'">删除</button>'+
+            '<button class="px-2 py-1 rounded-lg border border-emerald-500/40 text-emerald-300 hover:bg-slate-800 md:hover:bg-slate-100" data-action="mark" data-id="'+v.id+'">标记通过</button>'+
+            '<button class="px-2 py-1 rounded-lg border border-slate-500/40 text-slate-200 md:text-slate-700 hover:bg-slate-800 md:hover:bg-slate-100" data-action="inactive" data-id="'+v.id+'">设为未激活</button>'+
+            '<button class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-800 md:hover:bg-slate-100" data-action="failed" data-id="'+v.id+'">设为失败</button>'+
+            '<button class="px-2 py-1 rounded-lg border border-amber-500/40 text-amber-300 hover:bg-slate-800 md:hover:bg-slate-100" data-action="edit-notes" data-id="'+v.id+'">编辑信息</button>'+
+            '<button class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-900 md:hover:bg-red-50" data-action="delete" data-id="'+v.id+'">删除</button>'+
           '</div>'+
         '</div>'+
       '</details>';
