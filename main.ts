@@ -130,10 +130,10 @@ async function checkPortReachable(ip: string, port: number): Promise<boolean> {
   }
 }
 
-// 一键验证：现在对所有 VPS 重新检测
+// 一键验证：对所有 VPS 检测
 async function batchVerifyVPS(): Promise<{ total: number; success: number; failed: number; details: any[] }> {
   const allVPS = await getAllVPS();
-  const toCheck = allVPS; // 不再只筛 pending，全量检测
+  const toCheck = allVPS;
 
   let successCount = 0;
   let failedCount = 0;
@@ -452,8 +452,7 @@ app.get('/api/user/donations', requireAuth, async (c) => {
     authType: d.authType,
     donatedAt: d.donatedAt,
     status: d.status,
-    note: d.note,
-    adminNote: d.adminNote,
+    note: d.note,          // 仅本人可见
     country: d.country,
     traffic: d.traffic,
     expiryDate: d.expiryDate,
@@ -462,6 +461,7 @@ app.get('/api/user/donations', requireAuth, async (c) => {
     verifyStatus: d.verifyStatus,
     lastVerifyAt: d.lastVerifyAt,
     verifyErrorMsg: d.verifyErrorMsg,
+    donatedByUsername: d.donatedByUsername,
   }));
   return c.json({ success: true, data: safe });
 });
@@ -498,8 +498,6 @@ app.get('/api/leaderboard', async (c) => {
       traffic: v.traffic || '未填写',
       expiryDate: v.expiryDate || '未填写',
       specs: v.specs || '未填写',
-      note: v.note,
-      adminNote: v.adminNote,
       status: v.status,
       donatedAt: v.donatedAt,
     });
@@ -520,8 +518,6 @@ app.get('/api/user/:username/donations', async (c) => {
     traffic: v.traffic || '未填写',
     expiryDate: v.expiryDate || '未填写',
     specs: v.specs || '未填写',
-    note: v.note,
-    adminNote: v.adminNote,
     status: v.status,
     donatedAt: v.donatedAt,
   }));
@@ -811,13 +807,13 @@ app.post('/api/admin/vps/batch-verify', requireAdmin, async (c) => {
   }
 });
 
-// ==================== /donate 页面（榜单 + 我要投喂按钮） ====================
+// ==================== /donate 页面 ====================
 app.get('/donate', (c) => {
   const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8" />
-<title>风萧萧兮公益机场 · VPS 投喂榜</title>
+<title>风萧萧公益机场 · VPS 投喂榜</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
@@ -849,8 +845,8 @@ body[data-theme="light"] .stat-card{
 <div class="max-w-5xl mx-auto px-4 py-10">
   <header class="mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
     <div>
-      <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 bg-clip-text text-transparent">
-        风萧萧兮公益机场 · VPS 投喂榜
+      <h1 class="text-3xl md:text-4xl font-bold bg-[linear-gradient(110deg,#22d3ee,45%,#38bdf8,65%,#a855f7,80%,#ec4899)] bg-clip-text text-transparent animate-pulse">
+        风萧萧公益机场 · VPS 投喂榜
       </h1>
       <p class="mt-3 text-sm md:text-base text-slate-300 leading-relaxed">
         这是一个完全非盈利的公益项目，没有运营团队，只有我一个人维护。<br/>
@@ -983,9 +979,7 @@ async function loadLeaderboard(){
             '<span>流量/带宽：'+(srv.traffic||'未填写')+'</span>'+
             '<span>到期：'+(srv.expiryDate||'未填写')+'</span>'+
           '</div>'+
-          (srv.specs?'<div class="text-[11px] text-slate-400 mt-1">配置：'+srv.specs+'</div>':'')+
-          (srv.note?'<div class="text-[11px] text-amber-300/80 mt-1">投喂者备注：'+srv.note+'</div>':'');
-
+          (srv.specs?'<div class="text-[11px] text-slate-400 mt-1">配置：'+srv.specs+'</div>':'');
         list.appendChild(d);
       });
 
@@ -1005,11 +999,17 @@ loadLeaderboard();
 
 // ==================== /donate/vps 页面 ====================
 app.get('/donate/vps', (c) => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const minDate = `${yyyy}-${mm}-${dd}`;
+
   const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8" />
-<title>风萧萧兮公益机场 · VPS 投喂中心</title>
+<title>风萧萧公益机场 · VPS 投喂榜 · 投喂中心</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
@@ -1032,12 +1032,10 @@ body[data-theme="light"] .card{background-color:#ffffff;border-color:#e2e8f0;col
 <div class="max-w-6xl mx-auto px-4 py-8">
   <header class="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
     <div>
-      <h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">
-        VPS 投喂中心
+      <h1 class="text-2xl md:text-3xl font-bold bg-[linear-gradient(110deg,#22d3ee,45%,#38bdf8,65%,#a855f7,80%,#ec4899)] bg-clip-text text-transparent animate-pulse">
+        风萧萧公益机场 · VPS 投喂榜
       </h1>
-      <p class="mt-2 text-sm text-slate-300">
-        仅已登录用户可见，可以提交新的 VPS 投喂，也可以查看和管理自己的投喂记录。
-      </p>
+      <p class="mt-1 text-xs text-slate-400">当前页面：VPS 投喂中心（提交新 VPS / 查看自己的投喂记录）</p>
     </div>
     <div class="flex items-center gap-3">
       <div id="user-info" class="text-sm text-slate-300"></div>
@@ -1049,25 +1047,25 @@ body[data-theme="light"] .card{background-color:#ffffff;border-color:#e2e8f0;col
   <main class="grid md:grid-cols-2 gap-6 items-start">
     <section class="panel rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-slate-900/70">
       <h2 class="text-lg font-semibold mb-2">🧡 提交新的 VPS 投喂</h2>
-      <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+      <p class="text-xs text-slate-300 mb-4 leading-relaxed">
         请确保服务器是你有控制权的机器，并允许用于公益节点。禁止长时间占满带宽、刷流量、倒卖账号等行为。
       </p>
 
       <form id="donate-form" class="space-y-3 text-sm">
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block mb-1 text-xs text-slate-300">服务器 IP</label>
+            <label class="block mb-1 text-xs text-slate-300">服务器 IP（必填）</label>
             <input name="ip" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
           </div>
           <div>
-            <label class="block mb-1 text-xs text-slate-300">端口</label>
+            <label class="block mb-1 text-xs text-slate-300">端口（必填）</label>
             <input name="port" required type="number" min="1" max="65535" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block mb-1 text-xs text-slate-300">系统用户名</label>
+            <label class="block mb-1 text-xs text-slate-300">系统用户名（必填）</label>
             <input name="username" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
           </div>
           <div>
@@ -1080,46 +1078,46 @@ body[data-theme="light"] .card{background-color:#ffffff;border-color:#e2e8f0;col
         </div>
 
         <div id="password-field">
-          <label class="block mb-1 text-xs text-slate-300">密码</label>
+          <label class="block mb-1 text-xs text-slate-300">密码（密码登录必填）</label>
           <input name="password" type="password" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
         </div>
 
         <div id="key-field" class="hidden">
-          <label class="block mb-1 text-xs text-slate-300">SSH 私钥</label>
+          <label class="block mb-1 text-xs text-slate-300">SSH 私钥（密钥登录必填）</label>
           <textarea name="privateKey" rows="4" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block mb-1 text-xs text-slate-300">国家 / 区域</label>
+            <label class="block mb-1 text-xs text-slate-300">国家 / 区域（必填）</label>
             <input name="country" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
           </div>
           <div>
-            <label class="block mb-1 text-xs text-slate-300">流量 / 带宽</label>
+            <label class="block mb-1 text-xs text-slate-300">流量 / 带宽（必填）</label>
             <input name="traffic" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block mb-1 text-xs text-slate-300">到期日期</label>
-            <input name="expiryDate" required type="date" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
+            <label class="block mb-1 text-xs text-slate-300">到期日期（必填）</label>
+            <input name="expiryDate" required type="date" min="${minDate}" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
           </div>
           <div>
-            <label class="block mb-1 text-xs text-slate-300">配置描述</label>
+            <label class="block mb-1 text-xs text-slate-300">配置描述（必填）</label>
             <input name="specs" required class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" />
           </div>
         </div>
 
         <div>
-          <label class="block mb-1 text-xs text-slate-300">投喂备注（可选）</label>
+          <label class="block mb-1 text-xs text-slate-300">投喂备注（可选，仅自己 & 管理员可见）</label>
           <textarea name="note" rows="2" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500"></textarea>
         </div>
 
-        <div id="donate-message" class="text-xs mt-1 h-4"></div>
+        <div id="donate-message" class="text-xs mt-1 min-h-[1.5rem]"></div>
 
-        <button type="submit"
-          class="mt-2 inline-flex items-center justify-center rounded-xl bg-cyan-500 px-4 py-2 text-xs font-semibold shadow-lg shadow-cyan-500/30 hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950">
+        <button id="donate-submit-btn" type="submit"
+          class="mt-1 inline-flex items-center justify-center rounded-xl bg-cyan-500 px-4 py-2 text-xs font-semibold shadow-lg shadow-cyan-500/30 hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950">
           提交投喂
         </button>
       </form>
@@ -1200,8 +1198,9 @@ async function submitDonateForm(e){
   e.preventDefault();
   const form = e.target;
   const msg = document.getElementById('donate-message');
+  const btn = document.getElementById('donate-submit-btn');
   msg.textContent = '';
-  msg.className = 'text-xs mt-1 h-4';
+  msg.className = 'text-xs mt-1 min-h-[1.5rem]';
 
   const fd = new FormData(form);
   const payload = {
@@ -1217,6 +1216,11 @@ async function submitDonateForm(e){
     specs: fd.get('specs')?.toString().trim(),
     note: fd.get('note')?.toString().trim(),
   };
+
+  btn.disabled = true;
+  const originText = btn.textContent;
+  btn.textContent = '提交中...';
+
   try{
     const res = await fetch('/api/donate',{
       method:'POST',
@@ -1227,15 +1231,21 @@ async function submitDonateForm(e){
     if(!res.ok || !json.success){
       msg.textContent = json.message || '提交失败';
       msg.classList.add('text-red-400');
+      alert('投喂失败：'+(json.message || '请检查 IP、端口、密码/私钥是否正确'));
     }else{
       msg.textContent = json.message || '投喂成功';
       msg.classList.add('text-emerald-400');
+      alert(json.message || '投喂成功');
       form.reset();
       loadDonations();
     }
   }catch(e){
     msg.textContent = '提交异常，请稍后重试';
     msg.classList.add('text-red-400');
+    alert('投喂异常：'+e);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originText;
   }
 }
 async function loadDonations(){
@@ -1289,7 +1299,7 @@ async function loadDonations(){
           '<span>到期：'+(vps.expiryDate||'未填写')+'</span>'+
         '</div>'+
         '<div class="text-[11px] text-slate-400 mt-1">配置：'+(vps.specs||'未填写')+'</div>'+
-        (vps.note?'<div class="text-[11px] text-amber-300/80 mt-1">我的备注：'+vps.note+'</div>':'')+
+        (vps.note?'<div class="text-[11px] text-amber-300/90 mt-1">我的备注：'+vps.note+'</div>':'')+
         (donatedAtText?'<div class="text-[11px] text-slate-500 mt-1">投喂时间：'+donatedAtText+'</div>':'');
 
       box.appendChild(div);
@@ -1314,7 +1324,7 @@ app.get('/admin', (c) => {
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8" />
-<title>风萧萧兮公益机场 · VPS 管理后台</title>
+<title>风萧萧公益机场 · VPS 管理后台</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
@@ -1344,6 +1354,7 @@ body[data-theme="light"] .stat-card-dark{background-color:#f1f5f9;}
 let allVpsList = [];
 let statusFilter = 'all';
 let userFilter = '';
+let searchFilter = '';
 
 function updateThemeToggleText(){
   const btn = document.getElementById('theme-toggle');
@@ -1370,6 +1381,7 @@ async function checkAdmin(){
     }else{
       renderAdmin(root, json.username);
       await loadStats();
+      await loadConfig();
       await loadVps();
     }
   }catch(e){
@@ -1427,7 +1439,7 @@ function renderAdmin(root, adminName){
   header.className = 'mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4';
   header.innerHTML =
     '<div>'+
-      '<h1 class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">VPS 管理后台</h1>'+
+      '<h1 class="text-2xl md:text-3xl font-bold bg-[linear-gradient(110deg,#22d3ee,45%,#38bdf8,65%,#a855f7,80%,#ec4899)] bg-clip-text text-transparent animate-pulse">VPS 管理后台</h1>'+
       '<p class="mt-2 text-xs text-slate-400">仅管理员可见，可查看全部投喂 VPS 与认证信息。</p>'+
     '</div>'+
     '<div class="flex items-center gap-3">'+
@@ -1444,17 +1456,27 @@ function renderAdmin(root, adminName){
   statsWrap.id = 'admin-stats';
   root.appendChild(statsWrap);
 
+  const configWrap = document.createElement('section');
+  configWrap.id = 'admin-config';
+  configWrap.className = 'mt-4';
+  root.appendChild(configWrap);
+
   const listWrap = document.createElement('section');
   listWrap.className = 'mt-6';
   listWrap.innerHTML =
-    '<div class="flex items-center justify-between mb-2">'+
+    '<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-2">'+
       '<h2 class="text-lg font-semibold">VPS 列表</h2>'+
-      '<div class="flex items-center gap-2 text-[11px] text-slate-400">'+
+      '<div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">'+
         '<span>状态筛选：</span>'+
         '<button data-status-filter="all" class="px-2 py-1 rounded-lg border border-slate-700 hover:bg-slate-800">全部</button>'+
         '<button data-status-filter="active" class="px-2 py-1 rounded-lg border border-emerald-500/40 text-emerald-300 hover:bg-slate-800">活跃</button>'+
         '<button data-status-filter="failed" class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-800">失败</button>'+
         '<button data-status-filter="inactive" class="px-2 py-1 rounded-lg border border-slate-500/40 text-slate-200 hover:bg-slate-800">未激活</button>'+
+        '<button data-status-filter="pending" class="px-2 py-1 rounded-lg border border-amber-500/40 text-amber-300 hover:bg-slate-800">待验证</button>'+
+        '<span class="ml-2">搜索：</span>'+
+        '<input id="filter-input" placeholder="按 IP / 用户名 / 备注 ..." class="rounded-lg bg-slate-950 border border-slate-700 px-2 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
+        '<button id="filter-btn" class="px-2 py-1 rounded-lg border border-slate-700 hover:bg-slate-800">搜索</button>'+
+        '<button id="filter-clear-btn" class="px-2 py-1 rounded-lg border border-slate-700 hover:bg-slate-800">清除</button>'+
       '</div>'+
     '</div>'+
     '<div id="vps-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>';
@@ -1466,6 +1488,19 @@ function renderAdmin(root, adminName){
       userFilter = '';
       renderVpsList();
     });
+  });
+
+  document.getElementById('filter-btn').addEventListener('click',()=>{
+    const val = (document.getElementById('filter-input') as HTMLInputElement).value.trim();
+    searchFilter = val;
+    userFilter = '';
+    renderVpsList();
+  });
+  document.getElementById('filter-clear-btn').addEventListener('click',()=>{
+    searchFilter = '';
+    (document.getElementById('filter-input') as HTMLInputElement).value = '';
+    userFilter = '';
+    renderVpsList();
   });
 }
 
@@ -1538,6 +1573,109 @@ async function loadStats(){
   }
 }
 
+async function loadConfig(){
+  const wrap = document.getElementById('admin-config');
+  wrap.innerHTML = '<div class="text-xs text-slate-400 mb-3">正在加载系统配置...</div>';
+  try{
+    const res = await fetch('/api/admin/config/oauth');
+    const json = await res.json();
+    const cfg = json.data || {};
+    wrap.innerHTML =
+      '<div class="grid md:grid-cols-2 gap-4">'+
+        '<div class="panel rounded-2xl border border-slate-800 bg-slate-900/80 p-4">'+
+          '<h2 class="text-sm font-semibold mb-2">OAuth 配置</h2>'+
+          '<form id="oauth-form" class="space-y-2 text-[11px]">'+
+            '<div>'+
+              '<label class="block mb-1 text-slate-300">Client ID</label>'+
+              '<input name="clientId" value="'+(cfg.clientId||'')+'" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
+            '</div>'+
+            '<div>'+
+              '<label class="block mb-1 text-slate-300">Client Secret</label>'+
+              '<input name="clientSecret" value="'+(cfg.clientSecret||'')+'" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
+            '</div>'+
+            '<div>'+
+              '<label class="block mb-1 text-slate-300">Redirect URI</label>'+
+              '<input name="redirectUri" value="'+(cfg.redirectUri||'')+'" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
+            '</div>'+
+            '<div id="oauth-msg" class="text-[10px] h-4 mt-1"></div>'+
+            '<button type="submit" class="mt-1 inline-flex items-center rounded-lg bg-cyan-500 px-3 py-1 text-[11px] font-semibold hover:bg-cyan-400">保存 OAuth</button>'+
+          '</form>'+
+        '</div>'+
+        '<div class="panel rounded-2xl border border-slate-800 bg-slate-900/80 p-4">'+
+          '<h2 class="text-sm font-semibold mb-2">管理员密码</h2>'+
+          '<form id="pwd-form" class="space-y-2 text-[11px]">'+
+            '<div>'+
+              '<label class="block mb-1 text-slate-300">新密码（至少 6 位）</label>'+
+              '<input name="password" type="password" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-500" />'+
+            '</div>'+
+            '<div id="pwd-msg" class="text-[10px] h-4 mt-1"></div>'+
+            '<button type="submit" class="mt-1 inline-flex items-center rounded-lg bg-slate-700 px-3 py-1 text-[11px] font-semibold hover:bg-slate-600">修改密码</button>'+
+          '</form>'+
+        '</div>'+
+      '</div>';
+
+    document.getElementById('oauth-form').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const msg = document.getElementById('oauth-msg');
+      msg.textContent = '';
+      msg.className = 'text-[10px] h-4 mt-1';
+      const fd = new FormData(e.target);
+      const payload = {
+        clientId: fd.get('clientId')?.toString().trim(),
+        clientSecret: fd.get('clientSecret')?.toString().trim(),
+        redirectUri: fd.get('redirectUri')?.toString().trim(),
+      };
+      try{
+        const res2 = await fetch('/api/admin/config/oauth',{
+          method:'PUT',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(payload),
+        });
+        const j2 = await res2.json();
+        if(!res2.ok || !j2.success){
+          msg.textContent = j2.message || '保存失败';
+          msg.classList.add('text-red-400');
+        }else{
+          msg.textContent = '已保存';
+          msg.classList.add('text-emerald-400');
+        }
+      }catch(e){
+        msg.textContent = '保存异常';
+        msg.classList.add('text-red-400');
+      }
+    });
+
+    document.getElementById('pwd-form').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const msg = document.getElementById('pwd-msg');
+      msg.textContent = '';
+      msg.className = 'text-[10px] h-4 mt-1';
+      const fd = new FormData(e.target);
+      const payload = { password: fd.get('password')?.toString().trim() };
+      try{
+        const res2 = await fetch('/api/admin/config/password',{
+          method:'PUT',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(payload),
+        });
+        const j2 = await res2.json();
+        if(!res2.ok || !j2.success){
+          msg.textContent = j2.message || '修改失败';
+          msg.classList.add('text-red-400');
+        }else{
+          msg.textContent = '已修改';
+          msg.classList.add('text-emerald-400');
+        }
+      }catch(e){
+        msg.textContent = '修改异常';
+        msg.classList.add('text-red-400');
+      }
+    });
+  }catch(e){
+    wrap.innerHTML = '<div class="text-red-400 text-xs mb-3">系统配置加载异常</div>';
+  }
+}
+
 async function loadVps(){
   const list = document.getElementById('vps-list');
   list.innerHTML = '<div class="text-xs text-slate-400">正在加载 VPS...</div>';
@@ -1561,6 +1699,7 @@ function renderVpsList(){
     list.innerHTML = '<div class="text-xs text-slate-400 col-span-full">暂无 VPS 记录</div>';
     return;
   }
+  const keyword = (searchFilter || '').toLowerCase();
   const filtered = allVpsList.filter((v)=>{
     let ok = true;
     if(statusFilter==='active') ok = v.status==='active';
@@ -1568,6 +1707,20 @@ function renderVpsList(){
     else if(statusFilter==='failed') ok = v.status==='failed';
     else if(statusFilter==='pending') ok = v.verifyStatus==='pending';
     if(userFilter) ok = ok && v.donatedByUsername===userFilter;
+
+    if(keyword){
+      const hay = [
+        v.ip,
+        String(v.port),
+        v.donatedByUsername,
+        v.country,
+        v.traffic,
+        v.specs,
+        v.note,
+      ].join(' ').toLowerCase();
+      ok = ok && hay.includes(keyword);
+    }
+
     return ok;
   });
   if(!filtered.length){
@@ -1624,16 +1777,12 @@ function renderVpsList(){
             '<button class="px-2 py-1 rounded-lg border border-emerald-500/40 text-emerald-300 hover:bg-slate-800" data-action="mark" data-id="'+v.id+'">标记通过</button>'+
             '<button class="px-2 py-1 rounded-lg border border-slate-500/40 text-slate-200 hover:bg-slate-800" data-action="inactive" data-id="'+v.id+'">设为未激活</button>'+
             '<button class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-800" data-action="failed" data-id="'+v.id+'">设为失败</button>'+
-            '<button class="px-2 py-1 rounded-lg border border-amber-500/40 text-amber-300 hover:bg-slate-800" data-action="edit-notes" data-id="'+v.id+'" data-note="'+(v.note||'').replace(/"/g,'&quot;')+'" data-adminnote="'+(v.adminNote||'').replace(/"/g,'&quot;')+'">编辑备注</button>'+
+            '<button class="px-2 py-1 rounded-lg border border-amber-500/40 text-amber-300 hover:bg-slate-800" data-action="edit-notes" data-id="'+v.id+'">编辑信息</button>'+
             '<button class="px-2 py-1 rounded-lg border border-red-500/40 text-red-300 hover:bg-slate-900" data-action="delete" data-id="'+v.id+'">删除</button>'+
           '</div>'+
         '</div>'+
       '</details>';
 
-    const userBtn = card.querySelector('a[href^="https://linux.do/u/"]');
-    if(userBtn){
-      userBtn.addEventListener('click',(e)=>{ e.stopPropagation(); });
-    }
     card.querySelectorAll('button[data-action]').forEach((btn)=>{
       const id = btn.getAttribute('data-id');
       const action = btn.getAttribute('data-action');
@@ -1643,7 +1792,7 @@ function renderVpsList(){
           if(!confirm('确定将此 VPS 标记为验证通过并激活？')) return;
           await fetch('/api/admin/vps/'+id+'/mark-verified',{method:'POST'});
         }else if(action==='inactive' || action==='failed'){
-          if(!confirm('确定修改状态为 '+action+' ?')) return;
+          if(!confirm('确定修改状态为 '+(action==='inactive'?'未激活':'失败')+' ?')) return;
           await fetch('/api/admin/vps/'+id+'/status',{
             method:'PUT',
             headers:{'Content-Type':'application/json'},
@@ -1653,16 +1802,37 @@ function renderVpsList(){
           if(!confirm('确定删除此 VPS 记录？')) return;
           await fetch('/api/admin/vps/'+id,{method:'DELETE'});
         }else if(action==='edit-notes'){
-          const curNote = btn.getAttribute('data-note') || '';
-          const curAdmin = btn.getAttribute('data-adminnote') || '';
-          const newNote = prompt('用户备注（可以修改）：',curNote);
-          if(newNote===null) return;
-          const newAdmin = prompt('管理员备注（可以修改）：',curAdmin);
-          if(newAdmin===null) return;
+          const curNote = v.note || '';
+          const curAdmin = v.adminNote || '';
+          const curCountry = v.country || '';
+          const curTraffic = v.traffic || '';
+          const curExpiry = v.expiryDate || '';
+          const curSpecs = v.specs || '';
+
+          const newNote = prompt('用户备注（可为空）：', curNote);
+          if(newNote === null) return;
+          const newAdmin = prompt('管理员备注（可为空）：', curAdmin);
+          if(newAdmin === null) return;
+          const newCountry = prompt('国家/区域：', curCountry);
+          if(newCountry === null) return;
+          const newTraffic = prompt('流量/带宽：', curTraffic);
+          if(newTraffic === null) return;
+          const newExpiry = prompt('到期时间（任意格式，建议 YYYY-MM-DD）：', curExpiry);
+          if(newExpiry === null) return;
+          const newSpecs = prompt('配置描述：', curSpecs);
+          if(newSpecs === null) return;
+
           await fetch('/api/admin/vps/'+id+'/notes',{
             method:'PUT',
             headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({note:newNote,adminNote:newAdmin}),
+            body:JSON.stringify({
+              note:newNote,
+              adminNote:newAdmin,
+              country:newCountry,
+              traffic:newTraffic,
+              expiryDate:newExpiry,
+              specs:newSpecs,
+            }),
           });
         }
         await loadVps();
@@ -1670,13 +1840,14 @@ function renderVpsList(){
       });
     });
 
-    const filterBtn = card.querySelector('span a.underline');
-    if(filterBtn){
-      filterBtn.addEventListener('click',(e)=>{
-        e.preventDefault();
+    const nameLink = card.querySelector('a[href^="https://linux.do/u/"]');
+    if(nameLink){
+      nameLink.addEventListener('click',(e)=>{
+        e.stopPropagation();
+      });
+      nameLink.addEventListener('click',(e)=>{
         userFilter = v.donatedByUsername;
         renderVpsList();
-        window.open(filterBtn.getAttribute('href'),'_blank');
       });
     }
 
