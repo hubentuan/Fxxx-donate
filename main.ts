@@ -815,10 +815,10 @@ app.get('/donate', c => {
                class="font-semibold transition-colors hover:opacity-80">@Carry&nbsp;Delahaye</a>。
           </p>
 
-          <p class="text-sm leading-relaxed bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
+          <div class="alert-warning text-sm leading-relaxed rounded-xl px-4 py-3">
             <span class="font-semibold">💝 榜单按投喂 VPS 数量排序，</span>
             但无论名次高低，您的每一次支持，对我和这个项目来说都弥足珍贵，衷心感谢！
-          </p>
+          </div>
 
           <p class="text-sm leading-relaxed flex items-start gap-2">
             <span class="text-lg mt-0.5">🤝</span>
@@ -830,20 +830,61 @@ app.get('/donate', c => {
           <button onclick="gotoDonatePage()" class="btn-primary">
             <span class="text-lg">🧡</span> 我要投喂 VPS
           </button>
+          <button onclick="shareLeaderboard()" class="btn-secondary">
+            🔗 分享榜单
+          </button>
           <button id="theme-toggle" onclick="toggleTheme()">浅色模式</button>
         </div>
       </div>
     </div>
   </header>
 
+  <!-- 服务器分布概览 -->
   <section class="mb-8">
-    <div class="flex items-center gap-3 mb-5">
-      <span class="text-3xl">🏆</span>
-      <h2 class="text-3xl font-bold">捐赠榜单</h2>
-      <span id="leaderboard-count" class="text-sm muted"></span>
+    <div class="panel border p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-3xl">🗺️</span>
+        <h2 class="text-2xl font-bold">全球服务器分布</h2>
+      </div>
+      <div id="server-distribution" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>
+    </div>
+  </section>
+
+  <section class="mb-8">
+    <div class="flex flex-col gap-4 mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">🏆</span>
+          <div>
+            <h2 class="text-3xl font-bold leading-tight">捐赠榜单</h2>
+            <p id="leaderboard-count" class="text-sm muted mt-1"></p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 搜索筛选栏 -->
+      <div class="panel border p-4">
+        <div class="flex flex-col md:flex-row gap-3">
+          <div class="flex-1">
+            <input type="text" id="search-leaderboard" placeholder="🔍 搜索用户名、国家、配置..." 
+                   class="w-full" />
+          </div>
+          <div class="flex gap-2">
+            <select id="filter-status" class="w-full md:w-auto">
+              <option value="">全部状态</option>
+              <option value="active">✅ 运行中</option>
+              <option value="failed">❌ 失败</option>
+              <option value="inactive">⏸️ 未启用</option>
+            </select>
+            <button onclick="clearFilters()" class="btn-secondary whitespace-nowrap">
+              清除筛选
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
     
-    <div id="leaderboard" class="space-y-4">
+    <div id="leaderboard" class="space-y-5">
       <div class="flex items-center justify-center py-12">
         <div class="flex flex-col items-center gap-3">
           <div class="loading-spinner"></div>
@@ -853,11 +894,13 @@ app.get('/donate', c => {
     </div>
   </section>
 
-  <footer class="mt-16 border-t pt-8 text-sm muted text-center">
-    <p class="flex items-center justify-center gap-2">
-      <span class="text-lg">ℹ️</span>
-      <span>说明：本项目仅作公益用途，请勿滥用资源（长时间占满带宽、刷流量、倒卖账号等）。</span>
-    </p>
+  <footer class="mt-16 pt-8 text-center">
+    <div class="panel border px-6 py-4 inline-block">
+      <p class="flex items-center justify-center gap-2 text-sm muted">
+        <span class="text-lg">ℹ️</span>
+        <span>说明：本项目仅作公益用途，请勿滥用资源（长时间占满带宽、刷流量、倒卖账号等）。</span>
+      </p>
+    </div>
   </footer>
 
 </div>
@@ -865,6 +908,10 @@ app.get('/donate', c => {
 <div id="toast-root"></div>
 <script>
 updateThemeBtn();
+
+let allLeaderboardData = [];
+let searchQuery = '';
+let statusFilter = '';
 
 async function gotoDonatePage(){
   try{
@@ -885,11 +932,251 @@ async function gotoDonatePage(){
   }
 }
 
+function shareLeaderboard(){
+  const url = window.location.href;
+  const text = '风萧萧公益机场 VPS 投喂榜 - 感谢各位热佬的支持！';
+  
+  if(navigator.share){
+    navigator.share({
+      title: '风萧萧公益机场 VPS 投喂榜',
+      text: text,
+      url: url
+    }).then(()=>{
+      toast('分享成功','success');
+    }).catch(err=>{
+      if(err.name !== 'AbortError'){
+        fallbackShare(url, text);
+      }
+    });
+  } else {
+    fallbackShare(url, text);
+  }
+}
+
+function fallbackShare(url, text){
+  const shareText = text + '\\n' + url;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(shareText).then(()=>{
+      toast('链接已复制到剪贴板','success');
+    }).catch(()=>{
+      toast('分享失败','error');
+    });
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = shareText;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try{
+      document.execCommand('copy');
+      toast('链接已复制到剪贴板','success');
+    }catch{
+      toast('分享失败','error');
+    }
+    document.body.removeChild(ta);
+  }
+}
+
 function statusText(s){ return s==='active'?'运行中':(s==='failed'?'失败':'未启用'); }
 function statusCls(s){ return s==='active'?'badge-ok':(s==='failed'?'badge-fail':'badge-idle'); }
 
+function clearFilters(){
+  searchQuery = '';
+  statusFilter = '';
+  document.getElementById('search-leaderboard').value = '';
+  document.getElementById('filter-status').value = '';
+  renderLeaderboard();
+}
+
+function filterLeaderboard(){
+  searchQuery = document.getElementById('search-leaderboard').value.toLowerCase();
+  statusFilter = document.getElementById('filter-status').value;
+  renderLeaderboard();
+}
+
+function renderServerDistribution(){
+  const distBox = document.getElementById('server-distribution');
+  if(!allLeaderboardData.length) return;
+  
+  // 统计各国家/地区的服务器数量
+  const countryMap = new Map();
+  allLeaderboardData.forEach(user => {
+    user.servers.forEach(srv => {
+      const country = srv.country || '未知';
+      const count = countryMap.get(country) || 0;
+      countryMap.set(country, count + 1);
+    });
+  });
+  
+  // 按数量排序
+  const sorted = Array.from(countryMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12);
+  
+  if(!sorted.length){
+    distBox.innerHTML = '<div class="col-span-full text-sm muted text-center">暂无数据</div>';
+    return;
+  }
+  
+  distBox.innerHTML = '';
+  sorted.forEach(([country, count]) => {
+    const item = document.createElement('div');
+    item.className = 'panel border rounded-lg px-3 py-2.5 text-center transition-all hover:shadow-sm cursor-pointer';
+    item.innerHTML = '<div class="text-2xl mb-1">'+country.split(' ')[0]+'</div>'+
+      '<div class="text-xs muted mb-1">'+country.split(' ').slice(1).join(' ')+'</div>'+
+      '<div class="font-bold text-lg">'+count+'</div>'+
+      '<div class="text-xs muted">台服务器</div>';
+    item.onclick = () => {
+      searchQuery = country;
+      document.getElementById('search-leaderboard').value = country;
+      renderLeaderboard();
+      // 滚动到榜单
+      document.getElementById('leaderboard').scrollIntoView({behavior: 'smooth', block: 'start'});
+    };
+    distBox.appendChild(item);
+  });
+}
+
+function renderLeaderboard(){
+  const box = document.getElementById('leaderboard');
+  const countEl = document.getElementById('leaderboard-count');
+  
+  let filtered = allLeaderboardData.filter(it => {
+    // 搜索过滤
+    if(searchQuery){
+      const text = [
+        it.username,
+        ...it.servers.map(s => [s.country, s.ipLocation, s.traffic, s.specs, s.note].join(' '))
+      ].join(' ').toLowerCase();
+      if(!text.includes(searchQuery)) return false;
+    }
+    
+    // 状态过滤
+    if(statusFilter){
+      if(!it.servers.some(s => s.status === statusFilter)) return false;
+    }
+    
+    return true;
+  });
+  
+  countEl.textContent = filtered.length ? ('共 '+filtered.length+' 位投喂者') : '';
+  
+  if(!filtered.length){
+    box.innerHTML='<div class="muted text-sm py-8 text-center">没有找到匹配的投喂记录</div>';
+    return;
+  }
+  
+  box.innerHTML='';
+  filtered.forEach((it,idx)=>{
+    const wrap=document.createElement('div');
+    wrap.className='card border transition-all animate-slide-in';
+    wrap.style.animationDelay = (idx * 0.05) + 's';
+    const cardId = 'card-'+idx;
+    const isExpanded = localStorage.getItem(cardId) !== 'collapsed';
+
+    const head=document.createElement('div');
+    head.className='flex items-center justify-between p-5 pb-4 border-b gap-4 bg-gradient-to-r cursor-pointer';
+    
+    let gradientClass = '';
+    if(idx === 0) gradientClass = 'from-amber-500/5 to-transparent';
+    else if(idx === 1) gradientClass = 'from-slate-400/5 to-transparent';
+    else if(idx === 2) gradientClass = 'from-orange-600/5 to-transparent';
+    head.className += ' ' + gradientClass;
+    
+    const badge=getBadge(it.count);
+    const originalIdx = allLeaderboardData.indexOf(it);
+    head.innerHTML='<div class="flex items-center gap-4 flex-1 min-w-0">'+
+      '<div class="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl">'+medalByRank(originalIdx)+'</div>'+
+      '<div class="flex flex-col gap-1.5 min-w-0">'+
+        '<a class="font-bold text-xl hover:opacity-80 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'" onclick="event.stopPropagation()">@'+it.username+'</a>'+
+        '<div class="flex items-center gap-2 flex-wrap">'+
+          renderBadge(badge)+
+          '<span class="text-xs muted">共投喂 '+it.count+' 台服务器</span>'+
+        '</div>'+
+      '</div>'+
+      '</div>'+
+      '<div class="flex items-center gap-3">'+
+        '<div class="flex-shrink-0 flex items-center justify-center w-16 h-16 panel border rounded-2xl">'+
+          '<div class="text-center">'+
+            '<div class="font-bold text-2xl leading-none mb-1">'+it.count+'</div>'+
+            '<div class="text-xs muted leading-none">VPS</div>'+
+          '</div>'+
+        '</div>'+
+        '<button class="toggle-expand text-2xl transition-transform" data-card="'+cardId+'" onclick="event.stopPropagation()">'+
+          (isExpanded ? '▼' : '▶')+
+        '</button>'+
+      '</div>';
+    
+    head.onclick = () => {
+      const listEl = wrap.querySelector('.server-list');
+      const toggleBtn = wrap.querySelector('.toggle-expand');
+      const isCurrentlyExpanded = !listEl.classList.contains('expandable') || listEl.classList.contains('expanded');
+      
+      if(isCurrentlyExpanded){
+        listEl.classList.add('expandable');
+        listEl.classList.remove('expanded');
+        toggleBtn.textContent = '▶';
+        toggleBtn.style.transform = 'rotate(0deg)';
+        localStorage.setItem(cardId, 'collapsed');
+      } else {
+        listEl.classList.remove('expandable');
+        listEl.classList.add('expanded');
+        toggleBtn.textContent = '▼';
+        toggleBtn.style.transform = 'rotate(0deg)';
+        localStorage.removeItem(cardId);
+      }
+    };
+    
+    wrap.appendChild(head);
+
+    const list=document.createElement('div');
+    list.className='server-list p-5 pt-4 space-y-3 ' + (isExpanded ? 'expanded' : 'expandable');
+    (it.servers||[]).forEach(srv=>{
+      const d=document.createElement('div');
+      d.className='panel border rounded-xl p-4 transition-all hover:shadow-sm';
+      d.innerHTML = '<div class="flex items-start justify-between gap-3 mb-3">'+
+        '<div class="flex items-center gap-2.5 flex-1 min-w-0">'+
+          '<span class="text-xl flex-shrink-0">🌍</span>'+
+          '<div class="flex flex-col gap-1 min-w-0">'+
+            '<span class="font-semibold text-sm truncate">'+(srv.country||'未填写')+'</span>'+
+            (srv.ipLocation?'<span class="text-xs muted truncate">'+srv.ipLocation+'</span>':'')+
+          '</div>'+
+        '</div>'+
+        '<span class="'+statusCls(srv.status)+' text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0">'+statusText(srv.status)+'</span>'+
+      '</div>'+
+      '<div class="grid grid-cols-2 gap-3 text-sm">'+
+        '<div class="flex items-center gap-2 panel border rounded-lg px-3 py-2">'+
+          '<span class="opacity-60">📊</span>'+
+          '<span class="truncate font-medium">'+(srv.traffic||'未填写')+'</span>'+
+        '</div>'+
+        '<div class="flex items-center gap-2 panel border rounded-lg px-3 py-2">'+
+          '<span class="opacity-60">📅</span>'+
+          '<span class="truncate font-medium">'+(srv.expiryDate||'未填写')+'</span>'+
+        '</div>'+
+      '</div>'+
+      (srv.specs?'<div class="text-sm mt-3 panel border rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">⚙️</span><span class="flex-1">'+srv.specs+'</span></div>':'')+
+      (srv.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">💬</span><span class="flex-1">'+srv.note+'</span></div>':'');
+      list.appendChild(d);
+    });
+    wrap.appendChild(list);
+    box.appendChild(wrap);
+  });
+}
+
 async function loadLeaderboard(){
   const box = document.getElementById('leaderboard'), countEl=document.getElementById('leaderboard-count');
+  
+  // 显示骨架屏
+  box.innerHTML='<div class="space-y-5">'+
+    '<div class="skeleton-card"><div class="skeleton-header">'+
+    '<div class="skeleton skeleton-avatar"></div>'+
+    '<div class="flex-1"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-text short mt-2"></div></div>'+
+    '</div>'+
+    '<div class="skeleton skeleton-text"></div>'+
+    '<div class="skeleton skeleton-text medium"></div>'+
+    '</div>'.repeat(3)+
+    '</div>';
 
   const timeoutPromise = new Promise((_, reject) =>
     setTimeout(() => reject(new Error('加载超时')), 8000)
@@ -910,62 +1197,37 @@ async function loadLeaderboard(){
 
     const j = await res.json();
     if(!j.success){
-      box.innerHTML='<div class="text-red-400 text-sm">加载失败: '+(j.message||'未知错误')+'<br><button onclick="loadLeaderboard()" class="mt-2 px-3 py-1 rounded-lg border">重试</button></div>';
+      box.innerHTML='<div class="text-red-400 text-sm">加载失败: '+(j.message||'未知错误')+'<br><button onclick="loadLeaderboard()" class="btn-secondary mt-4">重试</button></div>';
       return;
     }
 
-    const data=j.data||[];
-    countEl.textContent = data.length?(' · 共 '+data.length+' 位投喂者'):'';
-
-    if(!data.length){
-      box.innerHTML='<div class="muted text-sm">暂时还没有投喂记录，成为第一个投喂者吧～</div>';
+    allLeaderboardData = j.data||[];
+    
+    if(!allLeaderboardData.length){
+      box.innerHTML='<div class="muted text-sm py-8 text-center">暂时还没有投喂记录，成为第一个投喂者吧～</div>';
+      countEl.textContent = '';
       return;
     }
-
-    box.innerHTML='';
-    data.forEach((it,idx)=>{
-      const wrap=document.createElement('div');
-      wrap.className='card border p-6 transition-all';
-
-      const head=document.createElement('div');
-      head.className='flex items-center justify-between mb-4 pb-4 border-b gap-3';
-      head.innerHTML='<div class="flex items-center gap-3 flex-1 min-w-0">'+
-        '<span class="text-3xl flex-shrink-0">'+medalByRank(idx)+'</span>'+
-        '<a class="font-bold text-xl hover:opacity-80 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a>'+
-        '</div>'+
-        '<div class="flex items-center gap-2 panel border rounded-full px-4 py-2 whitespace-nowrap">'+
-          '<span class="font-bold text-lg">'+it.count+'</span>'+
-          '<span class="text-sm muted">台 VPS</span>'+
-        '</div>';
-      wrap.appendChild(head);
-
-      const list=document.createElement('div');
-      list.className='space-y-3 text-sm';
-      (it.servers||[]).forEach(srv=>{
-        const d=document.createElement('div');
-        d.className='panel border rounded-lg px-4 py-3 transition-all';
-        d.innerHTML = '<div class="flex items-center justify-between gap-2 mb-3">'+
-          '<div class="flex items-center gap-2 flex-1 min-w-0">'+
-            '<span class="opacity-60 text-base">🌍</span>'+
-            '<span class="font-medium truncate">'+(srv.country||'未填写')+(srv.ipLocation?' · '+srv.ipLocation:'')+'</span>'+
-          '</div>'+
-          '<span class="'+statusCls(srv.status)+' text-xs px-2.5 py-1 rounded-full font-semibold">'+statusText(srv.status)+'</span>'+
-        '</div>'+
-        '<div class="grid grid-cols-2 gap-3 text-sm mt-2">'+
-          '<div class="flex items-center gap-2"><span class="opacity-60">📊</span><span class="truncate">'+(srv.traffic||'未填写')+'</span></div>'+
-          '<div class="flex items-center gap-2"><span class="opacity-60">📅</span><span class="truncate">'+(srv.expiryDate||'未填写')+'</span></div>'+
-        '</div>'+
-        (srv.specs?'<div class="text-sm muted mt-3 panel border rounded-lg px-3 py-2 break-words flex items-start gap-2"><span class="opacity-60">⚙️</span><span>'+srv.specs+'</span></div>':'')+
-        (srv.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2 break-words flex items-start gap-2"><span class="opacity-60">💬</span><span>'+srv.note+'</span></div>':'');
-        list.appendChild(d);
-      });
-      wrap.appendChild(list);
-      box.appendChild(wrap);
-    });
+    
+    renderServerDistribution();
+    renderLeaderboard();
   }catch(err){
     console.error('Leaderboard load error:', err);
-    box.innerHTML='<div class="text-red-400 text-sm">'+err.message+'<br><button onclick="loadLeaderboard()" class="mt-2 px-3 py-1 rounded-lg border">重试</button></div>';
+    box.innerHTML='<div class="text-red-400 text-sm text-center py-8">'+err.message+'<br><button onclick="loadLeaderboard()" class="btn-secondary mt-4">重试</button></div>';
   }
+}
+
+// 绑定搜索筛选事件
+document.getElementById('search-leaderboard').addEventListener('input', debounce(filterLeaderboard, 300));
+document.getElementById('filter-status').addEventListener('change', filterLeaderboard);
+
+// 防抖函数
+function debounce(func, wait){
+  let timeout;
+  return function(...args){
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
 }
 
 loadLeaderboard();
@@ -1018,9 +1280,9 @@ app.get('/donate/vps', c => {
         <span class="text-3xl">🧡</span>
         <h2 class="text-2xl font-bold">提交新的 VPS 投喂</h2>
       </div>
-      <p class="text-sm muted mb-6 leading-relaxed bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3">
+      <div class="alert-warning text-sm mb-6 leading-relaxed rounded-xl px-4 py-3">
         ⚠️ 请确保服务器是你有控制权的机器，并允许用于公益节点。禁止长时间占满带宽、刷流量、倒卖账号等行为。
-      </p>
+      </div>
 
       <form id="donate-form" class="space-y-5">
         <div class="grid md:grid-cols-2 gap-5">
@@ -1081,8 +1343,59 @@ app.get('/donate/vps', c => {
             <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
               <span>🌍</span> 国家 / 区域 <span class="text-red-400">*</span>
             </label>
-            <input name="country" required placeholder="示例：HK - Hong Kong, Kowloon, Hong Kong"
-                   class="w-full" />
+            <select name="country" required class="w-full">
+              <option value="">请选择国家/区域</option>
+              <optgroup label="🌏 亚洲">
+                <option value="🇨🇳 中国大陆">🇨🇳 中国大陆</option>
+                <option value="🇭🇰 中国香港">🇭🇰 中国香港</option>
+                <option value="🇲🇴 中国澳门">🇲🇴 中国澳门</option>
+                <option value="🇹🇼 中国台湾">🇹🇼 中国台湾</option>
+                <option value="🇯🇵 日本">🇯🇵 日本</option>
+                <option value="🇰🇷 韩国">🇰🇷 韩国</option>
+                <option value="🇸🇬 新加坡">🇸🇬 新加坡</option>
+                <option value="🇲🇾 马来西亚">🇲🇾 马来西亚</option>
+                <option value="🇹🇭 泰国">🇹🇭 泰国</option>
+                <option value="🇻🇳 越南">🇻🇳 越南</option>
+                <option value="🇵🇭 菲律宾">🇵🇭 菲律宾</option>
+                <option value="🇮🇩 印度尼西亚">🇮🇩 印度尼西亚</option>
+                <option value="🇮🇳 印度">🇮🇳 印度</option>
+              </optgroup>
+              <optgroup label="🌍 欧洲">
+                <option value="🇬🇧 英国">🇬🇧 英国</option>
+                <option value="🇩🇪 德国">🇩🇪 德国</option>
+                <option value="🇫🇷 法国">🇫🇷 法国</option>
+                <option value="🇳🇱 荷兰">🇳🇱 荷兰</option>
+                <option value="🇮🇹 意大利">🇮🇹 意大利</option>
+                <option value="🇪🇸 西班牙">🇪🇸 西班牙</option>
+                <option value="🇷🇺 俄罗斯">🇷🇺 俄罗斯</option>
+                <option value="🇵🇱 波兰">🇵🇱 波兰</option>
+                <option value="🇨🇭 瑞士">🇨🇭 瑞士</option>
+                <option value="🇸🇪 瑞典">🇸🇪 瑞典</option>
+              </optgroup>
+              <optgroup label="🌎 北美">
+                <option value="🇺🇸 美国">🇺🇸 美国</option>
+                <option value="🇨🇦 加拿大">🇨🇦 加拿大</option>
+                <option value="🇲🇽 墨西哥">🇲🇽 墨西哥</option>
+              </optgroup>
+              <optgroup label="🌏 大洋洲">
+                <option value="🇦🇺 澳大利亚">🇦🇺 澳大利亚</option>
+                <option value="🇳🇿 新西兰">🇳🇿 新西兰</option>
+              </optgroup>
+              <optgroup label="🌍 非洲">
+                <option value="🇿🇦 南非">🇿🇦 南非</option>
+                <option value="🇪🇬 埃及">🇪🇬 埃及</option>
+              </optgroup>
+              <optgroup label="🌎 南美">
+                <option value="🇧🇷 巴西">🇧🇷 巴西</option>
+                <option value="🇦🇷 阿根廷">🇦🇷 阿根廷</option>
+                <option value="🇨🇱 智利">🇨🇱 智利</option>
+              </optgroup>
+              <optgroup label="🌏 中东">
+                <option value="🇦🇪 阿联酋">🇦🇪 阿联酋</option>
+                <option value="🇸🇦 沙特阿拉伯">🇸🇦 沙特阿拉伯</option>
+                <option value="🇹🇷 土耳其">🇹🇷 土耳其</option>
+              </optgroup>
+            </select>
           </div>
           <div>
             <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
@@ -1133,9 +1446,14 @@ app.get('/donate/vps', c => {
           <span class="text-3xl">📦</span>
           <h2 class="text-2xl font-bold">我的投喂记录</h2>
         </div>
-        <button onclick="loadDonations()" class="btn-secondary">
-          🔄 刷新
-        </button>
+        <div class="flex gap-2">
+          <button onclick="exportDonations()" class="btn-secondary" title="导出为JSON">
+            📥 导出
+          </button>
+          <button onclick="loadDonations()" class="btn-secondary">
+            🔄 刷新
+          </button>
+        </div>
       </div>
       <div id="donations-list" class="space-y-4 text-sm">
         <div class="flex items-center justify-center py-12">
@@ -1148,11 +1466,13 @@ app.get('/donate/vps', c => {
     </section>
   </main>
 
-  <footer class="mt-12 text-sm muted border-t pt-8 text-center">
-    <p class="flex items-center justify-center gap-2">
-      <span class="text-lg">ℹ️</span>
-      <span>友情提示：投喂即视为同意将该 VPS 用于公益机场中转节点。请勿提交有敏感业务的生产机器。</span>
-    </p>
+  <footer class="mt-16 pt-8 text-center">
+    <div class="panel border px-6 py-4 inline-block">
+      <p class="flex items-center justify-center gap-2 text-sm muted">
+        <span class="text-lg">ℹ️</span>
+        <span>友情提示：投喂即视为同意将该 VPS 用于公益机场中转节点。请勿提交有敏感业务的生产机器。</span>
+      </p>
+    </div>
   </footer>
 </div>
 
@@ -1181,6 +1501,52 @@ async function ensureLogin(){
 async function logout(){
   try{ await fetch('/api/logout',{credentials:'same-origin'});}catch{}
   location.href='/donate';
+}
+
+async function exportDonations(){
+  try{
+    const r=await fetch('/api/user/donations',{credentials:'same-origin',cache:'no-store'});
+    const j=await r.json();
+    if(!r.ok||!j.success){
+      toast('导出失败','error');
+      return;
+    }
+    const data=j.data||[];
+    if(!data.length){
+      toast('暂无投喂记录可导出','warn');
+      return;
+    }
+    
+    const exportData = {
+      exportTime: new Date().toISOString(),
+      totalCount: data.length,
+      donations: data.map(v => ({
+        ip: v.ip,
+        port: v.port,
+        username: v.username,
+        country: v.country,
+        ipLocation: v.ipLocation,
+        traffic: v.traffic,
+        expiryDate: v.expiryDate,
+        specs: v.specs,
+        status: v.status,
+        donatedAt: new Date(v.donatedAt).toISOString(),
+        note: v.note || ''
+      }))
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'my-vps-donations-'+Date.now()+'.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('导出成功','success');
+  }catch(err){
+    console.error('Export error:', err);
+    toast('导出异常','error');
+  }
 }
 
 function bindAuthType(){
@@ -1221,7 +1587,12 @@ async function submitDonate(e){
     specs:fd.get('specs')?.toString().trim(),
     note:fd.get('note')?.toString().trim()
   };
-  btn.disabled=true; const t=btn.textContent; btn.textContent='提交中...';
+  
+  btn.disabled=true;
+  btn.classList.add('loading');
+  const originalHTML=btn.innerHTML;
+  btn.innerHTML='<span>提交中...</span>';
+  
   try{
     const r=await fetch('/api/donate',{
       method:'POST',
@@ -1230,28 +1601,69 @@ async function submitDonate(e){
       body:JSON.stringify(payload)
     });
     const j=await r.json();
+    
+    btn.classList.remove('loading');
+    
     if(!r.ok||!j.success){
+      btn.classList.add('error');
       msg.textContent=j.message||'提交失败';
+      msg.className='text-sm mt-1 min-h-[1.5rem] text-red-400';
       toast('投喂失败：'+(j.message||'请检查填写项'), 'error');
+      setTimeout(()=>btn.classList.remove('error'), 400);
     } else{
+      btn.classList.add('success');
+      btn.innerHTML='<span>✓ 提交成功</span>';
       msg.textContent=j.message||'投喂成功';
+      msg.className='text-sm mt-1 min-h-[1.5rem] text-green-500';
       toast(j.message||'投喂成功','success');
-      form.reset();
-      loadDonations();
+      
+      setTimeout(()=>{
+        btn.classList.remove('success');
+        btn.innerHTML=originalHTML;
+        form.reset();
+        loadDonations();
+      }, 2000);
     }
   }catch(e){
     console.error('Donate error:', e);
+    btn.classList.remove('loading');
+    btn.classList.add('error');
     msg.textContent='提交异常';
+    msg.className='text-sm mt-1 min-h-[1.5rem] text-red-400';
     toast('提交异常','error');
+    setTimeout(()=>btn.classList.remove('error'), 400);
   } finally{
-    btn.disabled=false;
-    btn.textContent=t;
+    setTimeout(()=>{
+      btn.disabled=false;
+      if(!btn.classList.contains('success')){
+        btn.innerHTML=originalHTML;
+      }
+    }, 500);
   }
 }
 
 async function loadDonations(){
   const box=document.getElementById('donations-list');
-  box.innerHTML='<div class="muted text-sm">正在加载...</div>';
+  
+  // 显示骨架屏
+  box.innerHTML='<div class="space-y-4">'+
+    '<div class="skeleton-card"><div class="skeleton-header">'+
+    '<div class="skeleton skeleton-avatar"></div>'+
+    '<div class="flex-1"><div class="skeleton skeleton-title"></div></div>'+
+    '</div>'+
+    '<div class="skeleton skeleton-text"></div>'+
+    '<div class="skeleton skeleton-text medium"></div>'+
+    '<div class="skeleton skeleton-text short"></div>'+
+    '</div>'+
+    '<div class="skeleton-card"><div class="skeleton-header">'+
+    '<div class="skeleton skeleton-avatar"></div>'+
+    '<div class="flex-1"><div class="skeleton skeleton-title"></div></div>'+
+    '</div>'+
+    '<div class="skeleton skeleton-text"></div>'+
+    '<div class="skeleton skeleton-text medium"></div>'+
+    '</div>'+
+    '</div>';
+  
   try{
     const r=await fetch('/api/user/donations',{credentials:'same-origin',cache:'no-store'});
     const j=await r.json();
@@ -1295,6 +1707,38 @@ ensureLogin();
 bindAuthType();
 document.getElementById('donate-form').addEventListener('submit', submitDonate);
 loadDonations();
+
+// 实时IP格式验证
+document.querySelector('input[name="ip"]').addEventListener('blur', function(){
+  const ip = this.value.trim();
+  if(!ip) return;
+  const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && ip.split('.').every(p => +p >= 0 && +p <= 255);
+  const ipv6 = /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|::)/i.test(ip.replace(/^\[|\]$/g, ''));
+  
+  if(ipv4 || ipv6){
+    this.classList.remove('error');
+    this.classList.add('success');
+    setTimeout(()=>this.classList.remove('success'), 2000);
+  } else {
+    this.classList.add('error');
+    toast('IP 格式不正确','error');
+  }
+});
+
+// 端口范围验证
+document.querySelector('input[name="port"]').addEventListener('blur', function(){
+  const port = parseInt(this.value);
+  if(!port) return;
+  
+  if(port < 1 || port > 65535){
+    this.classList.add('error');
+    toast('端口范围应在 1-65535 之间','error');
+  } else {
+    this.classList.remove('error');
+    this.classList.add('success');
+    setTimeout(()=>this.classList.remove('success'), 2000);
+  }
+});
 </script>
 </body></html>`;
   return c.html(html);
@@ -1383,9 +1827,7 @@ function renderLogin(root){
                'class="w-full rounded-lg border px-4 py-3 text-sm focus:ring-2 focus:ring-cyan-500"/>'+
       '</div>'+
       '<div id="admin-login-msg" class="text-sm min-h-[1.5rem] font-medium"></div>'+
-      '<button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-xl '+
-                                    'bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-3 text-sm font-bold '+
-                                    'shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200">'+
+      '<button type="submit" class="w-full btn-primary">'+
         '<span class="text-lg">🚀</span> 登录'+
       '</button>'+
     '</form>';
@@ -1434,13 +1876,12 @@ async function renderAdmin(root, name){
       '</p>'+
     '</div>'+
     '<div class="flex flex-wrap items-center gap-3">'+
-      '<div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/50 rounded-full px-4 py-2 border">'+
+      '<div class="panel px-5 py-2.5 border">'+
         '<span class="text-sm">👤</span>'+
         '<span class="text-sm font-medium">'+name+'</span>'+
       '</div>'+
-      '<button id="theme-toggle" class="text-xs" onclick="toggleTheme()">浅色模式</button>'+
-      '<button id="btn-admin-logout" class="text-xs rounded-full border border-slate-300 hover:border-red-400 px-4 py-2 '+
-                                      'transition-all hover:bg-red-500/10 hover:text-red-500">'+
+      '<button id="theme-toggle" onclick="toggleTheme()">浅色模式</button>'+
+      '<button id="btn-admin-logout" class="btn-danger">'+
         '退出登录'+
       '</button>'+
     '</div>'+
@@ -1467,7 +1908,7 @@ async function renderAdmin(root, name){
         '<span class="text-xl">🔗</span>'+
         '<h2 class="text-lg font-bold">OAuth 配置</h2>'+
       '</div>'+
-      '<button id="btn-toggle-oauth" class="text-xs rounded-full border px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">展开</button>'+
+      '<button id="btn-toggle-oauth" class="btn-secondary text-xs">展开</button>'+
     '</div>'+
     '<div id="oauth-body" class="hidden">'+
       '<form id="oauth-form" class="grid md:grid-cols-3 gap-4">'+
@@ -1491,8 +1932,7 @@ async function renderAdmin(root, name){
         '</div>'+
       '</form>'+
       '<div class="mt-4 flex gap-2">'+
-        '<button id="btn-save-oauth" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 '+
-                                          'px-4 py-2 text-sm font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all">'+
+        '<button id="btn-save-oauth" class="btn-primary">'+
           '<span>💾</span> 保存 OAuth 配置'+
         '</button>'+
       '</div>'+
@@ -1503,9 +1943,9 @@ async function renderAdmin(root, name){
       '<span class="text-xl">🔑</span>'+
       '<h2 class="text-lg font-bold">管理员密码</h2>'+
     '</div>'+
-    '<p class="text-sm muted mb-4 bg-amber-500/5 border border-amber-500/20 rounded-xl px-3 py-2">'+
+    '<div class="alert-warning text-sm mb-4 rounded-xl px-3 py-2">'+
       '⚠️ 仅用于 <code class="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded">/admin</code> 后台登录，至少 6 位，建议与 Linux.do 账号密码不同'+
-    '</p>'+
+    '</div>'+
     '<div class="grid md:grid-cols-2 gap-4 mb-4">'+
       '<div>'+
         '<label class="block mb-2 text-sm font-medium">新密码</label>'+
@@ -1518,8 +1958,7 @@ async function renderAdmin(root, name){
                'class="w-full rounded-lg border px-3 py-2.5 text-sm"/>'+
       '</div>'+
     '</div>'+
-    '<button id="btn-save-admin-pass" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 '+
-                                              'px-4 py-2 text-sm font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all">'+
+    '<button id="btn-save-admin-pass" class="btn-primary">'+
       '<span>🔒</span> 保存密码'+
     '</button>'+
     '<p class="text-xs muted mt-3">💡 修改成功后立即生效，下次登录需要使用新密码</p>'+
@@ -1548,23 +1987,21 @@ async function renderAdmin(root, name){
         '<span class="text-2xl">📋</span>'+
         '<h2 class="text-2xl font-bold">VPS 列表</h2>'+
       '</div>'+
-      '<button id="btn-verify-all" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 '+
-                                          'px-4 py-2 text-sm font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all">'+
+      '<button id="btn-verify-all" class="btn-primary">'+
         '<span>🔄</span> 一键验证全部'+
       '</button>'+
     '</div>'+
     '<div class="flex flex-col md:flex-row gap-3">'+
       '<div class="flex flex-wrap items-center gap-2">'+
         '<span class="text-sm font-medium">筛选：</span>'+
-        '<button data-status="all" class="px-3 py-1.5 rounded-full border text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">全部</button>'+
-        '<button data-status="active" class="px-3 py-1.5 rounded-full border text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">✅ 运行中</button>'+
-        '<button data-status="failed" class="px-3 py-1.5 rounded-full border text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">❌ 失败</button>'+
+        '<button data-status="all" class="btn-secondary text-xs">全部</button>'+
+        '<button data-status="active" class="btn-secondary text-xs">✅ 运行中</button>'+
+        '<button data-status="failed" class="btn-secondary text-xs">❌ 失败</button>'+
       '</div>'+
       '<div class="flex-1 flex gap-2">'+
-        '<input id="filter-input" placeholder="🔍 搜索 IP / 用户名 / 备注..." '+
-               'class="flex-1 rounded-lg border px-3 py-2 text-sm"/>'+
-        '<button id="filter-btn" class="px-4 py-2 rounded-lg border text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">搜索</button>'+
-        '<button id="filter-clear-btn" class="px-4 py-2 rounded-lg border text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">清除</button>'+
+        '<input id="filter-input" placeholder="🔍 搜索 IP / 用户名 / 备注..." class="flex-1"/>'+
+        '<button id="filter-btn" class="btn-secondary">搜索</button>'+
+        '<button id="filter-clear-btn" class="btn-secondary">清除</button>'+
       '</div>'+
     '</div>'+
   '</div>'+
@@ -1617,15 +2054,36 @@ async function loadStats(){
     }
 
     const d=j.data||{};
-    function card(label,value,key){
-      return '<button data-gok="'+key+'" class="stat-card stat-'+key+' rounded-2xl border px-3 py-2 text-left">'+
-        '<div class="stat-label text-[11px] muted">'+label+'</div><div class="stat-value mt-1">'+value+'</div></button>';
+    function card(label,value,key,icon){
+      const percent = d.totalVPS > 0 ? Math.round((value / d.totalVPS) * 100) : 0;
+      return '<button data-gok="'+key+'" class="stat-card stat-'+key+' border px-4 py-3 text-left">'+
+        '<div class="flex items-center justify-between mb-2">'+
+          '<div class="stat-label text-xs muted">'+icon+' '+label+'</div>'+
+          '<div class="text-xs muted">'+percent+'%</div>'+
+        '</div>'+
+        '<div class="stat-value mb-2">'+value+'</div>'+
+        '<div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">'+
+          '<div class="h-full rounded-full transition-all duration-500" style="width:'+percent+'%;background:currentColor"></div>'+
+        '</div>'+
+        '</button>';
     }
-    wrap.innerHTML='<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-3">'+
-      card('总投喂数',d.totalVPS||0,'all')+
-      card('运行中',d.activeVPS||0,'active')+
-      card('失败',d.failedVPS||0,'failed')+
-      card('今日新增',d.todayNewVPS||0,'today')+'</div>';
+    wrap.innerHTML='<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">'+
+      card('总投喂数',d.totalVPS||0,'all','📊')+
+      card('运行中',d.activeVPS||0,'active','✅')+
+      card('失败',d.failedVPS||0,'failed','❌')+
+      card('今日新增',d.todayNewVPS||0,'today','🆕')+'</div>';
+    
+    // 添加数字计数动画
+    setTimeout(()=>{
+      wrap.querySelectorAll('.stat-value').forEach(el => {
+        const target = parseInt(el.textContent);
+        if(!isNaN(target)){
+          el.classList.add('count-up');
+          animateNumber(el, target);
+        }
+      });
+    }, 100);
+    
     wrap.querySelectorAll('button[data-gok]').forEach(b=> b.addEventListener('click',()=>{
       statusFilter=b.getAttribute('data-gok');
       userFilter='';
@@ -1835,10 +2293,10 @@ function renderVpsList(){
         (t?'<div class="flex items-center gap-1.5 text-xs muted"><span class="opacity-60">🕐</span><span>'+t+'</span></div>':'')+
       '</div>'+
       '<div class="flex flex-wrap gap-2 pt-3 border-t">'+
-        '<button class="px-3 py-1.5 rounded-lg border text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" data-act="login" data-id="'+v.id+'">🔍 查看</button>'+
-        '<button class="px-3 py-1.5 rounded-lg border text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" data-act="verify" data-id="'+v.id+'">✅ 验证</button>'+
-        '<button class="px-3 py-1.5 rounded-lg border text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" data-act="edit" data-id="'+v.id+'">✏️ 编辑</button>'+
-        '<button class="px-3 py-1.5 rounded-lg border border-red-300 text-red-500 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 transition-all" data-act="del" data-id="'+v.id+'">🗑️ 删除</button>'+
+        '<button class="btn-secondary text-xs" data-act="login" data-id="'+v.id+'">🔍 查看</button>'+
+        '<button class="btn-secondary text-xs" data-act="verify" data-id="'+v.id+'">✅ 验证</button>'+
+        '<button class="btn-secondary text-xs" data-act="edit" data-id="'+v.id+'">✏️ 编辑</button>'+
+        '<button class="btn-danger text-xs" data-act="del" data-id="'+v.id+'">🗑️ 删除</button>'+
       '</div>';
 
     card.querySelectorAll('button[data-act]').forEach(btn=>{
@@ -1899,12 +2357,27 @@ function renderVpsList(){
           }
         }
         else if(act==='del'){
+          if(!confirm('确定要删除这台 VPS 吗？此操作不可恢复。')) return;
+          
+          btn.classList.add('loading');
+          btn.disabled = true;
+          
           try{
             const r=await fetch('/api/admin/vps/'+id,{method:'DELETE',credentials:'same-origin'});
             const j=await r.json();
-            toast(j.message||'已删除', r.ok?'success':'error');
+            if(r.ok){
+              card.style.animation = 'slideOut 0.3s ease-out forwards';
+              setTimeout(()=>{
+                toast(j.message||'已删除', 'success');
+              }, 300);
+            } else {
+              toast(j.message||'删除失败', 'error');
+            }
           }catch{
             toast('删除失败','error');
+          } finally {
+            btn.classList.remove('loading');
+            btn.disabled = false;
           }
         }
         else if(act==='edit'){
@@ -2004,6 +2477,9 @@ tailwind.config = {
   --radius: 0.5rem;
   color-scheme: light;
 }
+html{
+  scroll-behavior: smooth;
+}
 html,body{
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 15px;
@@ -2012,15 +2488,65 @@ html,body{
   overflow-x: hidden;
 }
 body{
-  background: #fbfbfd;
+  background: linear-gradient(135deg, 
+    #f5e6ff 0%,    /* 淡紫色 */
+    #ffe6f0 25%,   /* 淡粉色 */
+    #ffebe6 50%,   /* 淡橙色 */
+    #fff4e6 75%,   /* 淡黄色 */
+    #fffbe6 100%   /* 极淡黄 */
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
   color: #1d1d1f;
   min-height: 100vh;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: color 0.3s ease;
+  position: relative;
 }
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+body::before{
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, 
+    rgba(197, 94, 236, 0.03) 0%,
+    rgba(251, 99, 166, 0.03) 25%,
+    rgba(255, 124, 134, 0.03) 50%,
+    rgba(255, 163, 106, 0.03) 75%,
+    rgba(255, 206, 69, 0.03) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+body > *{
+  position: relative;
+  z-index: 1;
+}
+
 body[data-theme="dark"]{
   color-scheme: dark;
-  background: #000000;
+  background: linear-gradient(135deg,
+    #1a0a2e 0%,    /* 深紫蓝 */
+    #16213e 25%,   /* 深蓝灰 */
+    #0f3460 50%,   /* 深蓝 */
+    #1a1a2e 75%,   /* 深灰蓝 */
+    #0a0e27 100%   /* 极深蓝 */
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
   color: #f5f5f7;
+}
+body[data-theme="dark"]::before{
+  background: linear-gradient(135deg,
+    rgba(138, 43, 226, 0.1) 0%,
+    rgba(72, 52, 212, 0.08) 25%,
+    rgba(59, 130, 246, 0.06) 50%,
+    rgba(16, 185, 129, 0.05) 75%,
+    rgba(14, 165, 233, 0.08) 100%
+  );
 }
 
 /* ========== 动画 ========== */
@@ -2047,12 +2573,35 @@ body[data-theme="dark"]{
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50px) scale(0.9);
+  }
+}
 
 .animate-in {
   animation: slideUpAndFade 0.3s ease-out;
 }
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out;
+}
+.animate-slide-in {
+  animation: slideInFromBottom 0.4s ease-out forwards;
 }
 
 /* ========== 加载指示器 ========== */
@@ -2068,27 +2617,114 @@ body[data-theme="dark"] .loading-spinner {
   border-top-color: #0A84FF;
 }
 
+/* ========== 骨架屏 ========== */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(220, 220, 225, 0.6) 0%,
+    rgba(235, 235, 240, 0.8) 50%,
+    rgba(220, 220, 225, 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonLoading 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+@keyframes skeletonLoading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+body[data-theme="dark"] .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(44, 44, 46, 0.6) 0%,
+    rgba(56, 56, 58, 0.8) 50%,
+    rgba(44, 44, 46, 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonLoading 1.5s ease-in-out infinite;
+}
+
+/* 骨架屏卡片 */
+.skeleton-card {
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+body[data-theme="dark"] .skeleton-card {
+  background: rgba(28, 28, 30, 0.8);
+  border-color: rgba(56, 56, 58, 0.6);
+}
+
+.skeleton-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.skeleton-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+.skeleton-title {
+  height: 20px;
+  width: 40%;
+  border-radius: 4px;
+}
+.skeleton-text {
+  height: 16px;
+  width: 100%;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+.skeleton-text.short {
+  width: 60%;
+}
+.skeleton-text.medium {
+  width: 80%;
+}
+
 /* ========== 卡片与面板 ========== */
 .panel,.card{
-  background: #ffffff;
-  border: 1px solid #d2d2d7;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 
+    0 2px 16px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   transition: all 0.2s ease;
   word-break: break-word;
 }
 .card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
   transform: translateY(-2px);
 }
+
 body[data-theme="dark"] .panel,
 body[data-theme="dark"] .card{
-  background: #1c1c1e;
-  border-color: #38383a;
-  box-shadow: none;
+  background: rgba(28, 28, 30, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-color: rgba(56, 56, 58, 0.6);
+  box-shadow: 
+    0 2px 16px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(56, 56, 58, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 body[data-theme="dark"] .card:hover{
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(56, 56, 58, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /* ========== 弹窗内文本块 ========== */
@@ -2100,32 +2736,38 @@ body[data-theme="dark"] .card:hover{
   overflow-y: auto;
   padding: 8px 12px;
   border-radius: 8px;
-  background: #f5f5f7;
-  border: 1px solid #d2d2d7;
+  background: rgba(245, 245, 247, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(210, 210, 215, 0.8);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 13px;
   line-height: 1.5;
 }
 body[data-theme="dark"] .modal-text-block{
-  background: #2c2c2e;
-  border-color: #38383a;
+  background: rgba(44, 44, 46, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-color: rgba(56, 56, 58, 0.8);
   color: #f5f5f7;
 }
 
 /* ========== 文字样式 ========== */
 .muted{
-  color: #86868b;
+  color: #6b6b6f;
 }
 body[data-theme="dark"] .muted{
-  color: #98989d;
+  color: #a8a8ad;
 }
 
 .grad-title{
   color: #1d1d1f;
   font-weight: 700;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 body[data-theme="dark"] .grad-title{
   color: #f5f5f7;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* ========== Toast 通知 ========== */
@@ -2144,10 +2786,12 @@ body[data-theme="dark"] .grad-title{
 .toast{
   padding: 12px 20px;
   border-radius: 10px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   color: #1d1d1f;
-  border: 1px solid #d2d2d7;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.8);
   transform: translateY(-20px);
   opacity: 0;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2172,10 +2816,12 @@ body[data-theme="dark"] .grad-title{
   border-left: 3px solid #FF9500;
 }
 body[data-theme="dark"] .toast{
-  background: #2c2c2e;
+  background: rgba(44, 44, 46, 0.9);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   color: #f5f5f7;
-  border-color: #38383a;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  border-color: rgba(56, 56, 58, 0.8);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(56,56,58,0.6);
 }
 body[data-theme="dark"] .toast.success{ border-left-color: #32D74B; }
 body[data-theme="dark"] .toast.error{ border-left-color: #FF453A; }
@@ -2190,10 +2836,39 @@ body[data-theme="dark"] .help{
   color: #98989d;
 }
 
+/* ========== 警告框 ========== */
+.alert-warning{
+  background: linear-gradient(135deg, rgba(255, 149, 0, 0.08), rgba(255, 204, 0, 0.05));
+  border: 1px solid rgba(255, 149, 0, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+body[data-theme="dark"] .alert-warning{
+  background: linear-gradient(135deg, rgba(255, 159, 10, 0.12), rgba(255, 214, 10, 0.08));
+  border-color: rgba(255, 159, 10, 0.3);
+}
+
 /* ========== 状态徽章 ========== */
 .badge-ok{
   color: #34C759;
   font-weight: 600;
+  position: relative;
+}
+.badge-ok::before{
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: #34C759;
+  border-radius: 50%;
+  animation: pulse-green 2s ease-in-out infinite;
+}
+@keyframes pulse-green {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52,199,89,0.7); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(52,199,89,0); }
 }
 .badge-fail{
   color: #FF3B30;
@@ -2204,6 +2879,7 @@ body[data-theme="dark"] .help{
   font-weight: 600;
 }
 body[data-theme="dark"] .badge-ok{ color: #32D74B; }
+body[data-theme="dark"] .badge-ok::before{ background: #32D74B; }
 body[data-theme="dark"] .badge-fail{ color: #FF453A; }
 body[data-theme="dark"] .badge-idle{ color: #98989d; }
 
@@ -2211,8 +2887,10 @@ body[data-theme="dark"] .badge-idle{ color: #98989d; }
 #theme-toggle{
   border-radius: 10px;
   padding: 8px 16px;
-  border: 1px solid #d2d2d7;
-  background: #ffffff;
+  border: 1px solid rgba(210, 210, 215, 0.8);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #1d1d1f;
   font-size: 13px;
   font-weight: 500;
@@ -2220,7 +2898,7 @@ body[data-theme="dark"] .badge-idle{ color: #98989d; }
   cursor: pointer;
 }
 #theme-toggle:hover{
-  background: #f5f5f7;
+  background: rgba(245, 245, 247, 0.95);
   transform: scale(0.98);
 }
 #theme-toggle:active{
@@ -2228,26 +2906,30 @@ body[data-theme="dark"] .badge-idle{ color: #98989d; }
   opacity: 0.8;
 }
 body[data-theme="dark"] #theme-toggle{
-  background: #2c2c2e;
+  background: rgba(44, 44, 46, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #f5f5f7;
-  border-color: #38383a;
+  border-color: rgba(56, 56, 58, 0.8);
 }
 body[data-theme="dark"] #theme-toggle:hover{
-  background: #38383a;
+  background: rgba(56, 56, 58, 0.9);
 }
 
 /* ========== 统计卡片 ========== */
 .stat-card{
-  background: #ffffff;
-  border: 1px solid #d2d2d7;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 12px;
   transition: all 0.2s ease;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(255,255,255,0.8);
 }
 .stat-card:hover{
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.9);
 }
 .stat-card:active{
   transform: translateY(-1px) scale(0.98);
@@ -2270,12 +2952,14 @@ body[data-theme="dark"] #theme-toggle:hover{
 .stat-card.stat-today .stat-value{ color: #007AFF; }
 
 body[data-theme="dark"] .stat-card{
-  background: #1c1c1e;
-  border-color: #38383a;
-  box-shadow: none;
+  background: rgba(28, 28, 30, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-color: rgba(56, 56, 58, 0.6);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4), 0 0 0 1px rgba(56,56,58,0.5);
 }
 body[data-theme="dark"] .stat-card:hover{
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(56,56,58,0.8);
 }
 body[data-theme="dark"] .stat-card .stat-label{
   color: #98989d;
@@ -2296,28 +2980,48 @@ body[data-theme="dark"] .stat-card.stat-today .stat-value{ color: #0A84FF; }
 
 /* ========== 表单元素 ========== */
 input, textarea, select{
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #1d1d1f;
-  border: 1px solid #d2d2d7;
+  border: 1px solid rgba(210, 210, 215, 0.8);
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 15px;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
+  position: relative;
+}
+select{
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231d1d1f' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 40px;
+}
+optgroup{
+  font-weight: 600;
+  color: #86868b;
 }
 input:hover, textarea:hover, select:hover{
   border-color: #86868b;
+  transform: translateY(-1px);
 }
 input:focus, textarea:focus, select:focus{
   border-color: #007AFF;
-  box-shadow: 0 0 0 3px rgba(0,122,255,0.1);
+  box-shadow: 0 0 0 4px rgba(0,122,255,0.12), 0 2px 8px rgba(0,122,255,0.15);
   outline: none;
+  transform: translateY(-2px);
 }
 input::placeholder,
 textarea::placeholder{
   color: #86868b;
+  transition: opacity 0.2s ease;
+}
+input:focus::placeholder,
+textarea:focus::placeholder{
+  opacity: 0.5;
 }
 input:disabled, textarea:disabled, select:disabled{
   opacity: 0.5;
@@ -2325,23 +3029,59 @@ input:disabled, textarea:disabled, select:disabled{
   background: #f5f5f7;
 }
 
+/* 输入框错误状态 */
+input.error, textarea.error, select.error{
+  border-color: #FF3B30;
+  animation: shake 0.3s ease;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* 输入框成功状态 */
+input.success, textarea.success, select.success{
+  border-color: #34C759;
+}
+
 body[data-theme="dark"] input,
 body[data-theme="dark"] textarea,
 body[data-theme="dark"] select{
-  background: #2c2c2e;
+  background: rgba(44, 44, 46, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #f5f5f7;
-  border-color: #38383a;
+  border-color: rgba(56, 56, 58, 0.8);
+}
+body[data-theme="dark"] select{
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23f5f5f7' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+body[data-theme="dark"] optgroup{
+  color: #98989d;
 }
 body[data-theme="dark"] input:hover,
 body[data-theme="dark"] textarea:hover,
 body[data-theme="dark"] select:hover{
   border-color: #98989d;
+  transform: translateY(-1px);
 }
 body[data-theme="dark"] input:focus,
 body[data-theme="dark"] textarea:focus,
 body[data-theme="dark"] select:focus{
   border-color: #0A84FF;
-  box-shadow: 0 0 0 3px rgba(10,132,255,0.15);
+  box-shadow: 0 0 0 4px rgba(10,132,255,0.18), 0 2px 8px rgba(10,132,255,0.2);
+  transform: translateY(-2px);
+}
+body[data-theme="dark"] input.error,
+body[data-theme="dark"] textarea.error,
+body[data-theme="dark"] select.error{
+  border-color: #FF453A;
+}
+body[data-theme="dark"] input.success,
+body[data-theme="dark"] textarea.success,
+body[data-theme="dark"] select.success{
+  border-color: #32D74B;
 }
 body[data-theme="dark"] input::placeholder,
 body[data-theme="dark"] textarea::placeholder{
@@ -2383,10 +3123,45 @@ button:disabled{
   padding: 12px 24px;
   font-size: 15px;
   box-shadow: 0 2px 8px rgba(0,122,255,0.2);
+  position: relative;
+  overflow: hidden;
 }
 .btn-primary:hover{
   background: #0077ED;
   box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+}
+.btn-primary.loading{
+  pointer-events: none;
+  opacity: 0.8;
+}
+.btn-primary.loading::after{
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-left: 8px;
+}
+.btn-primary.success{
+  background: #34C759;
+  animation: successPulse 0.5s ease;
+}
+.btn-primary.error{
+  background: #FF3B30;
+  animation: errorShake 0.4s ease;
+}
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(52,199,89,0.5); }
+  100% { transform: scale(1); }
+}
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
 }
 body[data-theme="dark"] .btn-primary{
   background: #0A84FF;
@@ -2394,6 +3169,12 @@ body[data-theme="dark"] .btn-primary{
 }
 body[data-theme="dark"] .btn-primary:hover{
   background: #0077ED;
+}
+body[data-theme="dark"] .btn-primary.success{
+  background: #32D74B;
+}
+body[data-theme="dark"] .btn-primary.error{
+  background: #FF453A;
 }
 
 /* 次要按钮（边框按钮）*/
@@ -2457,20 +3238,71 @@ body[data-theme="dark"] .btn-danger:hover{
     min-width: 260px;
     max-width: calc(100vw - 40px);
   }
+  /* 移动端卡片可左右滑动 */
+  .swipeable{
+    touch-action: pan-y;
+    user-select: none;
+  }
+}
+
+/* ========== 数字计数动画 ========== */
+.count-up {
+  display: inline-block;
+  animation: countUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes countUp {
+  0% { 
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ========== 进度条动画 ========== */
+.progress-bar {
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== 卡片展开/收起 ========== */
+.expandable {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.expandable.expanded {
+  max-height: 2000px;
+}
+
+/* ========== 链接样式 ========== */
+a{
+  color: #007AFF;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+a:hover{
+  opacity: 0.8;
+}
+body[data-theme="dark"] a{
+  color: #0A84FF;
 }
 
 /* ========== 可访问性 ========== */
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
-select:focus-visible{
+select:focus-visible,
+a:focus-visible{
   outline: 2px solid #007AFF;
   outline-offset: 2px;
 }
 body[data-theme="dark"] button:focus-visible,
 body[data-theme="dark"] input:focus-visible,
 body[data-theme="dark"] textarea:focus-visible,
-body[data-theme="dark"] select:focus-visible{
+body[data-theme="dark"] select:focus-visible,
+body[data-theme="dark"] a:focus-visible{
   outline-color: #0A84FF;
 }
 
@@ -2499,9 +3331,12 @@ body[data-theme="dark"] ::-webkit-scrollbar-thumb:hover{
 <script>
 (function(){
   const saved = localStorage.getItem('theme') || 'dark';
+  const accent = localStorage.getItem('accent-color') || 'blue';
   document.documentElement.setAttribute('data-theme', saved);
+  document.documentElement.setAttribute('data-accent', accent);
   document.addEventListener('DOMContentLoaded', () => {
     document.body.setAttribute('data-theme', saved);
+    document.body.setAttribute('data-accent', accent);
   });
 })();
 
@@ -2520,6 +3355,13 @@ function updateThemeBtn(){
     const cur=document.body.getAttribute('data-theme')||'dark';
     b.textContent = cur==='dark' ? '浅色模式' : '深色模式';
   }
+}
+
+// 主题色切换（可选功能）
+function setAccentColor(color){
+  document.body.setAttribute('data-accent', color);
+  document.documentElement.setAttribute('data-accent', color);
+  localStorage.setItem('accent-color', color);
 }
 
 function toast(msg,type='info',ms=2600){
@@ -2956,6 +3798,46 @@ function modalLoginInfo(v){
 function medalByRank(i){
   const arr=["👑","🏆","🥇","🥈","🥉","💎","🔥","🌟","✨","⚡","🎖️","🛡️","🎗️","🎯","🚀","🧿","🪙","🧭","🗡️","🦄","🐉","🦅","🦁","🐯","🐺","🐻","🐼","🐧","🐬","🐳","🛰️","🪐","🌙","🌈","🌊","🌋","🏔️","🏰","🧱","⚙️","🔧","🔭","🧪","🧠","🪄","🔮","🎩","🎼","🎷","🎻","🥁","🎹"];
   return arr[i%arr.length];
+}
+
+// 勋章系统
+function getBadge(count){
+  if(count >= 10) return {emoji:'👑',name:'超级赞助商',color:'#FFD700',desc:'投喂10台+'};
+  if(count >= 5) return {emoji:'💎',name:'白金赞助商',color:'#E5E4E2',desc:'投喂5-9台'};
+  if(count >= 3) return {emoji:'🏆',name:'金牌赞助商',color:'#CD7F32',desc:'投喂3-4台'};
+  if(count >= 2) return {emoji:'🥇',name:'银牌赞助商',color:'#C0C0C0',desc:'投喂2台'};
+  return {emoji:'⭐',name:'新星赞助商',color:'#4A90E2',desc:'投喂1台'};
+}
+
+function renderBadge(badge){
+  return '<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold" '+
+    'style="background:'+badge.color+'22;border:1px solid '+badge.color+'44;color:'+badge.color+'">'+
+    '<span>'+badge.emoji+'</span>'+
+    '<span>'+badge.name+'</span>'+
+    '</div>';
+}
+
+// 数字计数动画
+function animateNumber(element, target, duration = 800){
+  const start = 0;
+  const startTime = performance.now();
+  
+  function update(currentTime){
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const easeProgress = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+    const current = Math.floor(start + (target - start) * easeProgress);
+    
+    element.textContent = current;
+    
+    if(progress < 1){
+      requestAnimationFrame(update);
+    } else {
+      element.textContent = target;
+    }
+  }
+  
+  requestAnimationFrame(update);
 }
 </script>
 `;
