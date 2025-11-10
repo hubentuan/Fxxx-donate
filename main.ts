@@ -1200,6 +1200,13 @@ app.get('/donate/vps', c => {
                 <option value="🇵🇭 菲律宾">🇵🇭 菲律宾</option>
                 <option value="🇮🇩 印度尼西亚">🇮🇩 印度尼西亚</option>
                 <option value="🇮🇳 印度">🇮🇳 印度</option>
+                <option value="🇵🇰 巴基斯坦">🇵🇰 巴基斯坦</option>
+                <option value="🇧🇩 孟加拉国">🇧🇩 孟加拉国</option>
+                <option value="🇰🇭 柬埔寨">🇰🇭 柬埔寨</option>
+                <option value="🇱🇦 老挝">🇱🇦 老挝</option>
+                <option value="🇲🇲 缅甸">🇲🇲 缅甸</option>
+                <option value="🇰🇿 哈萨克斯坦">🇰🇿 哈萨克斯坦</option>
+                <option value="🇺🇿 乌兹别克斯坦">🇺🇿 乌兹别克斯坦</option>
               </optgroup>
               <optgroup label="🌍 欧洲">
                 <option value="🇬🇧 英国">🇬🇧 英国</option>
@@ -1212,6 +1219,21 @@ app.get('/donate/vps', c => {
                 <option value="🇵🇱 波兰">🇵🇱 波兰</option>
                 <option value="🇨🇭 瑞士">🇨🇭 瑞士</option>
                 <option value="🇸🇪 瑞典">🇸🇪 瑞典</option>
+                <option value="🇳🇴 挪威">🇳🇴 挪威</option>
+                <option value="🇩🇰 丹麦">🇩🇰 丹麦</option>
+                <option value="🇫🇮 芬兰">🇫🇮 芬兰</option>
+                <option value="🇮🇪 爱尔兰">🇮🇪 爱尔兰</option>
+                <option value="🇧🇪 比利时">🇧🇪 比利时</option>
+                <option value="🇦🇹 奥地利">🇦🇹 奥地利</option>
+                <option value="🇵🇹 葡萄牙">🇵🇹 葡萄牙</option>
+                <option value="🇬🇷 希腊">🇬🇷 希腊</option>
+                <option value="🇨🇿 捷克">🇨🇿 捷克</option>
+                <option value="🇭🇺 匈牙利">🇭🇺 匈牙利</option>
+                <option value="🇷🇴 罗马尼亚">🇷🇴 罗马尼亚</option>
+                <option value="🇧🇬 保加利亚">🇧🇬 保加利亚</option>
+                <option value="🇺🇦 乌克兰">🇺🇦 乌克兰</option>
+                <option value="🇮🇸 冰岛">🇮🇸 冰岛</option>
+                <option value="🇱🇺 卢森堡">🇱🇺 卢森堡</option>
               </optgroup>
               <optgroup label="🌎 北美">
                 <option value="🇺🇸 美国">🇺🇸 美国</option>
@@ -1221,20 +1243,35 @@ app.get('/donate/vps', c => {
               <optgroup label="🌏 大洋洲">
                 <option value="🇦🇺 澳大利亚">🇦🇺 澳大利亚</option>
                 <option value="🇳🇿 新西兰">🇳🇿 新西兰</option>
+                <option value="🇫🇯 斐济">🇫🇯 斐济</option>
               </optgroup>
               <optgroup label="🌍 非洲">
                 <option value="🇿🇦 南非">🇿🇦 南非</option>
                 <option value="🇪🇬 埃及">🇪🇬 埃及</option>
+                <option value="🇳🇬 尼日利亚">🇳🇬 尼日利亚</option>
+                <option value="🇰🇪 肯尼亚">🇰🇪 肯尼亚</option>
+                <option value="🇲🇦 摩洛哥">🇲🇦 摩洛哥</option>
               </optgroup>
               <optgroup label="🌎 南美">
                 <option value="🇧🇷 巴西">🇧🇷 巴西</option>
                 <option value="🇦🇷 阿根廷">🇦🇷 阿根廷</option>
                 <option value="🇨🇱 智利">🇨🇱 智利</option>
+                <option value="🇨🇴 哥伦比亚">🇨🇴 哥伦比亚</option>
+                <option value="🇵🇪 秘鲁">🇵🇪 秘鲁</option>
+                <option value="🇻🇪 委内瑞拉">🇻🇪 委内瑞拉</option>
               </optgroup>
               <optgroup label="🌏 中东">
                 <option value="🇦🇪 阿联酋">🇦🇪 阿联酋</option>
                 <option value="🇸🇦 沙特阿拉伯">🇸🇦 沙特阿拉伯</option>
                 <option value="🇹🇷 土耳其">🇹🇷 土耳其</option>
+                <option value="🇮🇱 以色列">🇮🇱 以色列</option>
+                <option value="🇮🇷 伊朗">🇮🇷 伊朗</option>
+                <option value="🇮🇶 伊拉克">🇮🇶 伊拉克</option>
+                <option value="🇯🇴 约旦">🇯🇴 约旦</option>
+                <option value="🇰🇼 科威特">🇰🇼 科威特</option>
+                <option value="🇶🇦 卡塔尔">🇶🇦 卡塔尔</option>
+                <option value="🇴🇲 阿曼">🇴🇲 阿曼</option>
+                <option value="🇧🇭 巴林">🇧🇭 巴林</option>
               </optgroup>
             </select>
           </div>
@@ -1742,49 +1779,6 @@ async function renderAdmin(root, name){
   const stats=document.createElement('section');
   stats.id='admin-stats';
   root.appendChild(stats);
-  
-  const distMap=document.createElement('section');
-  distMap.className='mt-6';
-  distMap.innerHTML='<div class="panel border p-6">'+
-    '<div class="flex items-center justify-between mb-4">'+
-      '<div class="flex items-center gap-3">'+
-        '<span class="text-2xl">🗺️</span>'+
-        '<h2 class="text-lg font-bold">全球服务器分布</h2>'+
-      '</div>'+
-      '<button id="btn-toggle-map" class="btn-secondary text-xs">展开</button>'+
-    '</div>'+
-      '<div id="map-body" class="hidden">'+
-        '<div class="mb-4">'+
-          '<div id="server-map-chart" style="width:100%;height:450px;min-height:450px;"></div>'+
-        '</div>'+
-        '<div class="border-t pt-4">'+
-          '<h3 class="text-sm font-semibold mb-3 flex items-center gap-2">'+
-            '<span>📊</span>'+
-            '<span>国家/地区统计</span>'+
-          '</h3>'+
-          '<div id="server-distribution-admin" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>'+
-        '</div>'+
-      '</div>'+
-  '</div>';
-  root.appendChild(distMap);
-
-  document.getElementById('btn-toggle-map').addEventListener('click',()=>{
-    const b=document.getElementById('map-body');
-    const btn=document.getElementById('btn-toggle-map');
-    if(b.classList.contains('hidden')){
-      b.classList.remove('hidden');
-      btn.textContent='收起';
-      
-      // 延迟执行以确保DOM已渲染
-      setTimeout(()=>{
-        renderServerMapChart();
-        renderServerDistributionAdmin();
-      }, 100);
-    } else {
-      b.classList.add('hidden');
-      btn.textContent='展开';
-    }
-  });
 
   const cfg=document.createElement('section');
   cfg.id='admin-config';
@@ -2075,357 +2069,7 @@ async function saveAdminPassword(){
   }
 }
 
-let mapChartInstance = null;
-let mapLoaded = false;
 
-function renderServerMapChart(){
-  const chartDom = document.getElementById('server-map-chart');
-  if(!chartDom) return;
-  
-  if(!window.echarts){
-    chartDom.innerHTML = '<div class="text-center py-8 text-red-400">ECharts 库未加载</div>';
-    return;
-  }
-
-  // 如果已经初始化过，只更新数据
-  if(mapChartInstance && mapLoaded){
-    updateMapData();
-    return;
-  }
-
-  mapChartInstance = echarts.init(chartDom);
-
-  if(!allVpsList.length) {
-    mapChartInstance.showLoading({
-      text: '暂无数据',
-      color: '#007AFF',
-      textColor: '#1d1d1f',
-      maskColor: 'rgba(255, 255, 255, 0.2)'
-    });
-    return;
-  }
-  
-  mapChartInstance.showLoading({
-    text: '加载地图中...',
-    color: '#007AFF',
-    textColor: '#1d1d1f',
-    maskColor: 'rgba(255, 255, 255, 0.2)'
-  });
-
-  // 统计各国家/地区的服务器数量
-  const countryMap = new Map();
-  allVpsList.forEach(vps => {
-    const country = vps.country || '未知';
-    const count = countryMap.get(country) || 0;
-    countryMap.set(country, count + 1);
-  });
-
-  // 国家名称映射函数 - 将数据库中的名称映射到地图标准名称
-  const mapCountryName = (name) => {
-    // 提取国家名称（去掉emoji和多余空格）
-    const cleanName = name.replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '').trim();
-
-    // 中文到地图名称的映射表
-    const nameMap = {
-      '中国大陆': '中国',
-      '中国香港': '香港',
-      '中国澳门': '澳门',
-      '中国台湾': '台湾',
-      '美国': '美国',
-      '日本': '日本',
-      '韩国': '韩国',
-      '新加坡': '新加坡',
-      '英国': '英国',
-      '德国': '德国',
-      '法国': '法国',
-      '加拿大': '加拿大',
-      '澳大利亚': '澳大利亚',
-      '俄罗斯': '俄罗斯',
-      '印度': '印度',
-      '巴西': '巴西',
-      '荷兰': '荷兰',
-      '意大利': '意大利',
-      '西班牙': '西班牙',
-      // 可根据需要继续添加更多映射
-    };
-
-    return nameMap[cleanName] || cleanName;
-  };
-
-  // 转换为 ECharts 需要的数据格式
-  const mapData = Array.from(countryMap.entries()).map(([name, value]) => {
-    const mappedName = mapCountryName(name);
-    return { name: mappedName, value: value };
-  });
-
-  const isDark = document.body.getAttribute('data-theme') === 'dark';
-
-  const option = {
-    tooltip: {
-      trigger: 'item',
-      formatter: function(params) {
-        if(params.value) {
-          return params.name + '<br/>服务器数量：' + params.value + ' 台';
-        }
-        return params.name + '<br/>暂无服务器';
-      },
-      backgroundColor: isDark ? 'rgba(28, 28, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-      borderColor: isDark ? 'rgba(56, 56, 58, 0.8)' : 'rgba(210, 210, 215, 0.8)',
-      textStyle: {
-        color: isDark ? '#f5f5f7' : '#1d1d1f'
-      }
-    },
-    visualMap: {
-      min: 0,
-      max: Math.max(...Array.from(countryMap.values()), 1),
-      text: ['多', '少'],
-      realtime: false,
-      calculable: true,
-      inRange: {
-        color: isDark
-          ? ['#1a1a2e', '#0f3460', '#16213e', '#0A84FF', '#0066CC']
-          : ['#f0e6ff', '#ddd6fe', '#c4b5fd', '#a78bfa', '#8b5cf6']
-      },
-      textStyle: {
-        color: isDark ? '#f5f5f7' : '#1d1d1f'
-      },
-      bottom: 20,
-      left: 'center',
-      orient: 'horizontal'
-    },
-    series: [
-      {
-        name: '服务器数量',
-        type: 'map',
-        map: 'world',
-        roam: true,
-        emphasis: {
-          label: {
-            show: true,
-            color: isDark ? '#f5f5f7' : '#1d1d1f'
-          },
-          itemStyle: {
-            areaColor: isDark ? '#0A84FF' : '#8b5cf6',
-            borderColor: '#fff',
-            borderWidth: 2
-          }
-        },
-        itemStyle: {
-          borderColor: isDark ? '#38383a' : '#d2d2d7',
-          borderWidth: 0.5,
-          areaColor: isDark ? '#1c1c1e' : '#f5f5f7'
-        },
-        label: {
-          show: false,
-          color: isDark ? '#f5f5f7' : '#1d1d1f'
-        },
-        data: mapData
-      }
-    ]
-  };
-
-  // 多个备用地图数据源（按优先级排序）
-  const mapSources = [
-    // jsDelivr CDN - 通常最快且稳定
-    'https://cdn.jsdelivr.net/npm/echarts@5.4.3/map/json/world.json',
-    // Fastly CDN - jsDelivr 的备用节点
-    'https://fastly.jsdelivr.net/npm/echarts@5.4.3/map/json/world.json',
-    // unpkg CDN - 备用源
-    'https://unpkg.com/echarts@5.4.3/map/json/world.json',
-    // GitHub 原始文件 - 最后的备用方案
-    'https://raw.githubusercontent.com/apache/echarts/5.4.3/map/json/world.json'
-  ];
-
-  async function loadWorldMap(sources, index = 0){
-    if(index >= sources.length){
-      throw new Error('所有地图数据源均加载失败，请检查网络连接');
-    }
-
-    const currentSource = sources[index];
-    console.log('尝试加载地图数据源 '+(index + 1)+'/'+sources.length+': '+currentSource);
-
-    try{
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
-
-      const response = await fetch(currentSource, {
-        signal: controller.signal,
-        cache: 'default' // 允许浏览器缓存
-      });
-
-      clearTimeout(timeoutId);
-
-      if(!response.ok) {
-        throw new Error('HTTP '+response.status+': '+response.statusText);
-      }
-
-      const data = await response.json();
-      console.log('✓ 地图数据源 '+(index + 1)+' 加载成功');
-      return data;
-
-    } catch(err){
-      const errorMsg = err.name === 'AbortError'
-        ? '请求超时'
-        : (err.message || '未知错误');
-
-      console.warn('✗ 地图数据源 '+(index + 1)+' 加载失败: '+errorMsg);
-
-      // 如果还有备用源，继续尝试
-      if(index + 1 < sources.length){
-        console.log('正在尝试下一个备用数据源...');
-        return loadWorldMap(sources, index + 1);
-      }
-
-      // 所有源都失败了
-      throw new Error('所有地图数据源均加载失败。最后一次错误: '+errorMsg);
-    }
-  }
-  
-  loadWorldMap(mapSources)
-    .then(worldJson => {
-      if(!worldJson || !worldJson.features){
-        throw new Error('地图数据格式无效');
-      }
-
-      echarts.registerMap('world', worldJson);
-      mapChartInstance.setOption(option);
-      mapChartInstance.hideLoading();
-      mapLoaded = true;
-
-      console.log('✓ 世界地图渲染成功');
-      toast('地图加载成功','success');
-
-      // 监听主题切换（只注册一次）
-      if(!window.mapThemeHandler){
-        window.mapThemeHandler = () => {
-          if(!mapChartInstance || !mapLoaded) return;
-          const newIsDark = document.body.getAttribute('data-theme') === 'dark';
-          option.visualMap.textStyle.color = newIsDark ? '#f5f5f7' : '#1d1d1f';
-          option.visualMap.inRange.color = newIsDark
-            ? ['#1a1a2e', '#0f3460', '#16213e', '#0A84FF', '#0066CC']
-            : ['#f0e6ff', '#ddd6fe', '#c4b5fd', '#a78bfa', '#8b5cf6'];
-          option.tooltip.backgroundColor = newIsDark ? 'rgba(28, 28, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)';
-          option.tooltip.borderColor = newIsDark ? 'rgba(56, 56, 58, 0.8)' : 'rgba(210, 210, 215, 0.8)';
-          option.tooltip.textStyle.color = newIsDark ? '#f5f5f7' : '#1d1d1f';
-          option.series[0].emphasis.label.color = newIsDark ? '#f5f5f7' : '#1d1d1f';
-          option.series[0].emphasis.itemStyle.areaColor = newIsDark ? '#0A84FF' : '#8b5cf6';
-          option.series[0].itemStyle.borderColor = newIsDark ? '#38383a' : '#d2d2d7';
-          option.series[0].itemStyle.areaColor = newIsDark ? '#1c1c1e' : '#f5f5f7';
-          option.series[0].label.color = newIsDark ? '#f5f5f7' : '#1d1d1f';
-          mapChartInstance.setOption(option);
-        };
-        window.addEventListener('themeChanged', window.mapThemeHandler);
-      }
-
-      // 响应式调整（只注册一次）
-      if(!window.mapResizeHandler){
-        window.mapResizeHandler = () => {
-          if(mapChartInstance) mapChartInstance.resize();
-        };
-        window.addEventListener('resize', window.mapResizeHandler);
-      }
-    })
-    .catch(err => {
-      console.error('✗ 世界地图加载失败:', err);
-      if(mapChartInstance) mapChartInstance.hideLoading();
-
-      const errorDetail = err.message || '未知错误';
-
-      chartDom.innerHTML = '<div class="text-center py-12 px-6">'+
-        '<div class="text-6xl mb-4">🗺️</div>'+
-        '<div class="text-red-400 mb-3 text-xl font-semibold">地图加载失败</div>'+
-        '<div class="text-sm muted mb-2">无法从任何CDN源加载地图数据</div>'+
-        '<div class="text-xs muted mb-6 max-w-md mx-auto">'+
-          '<details class="mt-2">'+
-            '<summary class="cursor-pointer hover:text-sky-400">查看详细错误信息</summary>'+
-            '<div class="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-left">'+
-              '<code class="text-xs">'+errorDetail+'</code>'+
-            '</div>'+
-          '</details>'+
-        '</div>'+
-        '<div class="flex gap-3 justify-center">'+
-          '<button onclick="location.reload()" class="btn-primary">刷新页面重试</button>'+
-          '<button onclick="document.getElementById(&quot;btn-toggle-map&quot;).click()" class="btn-secondary">收起地图</button>'+
-        '</div>'+
-        '<div class="mt-6 text-xs muted">'+
-          '<p>💡 提示：地图功能为可选功能，不影响其他管理功能的使用</p>'+
-        '</div>'+
-      '</div>';
-
-      toast('地图加载失败，但不影响其他功能','warn');
-    });
-}
-
-function updateMapData(){
-  if(!mapChartInstance || !mapLoaded) return;
-  
-  // 重新统计数据
-  const countryMap = new Map();
-  allVpsList.forEach(vps => {
-    const country = vps.country || '未知';
-    const count = countryMap.get(country) || 0;
-    countryMap.set(country, count + 1);
-  });
-  
-  const mapData = Array.from(countryMap.entries()).map(([name, value]) => {
-    const cleanName = name.replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '').trim();
-    return { name: cleanName, value: value };
-  });
-  
-  mapChartInstance.setOption({
-    series: [{
-      data: mapData
-    }]
-  });
-  
-  toast('地图数据已更新','success');
-}
-
-function renderServerDistributionAdmin(){
-  const distBox = document.getElementById('server-distribution-admin');
-  if(!allVpsList.length) {
-    distBox.innerHTML = '<div class="col-span-full text-sm muted text-center py-4">暂无数据</div>';
-    return;
-  }
-  
-  // 统计各国家/地区的服务器数量
-  const countryMap = new Map();
-  allVpsList.forEach(vps => {
-    const country = vps.country || '未知';
-    const count = countryMap.get(country) || 0;
-    countryMap.set(country, count + 1);
-  });
-  
-  // 按数量排序
-  const sorted = Array.from(countryMap.entries())
-    .sort((a, b) => b[1] - a[1]);
-  
-  if(!sorted.length){
-    distBox.innerHTML = '<div class="col-span-full text-sm muted text-center py-4">暂无数据</div>';
-    return;
-  }
-  
-  distBox.innerHTML = '';
-  sorted.forEach(([country, count]) => {
-    const item = document.createElement('div');
-    item.className = 'panel border rounded-lg px-3 py-3 text-center transition-all hover:shadow-sm animate-slide-in';
-    item.innerHTML = '<div class="text-2xl mb-1.5">'+country.split(' ')[0]+'</div>'+
-      '<div class="text-xs muted mb-2">'+country.split(' ').slice(1).join(' ')+'</div>'+
-      '<div class="font-bold text-xl mb-0.5 count-up">'+count+'</div>'+
-      '<div class="text-xs muted">台服务器</div>';
-    distBox.appendChild(item);
-  });
-  
-  // 数字计数动画
-  setTimeout(()=>{
-    distBox.querySelectorAll('.count-up').forEach(el => {
-      const target = parseInt(el.textContent);
-      if(!isNaN(target)){
-        animateNumber(el, target);
-      }
-    });
-  }, 100);
-}
 
 async function loadVps(){
   const list=document.getElementById('vps-list');
@@ -2533,10 +2177,10 @@ function renderVpsList(){
           '<span>'+(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'')+'</span>'+
         '</div>'+
         '<div class="grid grid-cols-2 gap-2">'+
-          '<div class="flex items-center gap-1.5"><span class="opacity-60">📊</span><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
-          '<div class="flex items-center gap-1.5"><span class="opacity-60">📅</span><span class="truncate">'+(v.expiryDate||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-1.5 panel border rounded-lg px-2 py-1.5"><span class="opacity-60">📊</span><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-1.5 panel border rounded-lg px-2 py-1.5"><span class="opacity-60">📅</span><span class="truncate">'+(v.expiryDate||'未填写')+'</span></div>'+
         '</div>'+
-        '<div class="bg-slate-100 dark:bg-slate-800/50 rounded-lg px-2 py-1.5 flex items-start gap-1.5">'+
+        '<div class="panel border rounded-lg px-2 py-1.5 flex items-start gap-1.5">'+
           '<span class="opacity-60">⚙️</span>'+
           '<span class="break-words">'+(v.specs||'未填写')+'</span>'+
         '</div>'+
