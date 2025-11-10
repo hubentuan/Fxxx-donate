@@ -238,6 +238,16 @@ app.use('*', cors());
 
 app.get('/', c => c.redirect('/donate'));
 
+/* ---- Favicon 路由（防止 404 错误）---- */
+app.get('/favicon.ico', c => {
+  // 返回一个简单的橙色心形 SVG favicon
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🧡</text></svg>`;
+  return c.body(svg, 200, {
+    'Content-Type': 'image/svg+xml',
+    'Cache-Control': 'public, max-age=86400' // 缓存1天
+  });
+});
+
 /* ---- OAuth 登录 ---- */
 app.get('/oauth/login', async c => {
   const redirectPath = c.req.query('redirect') || '/donate/vps';
@@ -857,11 +867,11 @@ app.get('/donate', c => {
     </div>
   </section>
 
-  <footer class="mt-16 pt-8 text-center">
-    <div class="panel border px-6 py-4 inline-block">
-      <p class="flex items-center justify-center gap-2 text-sm muted">
-        <span class="text-lg">ℹ️</span>
-        <span>说明：本项目仅作公益用途，请勿滥用资源（长时间占满带宽、刷流量、倒卖账号等）。</span>
+  <footer class="mt-16 pt-8 pb-8 text-center">
+    <div class="panel border px-4 md:px-6 py-4 inline-block max-w-full">
+      <p class="flex items-center justify-center gap-2 text-sm muted flex-wrap">
+        <span class="text-lg flex-shrink-0">ℹ️</span>
+        <span class="break-words">说明：本项目仅作公益用途，请勿滥用资源（长时间占满带宽、刷流量、倒卖账号等）。</span>
       </p>
     </div>
   </footer>
@@ -942,23 +952,30 @@ function renderLeaderboard(){
             '<div class="text-xs muted leading-none">VPS</div>'+
           '</div>'+
         '</div>'+
-        '<button class="toggle-expand text-2xl transition-transform" data-card="'+cardId+'" onclick="event.stopPropagation()">'+
-          (isExpanded ? '▼' : '▶')+
+        '<button class="toggle-expand flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg panel border hover:bg-sky-500/10 transition-all" data-card="'+cardId+'" onclick="event.stopPropagation()" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
+          '<span class="text-lg transition-transform duration-300 '+(isExpanded ? 'rotate-0' : '-rotate-90')+'">'+'▼'+'</span>'+
         '</button>'+
       '</div>';
     
     head.onclick = () => {
       const listEl = wrap.querySelector('.server-list');
       const toggleBtn = wrap.querySelector('.toggle-expand');
+      const toggleIcon = toggleBtn.querySelector('span');
       const isCurrentlyExpanded = !listEl.classList.contains('expandable');
-      
+
       if(isCurrentlyExpanded){
+        // 收起
         listEl.classList.add('expandable');
-        toggleBtn.textContent = '▶';
+        toggleIcon.classList.remove('rotate-0');
+        toggleIcon.classList.add('-rotate-90');
+        toggleBtn.setAttribute('title', '展开列表');
         localStorage.setItem(cardId, 'collapsed');
       } else {
+        // 展开
         listEl.classList.remove('expandable');
-        toggleBtn.textContent = '▼';
+        toggleIcon.classList.remove('-rotate-90');
+        toggleIcon.classList.add('rotate-0');
+        toggleBtn.setAttribute('title', '收起列表');
         localStorage.removeItem(cardId);
       }
     };
@@ -966,7 +983,7 @@ function renderLeaderboard(){
     wrap.appendChild(head);
 
     const list=document.createElement('div');
-    list.className='server-list p-5 pt-4 space-y-3';
+    list.className='server-list px-5 pb-5 pt-4 space-y-3';
     if(!isExpanded){
       list.classList.add('expandable');
     }
@@ -1290,11 +1307,11 @@ app.get('/donate/vps', c => {
     </section>
   </main>
 
-  <footer class="mt-16 pt-8 text-center">
-    <div class="panel border px-6 py-4 inline-block">
-      <p class="flex items-center justify-center gap-2 text-sm muted">
-        <span class="text-lg">ℹ️</span>
-        <span>友情提示：投喂即视为同意将该 VPS 用于公益机场中转节点。请勿提交有敏感业务的生产机器。</span>
+  <footer class="mt-16 pt-8 pb-8 text-center">
+    <div class="panel border px-4 md:px-6 py-4 inline-block max-w-full">
+      <p class="flex items-center justify-center gap-2 text-sm muted flex-wrap">
+        <span class="text-lg flex-shrink-0">ℹ️</span>
+        <span class="break-words">友情提示：投喂即视为同意将该 VPS 用于公益机场中转节点。请勿提交有敏感业务的生产机器。</span>
       </p>
     </div>
   </footer>
@@ -1736,10 +1753,18 @@ async function renderAdmin(root, name){
       '</div>'+
       '<button id="btn-toggle-map" class="btn-secondary text-xs">展开</button>'+
     '</div>'+
-    '<div id="map-body" class="hidden">'+
-      '<div id="server-map-chart" style="width:100%;height:500px;"></div>'+
-      '<div id="server-distribution-admin" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mt-4"></div>'+
-    '</div>'+
+      '<div id="map-body" class="hidden">'+
+        '<div class="mb-4">'+
+          '<div id="server-map-chart" style="width:100%;height:450px;min-height:450px;"></div>'+
+        '</div>'+
+        '<div class="border-t pt-4">'+
+          '<h3 class="text-sm font-semibold mb-3 flex items-center gap-2">'+
+            '<span>📊</span>'+
+            '<span>国家/地区统计</span>'+
+          '</h3>'+
+          '<div id="server-distribution-admin" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>'+
+        '</div>'+
+      '</div>'+
   '</div>';
   root.appendChild(distMap);
 
@@ -1749,8 +1774,12 @@ async function renderAdmin(root, name){
     if(b.classList.contains('hidden')){
       b.classList.remove('hidden');
       btn.textContent='收起';
-      renderServerMapChart();
-      renderServerDistributionAdmin();
+      
+      // 延迟执行以确保DOM已渲染
+      setTimeout(()=>{
+        renderServerMapChart();
+        renderServerDistributionAdmin();
+      }, 100);
     } else {
       b.classList.add('hidden');
       btn.textContent='展开';
@@ -2046,16 +2075,42 @@ async function saveAdminPassword(){
   }
 }
 
+let mapChartInstance = null;
+let mapLoaded = false;
+
 function renderServerMapChart(){
   const chartDom = document.getElementById('server-map-chart');
-  if(!chartDom || !window.echarts) return;
-
-  const myChart = echarts.init(chartDom);
-
-  if(!allVpsList.length) {
-    myChart.showLoading();
+  if(!chartDom) return;
+  
+  if(!window.echarts){
+    chartDom.innerHTML = '<div class="text-center py-8 text-red-400">ECharts 库未加载</div>';
     return;
   }
+
+  // 如果已经初始化过，只更新数据
+  if(mapChartInstance && mapLoaded){
+    updateMapData();
+    return;
+  }
+
+  mapChartInstance = echarts.init(chartDom);
+
+  if(!allVpsList.length) {
+    mapChartInstance.showLoading({
+      text: '暂无数据',
+      color: '#007AFF',
+      textColor: '#1d1d1f',
+      maskColor: 'rgba(255, 255, 255, 0.2)'
+    });
+    return;
+  }
+  
+  mapChartInstance.showLoading({
+    text: '加载地图中...',
+    color: '#007AFF',
+    textColor: '#1d1d1f',
+    maskColor: 'rgba(255, 255, 255, 0.2)'
+  });
 
   // 统计各国家/地区的服务器数量
   const countryMap = new Map();
@@ -2169,45 +2224,161 @@ function renderServerMapChart(){
     ]
   };
 
-  // 需要先注册世界地图 - 使用阿里云 DataV 的 GeoJSON 数据
-  fetch('https://geo.datav.aliyun.com/areas_v3/bound/world.json')
-    .then(response => {
-      if(!response.ok) throw new Error('地图数据加载失败: HTTP ' + response.status);
-      return response.json();
-    })
+  // 多个备用地图数据源（按优先级排序）
+  const mapSources = [
+    // jsDelivr CDN - 通常最快且稳定
+    'https://cdn.jsdelivr.net/npm/echarts@5.4.3/map/json/world.json',
+    // Fastly CDN - jsDelivr 的备用节点
+    'https://fastly.jsdelivr.net/npm/echarts@5.4.3/map/json/world.json',
+    // unpkg CDN - 备用源
+    'https://unpkg.com/echarts@5.4.3/map/json/world.json',
+    // GitHub 原始文件 - 最后的备用方案
+    'https://raw.githubusercontent.com/apache/echarts/5.4.3/map/json/world.json'
+  ];
+
+  async function loadWorldMap(sources, index = 0){
+    if(index >= sources.length){
+      throw new Error('所有地图数据源均加载失败，请检查网络连接');
+    }
+
+    const currentSource = sources[index];
+    console.log('尝试加载地图数据源 '+(index + 1)+'/'+sources.length+': '+currentSource);
+
+    try{
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+
+      const response = await fetch(currentSource, {
+        signal: controller.signal,
+        cache: 'default' // 允许浏览器缓存
+      });
+
+      clearTimeout(timeoutId);
+
+      if(!response.ok) {
+        throw new Error('HTTP '+response.status+': '+response.statusText);
+      }
+
+      const data = await response.json();
+      console.log('✓ 地图数据源 '+(index + 1)+' 加载成功');
+      return data;
+
+    } catch(err){
+      const errorMsg = err.name === 'AbortError'
+        ? '请求超时'
+        : (err.message || '未知错误');
+
+      console.warn('✗ 地图数据源 '+(index + 1)+' 加载失败: '+errorMsg);
+
+      // 如果还有备用源，继续尝试
+      if(index + 1 < sources.length){
+        console.log('正在尝试下一个备用数据源...');
+        return loadWorldMap(sources, index + 1);
+      }
+
+      // 所有源都失败了
+      throw new Error('所有地图数据源均加载失败。最后一次错误: '+errorMsg);
+    }
+  }
+  
+  loadWorldMap(mapSources)
     .then(worldJson => {
+      if(!worldJson || !worldJson.features){
+        throw new Error('地图数据格式无效');
+      }
+
       echarts.registerMap('world', worldJson);
-      myChart.setOption(option);
-      myChart.hideLoading();
+      mapChartInstance.setOption(option);
+      mapChartInstance.hideLoading();
+      mapLoaded = true;
 
-      // 监听主题切换
-      window.addEventListener('themeChanged', () => {
-        const newIsDark = document.body.getAttribute('data-theme') === 'dark';
-        option.visualMap.textStyle.color = newIsDark ? '#f5f5f7' : '#1d1d1f';
-        option.visualMap.inRange.color = newIsDark
-          ? ['#1a1a2e', '#0f3460', '#16213e', '#0A84FF', '#0066CC']
-          : ['#f0e6ff', '#ddd6fe', '#c4b5fd', '#a78bfa', '#8b5cf6'];
-        option.tooltip.backgroundColor = newIsDark ? 'rgba(28, 28, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)';
-        option.tooltip.borderColor = newIsDark ? 'rgba(56, 56, 58, 0.8)' : 'rgba(210, 210, 215, 0.8)';
-        option.tooltip.textStyle.color = newIsDark ? '#f5f5f7' : '#1d1d1f';
-        option.series[0].emphasis.label.color = newIsDark ? '#f5f5f7' : '#1d1d1f';
-        option.series[0].emphasis.itemStyle.areaColor = newIsDark ? '#0A84FF' : '#8b5cf6';
-        option.series[0].itemStyle.borderColor = newIsDark ? '#38383a' : '#d2d2d7';
-        option.series[0].itemStyle.areaColor = newIsDark ? '#1c1c1e' : '#f5f5f7';
-        option.series[0].label.color = newIsDark ? '#f5f5f7' : '#1d1d1f';
-        myChart.setOption(option);
-      });
+      console.log('✓ 世界地图渲染成功');
+      toast('地图加载成功','success');
 
-      // 响应式调整
-      window.addEventListener('resize', () => {
-        myChart.resize();
-      });
+      // 监听主题切换（只注册一次）
+      if(!window.mapThemeHandler){
+        window.mapThemeHandler = () => {
+          if(!mapChartInstance || !mapLoaded) return;
+          const newIsDark = document.body.getAttribute('data-theme') === 'dark';
+          option.visualMap.textStyle.color = newIsDark ? '#f5f5f7' : '#1d1d1f';
+          option.visualMap.inRange.color = newIsDark
+            ? ['#1a1a2e', '#0f3460', '#16213e', '#0A84FF', '#0066CC']
+            : ['#f0e6ff', '#ddd6fe', '#c4b5fd', '#a78bfa', '#8b5cf6'];
+          option.tooltip.backgroundColor = newIsDark ? 'rgba(28, 28, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+          option.tooltip.borderColor = newIsDark ? 'rgba(56, 56, 58, 0.8)' : 'rgba(210, 210, 215, 0.8)';
+          option.tooltip.textStyle.color = newIsDark ? '#f5f5f7' : '#1d1d1f';
+          option.series[0].emphasis.label.color = newIsDark ? '#f5f5f7' : '#1d1d1f';
+          option.series[0].emphasis.itemStyle.areaColor = newIsDark ? '#0A84FF' : '#8b5cf6';
+          option.series[0].itemStyle.borderColor = newIsDark ? '#38383a' : '#d2d2d7';
+          option.series[0].itemStyle.areaColor = newIsDark ? '#1c1c1e' : '#f5f5f7';
+          option.series[0].label.color = newIsDark ? '#f5f5f7' : '#1d1d1f';
+          mapChartInstance.setOption(option);
+        };
+        window.addEventListener('themeChanged', window.mapThemeHandler);
+      }
+
+      // 响应式调整（只注册一次）
+      if(!window.mapResizeHandler){
+        window.mapResizeHandler = () => {
+          if(mapChartInstance) mapChartInstance.resize();
+        };
+        window.addEventListener('resize', window.mapResizeHandler);
+      }
     })
     .catch(err => {
-      console.error('Failed to load world map:', err);
-      myChart.hideLoading();
-      chartDom.innerHTML = '<div class="text-center text-red-400 py-8">地图加载失败</div>';
+      console.error('✗ 世界地图加载失败:', err);
+      if(mapChartInstance) mapChartInstance.hideLoading();
+
+      const errorDetail = err.message || '未知错误';
+
+      chartDom.innerHTML = '<div class="text-center py-12 px-6">'+
+        '<div class="text-6xl mb-4">🗺️</div>'+
+        '<div class="text-red-400 mb-3 text-xl font-semibold">地图加载失败</div>'+
+        '<div class="text-sm muted mb-2">无法从任何CDN源加载地图数据</div>'+
+        '<div class="text-xs muted mb-6 max-w-md mx-auto">'+
+          '<details class="mt-2">'+
+            '<summary class="cursor-pointer hover:text-sky-400">查看详细错误信息</summary>'+
+            '<div class="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-left">'+
+              '<code class="text-xs">'+errorDetail+'</code>'+
+            '</div>'+
+          '</details>'+
+        '</div>'+
+        '<div class="flex gap-3 justify-center">'+
+          '<button onclick="location.reload()" class="btn-primary">刷新页面重试</button>'+
+          '<button onclick="document.getElementById(\'btn-toggle-map\').click()" class="btn-secondary">收起地图</button>'+
+        '</div>'+
+        '<div class="mt-6 text-xs muted">'+
+          '<p>💡 提示：地图功能为可选功能，不影响其他管理功能的使用</p>'+
+        '</div>'+
+      '</div>';
+
+      toast('地图加载失败，但不影响其他功能','warn');
     });
+}
+
+function updateMapData(){
+  if(!mapChartInstance || !mapLoaded) return;
+  
+  // 重新统计数据
+  const countryMap = new Map();
+  allVpsList.forEach(vps => {
+    const country = vps.country || '未知';
+    const count = countryMap.get(country) || 0;
+    countryMap.set(country, count + 1);
+  });
+  
+  const mapData = Array.from(countryMap.entries()).map(([name, value]) => {
+    const cleanName = name.replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '').trim();
+    return { name: cleanName, value: value };
+  });
+  
+  mapChartInstance.setOption({
+    series: [{
+      data: mapData
+    }]
+  });
+  
+  toast('地图数据已更新','success');
 }
 
 function renderServerDistributionAdmin(){
@@ -2528,6 +2699,7 @@ function commonHead(title: string): string {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>${title}</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🧡</text></svg>" />
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <script>
@@ -2783,12 +2955,13 @@ body[data-theme="dark"] .skeleton-card {
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 12px;
-  box-shadow: 
+  box-shadow:
     0 2px 16px rgba(0, 0, 0, 0.06),
     0 0 0 1px rgba(255, 255, 255, 0.8),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   transition: all 0.2s ease;
   word-break: break-word;
+  overflow: hidden; /* 防止内容溢出 */
 }
 .card:hover {
   box-shadow: 
@@ -3177,6 +3350,8 @@ body[data-theme="dark"] select{
 }
 body[data-theme="dark"] select{
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23f5f5f7' stroke='%23f5f5f7' stroke-width='0.5' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
   background-size: 12px;
 }
 body[data-theme="dark"] optgroup{
@@ -3416,17 +3591,49 @@ body[data-theme="dark"] .btn-danger:hover{
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ========== ECharts 地图容器 ========== */
+#server-map-chart {
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+body[data-theme="dark"] #server-map-chart {
+  background: rgba(28, 28, 30, 0.5);
+}
+
 /* ========== 卡片展开/收起 ========== */
 .expandable {
   max-height: 0 !important;
   overflow: hidden;
-  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease,
+              padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
 .server-list {
-  max-height: none;
+  max-height: 5000px; /* 足够大的值以容纳所有内容 */
   opacity: 1;
-  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease,
+              padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 展开/收起按钮样式优化 */
+.toggle-expand {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+.toggle-expand:active {
+  transform: scale(0.95);
+}
+body[data-theme="dark"] .toggle-expand:hover {
+  background: rgba(10, 132, 255, 0.1);
+  border-color: rgba(10, 132, 255, 0.3);
 }
 
 /* ========== 链接样式 ========== */
