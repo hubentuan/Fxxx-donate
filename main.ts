@@ -805,7 +805,7 @@ app.get('/donate', c => {
         同时也非常感谢以下几位佬的日常协助：
         <a href="https://linux.do/u/shklrt" target="_blank" class="text-cyan-300 hover:text-cyan-200 font-semibold">@shklrt</a>、
         <a href="https://linux.do/u/sar60677" target="_blank" class="text-cyan-300 hover:text-cyan-200 font-semibold">@sar60677</a>、
-        <a href="https://linux.do/u/Carry%20Delahaye" target="_blank" class="text-cyan-300 hover:text-cyan-200 font-semibold">@Carry&nbsp;Delahaye</a>。
+        <a href="https://linux.do/u/carrydelahaye" target="_blank" class="text-cyan-300 hover:text-cyan-200 font-semibold">@Carry&nbsp;Delahaye</a>。
         榜单按投喂 VPS 数量排序，
         <span class="font-semibold text-amber-300">
           但无论名次高低，您的每一次支持，对我和这个项目来说都弥足珍贵，衷心感谢！
