@@ -798,14 +798,32 @@ app.get('/donate', c => {
   <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div class="space-y-2">
       <h1 class="grad-title text-2xl md:text-4xl font-bold">风萧萧公益机场 · VPS 投喂榜</h1>
-      <p class="mt-1 text-sm sm:text-base muted leading-relaxed">
-        这是一个完全非盈利的公益项目，没有运营团队，只有我一个人摸爬滚打地维护。榜单只是按投喂 VPS 的数量排个名，方便大家看看有哪些热心大佬参与。
-        但无论您投喂多少，对我和这个小项目来说，都是非常珍贵、非常重要的支持。真心感谢每一位愿意伸出援手的佬友！
+      <p class="mt-1 text-sm sm:text-base leading-relaxed">
+        <span class="muted">这是一个完全非盈利的公益项目，目前没有运营团队，由我独自维护。</span><br>
+        同时也非常感谢几位长期帮忙的佬：
+        <a href="https://linux.do/u/shklrt" target="_blank" class="text-cyan-300 hover:text-cyan-200 font-semibold">@shklrt</a>、
+        <a href="https://linux.do/u/sar60677" target="_blank" class="text-cyan-300 hover:text-cyan-200 font-semibold">@sar60677</a>、
+        <a href="https://linux.do/u/Carry%20Delahaye" target="_blank" class="text-cyan-300 hover:text-cyan-200 font-semibold">@Carry&nbsp;Delahaye</a>。
+        榜单按投喂 VPS 数量排序，
+        <span class="font-semibold text-amber-300">
+          但无论名次高低，您的每一次支持，对我和这个项目来说都弥足珍贵，衷心感谢！
+        </span>
       </p>
-      <p class="text-xs sm:text-sm text-amber-200 leading-relaxed">
-        感谢大家的投喂，🤝 这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，是大家的共同成果！共荣！🚀🤝
+      <p class="text-xs sm:text-sm text-amber-200 leading-relaxed mt-2">
+        感谢大家的投喂，🤝 这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，而是大家的共同成果！共荣！🚀🤝
       </p>
-      <button onclick="gotoDonatePage()" class="mt-3 inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold shadow-lg hover:bg-cyan-400">
+      <button onclick="gotoDonatePage()" 
+        class="mt-3 inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 
+               text-sm font-semibold shadow-lg hover:bg-cyan-400 transition">
+        🧡 我要投喂 VPS
+      </button>
+    </div>
+  </header>
+</div>
+</body></html>`;
+  return c.html(html);
+});
+
         🧡 我要投喂 VPS
       </button>
     </div>
