@@ -1184,7 +1184,7 @@ app.get('/donate/vps', c => {
         </div>
 
         <div class="grid md:grid-cols-2 gap-5">
-          <div>
+<div>
   <label for="country" class="block mb-2 text-sm font-medium text-gray-200">
     常用国家 / 区域
   </label>
@@ -1416,7 +1416,6 @@ app.get('/donate/vps', c => {
     </optgroup>
   </select>
 </div>
-
             <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
               <span>📊</span> 流量 / 带宽 <span class="text-red-400">*</span>
             </label>
