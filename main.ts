@@ -794,57 +794,52 @@ app.get('/donate', c => {
   const head = commonHead('风萧萧公益机场 · VPS 投喂榜');
   const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
 <body class="min-h-screen" data-theme="dark">
-<div class="max-w-6xl mx-auto px-4 py-6 md:py-10">
+<div class="max-w-6xl mx-auto px-6 py-8 md:py-12">
 
-  <header class="mb-8 animate-in">
+  <header class="mb-10 animate-in">
     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-      <div class="flex-1 space-y-4">
-        <h1 class="grad-title text-3xl md:text-5xl font-bold leading-tight">
+      <div class="flex-1 space-y-5">
+        <h1 class="grad-title text-4xl md:text-5xl font-bold leading-tight">
           风萧萧公益机场 · VPS 投喂榜
         </h1>
 
-        <div class="panel rounded-2xl border p-5 space-y-3 backdrop-blur-sm">
+        <div class="panel border p-6 space-y-4">
           <p class="text-sm leading-relaxed">
             <span class="muted">这是一个完全非盈利的公益项目，目前没有运营团队，由我独自维护。</span><br>
             同时也非常感谢以下几位佬的日常协助：
             <a href="https://linux.do/u/shklrt" target="_blank"
-               class="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors">@shklrt</a>、
+               class="font-semibold transition-colors hover:opacity-80">@shklrt</a>、
             <a href="https://linux.do/u/sar60677" target="_blank"
-               class="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors">@sar60677</a>、
+               class="font-semibold transition-colors hover:opacity-80">@sar60677</a>、
             <a href="https://linux.do/u/carrydelahaye" target="_blank"
-               class="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors">@Carry&nbsp;Delahaye</a>。
+               class="font-semibold transition-colors hover:opacity-80">@Carry&nbsp;Delahaye</a>。
           </p>
 
           <p class="text-sm leading-relaxed bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
-            <span class="font-semibold text-amber-300">💝 榜单按投喂 VPS 数量排序，</span>
+            <span class="font-semibold">💝 榜单按投喂 VPS 数量排序，</span>
             但无论名次高低，您的每一次支持，对我和这个项目来说都弥足珍贵，衷心感谢！
           </p>
 
-          <p class="text-xs text-amber-200/90 leading-relaxed flex items-start gap-2">
-            <span class="text-base mt-0.5">🤝</span>
+          <p class="text-sm leading-relaxed flex items-start gap-2">
+            <span class="text-lg mt-0.5">🤝</span>
             <span>感谢大家的投喂，这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，而是大家的共同成果！共荣！🚀</span>
           </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
-          <button onclick="gotoDonatePage()"
-            class="inline-flex items-center justify-center gap-2 rounded-xl
-                   bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-3
-                   text-sm font-bold shadow-xl hover:shadow-2xl
-                   hover:scale-[1.02] transition-all duration-200
-                   hover:from-cyan-400 hover:to-blue-400">
+          <button onclick="gotoDonatePage()" class="btn-primary">
             <span class="text-lg">🧡</span> 我要投喂 VPS
           </button>
-          <button id="theme-toggle" class="text-xs" onclick="toggleTheme()">浅色模式</button>
+          <button id="theme-toggle" onclick="toggleTheme()">浅色模式</button>
         </div>
       </div>
     </div>
   </header>
 
-  <section class="mb-6">
-    <div class="flex items-center gap-3 mb-4">
-      <span class="text-2xl">🏆</span>
-      <h2 class="text-2xl font-bold">捐赠榜单</h2>
+  <section class="mb-8">
+    <div class="flex items-center gap-3 mb-5">
+      <span class="text-3xl">🏆</span>
+      <h2 class="text-3xl font-bold">捐赠榜单</h2>
       <span id="leaderboard-count" class="text-sm muted"></span>
     </div>
     
@@ -858,9 +853,9 @@ app.get('/donate', c => {
     </div>
   </section>
 
-  <footer class="mt-12 border-t border-slate-700/50 pt-6 text-xs muted text-center">
+  <footer class="mt-16 border-t pt-8 text-sm muted text-center">
     <p class="flex items-center justify-center gap-2">
-      <span class="text-base">ℹ️</span>
+      <span class="text-lg">ℹ️</span>
       <span>说明：本项目仅作公益用途，请勿滥用资源（长时间占满带宽、刷流量、倒卖账号等）。</span>
     </p>
   </footer>
@@ -930,38 +925,38 @@ async function loadLeaderboard(){
     box.innerHTML='';
     data.forEach((it,idx)=>{
       const wrap=document.createElement('div');
-      wrap.className='card rounded-2xl border p-5 shadow-lg hover:shadow-xl transition-all';
+      wrap.className='card border p-6 transition-all';
 
       const head=document.createElement('div');
-      head.className='flex items-center justify-between mb-4 pb-3 border-b border-slate-700/30 gap-3';
+      head.className='flex items-center justify-between mb-4 pb-4 border-b gap-3';
       head.innerHTML='<div class="flex items-center gap-3 flex-1 min-w-0">'+
-        '<span class="text-2xl flex-shrink-0">'+medalByRank(idx)+'</span>'+
-        '<a class="font-bold text-lg text-sky-400 hover:text-cyan-300 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a>'+
+        '<span class="text-3xl flex-shrink-0">'+medalByRank(idx)+'</span>'+
+        '<a class="font-bold text-xl hover:opacity-80 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a>'+
         '</div>'+
-        '<div class="flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1.5 whitespace-nowrap">'+
-          '<span class="text-cyan-400 font-bold text-sm">'+it.count+'</span>'+
-          '<span class="text-xs muted">台 VPS</span>'+
+        '<div class="flex items-center gap-2 panel border rounded-full px-4 py-2 whitespace-nowrap">'+
+          '<span class="font-bold text-lg">'+it.count+'</span>'+
+          '<span class="text-sm muted">台 VPS</span>'+
         '</div>';
       wrap.appendChild(head);
 
       const list=document.createElement('div');
-      list.className='space-y-3 text-xs';
+      list.className='space-y-3 text-sm';
       (it.servers||[]).forEach(srv=>{
         const d=document.createElement('div');
-        d.className='rounded-xl border border-slate-700/50 bg-slate-800/30 px-4 py-3 hover:bg-slate-800/50 transition-all';
-        d.innerHTML = '<div class="flex items-center justify-between gap-2 mb-2">'+
+        d.className='panel border rounded-lg px-4 py-3 transition-all';
+        d.innerHTML = '<div class="flex items-center justify-between gap-2 mb-3">'+
           '<div class="flex items-center gap-2 flex-1 min-w-0">'+
-            '<span class="opacity-60">🌍</span>'+
-            '<span class="text-sm font-medium truncate">'+(srv.country||'未填写')+(srv.ipLocation?' · '+srv.ipLocation:'')+'</span>'+
+            '<span class="opacity-60 text-base">🌍</span>'+
+            '<span class="font-medium truncate">'+(srv.country||'未填写')+(srv.ipLocation?' · '+srv.ipLocation:'')+'</span>'+
           '</div>'+
-          '<span class="'+statusCls(srv.status)+' text-xs px-2 py-0.5 rounded-full">'+statusText(srv.status)+'</span>'+
+          '<span class="'+statusCls(srv.status)+' text-xs px-2.5 py-1 rounded-full font-semibold">'+statusText(srv.status)+'</span>'+
         '</div>'+
-        '<div class="grid grid-cols-2 gap-2 text-xs mt-2">'+
-          '<div class="flex items-center gap-1.5"><span class="opacity-60">📊</span><span class="truncate">'+(srv.traffic||'未填写')+'</span></div>'+
-          '<div class="flex items-center gap-1.5"><span class="opacity-60">📅</span><span class="truncate">'+(srv.expiryDate||'未填写')+'</span></div>'+
+        '<div class="grid grid-cols-2 gap-3 text-sm mt-2">'+
+          '<div class="flex items-center gap-2"><span class="opacity-60">📊</span><span class="truncate">'+(srv.traffic||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-2"><span class="opacity-60">📅</span><span class="truncate">'+(srv.expiryDate||'未填写')+'</span></div>'+
         '</div>'+
-        (srv.specs?'<div class="text-xs muted mt-2 bg-slate-900/40 rounded-lg px-2 py-1.5 break-words flex items-start gap-1.5"><span class="opacity-60">⚙️</span><span>'+srv.specs+'</span></div>':'')+
-        (srv.note?'<div class="text-xs text-amber-300/90 mt-2 bg-amber-500/5 border border-amber-500/20 rounded-lg px-2 py-1.5 break-words flex items-start gap-1.5"><span class="opacity-60">💬</span><span>'+srv.note+'</span></div>':'');
+        (srv.specs?'<div class="text-sm muted mt-3 panel border rounded-lg px-3 py-2 break-words flex items-start gap-2"><span class="opacity-60">⚙️</span><span>'+srv.specs+'</span></div>':'')+
+        (srv.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2 break-words flex items-start gap-2"><span class="opacity-60">💬</span><span>'+srv.note+'</span></div>':'');
         list.appendChild(d);
       });
       wrap.appendChild(list);
@@ -997,70 +992,68 @@ app.get('/donate/vps', c => {
 
   const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
 <body class="min-h-screen" data-theme="dark">
-<div class="max-w-7xl mx-auto px-4 py-6 md:py-10">
-  <header class="mb-8 animate-fade-in">
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-      <div class="space-y-2">
-        <h1 class="grad-title text-3xl md:text-4xl font-bold">风萧萧公益机场 · VPS 投喂中心</h1>
-        <p class="text-xs muted flex items-center gap-2">
-          <span class="text-base">📍</span>
+<div class="max-w-7xl mx-auto px-6 py-8 md:py-12">
+  <header class="mb-10 animate-fade-in">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+      <div class="space-y-3">
+        <h1 class="grad-title text-4xl md:text-5xl font-bold leading-tight">风萧萧公益机场 · VPS 投喂中心</h1>
+        <p class="text-sm muted flex items-center gap-2">
+          <span class="text-lg">📍</span>
           <span>提交新 VPS / 查看我的投喂记录</span>
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
-        <div id="user-info" class="text-sm bg-slate-800/50 rounded-full px-4 py-2 border border-slate-700"></div>
-        <button onclick="logout()"
-                class="text-xs rounded-full border border-slate-600 hover:border-red-400 px-4 py-2
-                       transition-all hover:bg-red-500/10 hover:text-red-400">
+        <div id="user-info" class="text-sm panel px-5 py-2.5 border"></div>
+        <button onclick="logout()" class="btn-secondary">
           退出登录
         </button>
-        <button id="theme-toggle" class="text-xs" onclick="toggleTheme()">浅色模式</button>
+        <button id="theme-toggle" onclick="toggleTheme()">浅色模式</button>
       </div>
     </div>
   </header>
 
-  <main class="grid lg:grid-cols-2 gap-6 items-start">
-    <section class="panel rounded-2xl border p-6 shadow-xl">
-      <div class="flex items-center gap-3 mb-3">
-        <span class="text-2xl">🧡</span>
-        <h2 class="text-xl font-bold">提交新的 VPS 投喂</h2>
+  <main class="grid lg:grid-cols-2 gap-8 items-start">
+    <section class="panel border p-8">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="text-3xl">🧡</span>
+        <h2 class="text-2xl font-bold">提交新的 VPS 投喂</h2>
       </div>
-      <p class="text-xs muted mb-5 leading-relaxed bg-amber-500/5 border border-amber-500/20 rounded-xl px-3 py-2">
+      <p class="text-sm muted mb-6 leading-relaxed bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3">
         ⚠️ 请确保服务器是你有控制权的机器，并允许用于公益节点。禁止长时间占满带宽、刷流量、倒卖账号等行为。
       </p>
 
-      <form id="donate-form" class="space-y-4 text-sm">
-        <div class="grid md:grid-cols-2 gap-4">
+      <form id="donate-form" class="space-y-5">
+        <div class="grid md:grid-cols-2 gap-5">
           <div>
-            <label class="block mb-2 text-xs font-medium flex items-center gap-1.5">
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
               <span>🌐</span> 服务器 IP <span class="text-red-400">*</span>
             </label>
             <input name="ip" required placeholder="示例：203.0.113.8 或 [2001:db8::1]"
-                   class="w-full rounded-lg border px-3 py-2 text-sm" />
-            <div class="help mt-1 flex items-center gap-1"><span class="opacity-60">💡</span>支持 IPv4 / IPv6</div>
+                   class="w-full" />
+            <div class="help mt-1.5 flex items-center gap-1"><span class="opacity-60">💡</span>支持 IPv4 / IPv6</div>
           </div>
           <div>
-            <label class="block mb-2 text-xs font-medium flex items-center gap-1.5">
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
               <span>🔌</span> 端口 <span class="text-red-400">*</span>
             </label>
             <input name="port" required type="number" min="1" max="65535" placeholder="示例：22 / 443 / 8080"
-                   class="w-full rounded-lg border px-3 py-2 text-sm" />
+                   class="w-full" />
           </div>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-4">
+        <div class="grid md:grid-cols-2 gap-5">
           <div>
-            <label class="block mb-2 text-xs font-medium flex items-center gap-1.5">
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
               <span>👤</span> 系统用户名 <span class="text-red-400">*</span>
             </label>
             <input name="username" required placeholder="示例：root / ubuntu"
-                   class="w-full rounded-lg border px-3 py-2 text-sm" />
+                   class="w-full" />
           </div>
           <div>
-            <label class="block mb-2 text-xs font-medium flex items-center gap-1.5">
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
               <span>🔐</span> 认证方式
             </label>
-            <select name="authType" class="w-full rounded-lg border px-3 py-2 text-sm">
+            <select name="authType" class="w-full">
               <option value="password">🔑 密码</option>
               <option value="key">🗝️ SSH 私钥</option>
             </select>
@@ -1068,102 +1061,96 @@ app.get('/donate/vps', c => {
         </div>
 
         <div id="password-field">
-          <label class="block mb-2 text-xs font-medium flex items-center gap-1.5">
+          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
             <span>🔑</span> 密码（密码登录必填）
           </label>
           <input name="password" type="password" placeholder="示例：MyStrongP@ssw0rd"
-                 class="w-full rounded-lg border px-3 py-2 text-sm" />
+                 class="w-full" />
         </div>
 
         <div id="key-field" class="hidden">
-          <label class="block mb-2 text-xs font-medium flex items-center gap-1.5">
+          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
             <span>🗝️</span> SSH 私钥（密钥登录必填）
           </label>
           <textarea name="privateKey" rows="4" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
-                    class="w-full rounded-lg border px-3 py-2 text-sm font-mono"></textarea>
+                    class="w-full font-mono"></textarea>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-4">
+        <div class="grid md:grid-cols-2 gap-5">
           <div>
-            <label class="block mb-2 text-xs font-medium flex items-center gap-1.5">
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
               <span>🌍</span> 国家 / 区域 <span class="text-red-400">*</span>
             </label>
             <input name="country" required placeholder="示例：HK - Hong Kong, Kowloon, Hong Kong"
-                   class="w-full rounded-lg border px-3 py-2 text-sm" />
+                   class="w-full" />
           </div>
           <div>
-            <label class="block mb-2 text-xs font-medium flex items-center gap-1.5">
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
               <span>📊</span> 流量 / 带宽 <span class="text-red-400">*</span>
             </label>
             <input name="traffic" required placeholder="示例：400G/月 · 上下行 1Gbps"
-                   class="w-full rounded-lg border px-3 py-2 text-sm" />
+                   class="w-full" />
           </div>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-4">
+        <div class="grid md:grid-cols-2 gap-5">
           <div>
-            <label class="block mb-2 text-xs font-medium flex items-center gap-1.5">
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
               <span>📅</span> 到期日期 <span class="text-red-400">*</span>
             </label>
             <input name="expiryDate" required type="date" min="${minDate}" value="${ny}"
-                   class="w-full rounded-lg border px-3 py-2 text-sm" />
-            <div class="help mt-1 flex items-center gap-1"><span class="opacity-60">💡</span>默认已填为 +1 年（可改）</div>
+                   class="w-full" />
+            <div class="help mt-1.5 flex items-center gap-1"><span class="opacity-60">💡</span>默认已填为 +1 年（可改）</div>
           </div>
           <div>
-            <label class="block mb-2 text-xs font-medium flex items-center gap-1.5">
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
               <span>⚙️</span> 配置描述 <span class="text-red-400">*</span>
             </label>
             <input name="specs" required placeholder="示例：1C1G · 10Gbps · 1T 流量"
-                   class="w-full rounded-lg border px-3 py-2 text-sm" />
+                   class="w-full" />
           </div>
         </div>
 
         <div>
-          <label class="block mb-2 text-xs font-medium flex items-center gap-1.5">
-            <span>💬</span> 投喂备注 <span class="text-xs muted">（可选，将前台展示）</span>
+          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+            <span>💬</span> 投喂备注 <span class="help ml-1">（可选，将前台展示）</span>
           </label>
           <textarea name="note" rows="3" placeholder="示例：电信到香港方向无法走大陆优选链路，共享带宽，不保证大陆连通性"
-                    class="w-full rounded-lg border px-3 py-2 text-sm"></textarea>
+                    class="w-full"></textarea>
         </div>
 
-        <div id="donate-message" class="text-sm mt-2 min-h-[1.5rem] font-medium"></div>
+        <div id="donate-message" class="text-sm min-h-[1.5rem] font-medium"></div>
 
-        <button id="donate-submit-btn" type="submit"
-                class="w-full mt-3 inline-flex items-center justify-center gap-2 rounded-xl
-                       bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-3 text-sm font-bold
-                       shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-200
-                       hover:from-cyan-400 hover:to-blue-400">
+        <button id="donate-submit-btn" type="submit" class="w-full btn-primary mt-4">
           <span class="text-lg">🚀</span> 提交投喂
         </button>
       </form>
     </section>
 
-    <section class="panel rounded-2xl border p-6 shadow-xl">
-      <div class="flex items-center justify-between mb-4">
+    <section class="panel border p-8">
+      <div class="flex items-center justify-between mb-5">
         <div class="flex items-center gap-3">
-          <span class="text-2xl">📦</span>
-          <h2 class="text-xl font-bold">我的投喂记录</h2>
+          <span class="text-3xl">📦</span>
+          <h2 class="text-2xl font-bold">我的投喂记录</h2>
         </div>
-        <button onclick="loadDonations()"
-                class="text-xs rounded-full border border-slate-600 hover:border-cyan-400 px-3 py-1.5
-                       transition-all hover:bg-cyan-500/10">
+        <button onclick="loadDonations()" class="btn-secondary">
           🔄 刷新
         </button>
       </div>
-      <div id="donations-list" class="space-y-3 text-xs">
-        <div class="flex items-center justify-center py-8">
+      <div id="donations-list" class="space-y-4 text-sm">
+        <div class="flex items-center justify-center py-12">
           <div class="flex flex-col items-center gap-3">
             <div class="loading-spinner"></div>
-            <div class="muted text-xs">正在加载...</div>
+            <div class="muted text-sm">正在加载...</div>
           </div>
         </div>
       </div>
     </section>
   </main>
 
-  <footer class="mt-10 text-xs muted border-t border-slate-700/50 pt-6 text-center">
+  <footer class="mt-12 text-sm muted border-t pt-8 text-center">
     <p class="flex items-center justify-center gap-2">
-      <span class="text-base">ℹ️</span>
+      <span class="text-lg">ℹ️</span>
       <span>友情提示：投喂即视为同意将该 VPS 用于公益机场中转节点。请勿提交有敏感业务的生产机器。</span>
     </p>
   </footer>
@@ -1264,43 +1251,43 @@ async function submitDonate(e){
 
 async function loadDonations(){
   const box=document.getElementById('donations-list');
-  box.innerHTML='<div class="muted text-xs">正在加载...</div>';
+  box.innerHTML='<div class="muted text-sm">正在加载...</div>';
   try{
     const r=await fetch('/api/user/donations',{credentials:'same-origin',cache:'no-store'});
     const j=await r.json();
     if(!r.ok||!j.success){
-      box.innerHTML='<div class="text-red-400 text-xs">加载失败</div>';
+      box.innerHTML='<div class="text-red-400 text-sm">加载失败</div>';
       return;
     }
     const data=j.data||[];
     if(!data.length){
-      box.innerHTML='<div class="muted text-xs">还没有投喂记录，先在左侧提交一台吧～</div>';
+      box.innerHTML='<div class="muted text-sm py-8 text-center">还没有投喂记录，先在左侧提交一台吧～</div>';
       return;
     }
     box.innerHTML='';
     data.forEach(v=>{
       const div=document.createElement('div');
-      div.className='card rounded-xl border border-slate-700/50 bg-slate-800/30 px-4 py-3 hover:bg-slate-800/50 transition-all';
+      div.className='card border px-5 py-4 transition-all';
       const dt=v.donatedAt?new Date(v.donatedAt):null, t=dt?dt.toLocaleString():'';
       const uname=v.donatedByUsername||'';
       const p='https://linux.do/u/'+encodeURIComponent(uname);
-      div.innerHTML='<div class="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-700/30">'+
-        '<div class="text-xs font-medium flex items-center gap-2"><span>🖥️</span><span class="break-words">'+v.ip+':'+v.port+'</span></div>'+
-        '<div class="'+scls(v.status)+' text-xs px-2 py-0.5 rounded-full">'+stxt(v.status)+'</div></div>'+
-        '<div class="text-xs mb-2">投喂者：<a href="'+p+'" target="_blank" class="underline text-sky-400 hover:text-cyan-300 transition-colors">@'+uname+'</a></div>'+
-        '<div class="grid grid-cols-2 gap-2 text-xs mt-2">'+
-          '<div class="flex items-center gap-1.5"><span class="opacity-60">🌍</span><span class="truncate">'+(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'')+'</span></div>'+
-          '<div class="flex items-center gap-1.5"><span class="opacity-60">📊</span><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
-          '<div class="flex items-center gap-1.5"><span class="opacity-60">📅</span><span class="truncate">'+(v.expiryDate||'未填写')+'</span></div>'+
+      div.innerHTML='<div class="flex items-center justify-between gap-2 mb-3 pb-3 border-b">'+
+        '<div class="text-sm font-medium flex items-center gap-2"><span>🖥️</span><span class="break-words">'+v.ip+':'+v.port+'</span></div>'+
+        '<div class="'+scls(v.status)+' text-xs px-2.5 py-1 rounded-full font-semibold">'+stxt(v.status)+'</div></div>'+
+        '<div class="text-sm mb-3">投喂者：<a href="'+p+'" target="_blank" class="underline hover:text-cyan-300 transition-colors">@'+uname+'</a></div>'+
+        '<div class="grid grid-cols-2 gap-3 text-sm mt-3">'+
+          '<div class="flex items-center gap-2"><span class="opacity-60">🌍</span><span class="truncate">'+(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'')+'</span></div>'+
+          '<div class="flex items-center gap-2"><span class="opacity-60">📊</span><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-2"><span class="opacity-60">📅</span><span class="truncate">'+(v.expiryDate||'未填写')+'</span></div>'+
         '</div>'+
-        '<div class="text-xs muted mt-2 bg-slate-900/40 rounded-lg px-2 py-1.5 break-words">⚙️ '+(v.specs||'未填写')+'</div>'+
-        (v.note?'<div class="text-xs text-amber-300/90 mt-2 bg-amber-500/5 border border-amber-500/20 rounded-lg px-2 py-1.5 break-words">💬 '+v.note+'</div>':'')+
-        (t?'<div class="text-xs muted mt-2 flex items-center gap-1.5"><span class="opacity-60">🕐</span><span>'+t+'</span></div>':'');
+        '<div class="text-sm muted mt-3 panel border rounded-lg px-3 py-2 break-words flex items-start gap-2"><span class="opacity-60">⚙️</span><span>'+(v.specs||'未填写')+'</span></div>'+
+        (v.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2 break-words flex items-start gap-2"><span class="opacity-60">💬</span><span>'+v.note+'</span></div>':'')+
+        (t?'<div class="text-xs muted mt-3 flex items-center gap-2"><span class="opacity-60">🕐</span><span>'+t+'</span></div>':'');
       box.appendChild(div);
     });
   }catch(err){
     console.error('Load donations error:', err);
-    box.innerHTML='<div class="text-red-400 text-xs">加载异常</div>';
+    box.innerHTML='<div class="text-red-400 text-sm">加载异常</div>';
   }
 }
 
