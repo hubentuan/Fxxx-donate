@@ -67,7 +67,7 @@ async function getIPLocation(ip: string): Promise<string> {
       const parts = [d.country, d.regionName, d.city].filter(Boolean);
       if (parts.length) return parts.join(', ');
     }
-  } catch (_) {}
+  } catch (_) { }
   return '未知地区';
 }
 
@@ -237,6 +237,16 @@ const app = new Hono();
 app.use('*', cors());
 
 app.get('/', c => c.redirect('/donate'));
+
+/* ---- Favicon 路由（防止 404 错误）---- */
+app.get('/favicon.ico', c => {
+  // 返回一个简单的橙色心形 SVG favicon
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🧡</text></svg>`;
+  return c.body(svg, 200, {
+    'Content-Type': 'image/svg+xml',
+    'Cache-Control': 'public, max-age=86400' // 缓存1天
+  });
+});
 
 /* ---- OAuth 登录 ---- */
 app.get('/oauth/login', async c => {
@@ -794,52 +804,76 @@ app.get('/donate', c => {
   const head = commonHead('风萧萧公益机场 · VPS 投喂榜');
   const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
 <body class="min-h-screen" data-theme="dark">
-<div class="max-w-5xl mx-auto px-4 py-8">
+<div class="max-w-6xl mx-auto px-6 py-8 md:py-12">
 
-  <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-    <div class="space-y-2">
-      <h1 class="grad-title text-2xl md:text-4xl font-bold">风萧萧公益机场 · VPS 投喂榜</h1>
+  <header class="mb-10 animate-in">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+      <div class="flex-1 space-y-5">
+        <h1 class="grad-title text-4xl md:text-5xl font-bold leading-tight">
+          风萧萧公益机场 · VPS 投喂榜
+        </h1>
 
-      <p class="mt-1 text-sm sm:text-base leading-relaxed">
-        <span class="muted">这是一个完全非盈利的公益项目，目前没有运营团队，由我独自维护。</span><br>
-        同时也非常感谢以下几位佬的日常协助：
-        <a href="https://linux.do/u/shklrt" target="_blank" class="text-cyan-300 hover:text-cyan-200 font-semibold">@shklrt</a>、
-        <a href="https://linux.do/u/sar60677" target="_blank" class="text-cyan-300 hover:text-cyan-200 font-semibold">@sar60677</a>、
-        <a href="https://linux.do/u/carrydelahaye" target="_blank" class="text-cyan-300 hover:text-cyan-200 font-semibold">@Carry&nbsp;Delahaye</a>。
-        榜单按投喂 VPS 数量排序，
-        <span class="font-semibold text-amber-300">
-          但无论名次高低，您的每一次支持，对我和这个项目来说都弥足珍贵，衷心感谢！
-        </span>
-      </p>
+        <div class="panel border p-6 space-y-4">
+          <p class="text-sm leading-relaxed">
+            <span class="muted">这是一个完全非盈利的公益项目，目前没有运营团队，由我独自维护。</span><br>
+            同时也非常感谢以下几位佬的日常协助：
+            <a href="https://linux.do/u/shklrt" target="_blank"
+               class="font-semibold transition-colors hover:opacity-80">@shklrt</a>、
+            <a href="https://linux.do/u/sar60677" target="_blank"
+               class="font-semibold transition-colors hover:opacity-80">@sar60677</a>、
+            <a href="https://linux.do/u/carrydelahaye" target="_blank"
+               class="font-semibold transition-colors hover:opacity-80">@Carry&nbsp;Delahaye</a>
+            <a href="https://linux.do/u/kkkyyx" target="_blank"
+               class="font-semibold transition-colors hover:opacity-80">@kkkyyx</a>。
+          </p>
 
-      <p class="text-xs sm:text-sm text-amber-200 leading-relaxed mt-2">
-        感谢大家的投喂，🤝 这个机场的发展离不开各位热佬的大力支持！
-        这不是我一个人的功劳，而是大家的共同成果！共荣！🚀🤝
-      </p>
+          <div class="alert-warning text-sm leading-relaxed rounded-xl px-4 py-3">
+            <span class="font-semibold">💝 榜单按投喂 VPS 数量排序，</span>
+            但无论名次高低，您的每一次支持，对我和这个项目来说都弥足珍贵，衷心感谢！
+          </div>
 
-      <button onclick="gotoDonatePage()" 
-        class="mt-3 inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2 
-               text-sm font-semibold shadow-lg hover:bg-cyan-400 transition">
-        🧡 我要投喂 VPS
-      </button>
-    </div>
+          <p class="text-sm leading-relaxed flex items-start gap-2">
+            <span class="text-lg mt-0.5">🤝</span>
+            <span>感谢大家的投喂，这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，而是大家的共同成果！共荣！🚀</span>
+          </p>
+        </div>
 
-    <div class="flex sm:flex-col items-center sm:items-end gap-2">
-      <button id="theme-toggle" class="text-xs" onclick="toggleTheme()">浅色模式</button>
+        <div class="flex flex-wrap items-center gap-3">
+          <button onclick="gotoDonatePage()" class="btn-primary">
+            <span class="text-lg">🧡</span> 我要投喂 VPS
+          </button>
+          <button id="theme-toggle" onclick="toggleTheme()">浅色模式</button>
+        </div>
+      </div>
     </div>
   </header>
 
-  <section class="mb-6">
-    <h2 class="text-xl font-semibold mb-3 flex items-center gap-2">
-      🏆 捐赠榜单 <span id="leaderboard-count" class="text-sm muted"></span>
-    </h2>
-    <div id="leaderboard" class="space-y-4">
-      <div class="muted text-sm">正在加载榜单...</div>
+  <section class="mb-8">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="text-3xl">🏆</span>
+      <div>
+        <h2 class="text-3xl font-bold leading-tight">捐赠榜单</h2>
+        <p id="leaderboard-count" class="text-sm muted mt-1"></p>
+      </div>
+    </div>
+    
+    <div id="leaderboard" class="space-y-5">
+      <div class="flex items-center justify-center py-12">
+        <div class="flex flex-col items-center gap-3">
+          <div class="loading-spinner"></div>
+          <div class="muted text-sm">正在加载榜单...</div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <footer class="mt-10 border-t border-slate-800 pt-4 text-xs muted">
-    <p>说明：本项目仅作公益用途，请勿滥用资源（长时间占满带宽、刷流量、倒卖账号等）。</p>
+  <footer class="mt-16 pt-8 pb-8 text-center">
+    <div class="panel border px-4 md:px-6 py-4 inline-block max-w-full">
+      <p class="flex items-center justify-center gap-2 text-sm muted flex-wrap">
+        <span class="text-lg flex-shrink-0">ℹ️</span>
+        <span class="break-words">说明：本项目仅作公益用途，请勿滥用资源（长时间占满带宽、刷流量、倒卖账号等）。</span>
+      </p>
+    </div>
   </footer>
 
 </div>
@@ -847,6 +881,8 @@ app.get('/donate', c => {
 <div id="toast-root"></div>
 <script>
 updateThemeBtn();
+
+let allLeaderboardData = [];
 
 async function gotoDonatePage(){
   try{
@@ -870,8 +906,132 @@ async function gotoDonatePage(){
 function statusText(s){ return s==='active'?'运行中':(s==='failed'?'失败':'未启用'); }
 function statusCls(s){ return s==='active'?'badge-ok':(s==='failed'?'badge-fail':'badge-idle'); }
 
+function renderLeaderboard(){
+  const box = document.getElementById('leaderboard');
+  const countEl = document.getElementById('leaderboard-count');
+  
+  countEl.textContent = allLeaderboardData.length ? ('共 '+allLeaderboardData.length+' 位投喂者') : '';
+  
+  if(!allLeaderboardData.length){
+    box.innerHTML='<div class="muted text-sm py-8 text-center">暂时还没有投喂记录</div>';
+    return;
+  }
+  
+  box.innerHTML='';
+  allLeaderboardData.forEach((it,idx)=>{
+    const wrap=document.createElement('div');
+    wrap.className='card border transition-all animate-slide-in';
+    wrap.style.animationDelay = (idx * 0.05) + 's';
+    const cardId = 'card-'+idx;
+    const isExpanded = localStorage.getItem(cardId) !== 'collapsed';
+
+    const head=document.createElement('div');
+    head.className='flex items-center justify-between p-5 pb-4 border-b gap-4 bg-gradient-to-r cursor-pointer';
+    
+    let gradientClass = '';
+    if(idx === 0) gradientClass = 'from-amber-500/5 to-transparent';
+    else if(idx === 1) gradientClass = 'from-slate-400/5 to-transparent';
+    else if(idx === 2) gradientClass = 'from-orange-600/5 to-transparent';
+    head.className += ' ' + gradientClass;
+    
+    const badge=getBadge(it.count);
+    head.innerHTML='<div class="flex items-center gap-4 flex-1 min-w-0">'+
+      '<div class="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl">'+medalByRank(idx)+'</div>'+
+      '<div class="flex flex-col gap-1.5 min-w-0">'+
+        '<a class="font-bold text-xl hover:opacity-80 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'" onclick="event.stopPropagation()">@'+it.username+'</a>'+
+        '<div class="flex items-center gap-2 flex-wrap">'+
+          renderBadge(badge)+
+          '<span class="text-xs muted">共投喂 '+it.count+' 台服务器</span>'+
+        '</div>'+
+      '</div>'+
+      '</div>'+
+      '<div class="flex items-center gap-3">'+
+        '<div class="flex-shrink-0 flex items-center justify-center w-16 h-16 panel border rounded-2xl">'+
+          '<div class="text-center">'+
+            '<div class="font-bold text-2xl leading-none mb-1">'+it.count+'</div>'+
+            '<div class="text-xs muted leading-none">VPS</div>'+
+          '</div>'+
+        '</div>'+
+        '<button class="toggle-expand flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg panel border hover:bg-sky-500/10 transition-all" data-card="'+cardId+'" onclick="event.stopPropagation()" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
+          '<span class="text-lg transition-transform duration-300 '+(isExpanded ? 'rotate-0' : '-rotate-90')+'">'+'▼'+'</span>'+
+        '</button>'+
+      '</div>';
+    
+    head.onclick = () => {
+      const listEl = wrap.querySelector('.server-list');
+      const toggleBtn = wrap.querySelector('.toggle-expand');
+      const toggleIcon = toggleBtn.querySelector('span');
+      const isCurrentlyExpanded = !listEl.classList.contains('expandable');
+
+      if(isCurrentlyExpanded){
+        // 收起
+        listEl.classList.add('expandable');
+        toggleIcon.classList.remove('rotate-0');
+        toggleIcon.classList.add('-rotate-90');
+        toggleBtn.setAttribute('title', '展开列表');
+        localStorage.setItem(cardId, 'collapsed');
+      } else {
+        // 展开
+        listEl.classList.remove('expandable');
+        toggleIcon.classList.remove('-rotate-90');
+        toggleIcon.classList.add('rotate-0');
+        toggleBtn.setAttribute('title', '收起列表');
+        localStorage.removeItem(cardId);
+      }
+    };
+    
+    wrap.appendChild(head);
+
+    const list=document.createElement('div');
+    list.className='server-list px-5 pb-5 pt-4 space-y-3';
+    if(!isExpanded){
+      list.classList.add('expandable');
+    }
+    (it.servers||[]).forEach(srv=>{
+      const d=document.createElement('div');
+      d.className='panel border rounded-xl p-4 transition-all hover:shadow-sm';
+      d.innerHTML = '<div class="flex items-start justify-between gap-3 mb-3">'+
+        '<div class="flex items-center gap-2.5 flex-1 min-w-0">'+
+          '<span class="text-xl flex-shrink-0">🌍</span>'+
+          '<div class="flex flex-col gap-1 min-w-0">'+
+            '<span class="font-semibold text-sm truncate">'+(srv.country||'未填写')+'</span>'+
+            (srv.ipLocation?'<span class="text-xs muted truncate">'+srv.ipLocation+'</span>':'')+
+          '</div>'+
+        '</div>'+
+        '<span class="'+statusCls(srv.status)+' text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0">'+statusText(srv.status)+'</span>'+
+      '</div>'+
+      '<div class="grid grid-cols-2 gap-3 text-sm">'+
+        '<div class="flex items-center gap-2 panel border rounded-lg px-3 py-2">'+
+          '<span class="opacity-60">📊</span>'+
+          '<span class="truncate font-medium">'+(srv.traffic||'未填写')+'</span>'+
+        '</div>'+
+        '<div class="flex items-center gap-2 panel border rounded-lg px-3 py-2">'+
+          '<span class="opacity-60">📅</span>'+
+          '<span class="truncate font-medium">'+(srv.expiryDate||'未填写')+'</span>'+
+        '</div>'+
+      '</div>'+
+      (srv.specs?'<div class="text-sm mt-3 panel border rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">⚙️</span><span class="flex-1">'+srv.specs+'</span></div>':'')+
+      (srv.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">💬</span><span class="flex-1">'+srv.note+'</span></div>':'');
+      list.appendChild(d);
+    });
+    wrap.appendChild(list);
+    box.appendChild(wrap);
+  });
+}
+
 async function loadLeaderboard(){
   const box = document.getElementById('leaderboard'), countEl=document.getElementById('leaderboard-count');
+  
+  // 显示骨架屏
+  box.innerHTML='<div class="space-y-5">'+
+    '<div class="skeleton-card"><div class="skeleton-header">'+
+    '<div class="skeleton skeleton-avatar"></div>'+
+    '<div class="flex-1"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-text short mt-2"></div></div>'+
+    '</div>'+
+    '<div class="skeleton skeleton-text"></div>'+
+    '<div class="skeleton skeleton-text medium"></div>'+
+    '</div>'.repeat(3)+
+    '</div>';
 
   const timeoutPromise = new Promise((_, reject) =>
     setTimeout(() => reject(new Error('加载超时')), 8000)
@@ -892,51 +1052,22 @@ async function loadLeaderboard(){
 
     const j = await res.json();
     if(!j.success){
-      box.innerHTML='<div class="text-red-400 text-sm">加载失败: '+(j.message||'未知错误')+'<br><button onclick="loadLeaderboard()" class="mt-2 px-3 py-1 rounded-lg border">重试</button></div>';
+      box.innerHTML='<div class="text-red-400 text-sm">加载失败: '+(j.message||'未知错误')+'<br><button onclick="loadLeaderboard()" class="btn-secondary mt-4">重试</button></div>';
       return;
     }
 
-    const data=j.data||[];
-    countEl.textContent = data.length?(' · 共 '+data.length+' 位投喂者'):'';
-
-    if(!data.length){
-      box.innerHTML='<div class="muted text-sm">暂时还没有投喂记录，成为第一个投喂者吧～</div>';
+    allLeaderboardData = j.data||[];
+    
+    if(!allLeaderboardData.length){
+      box.innerHTML='<div class="muted text-sm py-8 text-center">暂时还没有投喂记录，成为第一个投喂者吧～</div>';
+      countEl.textContent = '';
       return;
     }
-
-    box.innerHTML='';
-    data.forEach((it,idx)=>{
-      const wrap=document.createElement('div');
-      wrap.className='card rounded-2xl border p-4 shadow-sm';
-
-      const head=document.createElement('div');
-      head.className='flex items-center justify-between mb-2 gap-2';
-      head.innerHTML='<div class="flex items-center gap-2 flex-1 min-w-0"><span style="font-size:18px">'+medalByRank(idx)+'</span>'+
-      '<a class="font-semibold text-sky-300 hover:text-cyan-300 truncate" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a></div>'+
-      '<div class="muted text-xs whitespace-nowrap">共投喂 '+it.count+' 台 VPS</div>';
-      wrap.appendChild(head);
-
-      const list=document.createElement('div');
-      list.className='space-y-2 text-xs';
-      (it.servers||[]).forEach(srv=>{
-        const d=document.createElement('div');
-        d.className='rounded-xl border px-3 py-2';
-        d.innerHTML = '<div class="flex items-center justify-between gap-2">'+
-          '<span class="text-slate-100 text-xs truncate">'+(srv.country||'未填写')+(srv.ipLocation?' · '+srv.ipLocation:'')+'</span>'+
-          '<span class="'+statusCls(srv.status)+' text-[11px]">'+statusText(srv.status)+'</span></div>'+
-          '<div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] mt-1">'+
-          '<span>流量/带宽：'+(srv.traffic||'未填写')+'</span>'+
-          '<span>到期：'+(srv.expiryDate||'未填写')+'</span></div>'+
-          (srv.specs?'<div class="text-[11px] muted mt-1 break-words">配置：'+srv.specs+'</div>':'')+
-          (srv.note?'<div class="text-[11px] text-amber-300/90 mt-1 break-words">投喂备注：'+srv.note+'</div>':'');
-        list.appendChild(d);
-      });
-      wrap.appendChild(list);
-      box.appendChild(wrap);
-    });
+    
+    renderLeaderboard();
   }catch(err){
     console.error('Leaderboard load error:', err);
-    box.innerHTML='<div class="text-red-400 text-sm">'+err.message+'<br><button onclick="loadLeaderboard()" class="mt-2 px-3 py-1 rounded-lg border">重试</button></div>';
+    box.innerHTML='<div class="text-red-400 text-sm text-center py-8">'+err.message+'<br><button onclick="loadLeaderboard()" class="btn-secondary mt-4">重试</button></div>';
   }
 }
 
@@ -964,105 +1095,401 @@ app.get('/donate/vps', c => {
 
   const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
 <body class="min-h-screen" data-theme="dark">
-<div class="max-w-6xl mx-auto px-4 py-8">
-  <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-    <div>
-      <h1 class="grad-title text-2xl md:text-3xl font-bold">风萧萧公益机场 · VPS 投喂榜</h1>
-      <p class="mt-1 text-xs muted">当前：投喂中心（提交新 VPS / 查看我的投喂记录）</p>
-    </div>
-    <div class="flex items-center gap-3">
-      <div id="user-info" class="text-sm"></div>
-      <button onclick="logout()" class="text-xs rounded-full border px-3 py-1">退出登录</button>
-      <button id="theme-toggle" class="text-xs" onclick="toggleTheme()">浅色模式</button>
+<div class="max-w-7xl mx-auto px-6 py-8 md:py-12">
+  <header class="mb-10 animate-fade-in">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+      <div class="space-y-3">
+        <h1 class="grad-title text-4xl md:text-5xl font-bold leading-tight">风萧萧公益机场 · VPS 投喂中心</h1>
+        <p class="text-sm muted flex items-center gap-2">
+          <span class="text-lg">📍</span>
+          <span>提交新 VPS / 查看我的投喂记录</span>
+        </p>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <div id="user-info" class="text-sm panel px-5 py-2.5 border"></div>
+        <a href="/donate" class="btn-secondary flex items-center gap-2">
+          <span>🏠</span>
+          <span>首页</span>
+        </a>
+        <button onclick="logout()" class="btn-secondary">
+          退出登录
+        </button>
+        <button id="theme-toggle" onclick="toggleTheme()">浅色模式</button>
+      </div>
     </div>
   </header>
 
-  <main class="grid md:grid-cols-2 gap-6 items-start">
-    <section class="panel rounded-2xl border p-4 shadow-lg">
-      <h2 class="text-lg font-semibold mb-2">🧡 提交新的 VPS 投喂</h2>
-      <p class="text-xs muted mb-4 leading-relaxed">请确保服务器是你有控制权的机器，并允许用于公益节点。禁止长时间占满带宽、刷流量、倒卖账号等行为。</p>
+  <main class="grid lg:grid-cols-2 gap-8 items-start">
+    <section class="panel border p-8">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="text-3xl">🧡</span>
+        <h2 class="text-2xl font-bold">提交新的 VPS 投喂</h2>
+      </div>
+      <div class="alert-warning text-sm mb-6 leading-relaxed rounded-xl px-4 py-3">
+        ⚠️ 请确保服务器是你有控制权的机器，并允许用于公益节点。禁止长时间占满带宽、刷流量、倒卖账号等行为。
+      </div>
 
-      <form id="donate-form" class="space-y-3 text-sm">
-        <div class="grid grid-cols-2 gap-3">
+      <form id="donate-form" class="space-y-5">
+        <div class="grid md:grid-cols-2 gap-5">
           <div>
-            <label class="block mb-1 text-xs">服务器 IP（必填）</label>
-            <input name="ip" required placeholder="示例：203.0.113.8 或 [2001:db8::1]" class="w-full rounded-lg border px-2 py-1.5 text-xs focus:ring-1 focus:ring-cyan-500" />
-            <div class="help">支持 IPv4 / IPv6</div>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>🌐</span> 服务器 IP <span class="text-red-400">*</span>
+            </label>
+            <input name="ip" required placeholder="示例：203.0.113.8 或 [2001:db8::1]"
+                   class="w-full" />
+            <div class="help mt-1.5 flex items-center gap-1"><span class="opacity-60">💡</span>支持 IPv4 / IPv6</div>
           </div>
           <div>
-            <label class="block mb-1 text-xs">端口（必填）</label>
-            <input name="port" required type="number" min="1" max="65535" placeholder="示例：22 / 443 / 8080" class="w-full rounded-lg border px-2 py-1.5 text-xs focus:ring-1 focus:ring-cyan-500" />
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>🔌</span> 端口 <span class="text-red-400">*</span>
+            </label>
+            <input name="port" required type="number" min="1" max="65535" placeholder="示例：22 / 443 / 8080"
+                   class="w-full" />
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid md:grid-cols-2 gap-5">
           <div>
-            <label class="block mb-1 text-xs">系统用户名（必填）</label>
-            <input name="username" required placeholder="示例：root / ubuntu" class="w-full rounded-lg border px-2 py-1.5 text-xs focus:ring-1 focus:ring-cyan-500" />
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>👤</span> 系统用户名 <span class="text-red-400">*</span>
+            </label>
+            <input name="username" required placeholder="示例：root / ubuntu"
+                   class="w-full" />
           </div>
           <div>
-            <label class="block mb-1 text-xs">认证方式</label>
-            <select name="authType" class="w-full rounded-lg border px-2 py-1.5 text-xs focus:ring-1 focus:ring-cyan-500">
-              <option value="password">密码</option>
-              <option value="key">SSH 私钥</option>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>🔐</span> 认证方式
+            </label>
+            <select name="authType" class="w-full">
+              <option value="password">🔑 密码</option>
+              <option value="key">🗝️ SSH 私钥</option>
             </select>
           </div>
         </div>
 
         <div id="password-field">
-          <label class="block mb-1 text-xs">密码（密码登录必填）</label>
-          <input name="password" type="password" placeholder="示例：MyStrongP@ssw0rd" class="w-full rounded-lg border px-2 py-1.5 text-xs focus:ring-1 focus:ring-cyan-500" />
+          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+            <span>🔑</span> 密码（密码登录必填）
+          </label>
+          <input name="password" type="password" placeholder="示例：MyStrongP@ssw0rd"
+                 class="w-full" />
         </div>
 
         <div id="key-field" class="hidden">
-          <label class="block mb-1 text-xs">SSH 私钥（密钥登录必填）</label>
-          <textarea name="privateKey" rows="4" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" class="w-full rounded-lg border px-2 py-1.5 text-xs focus:ring-1 focus:ring-cyan-500"></textarea>
+          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+            <span>🗝️</span> SSH 私钥（密钥登录必填）
+          </label>
+          <textarea name="privateKey" rows="4" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
+                    class="w-full font-mono"></textarea>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid md:grid-cols-2 gap-5">
           <div>
-            <label class="block mb-1 text-xs">国家 / 区域（必填）</label>
-            <input name="country" required placeholder="示例：HK - Hong Kong, Kowloon, Hong Kong" class="w-full rounded-lg border px-2 py-1.5 text-xs focus:ring-1 focus:ring-cyan-500" />
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>🌍</span> 国家 / 区域 <span class="text-red-400">*</span>
+            </label>
+            <select name="country" required class="w-full">
+<option value="">请选择国家/区域</option>
+
+<!-- 🌏 亚洲（东亚 / 东南亚 / 南亚 / 中亚） -->
+<optgroup label="🌏 亚洲">
+  <!-- 东亚 / 东北亚 -->
+  <option value="🇨🇳 中国大陆">🇨🇳 中国大陆</option>
+  <option value="🇭🇰 中国香港">🇭🇰 中国香港</option>
+  <option value="🇲🇴 中国澳门">🇲🇴 中国澳门</option>
+  <option value="🇹🇼 中国台湾">🇹🇼 中国台湾</option>
+  <option value="🇯🇵 日本">🇯🇵 日本</option>
+  <option value="🇰🇷 韩国">🇰🇷 韩国</option>
+  <option value="🇰🇵 朝鲜">🇰🇵 朝鲜</option>
+  <option value="🇲🇳 蒙古">🇲🇳 蒙古</option>
+
+  <!-- 东南亚 -->
+  <option value="🇻🇳 越南">🇻🇳 越南</option>
+  <option value="🇹🇭 泰国">🇹🇭 泰国</option>
+  <option value="🇲🇾 马来西亚">🇲🇾 马来西亚</option>
+  <option value="🇸🇬 新加坡">🇸🇬 新加坡</option>
+  <option value="🇵🇭 菲律宾">🇵🇭 菲律宾</option>
+  <option value="🇮🇩 印度尼西亚">🇮🇩 印度尼西亚</option>
+  <option value="🇲🇲 缅甸">🇲🇲 缅甸</option>
+  <option value="🇰🇭 柬埔寨">🇰🇭 柬埔寨</option>
+  <option value="🇱🇦 老挝">🇱🇦 老挝</option>
+  <option value="🇧🇳 文莱">🇧🇳 文莱</option>
+  <option value="🇹🇱 东帝汶">🇹🇱 东帝汶</option>
+
+  <!-- 南亚 -->
+  <option value="🇮🇳 印度">🇮🇳 印度</option>
+  <option value="🇵🇰 巴基斯坦">🇵🇰 巴基斯坦</option>
+  <option value="🇧🇩 孟加拉国">🇧🇩 孟加拉国</option>
+  <option value="🇳🇵 尼泊尔">🇳🇵 尼泊尔</option>
+  <option value="🇱🇰 斯里兰卡">🇱🇰 斯里兰卡</option>
+  <option value="🇲🇻 马尔代夫">🇲🇻 马尔代夫</option>
+  <option value="🇧🇹 不丹">🇧🇹 不丹</option>
+  <option value="🇦🇫 阿富汗">🇦🇫 阿富汗</option>
+
+  <!-- 中亚 -->
+  <option value="🇰🇿 哈萨克斯坦">🇰🇿 哈萨克斯坦</option>
+  <option value="🇺🇿 乌兹别克斯坦">🇺🇿 乌兹别克斯坦</option>
+</optgroup>
+
+<!-- 🌏 中东 / 西亚 -->
+<optgroup label="🌏 中东">
+  <option value="🇸🇦 沙特阿拉伯">🇸🇦 沙特阿拉伯</option>
+  <option value="🇦🇪 阿联酋">🇦🇪 阿联酋</option>
+  <option value="🇹🇷 土耳其">🇹🇷 土耳其</option>
+  <option value="🇮🇱 以色列">🇮🇱 以色列</option>
+  <option value="🇮🇷 伊朗">🇮🇷 伊朗</option>
+  <option value="🇮🇶 伊拉克">🇮🇶 伊拉克</option>
+  <option value="🇯🇴 约旦">🇯🇴 约旦</option>
+  <option value="🇰🇼 科威特">🇰🇼 科威特</option>
+  <option value="🇶🇦 卡塔尔">🇶🇦 卡塔尔</option>
+  <option value="🇴🇲 阿曼">🇴🇲 阿曼</option>
+  <option value="🇧🇭 巴林">🇧🇭 巴林</option>
+  <option value="🇱🇧 黎巴嫩">🇱🇧 黎巴嫩</option>
+  <option value="🇾🇪 也门">🇾🇪 也门</option>
+  <option value="🇸🇾 叙利亚">🇸🇾 叙利亚</option>
+  <option value="🇵🇸 巴勒斯坦">🇵🇸 巴勒斯坦</option>
+</optgroup>
+
+<!-- 🌍 欧洲 -->
+<optgroup label="🌍 欧洲">
+  <!-- 西欧 / 北欧 -->
+  <option value="🇬🇧 英国">🇬🇧 英国</option>
+  <option value="🇫🇷 法国">🇫🇷 法国</option>
+  <option value="🇩🇪 德国">🇩🇪 德国</option>
+  <option value="🇳🇱 荷兰">🇳🇱 荷兰</option>
+  <option value="🇧🇪 比利时">🇧🇪 比利时</option>
+  <option value="🇱🇺 卢森堡">🇱🇺 卢森堡</option>
+  <option value="🇨🇭 瑞士">🇨🇭 瑞士</option>
+  <option value="🇦🇹 奥地利">🇦🇹 奥地利</option>
+  <option value="🇮🇪 爱尔兰">🇮🇪 爱尔兰</option>
+  <option value="🇮🇸 冰岛">🇮🇸 冰岛</option>
+  <option value="🇩🇰 丹麦">🇩🇰 丹麦</option>
+  <option value="🇸🇪 瑞典">🇸🇪 瑞典</option>
+  <option value="🇳🇴 挪威">🇳🇴 挪威</option>
+  <option value="🇫🇮 芬兰">🇫🇮 芬兰</option>
+
+  <!-- 南欧 -->
+  <option value="🇪🇸 西班牙">🇪🇸 西班牙</option>
+  <option value="🇵🇹 葡萄牙">🇵🇹 葡萄牙</option>
+  <option value="🇮🇹 意大利">🇮🇹 意大利</option>
+  <option value="🇬🇷 希腊">🇬🇷 希腊</option>
+  <option value="🇲🇹 马耳他">🇲🇹 马耳他</option>
+  <option value="🇨🇾 塞浦路斯">🇨🇾 塞浦路斯</option>
+
+  <!-- 中东欧 / 巴尔干 -->
+  <option value="🇵🇱 波兰">🇵🇱 波兰</option>
+  <option value="🇨🇿 捷克">🇨🇿 捷克</option>
+  <option value="🇸🇰 斯洛伐克">🇸🇰 斯洛伐克</option>
+  <option value="🇭🇺 匈牙利">🇭🇺 匈牙利</option>
+  <option value="🇷🇴 罗马尼亚">🇷🇴 罗马尼亚</option>
+  <option value="🇧🇬 保加利亚">🇧🇬 保加利亚</option>
+  <option value="🇸🇮 斯洛文尼亚">🇸🇮 斯洛文尼亚</option>
+  <option value="🇭🇷 克罗地亚">🇭🇷 克罗地亚</option>
+  <option value="🇷🇸 塞尔维亚">🇷🇸 塞尔维亚</option>
+  <option value="🇧🇦 波黑">🇧🇦 波黑</option>
+  <option value="🇲🇪 黑山">🇲🇪 黑山</option>
+  <option value="🇲🇰 北马其顿">🇲🇰 北马其顿</option>
+  <option value="🇦🇱 阿尔巴尼亚">🇦🇱 阿尔巴尼亚</option>
+  <option value="🇽🇰 科索沃">🇽🇰 科索沃</option>
+  <option value="🇲🇩 摩尔多瓦">🇲🇩 摩尔多瓦</option>
+
+  <!-- 东欧 / 波罗的海 -->
+  <option value="🇺🇦 乌克兰">🇺🇦 乌克兰</option>
+  <option value="🇧🇾 白俄罗斯">🇧🇾 白俄罗斯</option>
+  <option value="🇷🇺 俄罗斯">🇷🇺 俄罗斯</option>
+  <option value="🇪🇪 爱沙尼亚">🇪🇪 爱沙尼亚</option>
+  <option value="🇱🇻 拉脱维亚">🇱🇻 拉脱维亚</option>
+  <option value="🇱🇹 立陶宛">🇱🇹 立陶宛</option>
+</optgroup>
+
+<!-- 🌎 北美 -->
+<optgroup label="🌎 北美">
+  <option value="🇺🇸 美国">🇺🇸 美国</option>
+  <option value="🇨🇦 加拿大">🇨🇦 加拿大</option>
+  <option value="🇲🇽 墨西哥">🇲🇽 墨西哥</option>
+  <option value="🇬🇱 格陵兰">🇬🇱 格陵兰</option>
+</optgroup>
+
+<!-- 🌎 中美洲 / 加勒比 -->
+<optgroup label="🌎 中美洲 / 加勒比">
+  <option value="🇨🇺 古巴">🇨🇺 古巴</option>
+  <option value="🇩🇴 多米尼加">🇩🇴 多米尼加</option>
+  <option value="🇭🇹 海地">🇭🇹 海地</option>
+  <option value="🇯🇲 牙买加">🇯🇲 牙买加</option>
+  <option value="🇵🇷 波多黎各">🇵🇷 波多黎各</option>
+  <option value="🇵🇦 巴拿马">🇵🇦 巴拿马</option>
+  <option value="🇨🇷 哥斯达黎加">🇨🇷 哥斯达黎加</option>
+  <option value="🇬🇹 危地马拉">🇬🇹 危地马拉</option>
+  <option value="🇭🇳 洪都拉斯">🇭🇳 洪都拉斯</option>
+  <option value="🇳🇮 尼加拉瓜">🇳🇮 尼加拉瓜</option>
+  <option value="🇸🇻 萨尔瓦多">🇸🇻 萨尔瓦多</option>
+  <option value="🇧🇿 伯利兹">🇧🇿 伯利兹</option>
+  <option value="🇹🇹 特立尼达和多巴哥">🇹🇹 特立尼达和多巴哥</option>
+  <option value="🇧🇧 巴巴多斯">🇧🇧 巴巴多斯</option>
+  <option value="🇧🇸 巴哈马">🇧🇸 巴哈马</option>
+  <option value="🇬🇩 格林纳达">🇬🇩 格林纳达</option>
+  <option value="🇱🇨 圣卢西亚">🇱🇨 圣卢西亚</option>
+  <option value="🇰🇳 圣基茨和尼维斯">🇰🇳 圣基茨和尼维斯</option>
+  <option value="🇻🇨 圣文森特和格林纳丁斯">🇻🇨 圣文森特和格林纳丁斯</option>
+</optgroup>
+
+<!-- 🌎 南美 -->
+<optgroup label="🌎 南美">
+  <option value="🇧🇷 巴西">🇧🇷 巴西</option>
+  <option value="🇦🇷 阿根廷">🇦🇷 阿根廷</option>
+  <option value="🇨🇱 智利">🇨🇱 智利</option>
+  <option value="🇨🇴 哥伦比亚">🇨🇴 哥伦比亚</option>
+  <option value="🇵🇪 秘鲁">🇵🇪 秘鲁</option>
+  <option value="🇺🇾 乌拉圭">🇺🇾 乌拉圭</option>
+  <option value="🇵🇾 巴拉圭">🇵🇾 巴拉圭</option>
+  <option value="🇧🇴 玻利维亚">🇧🇴 玻利维亚</option>
+  <option value="🇪🇨 厄瓜多尔">🇪🇨 厄瓜多尔</option>
+  <option value="🇻🇪 委内瑞拉">🇻🇪 委内瑞拉</option>
+  <option value="🇬🇾 圭亚那">🇬🇾 圭亚那</option>
+  <option value="🇸🇷 苏里南">🇸🇷 苏里南</option>
+</optgroup>
+
+<!-- 🌏 大洋洲 -->
+<optgroup label="🌏 大洋洲">
+  <option value="🇦🇺 澳大利亚">🇦🇺 澳大利亚</option>
+  <option value="🇳🇿 新西兰">🇳🇿 新西兰</option>
+  <option value="🇫🇯 斐济">🇫🇯 斐济</option>
+  <option value="🇵🇬 巴布亚新几内亚">🇵🇬 巴布亚新几内亚</option>
+  <option value="🇼🇸 萨摩亚">🇼🇸 萨摩亚</option>
+  <option value="🇹🇴 汤加">🇹🇴 汤加</option>
+  <option value="🇻🇺 瓦努阿图">🇻🇺 瓦努阿图</option>
+  <option value="🇸🇧 所罗门群岛">🇸🇧 所罗门群岛</option>
+  <option value="🇵🇼 帕劳">🇵🇼 帕劳</option>
+  <option value="🇫🇲 密克罗尼西亚">🇫🇲 密克罗尼西亚</option>
+  <option value="🇲🇭 马绍尔群岛">🇲🇭 马绍尔群岛</option>
+  <option value="🇰🇮 基里巴斯">🇰🇮 基里巴斯</option>
+  <option value="🇳🇷 瑙鲁">🇳🇷 瑙鲁</option>
+  <option value="🇹🇻 图瓦卢">🇹🇻 图瓦卢</option>
+</optgroup>
+
+<!-- 🌍 非洲 -->
+<optgroup label="🌍 非洲">
+  <option value="🇿🇦 南非">🇿🇦 南非</option>
+  <option value="🇪🇬 埃及">🇪🇬 埃及</option>
+  <option value="🇳🇬 尼日利亚">🇳🇬 尼日利亚</option>
+  <option value="🇰🇪 肯尼亚">🇰🇪 肯尼亚</option>
+  <option value="🇪🇹 埃塞俄比亚">🇪🇹 埃塞俄比亚</option>
+  <option value="🇬🇭 加纳">🇬🇭 加纳</option>
+  <option value="🇲🇦 摩洛哥">🇲🇦 摩洛哥</option>
+  <option value="🇩🇿 阿尔及利亚">🇩🇿 阿尔及利亚</option>
+  <option value="🇹🇳 突尼斯">🇹🇳 突尼斯</option>
+  <option value="🇱🇾 利比亚">🇱🇾 利比亚</option>
+  <option value="🇸🇩 苏丹">🇸🇩 苏丹</option>
+  <option value="🇸🇸 南苏丹">🇸🇸 南苏丹</option>
+  <option value="🇹🇿 坦桑尼亚">🇹🇿 坦桑尼亚</option>
+  <option value="🇺🇬 乌干达">🇺🇬 乌干达</option>
+  <option value="🇦🇴 安哥拉">🇦🇴 安哥拉</option>
+  <option value="🇲🇿 莫桑比克">🇲🇿 莫桑比克</option>
+  <option value="🇿🇲 赞比亚">🇿🇲 赞比亚</option>
+  <option value="🇿🇼 津巴布韦">🇿🇼 津巴布韦</option>
+  <option value="🇷🇼 卢旺达">🇷🇼 卢旺达</option>
+  <option value="🇧🇮 布隆迪">🇧🇮 布隆迪</option>
+  <option value="🇧🇼 博茨瓦纳">🇧🇼 博茨瓦纳</option>
+  <option value="🇳🇦 纳米比亚">🇳🇦 纳米比亚</option>
+  <option value="🇲🇬 马达加斯加">🇲🇬 马达加斯加</option>
+  <option value="🇸🇨 塞舌尔">🇸🇨 塞舌尔</option>
+  <option value="🇲🇺 毛里求斯">🇲🇺 毛里求斯</option>
+  <option value="🇸🇳 塞内加尔">🇸🇳 塞内加尔</option>
+  <option value="🇲🇱 马里">🇲🇱 马里</option>
+  <option value="🇳🇪 尼日尔">🇳🇪 尼日尔</option>
+  <option value="🇨🇲 喀麦隆">🇨🇲 喀麦隆</option>
+  <option value="🇨🇮 科特迪瓦">🇨🇮 科特迪瓦</option>
+  <option value="🇬🇦 加蓬">🇬🇦 加蓬</option>
+  <option value="🇨🇬 刚果共和国">🇨🇬 刚果共和国</option>
+  <option value="🇨🇩 刚果民主共和国">🇨🇩 刚果民主共和国</option>
+  <option value="🇬🇳 几内亚">🇬🇳 几内亚</option>
+  <option value="🇬🇼 几内亚比绍">🇬🇼 几内亚比绍</option>
+  <option value="🇸🇱 塞拉利昂">🇸🇱 塞拉利昂</option>
+  <option value="🇱🇷 利比里亚">🇱🇷 利比里亚</option>
+  <option value="🇪🇷 厄立特里亚">🇪🇷 厄立特里亚</option>
+  <option value="🇩🇯 吉布提">🇩🇯 吉布提</option>
+  <option value="🇸🇴 索马里">🇸🇴 索马里</option>
+</optgroup>
+
+            </select>
           </div>
           <div>
-            <label class="block mb-1 text-xs">流量 / 带宽（必填）</label>
-            <input name="traffic" required placeholder="示例：400G/月 · 上下行 1Gbps" class="w-full rounded-lg border px-2 py-1.5 text-xs focus:ring-1 focus:ring-cyan-500" />
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>📊</span> 流量 / 带宽 <span class="text-red-400">*</span>
+            </label>
+            <input name="traffic" required placeholder="示例：400G/月 · 上下行 1Gbps"
+                   class="w-full" />
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid md:grid-cols-2 gap-5">
           <div>
-            <label class="block mb-1 text-xs">到期日期（必填）</label>
-            <input name="expiryDate" required type="date" min="${minDate}" value="${ny}" class="w-full rounded-lg border px-2 py-1.5 text-xs focus:ring-1 focus:ring-cyan-500" />
-            <div class="help">默认已填为 +1 年（可改）</div>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>📅</span> 到期日期 <span class="text-red-400">*</span>
+            </label>
+            <input name="expiryDate" required type="date" min="${minDate}" value="${ny}"
+                   class="w-full" />
+            <div class="help mt-1.5 flex items-center gap-1"><span class="opacity-60">💡</span>默认已填为 +1 年（可改）</div>
           </div>
           <div>
-            <label class="block mb-1 text-xs">配置描述（必填）</label>
-            <input name="specs" required placeholder="示例：1C1G · 10Gbps · 1T 流量" class="w-full rounded-lg border px-2 py-1.5 text-xs focus:ring-1 focus:ring-cyan-500" />
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>⚙️</span> 配置描述 <span class="text-red-400">*</span>
+            </label>
+            <input name="specs" required placeholder="示例：1C1G · 10Gbps · 1T 流量"
+                   class="w-full" />
           </div>
         </div>
 
         <div>
-          <label class="block mb-1 text-xs">投喂备注（可选，**将前台展示**）</label>
-          <textarea name="note" rows="2" placeholder="示例：电信到香港方向无法走大陆优选链路，共享带宽，不保证大陆连通性" class="w-full rounded-lg border px-2 py-1.5 text-xs focus:ring-1 focus:ring-cyan-500"></textarea>
+          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+            <span>💬</span> 投喂备注 <span class="help ml-1">（可选，将前台展示）</span>
+          </label>
+          <textarea name="note" rows="3" placeholder="示例：电信到香港方向无法走大陆优选链路，共享带宽，不保证大陆连通性"
+                    class="w-full"></textarea>
         </div>
 
-        <div id="donate-message" class="text-xs mt-1 min-h-[1.5rem]"></div>
+        <div id="donate-message" class="text-sm min-h-[1.5rem] font-medium"></div>
 
-        <button id="donate-submit-btn" type="submit" class="mt-1 inline-flex items-center justify-center rounded-xl bg-cyan-500 px-4 py-2 text-xs font-semibold shadow-lg hover:bg-cyan-400">提交投喂</button>
+        <button id="donate-submit-btn" type="submit" class="w-full btn-primary mt-4">
+          <span class="text-lg">🚀</span> 提交投喂
+        </button>
       </form>
     </section>
 
-    <section class="panel rounded-2xl border p-4 shadow-lg">
-      <div class="flex items-center justify-between mb-2">
-        <h2 class="text-lg font-semibold">📦 我的投喂记录</h2>
-        <button onclick="loadDonations()" class="text-[11px] rounded-full border px-2 py-1">刷新</button>
+    <section class="panel border p-8">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">📦</span>
+          <h2 class="text-2xl font-bold">我的投喂记录</h2>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="exportDonations()" class="btn-secondary" title="导出为JSON">
+            📥 导出
+          </button>
+          <button onclick="loadDonations()" class="btn-secondary">
+            🔄 刷新
+          </button>
+        </div>
       </div>
-      <div id="donations-list" class="space-y-3 text-xs"><div class="muted text-xs">正在加载...</div></div>
+      <div id="donations-list" class="space-y-4 text-sm">
+        <div class="flex items-center justify-center py-12">
+          <div class="flex flex-col items-center gap-3">
+            <div class="loading-spinner"></div>
+            <div class="muted text-sm">正在加载...</div>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 
-  <footer class="mt-8 text-[11px] muted border-t pt-3">友情提示：投喂即视为同意将该 VPS 用于公益机场中转节点。请勿提交有敏感业务的生产机器。</footer>
+  <footer class="mt-16 pt-8 pb-8 text-center">
+    <div class="panel border px-4 md:px-6 py-4 inline-block max-w-full">
+      <p class="flex items-center justify-center gap-2 text-sm muted flex-wrap">
+        <span class="text-lg flex-shrink-0">ℹ️</span>
+        <span class="break-words">友情提示：投喂即视为同意将该 VPS 用于公益机场中转节点。请勿提交有敏感业务的生产机器。</span>
+      </p>
+    </div>
+  </footer>
 </div>
 
 <div id="toast-root"></div>
@@ -1090,6 +1517,52 @@ async function ensureLogin(){
 async function logout(){
   try{ await fetch('/api/logout',{credentials:'same-origin'});}catch{}
   location.href='/donate';
+}
+
+async function exportDonations(){
+  try{
+    const r=await fetch('/api/user/donations',{credentials:'same-origin',cache:'no-store'});
+    const j=await r.json();
+    if(!r.ok||!j.success){
+      toast('导出失败','error');
+      return;
+    }
+    const data=j.data||[];
+    if(!data.length){
+      toast('暂无投喂记录可导出','warn');
+      return;
+    }
+    
+    const exportData = {
+      exportTime: new Date().toISOString(),
+      totalCount: data.length,
+      donations: data.map(v => ({
+        ip: v.ip,
+        port: v.port,
+        username: v.username,
+        country: v.country,
+        ipLocation: v.ipLocation,
+        traffic: v.traffic,
+        expiryDate: v.expiryDate,
+        specs: v.specs,
+        status: v.status,
+        donatedAt: new Date(v.donatedAt).toISOString(),
+        note: v.note || ''
+      }))
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'my-vps-donations-'+Date.now()+'.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('导出成功','success');
+  }catch(err){
+    console.error('Export error:', err);
+    toast('导出异常','error');
+  }
 }
 
 function bindAuthType(){
@@ -1130,7 +1603,12 @@ async function submitDonate(e){
     specs:fd.get('specs')?.toString().trim(),
     note:fd.get('note')?.toString().trim()
   };
-  btn.disabled=true; const t=btn.textContent; btn.textContent='提交中...';
+  
+  btn.disabled=true;
+  btn.classList.add('loading');
+  const originalHTML=btn.innerHTML;
+  btn.innerHTML='<span>提交中...</span>';
+  
   try{
     const r=await fetch('/api/donate',{
       method:'POST',
@@ -1139,60 +1617,105 @@ async function submitDonate(e){
       body:JSON.stringify(payload)
     });
     const j=await r.json();
+    
+    btn.classList.remove('loading');
+    
     if(!r.ok||!j.success){
+      btn.classList.add('error');
       msg.textContent=j.message||'提交失败';
+      msg.className='text-sm mt-1 min-h-[1.5rem] text-red-400';
       toast('投喂失败：'+(j.message||'请检查填写项'), 'error');
+      setTimeout(()=>btn.classList.remove('error'), 400);
     } else{
+      btn.classList.add('success');
+      btn.innerHTML='<span>✓ 提交成功</span>';
       msg.textContent=j.message||'投喂成功';
+      msg.className='text-sm mt-1 min-h-[1.5rem] text-green-500';
       toast(j.message||'投喂成功','success');
-      form.reset();
-      loadDonations();
+      
+      setTimeout(()=>{
+        btn.classList.remove('success');
+        btn.innerHTML=originalHTML;
+        form.reset();
+        loadDonations();
+      }, 2000);
     }
   }catch(e){
     console.error('Donate error:', e);
+    btn.classList.remove('loading');
+    btn.classList.add('error');
     msg.textContent='提交异常';
+    msg.className='text-sm mt-1 min-h-[1.5rem] text-red-400';
     toast('提交异常','error');
+    setTimeout(()=>btn.classList.remove('error'), 400);
   } finally{
-    btn.disabled=false;
-    btn.textContent=t;
+    setTimeout(()=>{
+      btn.disabled=false;
+      if(!btn.classList.contains('success')){
+        btn.innerHTML=originalHTML;
+      }
+    }, 500);
   }
 }
 
 async function loadDonations(){
   const box=document.getElementById('donations-list');
-  box.innerHTML='<div class="muted text-xs">正在加载...</div>';
+  
+  // 显示骨架屏
+  box.innerHTML='<div class="space-y-4">'+
+    '<div class="skeleton-card"><div class="skeleton-header">'+
+    '<div class="skeleton skeleton-avatar"></div>'+
+    '<div class="flex-1"><div class="skeleton skeleton-title"></div></div>'+
+    '</div>'+
+    '<div class="skeleton skeleton-text"></div>'+
+    '<div class="skeleton skeleton-text medium"></div>'+
+    '<div class="skeleton skeleton-text short"></div>'+
+    '</div>'+
+    '<div class="skeleton-card"><div class="skeleton-header">'+
+    '<div class="skeleton skeleton-avatar"></div>'+
+    '<div class="flex-1"><div class="skeleton skeleton-title"></div></div>'+
+    '</div>'+
+    '<div class="skeleton skeleton-text"></div>'+
+    '<div class="skeleton skeleton-text medium"></div>'+
+    '</div>'+
+    '</div>';
+  
   try{
     const r=await fetch('/api/user/donations',{credentials:'same-origin',cache:'no-store'});
     const j=await r.json();
     if(!r.ok||!j.success){
-      box.innerHTML='<div class="text-red-400 text-xs">加载失败</div>';
+      box.innerHTML='<div class="text-red-400 text-sm">加载失败</div>';
       return;
     }
     const data=j.data||[];
     if(!data.length){
-      box.innerHTML='<div class="muted text-xs">还没有投喂记录，先在左侧提交一台吧～</div>';
+      box.innerHTML='<div class="muted text-sm py-8 text-center">还没有投喂记录，先在左侧提交一台吧～</div>';
       return;
     }
     box.innerHTML='';
     data.forEach(v=>{
       const div=document.createElement('div');
-      div.className='card rounded-xl border px-3 py-2';
+      div.className='card border px-5 py-4 transition-all';
       const dt=v.donatedAt?new Date(v.donatedAt):null, t=dt?dt.toLocaleString():'';
       const uname=v.donatedByUsername||'';
       const p='https://linux.do/u/'+encodeURIComponent(uname);
-      div.innerHTML='<div class="flex items-center justify-between gap-2 mb-1"><div class="text-[11px] break-words">IP：'+v.ip+':'+v.port+
-        '</div><div class="'+scls(v.status)+' text-[11px]">'+stxt(v.status)+'</div></div>'+
-        '<div class="text-[11px]">投喂者：<a href="'+p+'" target="_blank" class="underline text-sky-300">@'+uname+'</a></div>'+
-        '<div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] mt-1"><span>地区：'+(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'')+
-        '</span><span>流量/带宽：'+(v.traffic||'未填写')+'</span><span>到期：'+(v.expiryDate||'未填写')+'</span></div>'+
-        '<div class="text-[11px] muted mt-1 break-words">配置：'+(v.specs||'未填写')+'</div>'+
-        (v.note?'<div class="text-[11px] text-amber-300/90 mt-1 break-words">我的备注：'+v.note+'</div>':'')+
-        (t?'<div class="text-[11px] muted mt-1">投喂时间：'+t+'</div>':'');
+      div.innerHTML='<div class="flex items-center justify-between gap-2 mb-3 pb-3 border-b">'+
+        '<div class="text-sm font-medium flex items-center gap-2"><span>🖥️</span><span class="break-words">'+v.ip+':'+v.port+'</span></div>'+
+        '<div class="'+scls(v.status)+' text-xs px-2.5 py-1 rounded-full font-semibold">'+stxt(v.status)+'</div></div>'+
+        '<div class="text-sm mb-3">投喂者：<a href="'+p+'" target="_blank" class="underline hover:text-cyan-300 transition-colors">@'+uname+'</a></div>'+
+        '<div class="grid grid-cols-2 gap-3 text-sm mt-3">'+
+          '<div class="flex items-center gap-2"><span class="opacity-60">🌍</span><span class="truncate">'+(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'')+'</span></div>'+
+          '<div class="flex items-center gap-2"><span class="opacity-60">📊</span><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-2"><span class="opacity-60">📅</span><span class="truncate">'+(v.expiryDate||'未填写')+'</span></div>'+
+        '</div>'+
+        '<div class="text-sm muted mt-3 panel border rounded-lg px-3 py-2 break-words flex items-start gap-2"><span class="opacity-60">⚙️</span><span>'+(v.specs||'未填写')+'</span></div>'+
+        (v.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2 break-words flex items-start gap-2"><span class="opacity-60">💬</span><span>'+v.note+'</span></div>':'')+
+        (t?'<div class="text-xs muted mt-3 flex items-center gap-2"><span class="opacity-60">🕐</span><span>'+t+'</span></div>':'');
       box.appendChild(div);
     });
   }catch(err){
     console.error('Load donations error:', err);
-    box.innerHTML='<div class="text-red-400 text-xs">加载异常</div>';
+    box.innerHTML='<div class="text-red-400 text-sm">加载异常</div>';
   }
 }
 
@@ -1200,6 +1723,38 @@ ensureLogin();
 bindAuthType();
 document.getElementById('donate-form').addEventListener('submit', submitDonate);
 loadDonations();
+
+// 实时IP格式验证
+document.querySelector('input[name="ip"]').addEventListener('blur', function(){
+  const ip = this.value.trim();
+  if(!ip) return;
+  const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && ip.split('.').every(p => +p >= 0 && +p <= 255);
+  const ipv6 = /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|::)/i.test(ip.replace(/^\[|\]$/g, ''));
+  
+  if(ipv4 || ipv6){
+    this.classList.remove('error');
+    this.classList.add('success');
+    setTimeout(()=>this.classList.remove('success'), 2000);
+  } else {
+    this.classList.add('error');
+    toast('IP 格式不正确','error');
+  }
+});
+
+// 端口范围验证
+document.querySelector('input[name="port"]').addEventListener('blur', function(){
+  const port = parseInt(this.value);
+  if(!port) return;
+  
+  if(port < 1 || port > 65535){
+    this.classList.add('error');
+    toast('端口范围应在 1-65535 之间','error');
+  } else {
+    this.classList.remove('error');
+    this.classList.add('success');
+    setTimeout(()=>this.classList.remove('success'), 2000);
+  }
+});
 </script>
 </body></html>`;
   return c.html(html);
@@ -1209,9 +1764,14 @@ loadDonations();
 app.get('/admin', c => {
   const head = commonHead('VPS 管理后台');
   const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
-<body class="min-h-screen" data-theme="dark">
+<body class="min-h-screen">
 <div class="max-w-7xl mx-auto px-4 py-8" id="app-root">
-  <div class="muted text-sm">正在检测管理员登录状态...</div>
+  <div class="flex items-center justify-center min-h-[60vh]">
+    <div class="text-center space-y-3">
+      <div class="loading-spinner mx-auto"></div>
+      <div class="text-sm text-slate-600">正在检测管理员登录状态...</div>
+    </div>
+  </div>
 </div>
 <div id="toast-root"></div>
 <script>
@@ -1266,13 +1826,26 @@ async function checkAdmin(){
 function renderLogin(root){
   root.innerHTML='';
   const wrap=document.createElement('div');
-  wrap.className='panel max-w-sm mx-auto rounded-2xl border p-6 shadow-lg';
-  wrap.innerHTML='<h1 class="text-xl font-semibold mb-4">管理员登录</h1>'+
-    '<p class="text-xs muted mb-4">请输入管理员密码。</p>'+
-    '<form id="admin-login-form" class="space-y-3 text-sm">'+
-      '<div><label class="block mb-1 text-xs">密码</label><input type="password" name="password" class="w-full rounded-lg border px-3 py-2 text-xs focus:ring-1 focus:ring-cyan-500"/></div>'+
-      '<div id="admin-login-msg" class="text-[11px] h-4"></div>'+
-      '<button type="submit" class="mt-1 inline-flex items-center justify-center rounded-xl bg-cyan-500 px-4 py-2 text-xs font-semibold hover:bg-cyan-400">登录</button>'+
+  wrap.className='panel max-w-md mx-auto border p-8 animate-in';
+  wrap.innerHTML='<div class="text-center mb-6">'+
+    '<div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background:#007AFF">'+
+      '<span class="text-3xl">🔐</span>'+
+    '</div>'+
+    '<h1 class="text-2xl font-bold mb-2">管理员登录</h1>'+
+    '<p class="text-sm muted">请输入管理员密码以继续</p>'+
+  '</div>'+
+    '<form id="admin-login-form" class="space-y-4">'+
+      '<div>'+
+        '<label class="block mb-2 text-sm font-medium flex items-center gap-2">'+
+          '<span>🔑</span> 密码'+
+        '</label>'+
+        '<input type="password" name="password" placeholder="请输入管理员密码" '+
+               'class="w-full rounded-lg border px-4 py-3 text-sm focus:ring-2 focus:ring-cyan-500"/>'+
+      '</div>'+
+      '<div id="admin-login-msg" class="text-sm min-h-[1.5rem] font-medium"></div>'+
+      '<button type="submit" class="w-full btn-primary">'+
+        '<span class="text-lg">🚀</span> 登录'+
+      '</button>'+
     '</form>';
   root.appendChild(wrap);
   document.getElementById('admin-login-form').addEventListener('submit', async(e)=>{
@@ -1304,12 +1877,38 @@ function renderLogin(root){
 async function renderAdmin(root, name){
   root.innerHTML='';
   const header=document.createElement('header');
-  header.className='mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between';
-  header.innerHTML='<div><h1 class="grad-title text-2xl md:text-3xl font-bold">VPS 管理后台</h1><p class="mt-2 text-xs muted">仅管理员可见，可查看全部投喂 VPS 与认证信息。</p></div>'+
-    '<div class="flex items-center gap-3"><span class="text-xs">管理员：'+name+'</span><button id="theme-toggle" class="text-[11px] rounded-full border px-2 py-1 mr-1">浅色模式</button><button id="btn-admin-logout" class="text-[11px] rounded-full border px-2 py-1">退出</button></div>';
+  header.className='mb-8 animate-in';
+  header.innerHTML='<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">'+
+    '<div class="space-y-3">'+
+      '<div class="flex items-center gap-3">'+
+        '<div class="inline-flex items-center justify-center w-12 h-12 rounded-xl" style="background:#007AFF">'+
+          '<span class="text-2xl">⚙️</span>'+
+        '</div>'+
+        '<h1 class="grad-title text-3xl md:text-4xl font-bold">VPS 管理后台</h1>'+
+      '</div>'+
+      '<p class="text-sm muted flex items-center gap-2 ml-15">'+
+        '<span class="text-base">🔒</span>'+
+        '<span>仅管理员可见，可查看全部投喂 VPS 与认证信息</span>'+
+      '</p>'+
+    '</div>'+
+    '<div class="flex flex-wrap items-center gap-3">'+
+      '<div class="panel px-5 py-2.5 border">'+
+        '<span class="text-sm">👤</span>'+
+        '<span class="text-sm font-medium">'+name+'</span>'+
+      '</div>'+
+      '<button id="theme-toggle" class="btn-secondary">浅色模式</button>'+
+      '<button id="btn-admin-logout" class="btn-danger">'+
+        '退出登录'+
+      '</button>'+
+    '</div>'+
+  '</div>';
   root.appendChild(header);
-  updateThemeBtn();
-  document.getElementById('theme-toggle').addEventListener('click',toggleTheme);
+
+  const themeBtn = document.getElementById('theme-toggle');
+  if(themeBtn){
+    updateThemeBtn();
+    themeBtn.addEventListener('click', toggleTheme);
+  }
   document.getElementById('btn-admin-logout').addEventListener('click', async()=>{
     try{await fetch('/api/admin/logout',{credentials:'same-origin'})}catch{}
     location.reload();
@@ -1321,28 +1920,74 @@ async function renderAdmin(root, name){
 
   const cfg=document.createElement('section');
   cfg.id='admin-config';
-  cfg.className='mt-4';
+  cfg.className='mt-6 space-y-4';
   cfg.innerHTML=
-  '<div class="panel rounded-2xl border p-4 mb-4">'+
-    '<div class="flex items-center justify-between"><h2 class="text-sm font-semibold">OAuth 配置</h2>'+
-    '<button id="btn-toggle-oauth" class="text-[11px] rounded-full border px-2 py-1">展开</button></div>'+
-    '<div id="oauth-body" class="mt-3 hidden">'+
-      '<form id="oauth-form" class="grid md:grid-cols-3 gap-3 text-[11px]">'+
-        '<div><label class="block mb-1 muted text-xs">Client ID</label><input name="clientId" class="w-full rounded-lg border px-2 py-1 text-xs focus:ring-1 focus:ring-cyan-500"/></div>'+
-        '<div><label class="block mb-1 muted text-xs">Client Secret</label><input name="clientSecret" class="w-full rounded-lg border px-2 py-1 text-xs focus:ring-1 focus:ring-cyan-500"/></div>'+
-        '<div><label class="block mb-1 muted text-xs">Redirect URI</label><input name="redirectUri" class="w-full rounded-lg border px-2 py-1 text-xs focus:ring-1 focus:ring-cyan-500"/></div>'+
-      '</form><div class="mt-2 flex gap-2"><button id="btn-save-oauth" class="text-[11px] rounded-xl bg-cyan-500 px-3 py-1 font-semibold">保存 OAuth</button></div>'+
-    '</div></div>'+
-    '<div class="panel rounded-2xl border p-4">'+
-      '<h2 class="text-sm font-semibold mb-3">管理员密码</h2>'+
-      '<p class="text-[11px] muted mb-2">仅用于 <code>/admin</code> 后台登录，至少 6 位，建议与 Linux.do 账号密码不同。</p>'+
-      '<div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center text-[11px]">'+
-        '<input id="admin-pass-input" type="password" placeholder="输入新的管理员密码" class="flex-1 rounded-lg border px-3 py-2 text-xs focus:ring-1 focus:ring-cyan-500"/>'+
-        '<input id="admin-pass-input2" type="password" placeholder="再次输入以确认" class="flex-1 rounded-lg border px-3 py-2 text-xs focus:ring-1 focus:ring-cyan-500"/>'+
-        '<button id="btn-save-admin-pass" class="rounded-xl bg-emerald-500 px-4 py-2 text-[11px] font-semibold hover:bg-emerald-400">保存密码</button>'+
+  '<div class="panel border p-6">'+
+    '<div class="flex items-center justify-between mb-4">'+
+      '<div class="flex items-center gap-3">'+
+        '<span class="text-xl">🔗</span>'+
+        '<h2 class="text-lg font-bold">OAuth 配置</h2>'+
       '</div>'+
-      '<p class="text-[11px] muted mt-2">修改成功后立即生效，下次登录需要使用新密码。</p>'+
-    '</div>';
+      '<button id="btn-toggle-oauth" class="btn-secondary text-xs">展开</button>'+
+    '</div>'+
+    '<div id="oauth-body" class="hidden">'+
+      '<form id="oauth-form" class="grid md:grid-cols-3 gap-4">'+
+        '<div>'+
+          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5">'+
+            '<span>🆔</span> Client ID'+
+          '</label>'+
+          '<input name="clientId" placeholder="输入 Client ID" class="w-full rounded-lg border px-3 py-2 text-sm"/>'+
+        '</div>'+
+        '<div>'+
+          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5">'+
+            '<span>🔐</span> Client Secret'+
+          '</label>'+
+          '<input name="clientSecret" placeholder="输入 Client Secret" class="w-full rounded-lg border px-3 py-2 text-sm"/>'+
+        '</div>'+
+        '<div>'+
+          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5">'+
+            '<span>🔗</span> Redirect URI'+
+          '</label>'+
+          '<input name="redirectUri" placeholder="输入 Redirect URI" class="w-full rounded-lg border px-3 py-2 text-sm"/>'+
+        '</div>'+
+      '</form>'+
+      '<div class="mt-4 flex gap-2">'+
+        '<button id="btn-save-oauth" class="btn-primary">'+
+          '<span>💾</span> 保存 OAuth 配置'+
+        '</button>'+
+      '</div>'+
+    '</div>'+
+  '</div>'+
+  '<div class="panel border p-6">'+
+    '<div class="flex items-center justify-between mb-4">'+
+      '<div class="flex items-center gap-3">'+
+        '<span class="text-xl">🔑</span>'+
+        '<h2 class="text-lg font-bold">管理员密码</h2>'+
+      '</div>'+
+      '<button id="btn-toggle-password" class="btn-secondary text-xs">展开</button>'+
+    '</div>'+
+    '<div id="password-body" class="hidden">'+
+      '<div class="alert-warning text-sm mb-4 rounded-xl px-3 py-2">'+
+        '⚠️ 仅用于 <code>/admin</code> 后台登录，至少 6 位，建议与 Linux.do 账号密码不同'+
+      '</div>'+
+      '<div class="grid md:grid-cols-2 gap-4 mb-4">'+
+        '<div>'+
+          '<label class="block mb-2 text-sm font-medium">新密码</label>'+
+          '<input id="admin-pass-input" type="password" placeholder="输入新的管理员密码" '+
+                 'class="w-full rounded-lg border px-3 py-2.5 text-sm"/>'+
+        '</div>'+
+        '<div>'+
+          '<label class="block mb-2 text-sm font-medium">确认密码</label>'+
+          '<input id="admin-pass-input2" type="password" placeholder="再次输入以确认" '+
+                 'class="w-full rounded-lg border px-3 py-2.5 text-sm"/>'+
+        '</div>'+
+      '</div>'+
+      '<button id="btn-save-admin-pass" class="btn-primary">'+
+        '<span>🔒</span> 保存密码'+
+      '</button>'+
+      '<p class="text-xs muted mt-3">💡 修改成功后立即生效，下次登录需要使用新密码</p>'+
+    '</div>'+
+  '</div>';
   root.appendChild(cfg);
 
   document.getElementById('btn-toggle-oauth').addEventListener('click',()=>{
@@ -1356,22 +2001,49 @@ async function renderAdmin(root, name){
       btn.textContent='展开';
     }
   });
+  
+  document.getElementById('btn-toggle-password').addEventListener('click',()=>{
+    const b=document.getElementById('password-body');
+    const btn=document.getElementById('btn-toggle-password');
+    if(b.classList.contains('hidden')){
+      b.classList.remove('hidden');
+      btn.textContent='收起';
+    } else {
+      b.classList.add('hidden');
+      btn.textContent='展开';
+    }
+  });
+  
   document.getElementById('btn-save-oauth').addEventListener('click', saveOAuth);
   document.getElementById('btn-save-admin-pass').addEventListener('click', saveAdminPassword);
 
   const listWrap=document.createElement('section');
-  listWrap.className='mt-6';
-  listWrap.innerHTML='<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-2">'+
-    '<div class="flex items-center gap-3"><h2 class="text-lg font-semibold">VPS 列表</h2><button id="btn-verify-all" class="px-3 py-1 rounded-full border text-[11px]">一键验证全部</button></div>'+
-    '<div class="flex flex-wrap items-center gap-2 text-[11px]">'+
-      '<span>状态筛选：</span>'+
-      '<button data-status="all" class="px-2 py-1 rounded-full border">全部</button>'+
-      '<button data-status="active" class="px-2 py-1 rounded-full border">运行中</button>'+
-      '<button data-status="failed" class="px-2 py-1 rounded-full border">失败</button>'+
-      '<span class="ml-2">搜索：</span><input id="filter-input" placeholder="按 IP / 用户名 / 备注 ..." class="rounded-lg border px-2 py-1 text-[11px] focus:ring-1 focus:ring-cyan-500"/>'+
-      '<button id="filter-btn" class="px-2 py-1 rounded-full border">搜索</button><button id="filter-clear-btn" class="px-2 py-1 rounded-full border">清除</button>'+
-    '</div></div>'+
-    '<div id="vps-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>';
+  listWrap.className='mt-8';
+  listWrap.innerHTML='<div class="panel border p-6 mb-6">'+
+    '<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">'+
+      '<div class="flex items-center gap-3">'+
+        '<span class="text-2xl">📋</span>'+
+        '<h2 class="text-2xl font-bold">VPS 列表</h2>'+
+      '</div>'+
+      '<button id="btn-verify-all" class="btn-primary">'+
+        '<span>🔄</span> 一键验证全部'+
+      '</button>'+
+    '</div>'+
+    '<div class="flex flex-col md:flex-row gap-3">'+
+      '<div class="flex flex-wrap items-center gap-2">'+
+        '<span class="text-sm font-medium">筛选：</span>'+
+        '<button data-status="all" class="btn-secondary text-xs">全部</button>'+
+        '<button data-status="active" class="btn-secondary text-xs">✅ 运行中</button>'+
+        '<button data-status="failed" class="btn-secondary text-xs">❌ 失败</button>'+
+      '</div>'+
+      '<div class="flex-1 flex gap-2">'+
+        '<input id="filter-input" placeholder="🔍 搜索 IP / 用户名 / 备注..." class="flex-1"/>'+
+        '<button id="filter-btn" class="btn-secondary">搜索</button>'+
+        '<button id="filter-clear-btn" class="btn-secondary">清除</button>'+
+      '</div>'+
+    '</div>'+
+  '</div>'+
+  '<div id="vps-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>';
   root.appendChild(listWrap);
 
   listWrap.querySelectorAll('button[data-status]').forEach(btn=> btn.addEventListener('click',()=>{
@@ -1399,7 +2071,12 @@ async function renderAdmin(root, name){
 
 async function loadStats(){
   const wrap=document.getElementById('admin-stats');
-  wrap.innerHTML='<div class="muted text-xs mb-3">正在加载统计信息...</div>';
+  wrap.innerHTML='<div class="flex items-center justify-center py-8">'+
+    '<div class="flex flex-col items-center gap-3">'+
+      '<div class="loading-spinner"></div>'+
+      '<div class="text-sm muted">正在加载统计信息...</div>'+
+    '</div>'+
+  '</div>';
   try{
     const r=await fetch('/api/admin/stats',{credentials:'same-origin',cache:'no-store'});
 
@@ -1415,15 +2092,36 @@ async function loadStats(){
     }
 
     const d=j.data||{};
-    function card(label,value,key){
-      return '<button data-gok="'+key+'" class="stat-card stat-'+key+' rounded-2xl border px-3 py-2 text-left">'+
-        '<div class="stat-label text-[11px] muted">'+label+'</div><div class="stat-value mt-1">'+value+'</div></button>';
+    function card(label,value,key,icon){
+      const percent = d.totalVPS > 0 ? Math.round((value / d.totalVPS) * 100) : 0;
+      return '<button data-gok="'+key+'" class="stat-card stat-'+key+' border px-4 py-3 text-left">'+
+        '<div class="flex items-center justify-between mb-2">'+
+          '<div class="stat-label text-xs muted">'+icon+' '+label+'</div>'+
+          '<div class="text-xs muted">'+percent+'%</div>'+
+        '</div>'+
+        '<div class="stat-value mb-2">'+value+'</div>'+
+        '<div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">'+
+          '<div class="h-full rounded-full transition-all duration-500" style="width:'+percent+'%;background:currentColor"></div>'+
+        '</div>'+
+        '</button>';
     }
-    wrap.innerHTML='<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-3">'+
-      card('总投喂数',d.totalVPS||0,'all')+
-      card('运行中',d.activeVPS||0,'active')+
-      card('失败',d.failedVPS||0,'failed')+
-      card('今日新增',d.todayNewVPS||0,'today')+'</div>';
+    wrap.innerHTML='<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">'+
+      card('总投喂数',d.totalVPS||0,'all','📊')+
+      card('运行中',d.activeVPS||0,'active','✅')+
+      card('失败',d.failedVPS||0,'failed','❌')+
+      card('今日新增',d.todayNewVPS||0,'today','🆕')+'</div>';
+    
+    // 添加数字计数动画
+    setTimeout(()=>{
+      wrap.querySelectorAll('.stat-value').forEach(el => {
+        const target = parseInt(el.textContent);
+        if(!isNaN(target)){
+          el.classList.add('count-up');
+          animateNumber(el, target);
+        }
+      });
+    }, 100);
+    
     wrap.querySelectorAll('button[data-gok]').forEach(b=> b.addEventListener('click',()=>{
       statusFilter=b.getAttribute('data-gok');
       userFilter='';
@@ -1509,9 +2207,16 @@ async function saveAdminPassword(){
   }
 }
 
+
+
 async function loadVps(){
   const list=document.getElementById('vps-list');
-  list.innerHTML='<div class="muted text-xs col-span-full">正在加载 VPS...</div>';
+  list.innerHTML='<div class="col-span-full flex items-center justify-center py-12">'+
+    '<div class="flex flex-col items-center gap-3">'+
+      '<div class="loading-spinner"></div>'+
+      '<div class="text-sm muted">正在加载 VPS 列表...</div>'+
+    '</div>'+
+  '</div>';
   try{
     const r=await fetch('/api/admin/vps',{credentials:'same-origin',cache:'no-store'});
 
@@ -1587,25 +2292,51 @@ function renderVpsList(){
   list.innerHTML='';
   arr.forEach(v=>{
     const card=document.createElement('div');
-    card.className='card rounded-2xl border p-3 flex flex-col gap-2 text-xs';
+    card.className='card rounded-2xl border p-4 flex flex-col gap-3 text-sm shadow-lg hover:shadow-xl transition-all';
     const dt=v.donatedAt?new Date(v.donatedAt):null;
     const t=dt?dt.toLocaleString():'';
     const uname=v.donatedByUsername||'';
     const p='https://linux.do/u/'+encodeURIComponent(uname);
 
-    card.innerHTML='<div class="flex items-center justify-between gap-2"><div class="text-[11px] break-words">IP：'+v.ip+':'+v.port+'</div><div class="'+scls(v.status)+' text-[11px]">'+stxt(v.status)+'</div></div>'+
-      '<div class="flex flex-wrap gap-2 text-[11px]"><span>投喂者：<a href="'+p+'" target="_blank" class="underline">@'+uname+'</a></span><span>地区：'+(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'')+'</span></div>'+
-      '<div class="flex flex-wrap gap-2 text-[11px]"><span>流量/带宽：'+(v.traffic||'未填写')+'</span><span>到期：'+(v.expiryDate||'未填写')+'</span></div>'+
-      '<div class="text-[11px] muted break-words">配置：'+(v.specs||'未填写')+'</div>'+
-      (v.note?'<div class="text-[11px] text-amber-300/90 break-words">用户备注：'+v.note+'</div>':'')+
-      (v.adminNote?'<div class="text-[11px] text-cyan-300/90 break-words">管理员备注：'+v.adminNote+'</div>':'')+
-      (t?'<div class="text-[11px] muted">投喂时间：'+t+'</div>':'')+
-      '<div class="flex flex-wrap gap-2 mt-1">'+
-        '<button class="px-2 py-1 rounded-full border" data-act="login" data-id="'+v.id+'">查看信息</button>'+
-        '<button class="px-2 py-1 rounded-full border" data-act="verify" data-id="'+v.id+'">一键验证</button>'+
-        '<button class="px-2 py-1 rounded-full border" data-act="failed" data-id="'+v.id+'">设为失败</button>'+
-        '<button class="px-2 py-1 rounded-full border" data-act="edit" data-id="'+v.id+'">编辑信息</button>'+
-        '<button class="px-2 py-1 rounded-full border" data-act="del" data-id="'+v.id+'">删除</button>'+
+    card.innerHTML='<div class="flex items-center justify-between gap-2 pb-3 border-b">'+
+        '<div class="flex items-center gap-2 text-sm font-medium">'+
+          '<span>🖥️</span>'+
+          '<span class="break-words">'+v.ip+':'+v.port+'</span>'+
+        '</div>'+
+        '<span class="'+scls(v.status)+' text-xs px-2 py-1 rounded-full">'+stxt(v.status)+'</span>'+
+      '</div>'+
+      '<div class="space-y-2 text-xs">'+
+        '<div class="flex items-center gap-2">'+
+          '<span class="opacity-60">👤</span>'+
+          '<span>投喂者：<a href="'+p+'" target="_blank" class="text-sky-500 hover:text-cyan-400 underline transition-colors">@'+uname+'</a></span>'+
+        '</div>'+
+        '<div class="flex items-center gap-2">'+
+          '<span class="opacity-60">🌍</span>'+
+          '<span>'+(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'')+'</span>'+
+        '</div>'+
+        '<div class="grid grid-cols-2 gap-2">'+
+          '<div class="flex items-center gap-1.5 panel border rounded-lg px-2 py-1.5"><span class="opacity-60">📊</span><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-1.5 panel border rounded-lg px-2 py-1.5"><span class="opacity-60">📅</span><span class="truncate">'+(v.expiryDate||'未填写')+'</span></div>'+
+        '</div>'+
+        '<div class="panel border rounded-lg px-2 py-1.5 flex items-start gap-1.5">'+
+          '<span class="opacity-60">⚙️</span>'+
+          '<span class="break-words">'+(v.specs||'未填写')+'</span>'+
+        '</div>'+
+        (v.note?'<div class="bg-amber-500/5 border border-amber-500/20 rounded-lg px-2 py-1.5 text-amber-600 dark:text-amber-300 flex items-start gap-1.5">'+
+          '<span class="opacity-60">💬</span>'+
+          '<span class="break-words">'+v.note+'</span>'+
+        '</div>':'')+
+        (v.adminNote?'<div class="bg-cyan-500/5 border border-cyan-500/20 rounded-lg px-2 py-1.5 text-cyan-600 dark:text-cyan-300 flex items-start gap-1.5">'+
+          '<span class="opacity-60">📝</span>'+
+          '<span class="break-words">'+v.adminNote+'</span>'+
+        '</div>':'')+
+        (t?'<div class="flex items-center gap-1.5 text-xs muted"><span class="opacity-60">🕐</span><span>'+t+'</span></div>':'')+
+      '</div>'+
+      '<div class="flex flex-wrap gap-2 pt-3 border-t">'+
+        '<button class="btn-secondary text-xs" data-act="login" data-id="'+v.id+'">🔍 查看</button>'+
+        '<button class="btn-secondary text-xs" data-act="verify" data-id="'+v.id+'">✅ 验证</button>'+
+        '<button class="btn-secondary text-xs" data-act="edit" data-id="'+v.id+'">✏️ 编辑</button>'+
+        '<button class="btn-danger text-xs" data-act="del" data-id="'+v.id+'">🗑️ 删除</button>'+
       '</div>';
 
     card.querySelectorAll('button[data-act]').forEach(btn=>{
@@ -1666,12 +2397,27 @@ function renderVpsList(){
           }
         }
         else if(act==='del'){
+          if(!confirm('确定要删除这台 VPS 吗？此操作不可恢复。')) return;
+          
+          btn.classList.add('loading');
+          btn.disabled = true;
+          
           try{
             const r=await fetch('/api/admin/vps/'+id,{method:'DELETE',credentials:'same-origin'});
             const j=await r.json();
-            toast(j.message||'已删除', r.ok?'success':'error');
+            if(r.ok){
+              card.style.animation = 'slideOut 0.3s ease-out forwards';
+              setTimeout(()=>{
+                toast(j.message||'已删除', 'success');
+              }, 300);
+            } else {
+              toast(j.message||'删除失败', 'error');
+            }
           }catch{
             toast('删除失败','error');
+          } finally {
+            btn.classList.remove('loading');
+            btn.disabled = false;
           }
         }
         else if(act==='edit'){
@@ -1735,201 +2481,1018 @@ function commonHead(title: string): string {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>${title}</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🧡</text></svg>" />
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        apple: {
+          blue: { light: '#007AFF', dark: '#0A84FF' },
+          gray: { 50: '#fbfbfd', 100: '#f5f5f7', 200: '#d2d2d7', 300: '#86868b', 900: '#1d1d1f' },
+          darkgray: { 50: '#38383a', 100: '#2c2c2e', 200: '#1c1c1e', 900: '#000000' },
+          success: { light: '#34C759', dark: '#32D74B' },
+          error: { light: '#FF3B30', dark: '#FF453A' },
+          warning: { light: '#FF9500', dark: '#FF9F0A' },
+        }
+      },
+      borderRadius: {
+        'apple-sm': '8px',
+        'apple': '10px',
+        'apple-lg': '12px',
+        'apple-xl': '16px',
+      },
+      boxShadow: {
+        'apple-sm': '0 2px 8px rgba(0,0,0,0.04)',
+        'apple': '0 4px 16px rgba(0,0,0,0.08)',
+        'apple-lg': '0 8px 32px rgba(0,0,0,0.12)',
+        'apple-dark': '0 2px 8px rgba(0,0,0,0.3)',
+      }
+    }
+  }
+}
+</script>
 <style>
 :root{
-  color-scheme: dark;
+  --radius: 0.5rem;
+  color-scheme: light;
+}
+html{
+  scroll-behavior: smooth;
 }
 html,body{
-  font-family: system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 body{
-  background:#020617;
-  color:#e5f0ff;
+  background: linear-gradient(135deg,
+    #f0e6ff 0%,    /* 淡紫色 */
+    #e9d5ff 20%,   /* 浅紫色 */
+    #ddd6fe 40%,   /* 紫罗兰 */
+    #c4b5fd 60%,   /* 中紫色 */
+    #e9d5ff 80%,   /* 浅紫色 */
+    #f0e6ff 100%   /* 淡紫色 */
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  color: #1d1d1f;
+  min-height: 100vh;
+  transition: color 0.3s ease;
+  position: relative;
 }
-body[data-theme="light"]{
-  color-scheme: light;
-  background:#f3f4f6;
-  color:#0f172a;
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+body::before{
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(139, 92, 246, 0.05) 0%,
+    rgba(168, 85, 247, 0.04) 25%,
+    rgba(147, 51, 234, 0.03) 50%,
+    rgba(126, 34, 206, 0.04) 75%,
+    rgba(139, 92, 246, 0.05) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+body > *{
+  position: relative;
+  z-index: 1;
 }
 
+body[data-theme="dark"]{
+  color-scheme: dark;
+  background: linear-gradient(135deg,
+    #1a0a2e 0%,    /* 深紫蓝 */
+    #16213e 25%,   /* 深蓝灰 */
+    #0f3460 50%,   /* 深蓝 */
+    #1a1a2e 75%,   /* 深灰蓝 */
+    #0a0e27 100%   /* 极深蓝 */
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  color: #f5f5f7;
+}
+body[data-theme="dark"]::before{
+  background: linear-gradient(135deg,
+    rgba(138, 43, 226, 0.1) 0%,
+    rgba(72, 52, 212, 0.08) 25%,
+    rgba(59, 130, 246, 0.06) 50%,
+    rgba(16, 185, 129, 0.05) 75%,
+    rgba(14, 165, 233, 0.08) 100%
+  );
+}
+
+/* ========== 动画 ========== */
+@keyframes slideUpAndFade {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50px) scale(0.9);
+  }
+}
+
+.animate-in {
+  animation: slideUpAndFade 0.3s ease-out;
+}
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+.animate-slide-in {
+  animation: slideInFromBottom 0.4s ease-out forwards;
+}
+
+/* ========== 加载指示器 ========== */
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top-color: #007AFF;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+body[data-theme="dark"] .loading-spinner {
+  border-top-color: #0A84FF;
+}
+
+/* ========== 骨架屏 ========== */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(220, 220, 225, 0.6) 0%,
+    rgba(235, 235, 240, 0.8) 50%,
+    rgba(220, 220, 225, 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonLoading 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+@keyframes skeletonLoading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+body[data-theme="dark"] .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(44, 44, 46, 0.6) 0%,
+    rgba(56, 56, 58, 0.8) 50%,
+    rgba(44, 44, 46, 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonLoading 1.5s ease-in-out infinite;
+}
+
+/* 骨架屏卡片 */
+.skeleton-card {
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+body[data-theme="dark"] .skeleton-card {
+  background: rgba(28, 28, 30, 0.8);
+  border-color: rgba(56, 56, 58, 0.6);
+}
+
+.skeleton-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.skeleton-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+.skeleton-title {
+  height: 20px;
+  width: 40%;
+  border-radius: 4px;
+}
+.skeleton-text {
+  height: 16px;
+  width: 100%;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+.skeleton-text.short {
+  width: 60%;
+}
+.skeleton-text.medium {
+  width: 80%;
+}
+
+/* ========== 卡片与面板 ========== */
 .panel,.card{
-  background:rgba(15,23,42,.98);
-  border:1px solid rgba(30,64,175,.5);
-  box-shadow:0 14px 40px rgba(15,23,42,.7);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  box-shadow:
+    0 2px 16px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: all 0.2s ease;
+  word-break: break-word;
+  overflow: hidden; /* 防止内容溢出 */
 }
-body[data-theme="light"] .panel,
-body[data-theme="light"] .card{
-  background:#ffffff;
-  border-color:#e5e7eb;
-  box-shadow:0 12px 35px rgba(148,163,184,.25);
+.card:hover {
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  transform: translateY(-2px);
 }
 
-.card{
-  word-break:break-word;
+body[data-theme="dark"] .panel,
+body[data-theme="dark"] .card{
+  background: rgba(28, 28, 30, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-color: rgba(56, 56, 58, 0.6);
+  box-shadow: 
+    0 2px 16px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(56, 56, 58, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+body[data-theme="dark"] .card:hover{
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(56, 56, 58, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-/* 新增：弹窗内大段文本（SSH 密钥等）样式 */
+/* ========== 弹窗内文本块 ========== */
 .modal-text-block{
   word-break: break-all;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
   max-height: 260px;
   overflow-y: auto;
-  padding: 6px 8px;
-  border-radius: 0.5rem;
-  background: rgba(15,23,42,.85);
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(245, 245, 247, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(210, 210, 215, 0.8);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.5;
 }
-body[data-theme="light"] .modal-text-block{
-  background:#f3f4f6;
+body[data-theme="dark"] .modal-text-block{
+  background: rgba(44, 44, 46, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-color: rgba(56, 56, 58, 0.8);
+  color: #f5f5f7;
 }
 
-.muted{ color:#94a3b8; }
-body[data-theme="light"] .muted{ color:#6b7280; }
+/* ========== 文字样式 ========== */
+.muted{
+  color: #6b6b6f;
+}
+body[data-theme="dark"] .muted{
+  color: #a8a8ad;
+}
 
 .grad-title{
-  background-image:linear-gradient(115deg,#22d3ee 0%,#38bdf8 25%,#a855f7 50%,#ec4899 75%,#f97316 100%);
-  background-size:320% 100%;
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-  display:inline-block;
-  animation:grad-loop 10s ease-in-out infinite alternate;
+  color: #1d1d1f;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
 }
-@keyframes grad-loop{
-  0%{ background-position:0% 50%; }
-  100%{ background-position:100% 50%; }
+body[data-theme="dark"] .grad-title{
+  color: #f5f5f7;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
+/* ========== Toast 通知 ========== */
 #toast-root{
-  position:fixed;
-  inset:0;
-  z-index:9999;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  pointer-events:none;
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
 }
 .toast{
-  padding:10px 12px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.08);
-  background:rgba(15,23,42,.97);
-  color:#e5f0ff;
-  box-shadow:0 10px 30px rgba(0,0,0,.5);
-  transform:translateY(10px);
-  opacity:0;
-  transition:all .25s ease;
-  pointer-events:auto;
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  color: #1d1d1f;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.8);
+  transform: translateY(-20px);
+  opacity: 0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: auto;
+  min-width: 280px;
+  max-width: 420px;
+  font-size: 14px;
+  font-weight: 500;
 }
-.toast.show{ transform:translateY(0); opacity:1; }
-.toast.success{ border-color:#10b981; }
-.toast.error{ border-color:#ef4444; }
-.toast.warn{ border-color:#f59e0b; }
+.toast.show{ 
+  transform: translateY(0); 
+  opacity: 1;
+  animation: slideDown 0.25s ease-out;
+}
+.toast.success{ 
+  border-left: 3px solid #34C759;
+}
+.toast.error{ 
+  border-left: 3px solid #FF3B30;
+}
+.toast.warn{ 
+  border-left: 3px solid #FF9500;
+}
+body[data-theme="dark"] .toast{
+  background: rgba(44, 44, 46, 0.9);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  color: #f5f5f7;
+  border-color: rgba(56, 56, 58, 0.8);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(56,56,58,0.6);
+}
+body[data-theme="dark"] .toast.success{ border-left-color: #32D74B; }
+body[data-theme="dark"] .toast.error{ border-left-color: #FF453A; }
+body[data-theme="dark"] .toast.warn{ border-left-color: #FF9F0A; }
 
-.help{ font-size:11px; opacity:.8; }
+/* ========== 辅助文字 ========== */
+.help{ 
+  font-size: 12px;
+  color: #86868b;
+}
+body[data-theme="dark"] .help{
+  color: #98989d;
+}
 
-.badge-ok{ color:#34d399; font-weight:600; }
-.badge-fail{ color:#f97373; font-weight:600; }
-.badge-idle{ color:#cbd5e1; }
+/* ========== 警告框 ========== */
+.alert-warning{
+  background: linear-gradient(135deg, rgba(255, 149, 0, 0.08), rgba(255, 204, 0, 0.05));
+  border: 1px solid rgba(255, 149, 0, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+body[data-theme="dark"] .alert-warning{
+  background: linear-gradient(135deg, rgba(255, 159, 10, 0.12), rgba(255, 214, 10, 0.08));
+  border-color: rgba(255, 159, 10, 0.3);
+}
 
+/* ========== 状态徽章 ========== */
+.badge-ok{
+  color: #34C759;
+  font-weight: 600;
+  position: relative;
+}
+.badge-ok::before{
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: #34C759;
+  border-radius: 50%;
+  animation: pulse-green 2s ease-in-out infinite;
+}
+@keyframes pulse-green {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52,199,89,0.7); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(52,199,89,0); }
+}
+.badge-fail{
+  color: #FF3B30;
+  font-weight: 600;
+}
+.badge-idle{
+  color: #86868b;
+  font-weight: 600;
+}
+body[data-theme="dark"] .badge-ok{ color: #32D74B; }
+body[data-theme="dark"] .badge-ok::before{ background: #32D74B; }
+body[data-theme="dark"] .badge-fail{ color: #FF453A; }
+body[data-theme="dark"] .badge-idle{ color: #98989d; }
+
+/* ========== 主题切换按钮 ========== */
 #theme-toggle{
-  border-radius:9999px;
-  padding:0.35rem 0.9rem;
-  border:1px solid rgba(148,163,184,.7);
-  background:rgba(15,23,42,.95);
-  color:#e5e7eb;
-  box-shadow:0 8px 20px rgba(15,23,42,.9);
+  border-radius: 10px;
+  padding: 8px 16px;
+  border: 1px solid rgba(210, 210, 215, 0.8);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #1d1d1f;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  cursor: pointer;
 }
-body[data-theme="light"] #theme-toggle{
-  background:#ffffff;
-  color:#374151;
-  border-color:#d1d5db;
-  box-shadow:0 6px 18px rgba(148,163,184,.5);
+#theme-toggle:hover{
+  background: rgba(245, 245, 247, 0.95);
+  transform: scale(0.98);
+}
+#theme-toggle:active{
+  transform: scale(0.96);
+  opacity: 0.8;
+}
+body[data-theme="dark"] #theme-toggle{
+  background: rgba(44, 44, 46, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #f5f5f7;
+  border-color: rgba(56, 56, 58, 0.8);
+}
+body[data-theme="dark"] #theme-toggle:hover{
+  background: rgba(56, 56, 58, 0.9);
 }
 
+/* ========== 统计卡片 ========== */
 .stat-card{
-  background:linear-gradient(135deg,rgba(15,23,42,1),rgba(30,64,175,.8));
-  border-color:rgba(56,189,248,.4);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(255,255,255,0.8);
+}
+.stat-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.9);
+}
+.stat-card:active{
+  transform: translateY(-1px) scale(0.98);
+}
+.stat-card .stat-label{
+  font-size: 12px;
+  font-weight: 500;
+  color: #86868b;
 }
 .stat-card .stat-value{
-  font-size:1.4rem;
-  font-weight:700;
-  color:#7dd3fc;
+  font-size: 28px;
+  font-weight: 700;
+  color: #007AFF;
 }
-.stat-card.stat-active .stat-value{ color:#22c55e; }
-.stat-card.stat-failed .stat-value{ color:#f97373; }
-.stat-card.stat-inactive .stat-value{ color:#eab308; }
-.stat-card.stat-pending .stat-value{ color:#facc15; }
-.stat-card.stat-today .stat-value{ color:#38bdf8; }
-body[data-theme="light"] .stat-card{
-  background:linear-gradient(135deg,#eff6ff,#e0f2fe);
-  border-color:#bfdbfe;
-}
-body[data-theme="light"] .stat-card .stat-value{
-  color:#0f766e;
-}
-/* 浅色模式下仍保持不同颜色，失败依旧红色 */
-body[data-theme="light"] .stat-card.stat-active .stat-value{ color:#16a34a; }
-body[data-theme="light"] .stat-card.stat-failed .stat-value{ color:#ef4444; }
-body[data-theme="light"] .stat-card.stat-today .stat-value{ color:#0284c7; }
+.stat-card.stat-all .stat-value{ color: #007AFF; }
+.stat-card.stat-active .stat-value{ color: #34C759; }
+.stat-card.stat-failed .stat-value{ color: #FF3B30; }
+.stat-card.stat-inactive .stat-value{ color: #FF9500; }
+.stat-card.stat-pending .stat-value{ color: #FF9500; }
+.stat-card.stat-today .stat-value{ color: #007AFF; }
 
-.text-xs{ font-size:0.8rem; line-height:1.4; }
-.text-sm{ font-size:0.9rem; line-height:1.45; }
+body[data-theme="dark"] .stat-card{
+  background: rgba(28, 28, 30, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-color: rgba(56, 56, 58, 0.6);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4), 0 0 0 1px rgba(56,56,58,0.5);
+}
+body[data-theme="dark"] .stat-card:hover{
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(56,56,58,0.8);
+}
+body[data-theme="dark"] .stat-card .stat-label{
+  color: #98989d;
+}
+body[data-theme="dark"] .stat-card .stat-value{
+  color: #0A84FF;
+}
+body[data-theme="dark"] .stat-card.stat-all .stat-value{ color: #0A84FF; }
+body[data-theme="dark"] .stat-card.stat-active .stat-value{ color: #32D74B; }
+body[data-theme="dark"] .stat-card.stat-failed .stat-value{ color: #FF453A; }
+body[data-theme="dark"] .stat-card.stat-inactive .stat-value{ color: #FF9F0A; }
+body[data-theme="dark"] .stat-card.stat-pending .stat-value{ color: #FF9F0A; }
+body[data-theme="dark"] .stat-card.stat-today .stat-value{ color: #0A84FF; }
 
-input,textarea,select{
-  background:#020617;
-  color:#e5f0ff;
-  border:1px solid #1f2937;
+/* ========== 文字大小 ========== */
+.text-xs{ font-size: 13px; line-height: 1.4; }
+.text-sm{ font-size: 14px; line-height: 1.45; }
+
+/* ========== 表单元素 ========== */
+input, textarea, select{
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #1d1d1f;
+  border: 1px solid rgba(210, 210, 215, 0.8);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 15px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+}
+select{
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%231d1d1f' stroke='%231d1d1f' stroke-width='0.5' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 40px;
+  cursor: pointer;
+}
+optgroup{
+  font-weight: 600;
+  color: #6b6b6f;
+  font-size: 14px;
+  padding: 10px 14px;
+  background: #f5f5f7;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+}
+option{
+  padding: 10px 14px;
+  color: #1d1d1f;
+  background: #ffffff;
+  font-size: 14.5px;
+  font-weight: 400;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  letter-spacing: 0.01em;
+}
+option:hover,
+option:focus{
+  background: #f5f5f7;
+  color: #000000;
+}
+input:hover, textarea:hover, select:hover{
+  border-color: #86868b;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+input:focus, textarea:focus, select:focus{
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12), 0 2px 8px rgba(139, 92, 246, 0.15);
+  outline: none;
+  transform: translateY(-2px);
 }
 input::placeholder,
 textarea::placeholder{
-  color:#64748b;
+  color: #86868b;
+  transition: opacity 0.2s ease;
 }
-body[data-theme="light"] input,
-body[data-theme="light"] textarea,
-body[data-theme="light"] select{
-  background:#f9fafb;
-  color:#111827;
-  border-color:#d1d5db;
+input:focus::placeholder,
+textarea:focus::placeholder{
+  opacity: 0.5;
 }
-body[data-theme="light"] input::placeholder,
-body[data-theme="light"] textarea::placeholder{
-  color:#9ca3af;
+input:disabled, textarea:disabled, select:disabled{
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f5f7;
 }
 
+/* 输入框错误状态 */
+input.error, textarea.error, select.error{
+  border-color: #FF3B30;
+  animation: shake 0.3s ease;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* 输入框成功状态 */
+input.success, textarea.success, select.success{
+  border-color: #34C759;
+}
+
+body[data-theme="dark"] input,
+body[data-theme="dark"] textarea,
+body[data-theme="dark"] select{
+  background: rgba(44, 44, 46, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #f5f5f7;
+  border-color: rgba(56, 56, 58, 0.8);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+}
+body[data-theme="dark"] select{
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23f5f5f7' stroke='%23f5f5f7' stroke-width='0.5' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+}
+body[data-theme="dark"] optgroup{
+  color: #d1d1d6;
+  background: #1c1c1e;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  border: none;
+}
+body[data-theme="dark"] option{
+  color: #f5f5f7;
+  background: #2c2c2e;
+  font-size: 14.5px;
+  font-weight: 400;
+  padding: 10px 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  letter-spacing: 0.01em;
+}
+body[data-theme="dark"] option:hover,
+body[data-theme="dark"] option:focus{
+  background: #3a3a3c;
+  color: #ffffff;
+}
+body[data-theme="dark"] input:hover,
+body[data-theme="dark"] textarea:hover,
+body[data-theme="dark"] select:hover{
+  border-color: #98989d;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+body[data-theme="dark"] input:focus,
+body[data-theme="dark"] textarea:focus,
+body[data-theme="dark"] select:focus{
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.18), 0 2px 8px rgba(139, 92, 246, 0.2);
+  transform: translateY(-2px);
+}
+body[data-theme="dark"] input.error,
+body[data-theme="dark"] textarea.error,
+body[data-theme="dark"] select.error{
+  border-color: #FF453A;
+}
+body[data-theme="dark"] input.success,
+body[data-theme="dark"] textarea.success,
+body[data-theme="dark"] select.success{
+  border-color: #32D74B;
+}
+body[data-theme="dark"] input::placeholder,
+body[data-theme="dark"] textarea::placeholder{
+  color: #98989d;
+}
+body[data-theme="dark"] input:disabled,
+body[data-theme="dark"] textarea:disabled,
+body[data-theme="dark"] select:disabled{
+  background: #1c1c1e;
+}
+
+/* ========== 按钮 ========== */
 button{
-  transition:background-color .15s ease, color .15s ease, box-shadow .15s ease, border-color .15s ease, transform .06s ease;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  font-weight: 500;
+  border-radius: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+button:hover{
+  opacity: 0.85;
+  transform: scale(0.98);
 }
 button:active{
-  transform:translateY(1px);
+  opacity: 0.7;
+  transform: scale(0.96);
+}
+button:disabled{
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
 }
 
+/* 主按钮（渐变蓝色背景）*/
+.btn-primary{
+  background: #007AFF;
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  font-size: 15px;
+  box-shadow: 0 2px 8px rgba(0,122,255,0.2);
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary:hover{
+  background: #0077ED;
+  box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+}
+.btn-primary.loading{
+  pointer-events: none;
+  opacity: 0.8;
+}
+.btn-primary.loading::after{
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-left: 8px;
+}
+.btn-primary.success{
+  background: #34C759;
+  animation: successPulse 0.5s ease;
+}
+.btn-primary.error{
+  background: #FF3B30;
+  animation: errorShake 0.4s ease;
+}
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(52,199,89,0.5); }
+  100% { transform: scale(1); }
+}
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+body[data-theme="dark"] .btn-primary{
+  background: #0A84FF;
+  box-shadow: 0 2px 8px rgba(10,132,255,0.3);
+}
+body[data-theme="dark"] .btn-primary:hover{
+  background: #0077ED;
+}
+body[data-theme="dark"] .btn-primary.success{
+  background: #32D74B;
+}
+body[data-theme="dark"] .btn-primary.error{
+  background: #FF453A;
+}
+
+/* 次要按钮（边框按钮）*/
+.btn-secondary{
+  background: transparent;
+  color: #1d1d1f;
+  border: 1px solid #d2d2d7;
+  padding: 8px 16px;
+  font-size: 13px;
+}
+.btn-secondary:hover{
+  background: #f5f5f7;
+  opacity: 1;
+}
+body[data-theme="dark"] .btn-secondary{
+  color: #f5f5f7;
+  border-color: #38383a;
+}
+body[data-theme="dark"] .btn-secondary:hover{
+  background: #2c2c2e;
+}
+
+/* 危险按钮（删除等）*/
+.btn-danger{
+  background: transparent;
+  color: #FF3B30;
+  border: 1px solid #FF3B30;
+  padding: 8px 16px;
+  font-size: 13px;
+}
+.btn-danger:hover{
+  background: #FF3B30;
+  color: #ffffff;
+  opacity: 1;
+}
+body[data-theme="dark"] .btn-danger{
+  color: #FF453A;
+  border-color: #FF453A;
+}
+body[data-theme="dark"] .btn-danger:hover{
+  background: #FF453A;
+}
+
+/* ========== 响应式设计 ========== */
 @media (max-width: 640px){
   html,body{
-    font-size:14px;
+    font-size: 14px;
   }
   .grad-title{
-    font-size:1.6rem;
-    line-height:1.3;
+    font-size: 24px;
+    line-height: 1.3;
   }
   .panel,.card{
-    border-radius:16px;
+    border-radius: 12px;
   }
+  button{
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .toast{
+    min-width: 260px;
+    max-width: calc(100vw - 40px);
+  }
+  /* 移动端卡片可左右滑动 */
+  .swipeable{
+    touch-action: pan-y;
+    user-select: none;
+  }
+}
+
+/* ========== 数字计数动画 ========== */
+.count-up {
+  display: inline-block;
+  animation: countUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes countUp {
+  0% { 
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ========== 进度条动画 ========== */
+.progress-bar {
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== ECharts 地图容器 ========== */
+#server-map-chart {
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+body[data-theme="dark"] #server-map-chart {
+  background: rgba(28, 28, 30, 0.5);
+}
+
+/* ========== 卡片展开/收起 ========== */
+.expandable {
+  max-height: 0 !important;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease,
+              padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+.server-list {
+  max-height: 5000px; /* 足够大的值以容纳所有内容 */
+  opacity: 1;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease,
+              padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 展开/收起按钮样式优化 */
+.toggle-expand {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+.toggle-expand:active {
+  transform: scale(0.95);
+}
+body[data-theme="dark"] .toggle-expand:hover {
+  background: rgba(10, 132, 255, 0.1);
+  border-color: rgba(10, 132, 255, 0.3);
+}
+
+/* ========== 链接样式 ========== */
+a{
+  color: #007AFF;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+a:hover{
+  opacity: 0.8;
+}
+body[data-theme="dark"] a{
+  color: #0A84FF;
+}
+
+/* ========== Code 标签 ========== */
+code{
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  color: #1d1d1f;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+}
+body[data-theme="dark"] code{
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+}
+
+/* ========== 可访问性 ========== */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible{
+  outline: 2px solid #007AFF;
+  outline-offset: 2px;
+}
+body[data-theme="dark"] button:focus-visible,
+body[data-theme="dark"] input:focus-visible,
+body[data-theme="dark"] textarea:focus-visible,
+body[data-theme="dark"] select:focus-visible,
+body[data-theme="dark"] a:focus-visible{
+  outline-color: #0A84FF;
+}
+
+/* ========== 滚动条样式 ========== */
+::-webkit-scrollbar{
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track{
+  background: transparent;
+}
+::-webkit-scrollbar-thumb{
+  background: #d2d2d7;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover{
+  background: #86868b;
+}
+body[data-theme="dark"] ::-webkit-scrollbar-thumb{
+  background: #38383a;
+}
+body[data-theme="dark"] ::-webkit-scrollbar-thumb:hover{
+  background: #98989d;
 }
 </style>
 <script>
 (function(){
   const saved = localStorage.getItem('theme') || 'dark';
+  const accent = localStorage.getItem('accent-color') || 'blue';
   document.documentElement.setAttribute('data-theme', saved);
+  document.documentElement.setAttribute('data-accent', accent);
   document.addEventListener('DOMContentLoaded', () => {
     document.body.setAttribute('data-theme', saved);
+    document.body.setAttribute('data-accent', accent);
   });
 })();
 
@@ -1940,6 +3503,9 @@ function toggleTheme(){
   document.documentElement.setAttribute('data-theme', nxt);
   localStorage.setItem('theme', nxt);
   updateThemeBtn && updateThemeBtn();
+
+  // 触发主题切换事件，通知地图更新
+  window.dispatchEvent(new Event('themeChanged'));
 }
 
 function updateThemeBtn(){
@@ -1948,6 +3514,13 @@ function updateThemeBtn(){
     const cur=document.body.getAttribute('data-theme')||'dark';
     b.textContent = cur==='dark' ? '浅色模式' : '深色模式';
   }
+}
+
+// 主题色切换（可选功能）
+function setAccentColor(color){
+  document.body.setAttribute('data-accent', color);
+  document.documentElement.setAttribute('data-accent', color);
+  localStorage.setItem('accent-color', color);
 }
 
 function toast(msg,type='info',ms=2600){
@@ -1995,27 +3568,28 @@ function copyToClipboard(text){
 
 function modalEdit(title, fields, onOk){
   const wrap=document.createElement('div');
-  wrap.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease-out;';
   const card=document.createElement('div');
-  card.className='panel rounded-2xl border p-4';
+  card.className='panel border p-6';
   card.style.width='min(680px,92vw)';
+  card.style.animation='scaleUp 0.25s ease-out';
   const h=document.createElement('div');
-  h.className='text-lg font-semibold mb-3';
+  h.className='text-lg font-semibold mb-4';
   h.textContent=title;
   card.appendChild(h);
   const form=document.createElement('div');
-  form.className='grid grid-cols-2 gap-3 text-sm';
+  form.className='grid grid-cols-2 gap-4 text-sm';
   fields.forEach(f=>{
     const box=document.createElement('div');
     const lab=document.createElement('div');
-    lab.className='muted text-xs mb-1';
+    lab.className='muted text-xs mb-2 font-medium';
     lab.textContent=f.label;
     const inp=f.type==='textarea'?document.createElement('textarea'):document.createElement('input');
     if(f.type!=='textarea') inp.type='text';
     inp.value=f.value||'';
     inp.placeholder=f.placeholder||'';
     if(f.type==='textarea') inp.rows=3;
-    inp.className='w-full rounded-lg border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500';
+    inp.className='w-full';
     box.appendChild(lab);
     box.appendChild(inp);
     box._get=()=>inp.value;
@@ -2024,19 +3598,42 @@ function modalEdit(title, fields, onOk){
   });
   card.appendChild(form);
   const actions=document.createElement('div');
-  actions.className='mt-4 flex items-center justify-end gap-2';
+  actions.className='mt-6 flex items-center justify-end gap-3';
   const btn1=document.createElement('button');
   btn1.textContent='取消';
-  btn1.className='px-3 py-1 rounded-full border';
+  btn1.className='btn-secondary';
   btn1.onclick=()=>wrap.remove();
   const btn2=document.createElement('button');
   btn2.textContent='保存';
-  btn2.className='px-3 py-1 rounded-full bg-cyan-500 text-black font-semibold';
+  btn2.className='btn-primary';
   btn2.onclick=()=>{ const data={}; form.childNodes.forEach((n)=>{ data[n._key]=n._get(); }); try{ onOk(data,()=>wrap.remove()); }catch(e){ console.error(e); } };
   actions.append(btn1,btn2);
   card.appendChild(actions);
   wrap.appendChild(card);
   document.body.appendChild(wrap);
+  
+  // 添加 ESC 键关闭
+  const handleEsc = (e) => {
+    if(e.key === 'Escape') {
+      wrap.remove();
+      document.removeEventListener('keydown', handleEsc);
+    }
+  };
+  document.addEventListener('keydown', handleEsc);
+  
+  // 点击背景关闭
+  wrap.addEventListener('click', (e) => {
+    if(e.target === wrap) {
+      wrap.remove();
+      document.removeEventListener('keydown', handleEsc);
+    }
+  });
+  
+  // 聚焦第一个输入框
+  setTimeout(() => {
+    const firstInput = form.querySelector('input, textarea');
+    if(firstInput) firstInput.focus();
+  }, 100);
 }
 
 function guessCountryFlag(v) {
@@ -2252,25 +3849,28 @@ function guessCountryFlag(v) {
 /* 重要：重写的 VPS 登录信息弹窗，支持长密钥换行+滚动+复制 */
 function modalLoginInfo(v){
   const wrap=document.createElement('div');
-  wrap.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease-out;';
   const card=document.createElement('div');
-  card.className='panel rounded-2xl border p-4';
+  card.className='panel border p-6';
   card.style.width='min(640px,96vw)';
+  card.style.maxHeight='90vh';
+  card.style.overflowY='auto';
+  card.style.animation='scaleUp 0.25s ease-out';
 
   const title=document.createElement('div');
-  title.className='text-base font-semibold mb-3';
+  title.className='text-lg font-semibold mb-4';
   title.textContent='VPS 登录信息（仅管理员可见）';
   card.appendChild(title);
 
   const rows=document.createElement('div');
-  rows.className='space-y-3 text-xs';
+  rows.className='space-y-4 text-sm';
 
   function addRow(label,value,canCopy=true,isCode=false){
     const row=document.createElement('div');
-    row.className='space-y-1';
+    row.className='space-y-2';
 
     const head=document.createElement('div');
-    head.className='muted text-xs';
+    head.className='muted text-xs font-medium';
     head.textContent=label;
     row.appendChild(head);
 
@@ -2284,7 +3884,7 @@ function modalLoginInfo(v){
 
     if(canCopy && value){
       const btn=document.createElement('button');
-      btn.className='px-2 py-1 rounded-full border text-[11px] whitespace-nowrap self-start';
+      btn.className='btn-secondary text-xs px-3 py-2 whitespace-nowrap self-start';
       btn.textContent='复制';
       btn.onclick=()=>copyToClipboard(value);
       body.appendChild(btn);
@@ -2322,21 +3922,81 @@ function modalLoginInfo(v){
   card.appendChild(rows);
 
   const footer=document.createElement('div');
-  footer.className='mt-4 flex justify-end';
+  footer.className='mt-6 flex justify-end';
   const closeBtn=document.createElement('button');
   closeBtn.textContent='关闭';
-  closeBtn.className='px-3 py-1 rounded-full border';
-  closeBtn.onclick=()=>wrap.remove();
+  closeBtn.className='btn-secondary';
+  closeBtn.onclick=()=>{
+    wrap.remove();
+    document.removeEventListener('keydown', handleEsc);
+  };
   footer.appendChild(closeBtn);
   card.appendChild(footer);
 
   wrap.appendChild(card);
   document.body.appendChild(wrap);
+  
+  // 添加 ESC 键关闭
+  const handleEsc = (e) => {
+    if(e.key === 'Escape') {
+      wrap.remove();
+      document.removeEventListener('keydown', handleEsc);
+    }
+  };
+  document.addEventListener('keydown', handleEsc);
+  
+  // 点击背景关闭
+  wrap.addEventListener('click', (e) => {
+    if(e.target === wrap) {
+      wrap.remove();
+      document.removeEventListener('keydown', handleEsc);
+    }
+  });
 }
 
 function medalByRank(i){
   const arr=["👑","🏆","🥇","🥈","🥉","💎","🔥","🌟","✨","⚡","🎖️","🛡️","🎗️","🎯","🚀","🧿","🪙","🧭","🗡️","🦄","🐉","🦅","🦁","🐯","🐺","🐻","🐼","🐧","🐬","🐳","🛰️","🪐","🌙","🌈","🌊","🌋","🏔️","🏰","🧱","⚙️","🔧","🔭","🧪","🧠","🪄","🔮","🎩","🎼","🎷","🎻","🥁","🎹"];
   return arr[i%arr.length];
+}
+
+// 勋章系统
+function getBadge(count){
+  if(count >= 10) return {emoji:'👑',name:'超级赞助商',color:'#FFD700',desc:'投喂10台+'};
+  if(count >= 5) return {emoji:'💎',name:'白金赞助商',color:'#E5E4E2',desc:'投喂5-9台'};
+  if(count >= 3) return {emoji:'🏆',name:'金牌赞助商',color:'#CD7F32',desc:'投喂3-4台'};
+  if(count >= 2) return {emoji:'🥇',name:'银牌赞助商',color:'#C0C0C0',desc:'投喂2台'};
+  return {emoji:'⭐',name:'新星赞助商',color:'#4A90E2',desc:'投喂1台'};
+}
+
+function renderBadge(badge){
+  return '<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold" '+
+    'style="background:'+badge.color+'22;border:1px solid '+badge.color+'44;color:'+badge.color+'">'+
+    '<span>'+badge.emoji+'</span>'+
+    '<span>'+badge.name+'</span>'+
+    '</div>';
+}
+
+// 数字计数动画
+function animateNumber(element, target, duration = 800){
+  const start = 0;
+  const startTime = performance.now();
+  
+  function update(currentTime){
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const easeProgress = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+    const current = Math.floor(start + (target - start) * easeProgress);
+    
+    element.textContent = current;
+    
+    if(progress < 1){
+      requestAnimationFrame(update);
+    } else {
+      element.textContent = target;
+    }
+  }
+  
+  requestAnimationFrame(update);
 }
 </script>
 `;
