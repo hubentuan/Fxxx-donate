@@ -1185,235 +1185,238 @@ app.get('/donate/vps', c => {
 
         <div class="grid md:grid-cols-2 gap-5">
           <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>🌍</span> 国家 / 区域 <span class="text-red-400">*</span>
-            </label>
-            <select name="country" required class="w-full">
-<option value="">请选择国家/区域</option>
+  <label for="country" class="block mb-2 text-sm font-medium text-gray-200">
+    常用国家 / 区域
+  </label>
+  <select
+    id="country"
+    name="country"
+    class="block w-full rounded-lg border border-slate-600 bg-slate-900/60 px-3 py-2 text-sm text-gray-100 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+  >
+    <option value="">请选择国家/区域</option>
 
-<!-- 🌏 亚洲（东亚 / 东南亚 / 南亚 / 中亚） -->
-<optgroup label="🌏 亚洲">
-  <!-- 东亚 / 东北亚 -->
-  <option value="🇨🇳 中国大陆">🇨🇳 中国大陆</option>
-  <option value="🇭🇰 中国香港">🇭🇰 中国香港</option>
-  <option value="🇲🇴 中国澳门">🇲🇴 中国澳门</option>
-  <option value="🇹🇼 中国台湾">🇹🇼 中国台湾</option>
-  <option value="🇯🇵 日本">🇯🇵 日本</option>
-  <option value="🇰🇷 韩国">🇰🇷 韩国</option>
-  <option value="🇰🇵 朝鲜">🇰🇵 朝鲜</option>
-  <option value="🇲🇳 蒙古">🇲🇳 蒙古</option>
+    <!-- 🌏 亚洲（东亚 / 东南亚 / 南亚 / 中亚） -->
+    <optgroup label="🌏 亚洲">
+      <!-- 东亚 / 东北亚 -->
+      <option value="cn 中国大陆">🇨🇳 中国大陆</option>
+      <option value="hk 中国香港">🇭🇰 中国香港</option>
+      <option value="mo 中国澳门">🇲🇴 中国澳门</option>
+      <option value="tw 中国台湾">🇹🇼 中国台湾</option>
+      <option value="jp 日本">🇯🇵 日本</option>
+      <option value="kr 韩国">🇰🇷 韩国</option>
+      <option value="kp 朝鲜">🇰🇵 朝鲜</option>
+      <option value="mn 蒙古">🇲🇳 蒙古</option>
 
-  <!-- 东南亚 -->
-  <option value="🇻🇳 越南">🇻🇳 越南</option>
-  <option value="🇹🇭 泰国">🇹🇭 泰国</option>
-  <option value="🇲🇾 马来西亚">🇲🇾 马来西亚</option>
-  <option value="🇸🇬 新加坡">🇸🇬 新加坡</option>
-  <option value="🇵🇭 菲律宾">🇵🇭 菲律宾</option>
-  <option value="🇮🇩 印度尼西亚">🇮🇩 印度尼西亚</option>
-  <option value="🇲🇲 缅甸">🇲🇲 缅甸</option>
-  <option value="🇰🇭 柬埔寨">🇰🇭 柬埔寨</option>
-  <option value="🇱🇦 老挝">🇱🇦 老挝</option>
-  <option value="🇧🇳 文莱">🇧🇳 文莱</option>
-  <option value="🇹🇱 东帝汶">🇹🇱 东帝汶</option>
+      <!-- 东南亚 -->
+      <option value="vn 越南">🇻🇳 越南</option>
+      <option value="th 泰国">🇹🇭 泰国</option>
+      <option value="my 马来西亚">🇲🇾 马来西亚</option>
+      <option value="sg 新加坡">🇸🇬 新加坡</option>
+      <option value="ph 菲律宾">🇵🇭 菲律宾</option>
+      <option value="id 印度尼西亚">🇮🇩 印度尼西亚</option>
+      <option value="mm 缅甸">🇲🇲 缅甸</option>
+      <option value="kh 柬埔寨">🇰🇭 柬埔寨</option>
+      <option value="la 老挝">🇱🇦 老挝</option>
+      <option value="bn 文莱">🇧🇳 文莱</option>
+      <option value="tl 东帝汶">🇹🇱 东帝汶</option>
 
-  <!-- 南亚 -->
-  <option value="🇮🇳 印度">🇮🇳 印度</option>
-  <option value="🇵🇰 巴基斯坦">🇵🇰 巴基斯坦</option>
-  <option value="🇧🇩 孟加拉国">🇧🇩 孟加拉国</option>
-  <option value="🇳🇵 尼泊尔">🇳🇵 尼泊尔</option>
-  <option value="🇱🇰 斯里兰卡">🇱🇰 斯里兰卡</option>
-  <option value="🇲🇻 马尔代夫">🇲🇻 马尔代夫</option>
-  <option value="🇧🇹 不丹">🇧🇹 不丹</option>
-  <option value="🇦🇫 阿富汗">🇦🇫 阿富汗</option>
+      <!-- 南亚 -->
+      <option value="in 印度">🇮🇳 印度</option>
+      <option value="pk 巴基斯坦">🇵🇰 巴基斯坦</option>
+      <option value="bd 孟加拉国">🇧🇩 孟加拉国</option>
+      <option value="np 尼泊尔">🇳🇵 尼泊尔</option>
+      <option value="lk 斯里兰卡">🇱🇰 斯里兰卡</option>
+      <option value="mv 马尔代夫">🇲🇻 马尔代夫</option>
+      <option value="bt 不丹">🇧🇹 不丹</option>
+      <option value="af 阿富汗">🇦🇫 阿富汗</option>
 
-  <!-- 中亚 -->
-  <option value="🇰🇿 哈萨克斯坦">🇰🇿 哈萨克斯坦</option>
-  <option value="🇺🇿 乌兹别克斯坦">🇺🇿 乌兹别克斯坦</option>
-</optgroup>
+      <!-- 中亚 -->
+      <option value="kz 哈萨克斯坦">🇰🇿 哈萨克斯坦</option>
+      <option value="uz 乌兹别克斯坦">🇺🇿 乌兹别克斯坦</option>
+    </optgroup>
 
-<!-- 🌏 中东 / 西亚 -->
-<optgroup label="🌏 中东">
-  <option value="🇸🇦 沙特阿拉伯">🇸🇦 沙特阿拉伯</option>
-  <option value="🇦🇪 阿联酋">🇦🇪 阿联酋</option>
-  <option value="🇹🇷 土耳其">🇹🇷 土耳其</option>
-  <option value="🇮🇱 以色列">🇮🇱 以色列</option>
-  <option value="🇮🇷 伊朗">🇮🇷 伊朗</option>
-  <option value="🇮🇶 伊拉克">🇮🇶 伊拉克</option>
-  <option value="🇯🇴 约旦">🇯🇴 约旦</option>
-  <option value="🇰🇼 科威特">🇰🇼 科威特</option>
-  <option value="🇶🇦 卡塔尔">🇶🇦 卡塔尔</option>
-  <option value="🇴🇲 阿曼">🇴🇲 阿曼</option>
-  <option value="🇧🇭 巴林">🇧🇭 巴林</option>
-  <option value="🇱🇧 黎巴嫩">🇱🇧 黎巴嫩</option>
-  <option value="🇾🇪 也门">🇾🇪 也门</option>
-  <option value="🇸🇾 叙利亚">🇸🇾 叙利亚</option>
-  <option value="🇵🇸 巴勒斯坦">🇵🇸 巴勒斯坦</option>
-</optgroup>
+    <!-- 🌏 中东 / 西亚 -->
+    <optgroup label="🌏 中东">
+      <option value="sa 沙特阿拉伯">🇸🇦 沙特阿拉伯</option>
+      <option value="ae 阿联酋">🇦🇪 阿联酋</option>
+      <option value="tr 土耳其">🇹🇷 土耳其</option>
+      <option value="il 以色列">🇮🇱 以色列</option>
+      <option value="ir 伊朗">🇮🇷 伊朗</option>
+      <option value="iq 伊拉克">🇮🇶 伊拉克</option>
+      <option value="jo 约旦">🇯🇴 约旦</option>
+      <option value="kw 科威特">🇰🇼 科威特</option>
+      <option value="qa 卡塔尔">🇶🇦 卡塔尔</option>
+      <option value="om 阿曼">🇴🇲 阿曼</option>
+      <option value="bh 巴林">🇧🇭 巴林</option>
+      <option value="lb 黎巴嫩">🇱🇧 黎巴嫩</option>
+      <option value="ye 也门">🇾🇪 也门</option>
+      <option value="sy 叙利亚">🇸🇾 叙利亚</option>
+      <option value="ps 巴勒斯坦">🇵🇸 巴勒斯坦</option>
+    </optgroup>
 
-<!-- 🌍 欧洲 -->
-<optgroup label="🌍 欧洲">
-  <!-- 西欧 / 北欧 -->
-  <option value="🇬🇧 英国">🇬🇧 英国</option>
-  <option value="🇫🇷 法国">🇫🇷 法国</option>
-  <option value="🇩🇪 德国">🇩🇪 德国</option>
-  <option value="🇳🇱 荷兰">🇳🇱 荷兰</option>
-  <option value="🇧🇪 比利时">🇧🇪 比利时</option>
-  <option value="🇱🇺 卢森堡">🇱🇺 卢森堡</option>
-  <option value="🇨🇭 瑞士">🇨🇭 瑞士</option>
-  <option value="🇦🇹 奥地利">🇦🇹 奥地利</option>
-  <option value="🇮🇪 爱尔兰">🇮🇪 爱尔兰</option>
-  <option value="🇮🇸 冰岛">🇮🇸 冰岛</option>
-  <option value="🇩🇰 丹麦">🇩🇰 丹麦</option>
-  <option value="🇸🇪 瑞典">🇸🇪 瑞典</option>
-  <option value="🇳🇴 挪威">🇳🇴 挪威</option>
-  <option value="🇫🇮 芬兰">🇫🇮 芬兰</option>
+    <!-- 🌍 欧洲 -->
+    <optgroup label="🌍 欧洲">
+      <!-- 西欧 / 北欧 -->
+      <option value="gb 英国">🇬🇧 英国</option>
+      <option value="fr 法国">🇫🇷 法国</option>
+      <option value="de 德国">🇩🇪 德国</option>
+      <option value="nl 荷兰">🇳🇱 荷兰</option>
+      <option value="be 比利时">🇧🇪 比利时</option>
+      <option value="lu 卢森堡">🇱🇺 卢森堡</option>
+      <option value="ch 瑞士">🇨🇭 瑞士</option>
+      <option value="at 奥地利">🇦🇹 奥地利</option>
+      <option value="ie 爱尔兰">🇮🇪 爱尔兰</option>
+      <option value="is 冰岛">🇮🇸 冰岛</option>
+      <option value="dk 丹麦">🇩🇰 丹麦</option>
+      <option value="se 瑞典">🇸🇪 瑞典</option>
+      <option value="no 挪威">🇳🇴 挪威</option>
+      <option value="fi 芬兰">🇫🇮 芬兰</option>
 
-  <!-- 南欧 -->
-  <option value="🇪🇸 西班牙">🇪🇸 西班牙</option>
-  <option value="🇵🇹 葡萄牙">🇵🇹 葡萄牙</option>
-  <option value="🇮🇹 意大利">🇮🇹 意大利</option>
-  <option value="🇬🇷 希腊">🇬🇷 希腊</option>
-  <option value="🇲🇹 马耳他">🇲🇹 马耳他</option>
-  <option value="🇨🇾 塞浦路斯">🇨🇾 塞浦路斯</option>
+      <!-- 南欧 -->
+      <option value="es 西班牙">🇪🇸 西班牙</option>
+      <option value="pt 葡萄牙">🇵🇹 葡萄牙</option>
+      <option value="it 意大利">🇮🇹 意大利</option>
+      <option value="gr 希腊">🇬🇷 希腊</option>
+      <option value="mt 马耳他">🇲🇹 马耳他</option>
+      <option value="cy 塞浦路斯">🇨🇾 塞浦路斯</option>
 
-  <!-- 中东欧 / 巴尔干 -->
-  <option value="🇵🇱 波兰">🇵🇱 波兰</option>
-  <option value="🇨🇿 捷克">🇨🇿 捷克</option>
-  <option value="🇸🇰 斯洛伐克">🇸🇰 斯洛伐克</option>
-  <option value="🇭🇺 匈牙利">🇭🇺 匈牙利</option>
-  <option value="🇷🇴 罗马尼亚">🇷🇴 罗马尼亚</option>
-  <option value="🇧🇬 保加利亚">🇧🇬 保加利亚</option>
-  <option value="🇸🇮 斯洛文尼亚">🇸🇮 斯洛文尼亚</option>
-  <option value="🇭🇷 克罗地亚">🇭🇷 克罗地亚</option>
-  <option value="🇷🇸 塞尔维亚">🇷🇸 塞尔维亚</option>
-  <option value="🇧🇦 波黑">🇧🇦 波黑</option>
-  <option value="🇲🇪 黑山">🇲🇪 黑山</option>
-  <option value="🇲🇰 北马其顿">🇲🇰 北马其顿</option>
-  <option value="🇦🇱 阿尔巴尼亚">🇦🇱 阿尔巴尼亚</option>
-  <option value="🇽🇰 科索沃">🇽🇰 科索沃</option>
-  <option value="🇲🇩 摩尔多瓦">🇲🇩 摩尔多瓦</option>
+      <!-- 中东欧 / 巴尔干 -->
+      <option value="pl 波兰">🇵🇱 波兰</option>
+      <option value="cz 捷克">🇨🇿 捷克</option>
+      <option value="sk 斯洛伐克">🇸🇰 斯洛伐克</option>
+      <option value="hu 匈牙利">🇭🇺 匈牙利</option>
+      <option value="ro 罗马尼亚">🇷🇴 罗马尼亚</option>
+      <option value="bg 保加利亚">🇧🇬 保加利亚</option>
+      <option value="si 斯洛文尼亚">🇸🇮 斯洛文尼亚</option>
+      <option value="hr 克罗地亚">🇭🇷 克罗地亚</option>
+      <option value="rs 塞尔维亚">🇷🇸 塞尔维亚</option>
+      <option value="ba 波黑">🇧🇦 波黑</option>
+      <option value="me 黑山">🇲🇪 黑山</option>
+      <option value="mk 北马其顿">🇲🇰 北马其顿</option>
+      <option value="al 阿尔巴尼亚">🇦🇱 阿尔巴尼亚</option>
+      <option value="xk 科索沃">🇽🇰 科索沃</option>
+      <option value="md 摩尔多瓦">🇲🇩 摩尔多瓦</option>
 
-  <!-- 东欧 / 波罗的海 -->
-  <option value="🇺🇦 乌克兰">🇺🇦 乌克兰</option>
-  <option value="🇧🇾 白俄罗斯">🇧🇾 白俄罗斯</option>
-  <option value="🇷🇺 俄罗斯">🇷🇺 俄罗斯</option>
-  <option value="🇪🇪 爱沙尼亚">🇪🇪 爱沙尼亚</option>
-  <option value="🇱🇻 拉脱维亚">🇱🇻 拉脱维亚</option>
-  <option value="🇱🇹 立陶宛">🇱🇹 立陶宛</option>
-</optgroup>
+      <!-- 东欧 / 波罗的海 -->
+      <option value="ua 乌克兰">🇺🇦 乌克兰</option>
+      <option value="by 白俄罗斯">🇧🇾 白俄罗斯</option>
+      <option value="ru 俄罗斯">🇷🇺 俄罗斯</option>
+      <option value="ee 爱沙尼亚">🇪🇪 爱沙尼亚</option>
+      <option value="lv 拉脱维亚">🇱🇻 拉脱维亚</option>
+      <option value="lt 立陶宛">🇱🇹 立陶宛</option>
+    </optgroup>
 
-<!-- 🌎 北美 -->
-<optgroup label="🌎 北美">
-  <option value="🇺🇸 美国">🇺🇸 美国</option>
-  <option value="🇨🇦 加拿大">🇨🇦 加拿大</option>
-  <option value="🇲🇽 墨西哥">🇲🇽 墨西哥</option>
-  <option value="🇬🇱 格陵兰">🇬🇱 格陵兰</option>
-</optgroup>
+    <!-- 🌎 北美 -->
+    <optgroup label="🌎 北美">
+      <option value="us 美国">🇺🇸 美国</option>
+      <option value="ca 加拿大">🇨🇦 加拿大</option>
+      <option value="mx 墨西哥">🇲🇽 墨西哥</option>
+      <option value="gl 格陵兰">🇬🇱 格陵兰</option>
+    </optgroup>
 
-<!-- 🌎 中美洲 / 加勒比 -->
-<optgroup label="🌎 中美洲 / 加勒比">
-  <option value="🇨🇺 古巴">🇨🇺 古巴</option>
-  <option value="🇩🇴 多米尼加">🇩🇴 多米尼加</option>
-  <option value="🇭🇹 海地">🇭🇹 海地</option>
-  <option value="🇯🇲 牙买加">🇯🇲 牙买加</option>
-  <option value="🇵🇷 波多黎各">🇵🇷 波多黎各</option>
-  <option value="🇵🇦 巴拿马">🇵🇦 巴拿马</option>
-  <option value="🇨🇷 哥斯达黎加">🇨🇷 哥斯达黎加</option>
-  <option value="🇬🇹 危地马拉">🇬🇹 危地马拉</option>
-  <option value="🇭🇳 洪都拉斯">🇭🇳 洪都拉斯</option>
-  <option value="🇳🇮 尼加拉瓜">🇳🇮 尼加拉瓜</option>
-  <option value="🇸🇻 萨尔瓦多">🇸🇻 萨尔瓦多</option>
-  <option value="🇧🇿 伯利兹">🇧🇿 伯利兹</option>
-  <option value="🇹🇹 特立尼达和多巴哥">🇹🇹 特立尼达和多巴哥</option>
-  <option value="🇧🇧 巴巴多斯">🇧🇧 巴巴多斯</option>
-  <option value="🇧🇸 巴哈马">🇧🇸 巴哈马</option>
-  <option value="🇬🇩 格林纳达">🇬🇩 格林纳达</option>
-  <option value="🇱🇨 圣卢西亚">🇱🇨 圣卢西亚</option>
-  <option value="🇰🇳 圣基茨和尼维斯">🇰🇳 圣基茨和尼维斯</option>
-  <option value="🇻🇨 圣文森特和格林纳丁斯">🇻🇨 圣文森特和格林纳丁斯</option>
-</optgroup>
+    <!-- 🌎 中美洲 / 加勒比 -->
+    <optgroup label="🌎 中美洲 / 加勒比">
+      <option value="cu 古巴">🇨🇺 古巴</option>
+      <option value="do 多米尼加">🇩🇴 多米尼加</option>
+      <option value="ht 海地">🇭🇹 海地</option>
+      <option value="jm 牙买加">🇯🇲 牙买加</option>
+      <option value="pr 波多黎各">🇵🇷 波多黎各</option>
+      <option value="pa 巴拿马">🇵🇦 巴拿马</option>
+      <option value="cr 哥斯达黎加">🇨🇷 哥斯达黎加</option>
+      <option value="gt 危地马拉">🇬🇹 危地马拉</option>
+      <option value="hn 洪都拉斯">🇭🇳 洪都拉斯</option>
+      <option value="ni 尼加拉瓜">🇳🇮 尼加拉瓜</option>
+      <option value="sv 萨尔瓦多">🇸🇻 萨尔瓦多</option>
+      <option value="bz 伯利兹">🇧🇿 伯利兹</option>
+      <option value="tt 特立尼达和多巴哥">🇹🇹 特立尼达和多巴哥</option>
+      <option value="bb 巴巴多斯">🇧🇧 巴巴多斯</option>
+      <option value="bs 巴哈马">🇧🇸 巴哈马</option>
+      <option value="gd 格林纳达">🇬🇩 格林纳达</option>
+      <option value="lc 圣卢西亚">🇱🇨 圣卢西亚</option>
+      <option value="kn 圣基茨和尼维斯">🇰🇳 圣基茨和尼维斯</option>
+      <option value="vc 圣文森特和格林纳丁斯">🇻🇨 圣文森特和格林纳丁斯</option>
+    </optgroup>
 
-<!-- 🌎 南美 -->
-<optgroup label="🌎 南美">
-  <option value="🇧🇷 巴西">🇧🇷 巴西</option>
-  <option value="🇦🇷 阿根廷">🇦🇷 阿根廷</option>
-  <option value="🇨🇱 智利">🇨🇱 智利</option>
-  <option value="🇨🇴 哥伦比亚">🇨🇴 哥伦比亚</option>
-  <option value="🇵🇪 秘鲁">🇵🇪 秘鲁</option>
-  <option value="🇺🇾 乌拉圭">🇺🇾 乌拉圭</option>
-  <option value="🇵🇾 巴拉圭">🇵🇾 巴拉圭</option>
-  <option value="🇧🇴 玻利维亚">🇧🇴 玻利维亚</option>
-  <option value="🇪🇨 厄瓜多尔">🇪🇨 厄瓜多尔</option>
-  <option value="🇻🇪 委内瑞拉">🇻🇪 委内瑞拉</option>
-  <option value="🇬🇾 圭亚那">🇬🇾 圭亚那</option>
-  <option value="🇸🇷 苏里南">🇸🇷 苏里南</option>
-</optgroup>
+    <!-- 🌎 南美 -->
+    <optgroup label="🌎 南美">
+      <option value="br 巴西">🇧🇷 巴西</option>
+      <option value="ar 阿根廷">🇦🇷 阿根廷</option>
+      <option value="cl 智利">🇨🇱 智利</option>
+      <option value="co 哥伦比亚">🇨🇴 哥伦比亚</option>
+      <option value="pe 秘鲁">🇵🇪 秘鲁</option>
+      <option value="uy 乌拉圭">🇺🇾 乌拉圭</option>
+      <option value="py 巴拉圭">🇵🇾 巴拉圭</option>
+      <option value="bo 玻利维亚">🇧🇴 玻利维亚</option>
+      <option value="ec 厄瓜多尔">🇪🇨 厄瓜多尔</option>
+      <option value="ve 委内瑞拉">🇻🇪 委内瑞拉</option>
+      <option value="gy 圭亚那">🇬🇾 圭亚那</option>
+      <option value="sr 苏里南">🇸🇷 苏里南</option>
+    </optgroup>
 
-<!-- 🌏 大洋洲 -->
-<optgroup label="🌏 大洋洲">
-  <option value="🇦🇺 澳大利亚">🇦🇺 澳大利亚</option>
-  <option value="🇳🇿 新西兰">🇳🇿 新西兰</option>
-  <option value="🇫🇯 斐济">🇫🇯 斐济</option>
-  <option value="🇵🇬 巴布亚新几内亚">🇵🇬 巴布亚新几内亚</option>
-  <option value="🇼🇸 萨摩亚">🇼🇸 萨摩亚</option>
-  <option value="🇹🇴 汤加">🇹🇴 汤加</option>
-  <option value="🇻🇺 瓦努阿图">🇻🇺 瓦努阿图</option>
-  <option value="🇸🇧 所罗门群岛">🇸🇧 所罗门群岛</option>
-  <option value="🇵🇼 帕劳">🇵🇼 帕劳</option>
-  <option value="🇫🇲 密克罗尼西亚">🇫🇲 密克罗尼西亚</option>
-  <option value="🇲🇭 马绍尔群岛">🇲🇭 马绍尔群岛</option>
-  <option value="🇰🇮 基里巴斯">🇰🇮 基里巴斯</option>
-  <option value="🇳🇷 瑙鲁">🇳🇷 瑙鲁</option>
-  <option value="🇹🇻 图瓦卢">🇹🇻 图瓦卢</option>
-</optgroup>
+    <!-- 🌏 大洋洲 -->
+    <optgroup label="🌏 大洋洲">
+      <option value="au 澳大利亚">🇦🇺 澳大利亚</option>
+      <option value="nz 新西兰">🇳🇿 新西兰</option>
+      <option value="fj 斐济">🇫🇯 斐济</option>
+      <option value="pg 巴布亚新几内亚">🇵🇬 巴布亚新几内亚</option>
+      <option value="ws 萨摩亚">🇼🇸 萨摩亚</option>
+      <option value="to 汤加">🇹🇴 汤加</option>
+      <option value="vu 瓦努阿图">🇻🇺 瓦努阿图</option>
+      <option value="sb 所罗门群岛">🇸🇧 所罗门群岛</option>
+      <option value="pw 帕劳">🇵🇼 帕劳</option>
+      <option value="fm 密克罗尼西亚">🇫🇲 密克罗尼西亚</option>
+      <option value="mh 马绍尔群岛">🇲🇭 马绍尔群岛</option>
+      <option value="ki 基里巴斯">🇰🇮 基里巴斯</option>
+      <option value="nr 瑙鲁">🇳🇷 瑙鲁</option>
+      <option value="tv 图瓦卢">🇹🇻 图瓦卢</option>
+    </optgroup>
 
-<!-- 🌍 非洲 -->
-<optgroup label="🌍 非洲">
-  <option value="🇿🇦 南非">🇿🇦 南非</option>
-  <option value="🇪🇬 埃及">🇪🇬 埃及</option>
-  <option value="🇳🇬 尼日利亚">🇳🇬 尼日利亚</option>
-  <option value="🇰🇪 肯尼亚">🇰🇪 肯尼亚</option>
-  <option value="🇪🇹 埃塞俄比亚">🇪🇹 埃塞俄比亚</option>
-  <option value="🇬🇭 加纳">🇬🇭 加纳</option>
-  <option value="🇲🇦 摩洛哥">🇲🇦 摩洛哥</option>
-  <option value="🇩🇿 阿尔及利亚">🇩🇿 阿尔及利亚</option>
-  <option value="🇹🇳 突尼斯">🇹🇳 突尼斯</option>
-  <option value="🇱🇾 利比亚">🇱🇾 利比亚</option>
-  <option value="🇸🇩 苏丹">🇸🇩 苏丹</option>
-  <option value="🇸🇸 南苏丹">🇸🇸 南苏丹</option>
-  <option value="🇹🇿 坦桑尼亚">🇹🇿 坦桑尼亚</option>
-  <option value="🇺🇬 乌干达">🇺🇬 乌干达</option>
-  <option value="🇦🇴 安哥拉">🇦🇴 安哥拉</option>
-  <option value="🇲🇿 莫桑比克">🇲🇿 莫桑比克</option>
-  <option value="🇿🇲 赞比亚">🇿🇲 赞比亚</option>
-  <option value="🇿🇼 津巴布韦">🇿🇼 津巴布韦</option>
-  <option value="🇷🇼 卢旺达">🇷🇼 卢旺达</option>
-  <option value="🇧🇮 布隆迪">🇧🇮 布隆迪</option>
-  <option value="🇧🇼 博茨瓦纳">🇧🇼 博茨瓦纳</option>
-  <option value="🇳🇦 纳米比亚">🇳🇦 纳米比亚</option>
-  <option value="🇲🇬 马达加斯加">🇲🇬 马达加斯加</option>
-  <option value="🇸🇨 塞舌尔">🇸🇨 塞舌尔</option>
-  <option value="🇲🇺 毛里求斯">🇲🇺 毛里求斯</option>
-  <option value="🇸🇳 塞内加尔">🇸🇳 塞内加尔</option>
-  <option value="🇲🇱 马里">🇲🇱 马里</option>
-  <option value="🇳🇪 尼日尔">🇳🇪 尼日尔</option>
-  <option value="🇨🇲 喀麦隆">🇨🇲 喀麦隆</option>
-  <option value="🇨🇮 科特迪瓦">🇨🇮 科特迪瓦</option>
-  <option value="🇬🇦 加蓬">🇬🇦 加蓬</option>
-  <option value="🇨🇬 刚果共和国">🇨🇬 刚果共和国</option>
-  <option value="🇨🇩 刚果民主共和国">🇨🇩 刚果民主共和国</option>
-  <option value="🇬🇳 几内亚">🇬🇳 几内亚</option>
-  <option value="🇬🇼 几内亚比绍">🇬🇼 几内亚比绍</option>
-  <option value="🇸🇱 塞拉利昂">🇸🇱 塞拉利昂</option>
-  <option value="🇱🇷 利比里亚">🇱🇷 利比里亚</option>
-  <option value="🇪🇷 厄立特里亚">🇪🇷 厄立特里亚</option>
-  <option value="🇩🇯 吉布提">🇩🇯 吉布提</option>
-  <option value="🇸🇴 索马里">🇸🇴 索马里</option>
-</optgroup>
+    <!-- 🌍 非洲 -->
+    <optgroup label="🌍 非洲">
+      <option value="za 南非">🇿🇦 南非</option>
+      <option value="eg 埃及">🇪🇬 埃及</option>
+      <option value="ng 尼日利亚">🇳🇬 尼日利亚</option>
+      <option value="ke 肯尼亚">🇰🇪 肯尼亚</option>
+      <option value="et 埃塞俄比亚">🇪🇹 埃塞俄比亚</option>
+      <option value="gh 加纳">🇬🇭 加纳</option>
+      <option value="ma 摩洛哥">🇲🇦 摩洛哥</option>
+      <option value="dz 阿尔及利亚">🇩🇿 阿尔及利亚</option>
+      <option value="tn 突尼斯">🇹🇳 突尼斯</option>
+      <option value="ly 利比亚">🇱🇾 利比亚</option>
+      <option value="sd 苏丹">🇸🇩 苏丹</option>
+      <option value="ss 南苏丹">🇸🇸 南苏丹</option>
+      <option value="tz 坦桑尼亚">🇹🇿 坦桑尼亚</option>
+      <option value="ug 乌干达">🇺🇬 乌干达</option>
+      <option value="ao 安哥拉">🇦🇴 安哥拉</option>
+      <option value="mz 莫桑比克">🇲🇿 莫桑比克</option>
+      <option value="zm 赞比亚">🇿🇲 赞比亚</option>
+      <option value="zw 津巴布韦">🇿🇼 津巴布韦</option>
+      <option value="rw 卢旺达">🇷🇼 卢旺达</option>
+      <option value="bi 布隆迪">🇧🇮 布隆迪</option>
+      <option value="bw 博茨瓦纳">🇧🇼 博茨瓦纳</option>
+      <option value="na 纳米比亚">🇳🇦 纳米比亚</option>
+      <option value="mg 马达加斯加">🇲🇬 马达加斯加</option>
+      <option value="sc 塞舌尔">🇸🇨 塞舌尔</option>
+      <option value="mu 毛里求斯">🇲🇺 毛里求斯</option>
+      <option value="sn 塞内加尔">🇸🇳 塞内加尔</option>
+      <option value="ml 马里">🇲🇱 马里</option>
+      <option value="ne 尼日尔">🇳🇪 尼日尔</option>
+      <option value="cm 喀麦隆">🇨🇲 喀麦隆</option>
+      <option value="ci 科特迪瓦">🇨🇮 科特迪瓦</option>
+      <option value="ga 加蓬">🇬🇦 加蓬</option>
+      <option value="cg 刚果共和国">🇨🇬 刚果共和国</option>
+      <option value="cd 刚果民主共和国">🇨🇩 刚果民主共和国</option>
+      <option value="gn 几内亚">🇬🇳 几内亚</option>
+      <option value="gw 几内亚比绍">🇬🇼 几内亚比绍</option>
+      <option value="sl 塞拉利昂">🇸🇱 塞拉利昂</option>
+      <option value="lr 利比里亚">🇱🇷 利比里亚</option>
+      <option value="er 厄立特里亚">🇪🇷 厄立特里亚</option>
+      <option value="dj 吉布提">🇩🇯 吉布提</option>
+      <option value="so 索马里">🇸🇴 索马里</option>
+    </optgroup>
+  </select>
+</div>
 
-            </select>
-          </div>
-          <div>
             <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
               <span>📊</span> 流量 / 带宽 <span class="text-red-400">*</span>
             </label>
