@@ -829,20 +829,19 @@ app.get('/donate', c => {
     </div>
   </header>
 
-</div>
-</body></html>`;
-  return c.html(html);
-});
-
-
   <section class="mb-6">
-    <h2 class="text-xl font-semibold mb-3 flex items-center gap-2">🏆 捐赠榜单 <span id="leaderboard-count" class="text-sm muted"></span></h2>
-    <div id="leaderboard" class="space-y-4"><div class="muted text-sm">正在加载榜单...</div></div>
+    <h2 class="text-xl font-semibold mb-3 flex items-center gap-2">
+      🏆 捐赠榜单 <span id="leaderboard-count" class="text-sm muted"></span>
+    </h2>
+    <div id="leaderboard" class="space-y-4">
+      <div class="muted text-sm">正在加载榜单...</div>
+    </div>
   </section>
 
   <footer class="mt-10 border-t border-slate-800 pt-4 text-xs muted">
     <p>说明：本项目仅作公益用途，请勿滥用资源（长时间占满带宽、刷流量、倒卖账号等）。</p>
   </footer>
+
 </div>
 
 <div id="toast-root"></div>
@@ -946,6 +945,7 @@ loadLeaderboard();
 </body></html>`;
   return c.html(html);
 });
+
 
 /* ==================== /donate/vps 投喂中心 ==================== */
 app.get('/donate/vps', c => {
