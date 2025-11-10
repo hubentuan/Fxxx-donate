@@ -799,8 +799,7 @@ app.get('/donate', c => {
     <div class="space-y-2">
       <h1 class="grad-title text-2xl md:text-4xl font-bold">风萧萧公益机场 · VPS 投喂榜</h1>
       <p class="mt-1 text-sm sm:text-base muted leading-relaxed">
-        这是一个完全非盈利的公益项目，目前没有运营团队，只有我一个人独立维护，榜单会按投喂 VPS 数量排序，
-        但无论名次高低，您的每一次支持，对我和这个项目来说都弥足珍贵，衷心感谢。
+        这是一个完全非盈利的公益项目，没有运营团队，只有我一个人维护。榜单仅展示「国家 / 区域 + IP 归属地 + 流量 + 到期时间 + 投喂备注」。
       </p>
       <p class="text-xs sm:text-sm text-amber-200 leading-relaxed">
         感谢大家的投喂，🤝 这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，是大家的共同成果！共荣！🚀🤝
