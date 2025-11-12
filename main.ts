@@ -1750,7 +1750,16 @@ document.getElementById('donate-form').addEventListener('submit', submitDonate);
 loadDonations();
 
 // 实时IP格式验证（与后端完全一致）
-document.querySelector('input[name="ip"]').addEventListener('blur', function(){
+const ipInput = document.querySelector('input[name="ip"]');
+
+// 获得焦点时清除错误状态
+ipInput.addEventListener('focus', function(){
+  this.classList.remove('error');
+  this.classList.remove('success');
+});
+
+// 失去焦点时验证
+ipInput.addEventListener('blur', function(){
   const ip = this.value.trim();
   if(!ip) return;
 
@@ -1771,10 +1780,19 @@ document.querySelector('input[name="ip"]').addEventListener('blur', function(){
 });
 
 // 端口范围验证
-document.querySelector('input[name="port"]').addEventListener('blur', function(){
+const portInput = document.querySelector('input[name="port"]');
+
+// 获得焦点时清除错误状态
+portInput.addEventListener('focus', function(){
+  this.classList.remove('error');
+  this.classList.remove('success');
+});
+
+// 失去焦点时验证
+portInput.addEventListener('blur', function(){
   const port = parseInt(this.value);
   if(!port) return;
-  
+
   if(port < 1 || port > 65535){
     this.classList.add('error');
     toast('端口范围应在 1-65535 之间','error');
