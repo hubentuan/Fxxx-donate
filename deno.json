@@ -1,0 +1,6 @@
+{
+  "unstable": ["kv"],
+  "compilerOptions": {
+    "lib": ["deno.window", "deno.unstable"]
+  }
+}

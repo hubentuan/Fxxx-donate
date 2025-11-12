@@ -465,7 +465,12 @@ app.post('/api/donate', requireAuth, async c => {
   if (authType === 'key' && !privateKey) {
     return c.json({ success: false, message: '密钥认证需要私钥' }, 400);
   }
-  if (!isValidIP(ip)) {
+
+  // ✅ 新增：统一把 IP 做 trim，去掉复制带来的空格/换行
+  const ipClean = String(ip).trim();
+
+  // ✅ 下面开始都用 ipClean
+  if (!isValidIP(ipClean)) {
     return c.json({ success: false, message: 'IP 格式不正确' }, 400);
   }
 
@@ -473,33 +478,35 @@ app.post('/api/donate', requireAuth, async c => {
   if (p < 1 || p > 65535) {
     return c.json({ success: false, message: '端口范围 1 ~ 65535' }, 400);
   }
-  if (await ipDup(ip, p)) {
+  if (await ipDup(ipClean, p)) {
     return c.json({ success: false, message: '该 IP:端口 已被投喂' }, 400);
   }
-  if (!(await portOK(ip, p))) {
-    return c.json({ success: false, message: '无法连接到该服务器，请确认 IP / 端口 是否正确、且对外开放' }, 400);
+  if (!(await portOK(ipClean, p))) {
+    return c.json({
+      success: false,
+      message: '无法连接到该服务器，请确认 IP / 端口 是否正确、且对外开放',
+    }, 400);
   }
 
-  const ipLoc = await getIPLocation(ip);
+  const ipLoc = await getIPLocation(ipClean);
   const now = Date.now();
 
   const v = await addVPS({
-    ip,
+    ip: ipClean,     // ✅ 这里也换成 ipClean
     port: p,
     username,
     authType,
-    password: authType === 'password' ? password : undefined,
-    privateKey: authType === 'key' ? privateKey : undefined,
-    donatedBy: s.userId,
-    donatedByUsername: s.username,
-    donatedAt: now,
-    status: 'active',
-    note: note || '',
-    adminNote: '',
+    password,
+    privateKey,
     country,
     traffic,
     expiryDate,
     specs,
+    note,
+    donatedBy: s.userId,
+    donatedByUsername: s.username,
+    donatedAt: now,
+    status: 'pending',
     ipLocation: ipLoc,
     verifyStatus: 'verified',
     lastVerifyAt: now,
@@ -917,94 +924,34 @@ function renderLeaderboard(){
     return;
   }
 
-  box.innerHTML='';
+  // 性能优化：批量读取localStorage
+  const expandedStates = {};
+  for(let i = 0; i < allLeaderboardData.length; i++){
+    expandedStates['card-'+i] = localStorage.getItem('card-'+i) !== 'collapsed';
+  }
 
-  // 性能优化：使用 DocumentFragment 批量插入
+  // 性能优化：使用DocumentFragment批量插入DOM
   const fragment = document.createDocumentFragment();
 
-  // 性能优化：分批渲染，避免一次性渲染过多元素导致卡顿
-  const renderBatch = (startIdx, batchSize) => {
-    const endIdx = Math.min(startIdx + batchSize, allLeaderboardData.length);
+  // 性能优化：限制动画数量，只给前20个添加入场动画
+  const animationLimit = 20;
 
-    for(let idx = startIdx; idx < endIdx; idx++){
-      const it = allLeaderboardData[idx];
-      const wrap=document.createElement('div');
-      wrap.className='card border transition-all animate-slide-in';
-      wrap.style.animationDelay = (idx * 0.05) + 's';
-      const cardId = 'card-'+idx;
-      const isExpanded = localStorage.getItem(cardId) !== 'collapsed';
+  allLeaderboardData.forEach((it,idx)=>{
+    const cardId = 'card-'+idx;
+    const isExpanded = expandedStates[cardId];
 
-      const head=document.createElement('div');
-      head.className='flex items-center justify-between p-5 pb-4 border-b gap-4 bg-gradient-to-r cursor-pointer';
+    let gradientClass = '';
+    if(idx === 0) gradientClass = 'from-amber-500/5 to-transparent';
+    else if(idx === 1) gradientClass = 'from-slate-400/5 to-transparent';
+    else if(idx === 2) gradientClass = 'from-orange-600/5 to-transparent';
 
-      let gradientClass = '';
-      if(idx === 0) gradientClass = 'from-amber-500/5 to-transparent';
-      else if(idx === 1) gradientClass = 'from-slate-400/5 to-transparent';
-      else if(idx === 2) gradientClass = 'from-orange-600/5 to-transparent';
-      head.className += ' ' + gradientClass;
+    const badge=getBadge(it.count);
 
-      const badge=getBadge(it.count);
-      head.innerHTML='<div class="flex items-center gap-4 flex-1 min-w-0">'+
-        '<div class="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl">'+medalByRank(idx)+'</div>'+
-        '<div class="flex flex-col gap-1.5 min-w-0">'+
-          '<a class="font-bold text-xl hover:opacity-80 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'" onclick="event.stopPropagation()">@'+it.username+'</a>'+
-          '<div class="flex items-center gap-2 flex-wrap">'+
-            renderBadge(badge)+
-            '<span class="text-xs muted">共投喂 '+it.count+' 台服务器</span>'+
-          '</div>'+
-        '</div>'+
-        '</div>'+
-        '<div class="flex items-center gap-3">'+
-          '<div class="flex-shrink-0 flex items-center justify-center w-16 h-16 panel border rounded-2xl">'+
-            '<div class="text-center">'+
-              '<div class="font-bold text-2xl leading-none mb-1">'+it.count+'</div>'+
-              '<div class="text-xs muted leading-none">VPS</div>'+
-            '</div>'+
-          '</div>'+
-          '<button class="toggle-expand flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg panel border hover:bg-sky-500/10 transition-all" data-card="'+cardId+'" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
-            '<span class="text-lg transition-transform duration-300 '+(isExpanded ? 'rotate-0' : '-rotate-90')+'">'+'▼'+'</span>'+
-          '</button>'+
-        '</div>';
-
-      // 统一的切换函数
-      const toggleExpand = (e) => {
-        if(e) e.stopPropagation();
-        const listEl = wrap.querySelector('.server-list');
-        const toggleBtn = wrap.querySelector('.toggle-expand');
-        const toggleIcon = toggleBtn.querySelector('span');
-        const isCurrentlyExpanded = !listEl.classList.contains('expandable');
-
-        if(isCurrentlyExpanded){
-          // 收起
-          listEl.classList.add('expandable');
-          toggleIcon.classList.remove('rotate-0');
-          toggleIcon.classList.add('-rotate-90');
-          toggleBtn.setAttribute('title', '展开列表');
-          localStorage.setItem(cardId, 'collapsed');
-        } else {
-          // 展开
-          listEl.classList.remove('expandable');
-          toggleIcon.classList.remove('-rotate-90');
-          toggleIcon.classList.add('rotate-0');
-          toggleBtn.setAttribute('title', '收起列表');
-          localStorage.removeItem(cardId);
-        }
-      };
-
-      // 修复：给三角形按钮添加独立的点击事件
-      head.onclick = toggleExpand;
-
-      wrap.appendChild(head);
-
-      const list=document.createElement('div');
-      list.className='server-list px-5 pb-5 pt-4 space-y-3';
-      if(!isExpanded){
-        list.classList.add('expandable');
-      }
-      (it.servers||[]).forEach(srv=>{
-        const d=document.createElement('div');
-        d.className='panel border rounded-xl p-4 transition-all hover:shadow-sm';
-        d.innerHTML = '<div class="flex items-start justify-between gap-3 mb-3">'+
+    // 性能优化：构建服务器列表HTML
+    let serversHTML = '';
+    (it.servers||[]).forEach(srv=>{
+      serversHTML += '<div class="panel border rounded-xl p-4 transition-all hover:shadow-sm">'+
+        '<div class="flex items-start justify-between gap-3 mb-3">'+
           '<div class="flex items-center gap-2.5 flex-1 min-w-0">'+
             '<span class="text-xl flex-shrink-0">🌍</span>'+
             '<div class="flex flex-col gap-1 min-w-0">'+
@@ -1026,23 +973,75 @@ function renderLeaderboard(){
         '</div>'+
         (srv.specs?'<div class="text-sm mt-3 panel border rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">⚙️</span><span class="flex-1">'+srv.specs+'</span></div>':'')+
         (srv.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">💬</span><span class="flex-1">'+srv.note+'</span></div>':'');
-        list.appendChild(d);
-      });
-      wrap.appendChild(list);
-      fragment.appendChild(wrap);
+      serversHTML += '</div>';
+    });
+
+    // 性能优化：一次性构建完整的卡片HTML
+    const wrap=document.createElement('div');
+    wrap.className='card border transition-all' + (idx < animationLimit ? ' animate-slide-in' : '');
+    if(idx < animationLimit) wrap.style.animationDelay = (idx * 0.05) + 's';
+    wrap.dataset.cardId = cardId;
+
+    wrap.innerHTML =
+      '<div class="flex items-center justify-between p-5 pb-4 border-b gap-4 bg-gradient-to-r '+gradientClass+'">'+
+        '<div class="flex items-center gap-4 flex-1 min-w-0">'+
+          '<div class="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl">'+medalByRank(idx)+'</div>'+
+          '<div class="flex flex-col gap-1.5 min-w-0">'+
+            '<a class="font-bold text-xl hover:opacity-80 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a>'+
+            '<div class="flex items-center gap-2 flex-wrap">'+
+              renderBadge(badge)+
+              '<span class="text-xs muted">共投喂 '+it.count+' 台服务器</span>'+
+            '</div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="flex items-center gap-3">'+
+          '<div class="flex-shrink-0 flex items-center justify-center w-16 h-16 panel border rounded-2xl">'+
+            '<div class="text-center">'+
+              '<div class="font-bold text-2xl leading-none mb-1">'+it.count+'</div>'+
+              '<div class="text-xs muted leading-none">VPS</div>'+
+            '</div>'+
+          '</div>'+
+          '<button class="toggle-expand flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg panel border hover:bg-sky-500/10 transition-all cursor-pointer" data-card="'+cardId+'" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
+            '<span class="text-lg transition-transform duration-300 '+(isExpanded ? 'rotate-0' : '-rotate-90')+'">'+'▼'+'</span>'+
+          '</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="server-list px-5 pb-5 pt-4 space-y-3'+(isExpanded ? '' : ' expandable')+'">'+
+        serversHTML+
+      '</div>';
+
+    fragment.appendChild(wrap);
+  });
+
+  // 性能优化：一次性插入所有DOM
+  box.innerHTML = '';
+  box.appendChild(fragment);
+
+  // 性能优化：使用事件委托处理所有按钮点击
+  box.addEventListener('click', (e) => {
+    const toggleBtn = e.target.closest('.toggle-expand');
+    if(!toggleBtn) return;
+
+    const cardId = toggleBtn.dataset.card;
+    const wrap = toggleBtn.closest('[data-card-id]');
+    const listEl = wrap.querySelector('.server-list');
+    const toggleIcon = toggleBtn.querySelector('span');
+    const isCurrentlyExpanded = !listEl.classList.contains('expandable');
+
+    if(isCurrentlyExpanded){
+      listEl.classList.add('expandable');
+      toggleIcon.classList.remove('rotate-0');
+      toggleIcon.classList.add('-rotate-90');
+      toggleBtn.setAttribute('title', '展开列表');
+      localStorage.setItem(cardId, 'collapsed');
+    } else {
+      listEl.classList.remove('expandable');
+      toggleIcon.classList.remove('-rotate-90');
+      toggleIcon.classList.add('rotate-0');
+      toggleBtn.setAttribute('title', '收起列表');
+      localStorage.removeItem(cardId);
     }
-
-    // 批量插入DOM
-    box.appendChild(fragment.cloneNode(true));
-
-    // 如果还有更多数据，继续渲染下一批
-    if(endIdx < allLeaderboardData.length){
-      requestAnimationFrame(() => renderBatch(endIdx, batchSize));
-    }
-  };
-
-  // 开始分批渲染，每批10个
-  renderBatch(0, 10);
+  });
 }
 
 async function loadLeaderboard(){
@@ -1215,94 +1214,228 @@ app.get('/donate/vps', c => {
               <span>🌍</span> 国家 / 区域 <span class="text-red-400">*</span>
             </label>
             <select name="country" required class="w-full">
-              <option value="">请选择国家/区域</option>
-              <optgroup label="🌏 亚洲">
-                <option value="🇨🇳 中国大陆">🇨🇳 中国大陆</option>
-                <option value="🇭🇰 中国香港">🇭🇰 中国香港</option>
-                <option value="🇲🇴 中国澳门">🇲🇴 中国澳门</option>
-                <option value="🇹🇼 中国台湾">🇹🇼 中国台湾</option>
-                <option value="🇯🇵 日本">🇯🇵 日本</option>
-                <option value="🇰🇷 韩国">🇰🇷 韩国</option>
-                <option value="🇸🇬 新加坡">🇸🇬 新加坡</option>
-                <option value="🇲🇾 马来西亚">🇲🇾 马来西亚</option>
-                <option value="🇹🇭 泰国">🇹🇭 泰国</option>
-                <option value="🇻🇳 越南">🇻🇳 越南</option>
-                <option value="🇵🇭 菲律宾">🇵🇭 菲律宾</option>
-                <option value="🇮🇩 印度尼西亚">🇮🇩 印度尼西亚</option>
-                <option value="🇮🇳 印度">🇮🇳 印度</option>
-                <option value="🇵🇰 巴基斯坦">🇵🇰 巴基斯坦</option>
-                <option value="🇧🇩 孟加拉国">🇧🇩 孟加拉国</option>
-                <option value="🇰🇭 柬埔寨">🇰🇭 柬埔寨</option>
-                <option value="🇱🇦 老挝">🇱🇦 老挝</option>
-                <option value="🇲🇲 缅甸">🇲🇲 缅甸</option>
-                <option value="🇰🇿 哈萨克斯坦">🇰🇿 哈萨克斯坦</option>
-                <option value="🇺🇿 乌兹别克斯坦">🇺🇿 乌兹别克斯坦</option>
-              </optgroup>
-              <optgroup label="🌍 欧洲">
-                <option value="🇬🇧 英国">🇬🇧 英国</option>
-                <option value="🇩🇪 德国">🇩🇪 德国</option>
-                <option value="🇫🇷 法国">🇫🇷 法国</option>
-                <option value="🇳🇱 荷兰">🇳🇱 荷兰</option>
-                <option value="🇮🇹 意大利">🇮🇹 意大利</option>
-                <option value="🇪🇸 西班牙">🇪🇸 西班牙</option>
-                <option value="🇷🇺 俄罗斯">🇷🇺 俄罗斯</option>
-                <option value="🇵🇱 波兰">🇵🇱 波兰</option>
-                <option value="🇨🇭 瑞士">🇨🇭 瑞士</option>
-                <option value="🇸🇪 瑞典">🇸🇪 瑞典</option>
-                <option value="🇳🇴 挪威">🇳🇴 挪威</option>
-                <option value="🇩🇰 丹麦">🇩🇰 丹麦</option>
-                <option value="🇫🇮 芬兰">🇫🇮 芬兰</option>
-                <option value="🇮🇪 爱尔兰">🇮🇪 爱尔兰</option>
-                <option value="🇧🇪 比利时">🇧🇪 比利时</option>
-                <option value="🇦🇹 奥地利">🇦🇹 奥地利</option>
-                <option value="🇵🇹 葡萄牙">🇵🇹 葡萄牙</option>
-                <option value="🇬🇷 希腊">🇬🇷 希腊</option>
-                <option value="🇨🇿 捷克">🇨🇿 捷克</option>
-                <option value="🇭🇺 匈牙利">🇭🇺 匈牙利</option>
-                <option value="🇷🇴 罗马尼亚">🇷🇴 罗马尼亚</option>
-                <option value="🇧🇬 保加利亚">🇧🇬 保加利亚</option>
-                <option value="🇺🇦 乌克兰">🇺🇦 乌克兰</option>
-                <option value="🇮🇸 冰岛">🇮🇸 冰岛</option>
-                <option value="🇱🇺 卢森堡">🇱🇺 卢森堡</option>
-              </optgroup>
-              <optgroup label="🌎 北美">
-                <option value="🇺🇸 美国">🇺🇸 美国</option>
-                <option value="🇨🇦 加拿大">🇨🇦 加拿大</option>
-                <option value="🇲🇽 墨西哥">🇲🇽 墨西哥</option>
-              </optgroup>
-              <optgroup label="🌏 大洋洲">
-                <option value="🇦🇺 澳大利亚">🇦🇺 澳大利亚</option>
-                <option value="🇳🇿 新西兰">🇳🇿 新西兰</option>
-                <option value="🇫🇯 斐济">🇫🇯 斐济</option>
-              </optgroup>
-              <optgroup label="🌍 非洲">
-                <option value="🇿🇦 南非">🇿🇦 南非</option>
-                <option value="🇪🇬 埃及">🇪🇬 埃及</option>
-                <option value="🇳🇬 尼日利亚">🇳🇬 尼日利亚</option>
-                <option value="🇰🇪 肯尼亚">🇰🇪 肯尼亚</option>
-                <option value="🇲🇦 摩洛哥">🇲🇦 摩洛哥</option>
-              </optgroup>
-              <optgroup label="🌎 南美">
-                <option value="🇧🇷 巴西">🇧🇷 巴西</option>
-                <option value="🇦🇷 阿根廷">🇦🇷 阿根廷</option>
-                <option value="🇨🇱 智利">🇨🇱 智利</option>
-                <option value="🇨🇴 哥伦比亚">🇨🇴 哥伦比亚</option>
-                <option value="🇵🇪 秘鲁">🇵🇪 秘鲁</option>
-                <option value="🇻🇪 委内瑞拉">🇻🇪 委内瑞拉</option>
-              </optgroup>
-              <optgroup label="🌏 中东">
-                <option value="🇦🇪 阿联酋">🇦🇪 阿联酋</option>
-                <option value="🇸🇦 沙特阿拉伯">🇸🇦 沙特阿拉伯</option>
-                <option value="🇹🇷 土耳其">🇹🇷 土耳其</option>
-                <option value="🇮🇱 以色列">🇮🇱 以色列</option>
-                <option value="🇮🇷 伊朗">🇮🇷 伊朗</option>
-                <option value="🇮🇶 伊拉克">🇮🇶 伊拉克</option>
-                <option value="🇯🇴 约旦">🇯🇴 约旦</option>
-                <option value="🇰🇼 科威特">🇰🇼 科威特</option>
-                <option value="🇶🇦 卡塔尔">🇶🇦 卡塔尔</option>
-                <option value="🇴🇲 阿曼">🇴🇲 阿曼</option>
-                <option value="🇧🇭 巴林">🇧🇭 巴林</option>
-              </optgroup>
+<option value="">请选择国家/区域</option>
+
+<!-- 🌏 亚洲（东亚 / 东南亚 / 南亚 / 中亚） -->
+<optgroup label="🌏 亚洲">
+  <!-- 东亚 / 东北亚 -->
+  <option value="🇨🇳 中国大陆">🇨🇳 中国大陆</option>
+  <option value="🇭🇰 中国香港">🇭🇰 中国香港</option>
+  <option value="🇲🇴 中国澳门">🇲🇴 中国澳门</option>
+  <option value="🇹🇼 中国台湾">🇹🇼 中国台湾</option>
+  <option value="🇯🇵 日本">🇯🇵 日本</option>
+  <option value="🇰🇷 韩国">🇰🇷 韩国</option>
+  <option value="🇰🇵 朝鲜">🇰🇵 朝鲜</option>
+  <option value="🇲🇳 蒙古">🇲🇳 蒙古</option>
+
+  <!-- 东南亚 -->
+  <option value="🇻🇳 越南">🇻🇳 越南</option>
+  <option value="🇹🇭 泰国">🇹🇭 泰国</option>
+  <option value="🇲🇾 马来西亚">🇲🇾 马来西亚</option>
+  <option value="🇸🇬 新加坡">🇸🇬 新加坡</option>
+  <option value="🇵🇭 菲律宾">🇵🇭 菲律宾</option>
+  <option value="🇮🇩 印度尼西亚">🇮🇩 印度尼西亚</option>
+  <option value="🇲🇲 缅甸">🇲🇲 缅甸</option>
+  <option value="🇰🇭 柬埔寨">🇰🇭 柬埔寨</option>
+  <option value="🇱🇦 老挝">🇱🇦 老挝</option>
+  <option value="🇧🇳 文莱">🇧🇳 文莱</option>
+  <option value="🇹🇱 东帝汶">🇹🇱 东帝汶</option>
+
+  <!-- 南亚 -->
+  <option value="🇮🇳 印度">🇮🇳 印度</option>
+  <option value="🇵🇰 巴基斯坦">🇵🇰 巴基斯坦</option>
+  <option value="🇧🇩 孟加拉国">🇧🇩 孟加拉国</option>
+  <option value="🇳🇵 尼泊尔">🇳🇵 尼泊尔</option>
+  <option value="🇱🇰 斯里兰卡">🇱🇰 斯里兰卡</option>
+  <option value="🇲🇻 马尔代夫">🇲🇻 马尔代夫</option>
+  <option value="🇧🇹 不丹">🇧🇹 不丹</option>
+  <option value="🇦🇫 阿富汗">🇦🇫 阿富汗</option>
+
+  <!-- 中亚 -->
+  <option value="🇰🇿 哈萨克斯坦">🇰🇿 哈萨克斯坦</option>
+  <option value="🇺🇿 乌兹别克斯坦">🇺🇿 乌兹别克斯坦</option>
+</optgroup>
+
+<!-- 🌏 中东 / 西亚 -->
+<optgroup label="🌏 中东">
+  <option value="🇸🇦 沙特阿拉伯">🇸🇦 沙特阿拉伯</option>
+  <option value="🇦🇪 阿联酋">🇦🇪 阿联酋</option>
+  <option value="🇹🇷 土耳其">🇹🇷 土耳其</option>
+  <option value="🇮🇱 以色列">🇮🇱 以色列</option>
+  <option value="🇮🇷 伊朗">🇮🇷 伊朗</option>
+  <option value="🇮🇶 伊拉克">🇮🇶 伊拉克</option>
+  <option value="🇯🇴 约旦">🇯🇴 约旦</option>
+  <option value="🇰🇼 科威特">🇰🇼 科威特</option>
+  <option value="🇶🇦 卡塔尔">🇶🇦 卡塔尔</option>
+  <option value="🇴🇲 阿曼">🇴🇲 阿曼</option>
+  <option value="🇧🇭 巴林">🇧🇭 巴林</option>
+  <option value="🇱🇧 黎巴嫩">🇱🇧 黎巴嫩</option>
+  <option value="🇾🇪 也门">🇾🇪 也门</option>
+  <option value="🇸🇾 叙利亚">🇸🇾 叙利亚</option>
+  <option value="🇵🇸 巴勒斯坦">🇵🇸 巴勒斯坦</option>
+</optgroup>
+
+<!-- 🌍 欧洲 -->
+<optgroup label="🌍 欧洲">
+  <!-- 西欧 / 北欧 -->
+  <option value="🇬🇧 英国">🇬🇧 英国</option>
+  <option value="🇫🇷 法国">🇫🇷 法国</option>
+  <option value="🇩🇪 德国">🇩🇪 德国</option>
+  <option value="🇳🇱 荷兰">🇳🇱 荷兰</option>
+  <option value="🇧🇪 比利时">🇧🇪 比利时</option>
+  <option value="🇱🇺 卢森堡">🇱🇺 卢森堡</option>
+  <option value="🇨🇭 瑞士">🇨🇭 瑞士</option>
+  <option value="🇦🇹 奥地利">🇦🇹 奥地利</option>
+  <option value="🇮🇪 爱尔兰">🇮🇪 爱尔兰</option>
+  <option value="🇮🇸 冰岛">🇮🇸 冰岛</option>
+  <option value="🇩🇰 丹麦">🇩🇰 丹麦</option>
+  <option value="🇸🇪 瑞典">🇸🇪 瑞典</option>
+  <option value="🇳🇴 挪威">🇳🇴 挪威</option>
+  <option value="🇫🇮 芬兰">🇫🇮 芬兰</option>
+
+  <!-- 南欧 -->
+  <option value="🇪🇸 西班牙">🇪🇸 西班牙</option>
+  <option value="🇵🇹 葡萄牙">🇵🇹 葡萄牙</option>
+  <option value="🇮🇹 意大利">🇮🇹 意大利</option>
+  <option value="🇬🇷 希腊">🇬🇷 希腊</option>
+  <option value="🇲🇹 马耳他">🇲🇹 马耳他</option>
+  <option value="🇨🇾 塞浦路斯">🇨🇾 塞浦路斯</option>
+
+  <!-- 中东欧 / 巴尔干 -->
+  <option value="🇵🇱 波兰">🇵🇱 波兰</option>
+  <option value="🇨🇿 捷克">🇨🇿 捷克</option>
+  <option value="🇸🇰 斯洛伐克">🇸🇰 斯洛伐克</option>
+  <option value="🇭🇺 匈牙利">🇭🇺 匈牙利</option>
+  <option value="🇷🇴 罗马尼亚">🇷🇴 罗马尼亚</option>
+  <option value="🇧🇬 保加利亚">🇧🇬 保加利亚</option>
+  <option value="🇸🇮 斯洛文尼亚">🇸🇮 斯洛文尼亚</option>
+  <option value="🇭🇷 克罗地亚">🇭🇷 克罗地亚</option>
+  <option value="🇷🇸 塞尔维亚">🇷🇸 塞尔维亚</option>
+  <option value="🇧🇦 波黑">🇧🇦 波黑</option>
+  <option value="🇲🇪 黑山">🇲🇪 黑山</option>
+  <option value="🇲🇰 北马其顿">🇲🇰 北马其顿</option>
+  <option value="🇦🇱 阿尔巴尼亚">🇦🇱 阿尔巴尼亚</option>
+  <option value="🇽🇰 科索沃">🇽🇰 科索沃</option>
+  <option value="🇲🇩 摩尔多瓦">🇲🇩 摩尔多瓦</option>
+
+  <!-- 东欧 / 波罗的海 -->
+  <option value="🇺🇦 乌克兰">🇺🇦 乌克兰</option>
+  <option value="🇧🇾 白俄罗斯">🇧🇾 白俄罗斯</option>
+  <option value="🇷🇺 俄罗斯">🇷🇺 俄罗斯</option>
+  <option value="🇪🇪 爱沙尼亚">🇪🇪 爱沙尼亚</option>
+  <option value="🇱🇻 拉脱维亚">🇱🇻 拉脱维亚</option>
+  <option value="🇱🇹 立陶宛">🇱🇹 立陶宛</option>
+</optgroup>
+
+<!-- 🌎 北美 -->
+<optgroup label="🌎 北美">
+  <option value="🇺🇸 美国">🇺🇸 美国</option>
+  <option value="🇨🇦 加拿大">🇨🇦 加拿大</option>
+  <option value="🇲🇽 墨西哥">🇲🇽 墨西哥</option>
+  <option value="🇬🇱 格陵兰">🇬🇱 格陵兰</option>
+</optgroup>
+
+<!-- 🌎 中美洲 / 加勒比 -->
+<optgroup label="🌎 中美洲 / 加勒比">
+  <option value="🇨🇺 古巴">🇨🇺 古巴</option>
+  <option value="🇩🇴 多米尼加">🇩🇴 多米尼加</option>
+  <option value="🇭🇹 海地">🇭🇹 海地</option>
+  <option value="🇯🇲 牙买加">🇯🇲 牙买加</option>
+  <option value="🇵🇷 波多黎各">🇵🇷 波多黎各</option>
+  <option value="🇵🇦 巴拿马">🇵🇦 巴拿马</option>
+  <option value="🇨🇷 哥斯达黎加">🇨🇷 哥斯达黎加</option>
+  <option value="🇬🇹 危地马拉">🇬🇹 危地马拉</option>
+  <option value="🇭🇳 洪都拉斯">🇭🇳 洪都拉斯</option>
+  <option value="🇳🇮 尼加拉瓜">🇳🇮 尼加拉瓜</option>
+  <option value="🇸🇻 萨尔瓦多">🇸🇻 萨尔瓦多</option>
+  <option value="🇧🇿 伯利兹">🇧🇿 伯利兹</option>
+  <option value="🇹🇹 特立尼达和多巴哥">🇹🇹 特立尼达和多巴哥</option>
+  <option value="🇧🇧 巴巴多斯">🇧🇧 巴巴多斯</option>
+  <option value="🇧🇸 巴哈马">🇧🇸 巴哈马</option>
+  <option value="🇬🇩 格林纳达">🇬🇩 格林纳达</option>
+  <option value="🇱🇨 圣卢西亚">🇱🇨 圣卢西亚</option>
+  <option value="🇰🇳 圣基茨和尼维斯">🇰🇳 圣基茨和尼维斯</option>
+  <option value="🇻🇨 圣文森特和格林纳丁斯">🇻🇨 圣文森特和格林纳丁斯</option>
+</optgroup>
+
+<!-- 🌎 南美 -->
+<optgroup label="🌎 南美">
+  <option value="🇧🇷 巴西">🇧🇷 巴西</option>
+  <option value="🇦🇷 阿根廷">🇦🇷 阿根廷</option>
+  <option value="🇨🇱 智利">🇨🇱 智利</option>
+  <option value="🇨🇴 哥伦比亚">🇨🇴 哥伦比亚</option>
+  <option value="🇵🇪 秘鲁">🇵🇪 秘鲁</option>
+  <option value="🇺🇾 乌拉圭">🇺🇾 乌拉圭</option>
+  <option value="🇵🇾 巴拉圭">🇵🇾 巴拉圭</option>
+  <option value="🇧🇴 玻利维亚">🇧🇴 玻利维亚</option>
+  <option value="🇪🇨 厄瓜多尔">🇪🇨 厄瓜多尔</option>
+  <option value="🇻🇪 委内瑞拉">🇻🇪 委内瑞拉</option>
+  <option value="🇬🇾 圭亚那">🇬🇾 圭亚那</option>
+  <option value="🇸🇷 苏里南">🇸🇷 苏里南</option>
+</optgroup>
+
+<!-- 🌏 大洋洲 -->
+<optgroup label="🌏 大洋洲">
+  <option value="🇦🇺 澳大利亚">🇦🇺 澳大利亚</option>
+  <option value="🇳🇿 新西兰">🇳🇿 新西兰</option>
+  <option value="🇫🇯 斐济">🇫🇯 斐济</option>
+  <option value="🇵🇬 巴布亚新几内亚">🇵🇬 巴布亚新几内亚</option>
+  <option value="🇼🇸 萨摩亚">🇼🇸 萨摩亚</option>
+  <option value="🇹🇴 汤加">🇹🇴 汤加</option>
+  <option value="🇻🇺 瓦努阿图">🇻🇺 瓦努阿图</option>
+  <option value="🇸🇧 所罗门群岛">🇸🇧 所罗门群岛</option>
+  <option value="🇵🇼 帕劳">🇵🇼 帕劳</option>
+  <option value="🇫🇲 密克罗尼西亚">🇫🇲 密克罗尼西亚</option>
+  <option value="🇲🇭 马绍尔群岛">🇲🇭 马绍尔群岛</option>
+  <option value="🇰🇮 基里巴斯">🇰🇮 基里巴斯</option>
+  <option value="🇳🇷 瑙鲁">🇳🇷 瑙鲁</option>
+  <option value="🇹🇻 图瓦卢">🇹🇻 图瓦卢</option>
+</optgroup>
+
+<!-- 🌍 非洲 -->
+<optgroup label="🌍 非洲">
+  <option value="🇿🇦 南非">🇿🇦 南非</option>
+  <option value="🇪🇬 埃及">🇪🇬 埃及</option>
+  <option value="🇳🇬 尼日利亚">🇳🇬 尼日利亚</option>
+  <option value="🇰🇪 肯尼亚">🇰🇪 肯尼亚</option>
+  <option value="🇪🇹 埃塞俄比亚">🇪🇹 埃塞俄比亚</option>
+  <option value="🇬🇭 加纳">🇬🇭 加纳</option>
+  <option value="🇲🇦 摩洛哥">🇲🇦 摩洛哥</option>
+  <option value="🇩🇿 阿尔及利亚">🇩🇿 阿尔及利亚</option>
+  <option value="🇹🇳 突尼斯">🇹🇳 突尼斯</option>
+  <option value="🇱🇾 利比亚">🇱🇾 利比亚</option>
+  <option value="🇸🇩 苏丹">🇸🇩 苏丹</option>
+  <option value="🇸🇸 南苏丹">🇸🇸 南苏丹</option>
+  <option value="🇹🇿 坦桑尼亚">🇹🇿 坦桑尼亚</option>
+  <option value="🇺🇬 乌干达">🇺🇬 乌干达</option>
+  <option value="🇦🇴 安哥拉">🇦🇴 安哥拉</option>
+  <option value="🇲🇿 莫桑比克">🇲🇿 莫桑比克</option>
+  <option value="🇿🇲 赞比亚">🇿🇲 赞比亚</option>
+  <option value="🇿🇼 津巴布韦">🇿🇼 津巴布韦</option>
+  <option value="🇷🇼 卢旺达">🇷🇼 卢旺达</option>
+  <option value="🇧🇮 布隆迪">🇧🇮 布隆迪</option>
+  <option value="🇧🇼 博茨瓦纳">🇧🇼 博茨瓦纳</option>
+  <option value="🇳🇦 纳米比亚">🇳🇦 纳米比亚</option>
+  <option value="🇲🇬 马达加斯加">🇲🇬 马达加斯加</option>
+  <option value="🇸🇨 塞舌尔">🇸🇨 塞舌尔</option>
+  <option value="🇲🇺 毛里求斯">🇲🇺 毛里求斯</option>
+  <option value="🇸🇳 塞内加尔">🇸🇳 塞内加尔</option>
+  <option value="🇲🇱 马里">🇲🇱 马里</option>
+  <option value="🇳🇪 尼日尔">🇳🇪 尼日尔</option>
+  <option value="🇨🇲 喀麦隆">🇨🇲 喀麦隆</option>
+  <option value="🇨🇮 科特迪瓦">🇨🇮 科特迪瓦</option>
+  <option value="🇬🇦 加蓬">🇬🇦 加蓬</option>
+  <option value="🇨🇬 刚果共和国">🇨🇬 刚果共和国</option>
+  <option value="🇨🇩 刚果民主共和国">🇨🇩 刚果民主共和国</option>
+  <option value="🇬🇳 几内亚">🇬🇳 几内亚</option>
+  <option value="🇬🇼 几内亚比绍">🇬🇼 几内亚比绍</option>
+  <option value="🇸🇱 塞拉利昂">🇸🇱 塞拉利昂</option>
+  <option value="🇱🇷 利比里亚">🇱🇷 利比里亚</option>
+  <option value="🇪🇷 厄立特里亚">🇪🇷 厄立特里亚</option>
+  <option value="🇩🇯 吉布提">🇩🇯 吉布提</option>
+  <option value="🇸🇴 索马里">🇸🇴 索马里</option>
+</optgroup>
+
             </select>
           </div>
           <div>
@@ -1616,13 +1749,15 @@ bindAuthType();
 document.getElementById('donate-form').addEventListener('submit', submitDonate);
 loadDonations();
 
-// 实时IP格式验证
+// 实时IP格式验证（与后端完全一致）
 document.querySelector('input[name="ip"]').addEventListener('blur', function(){
   const ip = this.value.trim();
   if(!ip) return;
 
-  // 使用与后端一致的验证逻辑
+  // IPv4 验证（与后端一致）
   const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && ip.split('.').every(p => +p >= 0 && +p <= 255);
+
+  // IPv6 验证（与后端完全一致）
   const ipv6 = /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})|:((:[0-9a-f]{1,4}){1,7}|:)|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/i.test(ip.replace(/^\[|\]$/g, ''));
 
   if(ipv4 || ipv6){
@@ -2638,13 +2773,17 @@ body[data-theme="dark"] .skeleton-card {
   transition: all 0.2s ease;
   word-break: break-word;
   overflow: hidden; /* 防止内容溢出 */
+  /* 性能优化：限制重排范围并启用GPU加速 */
+  contain: layout style paint;
+  will-change: transform;
+  transform: translateZ(0);
 }
 .card:hover {
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.12),
     0 0 0 1px rgba(255, 255, 255, 0.9),
     inset 0 1px 0 rgba(255, 255, 255, 1);
-  transform: translateY(-2px);
+  transform: translateY(-2px) translateZ(0);
 }
 
 body[data-theme="dark"] .panel,
@@ -3283,19 +3422,23 @@ body[data-theme="dark"] #server-map-chart {
 .expandable {
   max-height: 0 !important;
   overflow: hidden;
-  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.3s ease,
-              padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s ease,
+              padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+  will-change: max-height, opacity;
 }
 .server-list {
   max-height: 5000px; /* 足够大的值以容纳所有内容 */
   opacity: 1;
-  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.3s ease,
-              padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s ease,
+              padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: max-height, opacity;
+  /* 性能优化：限制重排范围 */
+  contain: layout style paint;
 }
 
 /* 展开/收起按钮样式优化 */
