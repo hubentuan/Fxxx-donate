@@ -465,7 +465,12 @@ app.post('/api/donate', requireAuth, async c => {
   if (authType === 'key' && !privateKey) {
     return c.json({ success: false, message: '密钥认证需要私钥' }, 400);
   }
-  if (!isValidIP(ip)) {
+
+  // ✅ 新增：统一把 IP 做 trim，去掉复制带来的空格/换行
+  const ipClean = String(ip).trim();
+
+  // ✅ 下面开始都用 ipClean
+  if (!isValidIP(ipClean)) {
     return c.json({ success: false, message: 'IP 格式不正确' }, 400);
   }
 
@@ -473,33 +478,35 @@ app.post('/api/donate', requireAuth, async c => {
   if (p < 1 || p > 65535) {
     return c.json({ success: false, message: '端口范围 1 ~ 65535' }, 400);
   }
-  if (await ipDup(ip, p)) {
+  if (await ipDup(ipClean, p)) {
     return c.json({ success: false, message: '该 IP:端口 已被投喂' }, 400);
   }
-  if (!(await portOK(ip, p))) {
-    return c.json({ success: false, message: '无法连接到该服务器，请确认 IP / 端口 是否正确、且对外开放' }, 400);
+  if (!(await portOK(ipClean, p))) {
+    return c.json({
+      success: false,
+      message: '无法连接到该服务器，请确认 IP / 端口 是否正确、且对外开放',
+    }, 400);
   }
 
-  const ipLoc = await getIPLocation(ip);
+  const ipLoc = await getIPLocation(ipClean);
   const now = Date.now();
 
   const v = await addVPS({
-    ip,
+    ip: ipClean,     // ✅ 这里也换成 ipClean
     port: p,
     username,
     authType,
-    password: authType === 'password' ? password : undefined,
-    privateKey: authType === 'key' ? privateKey : undefined,
-    donatedBy: s.userId,
-    donatedByUsername: s.username,
-    donatedAt: now,
-    status: 'active',
-    note: note || '',
-    adminNote: '',
+    password,
+    privateKey,
     country,
     traffic,
     expiryDate,
     specs,
+    note,
+    donatedBy: s.userId,
+    donatedByUsername: s.username,
+    donatedAt: now,
+    status: 'pending',
     ipLocation: ipLoc,
     verifyStatus: 'verified',
     lastVerifyAt: now,
