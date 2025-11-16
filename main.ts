@@ -467,11 +467,11 @@ app.post('/api/donate', requireAuth, async c => {
   }
 
   // ✅ 新增：统一把 IP 做 trim，去掉复制带来的空格/换行
-  const ipClean = String(ip).trim();
+  const ipClean = String(ip).trim().replace(/[\r\n\t]/g, '');
 
   // ✅ 下面开始都用 ipClean
   if (!isValidIP(ipClean)) {
-    return c.json({ success: false, message: 'IP 格式不正确' }, 400);
+    return c.json({ success: false, message: 'IP 格式不正确，请检查输入' }, 400);
   }
 
   const p = parseInt(String(port), 10);
@@ -506,7 +506,7 @@ app.post('/api/donate', requireAuth, async c => {
     donatedBy: s.userId,
     donatedByUsername: s.username,
     donatedAt: now,
-    status: 'pending',
+    status: 'active',
     ipLocation: ipLoc,
     verifyStatus: 'verified',
     lastVerifyAt: now,
@@ -653,6 +653,85 @@ app.put('/api/admin/config/password', requireAdmin, async c => {
 
   await setAdminPwd(String(password));
   return c.json({ success: true, message: '管理员密码已更新' });
+});
+
+/* 编辑 VPS 配置 */
+app.put('/api/admin/vps/:id/config', requireAdmin, async c => {
+  const id = c.req.param('id');
+  const { ip, port, username, authType, password, privateKey } = await c.req.json();
+
+  // 从 KV 数据库读取现有 VPS 配置
+  const r = await kv.get<VPSServer>(['vps', id]);
+  if (!r.value) return c.json({ success: false, message: 'VPS 不存在' }, 404);
+
+  const vps = r.value;
+
+  // 验证 IP 格式（如果提供了新的 IP）
+  if (ip !== undefined && ip !== '') {
+    const ipClean = String(ip).trim().replace(/[\r\n\t]/g, '');
+    if (!isValidIP(ipClean)) {
+      return c.json({ success: false, message: 'IP 格式不正确' }, 400);
+    }
+    vps.ip = ipClean;
+  }
+
+  // 验证端口范围（如果提供了新的端口）
+  if (port !== undefined && port !== '') {
+    const p = parseInt(String(port), 10);
+    if (isNaN(p) || p < 1 || p > 65535) {
+      return c.json({ success: false, message: '端口范围必须在 1-65535 之间' }, 400);
+    }
+    vps.port = p;
+  }
+
+  // 更新用户名（如果提供）
+  if (username !== undefined && username !== '') {
+    vps.username = String(username);
+  }
+
+  // 更新认证方式（如果提供）
+  if (authType !== undefined && authType !== '') {
+    if (authType !== 'password' && authType !== 'key') {
+      return c.json({ success: false, message: '认证方式必须是 password 或 key' }, 400);
+    }
+    vps.authType = authType;
+  }
+
+  // 验证认证方式与凭据的匹配
+  if (vps.authType === 'password') {
+    // 如果是密码认证，且提供了新密码，则更新
+    if (password !== undefined && password !== '') {
+      vps.password = String(password);
+    }
+    // 如果是密码认证但没有密码（既没有旧密码也没有新密码），返回错误
+    if (!vps.password) {
+      return c.json({ success: false, message: '密码认证需要提供密码' }, 400);
+    }
+  } else if (vps.authType === 'key') {
+    // 如果是密钥认证，且提供了新私钥，则更新
+    if (privateKey !== undefined && privateKey !== '') {
+      vps.privateKey = String(privateKey);
+    }
+    // 如果是密钥认证但没有私钥（既没有旧私钥也没有新私钥），返回错误
+    if (!vps.privateKey) {
+      return c.json({ success: false, message: '密钥认证需要提供私钥' }, 400);
+    }
+  }
+
+  // 保存更新后的配置到 KV 数据库
+  await kv.set(['vps', id], vps);
+
+  return c.json({
+    success: true,
+    message: '配置已更新',
+    data: {
+      id: vps.id,
+      ip: vps.ip,
+      port: vps.port,
+      username: vps.username,
+      authType: vps.authType
+    }
+  });
 });
 
 /* 后端统计：今日新增按固定东八区日期判断 */
@@ -816,7 +895,7 @@ app.get('/donate', c => {
   <header class="mb-10 animate-in">
     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
       <div class="flex-1 space-y-5">
-        <h1 class="grad-title text-4xl md:text-5xl font-bold leading-tight">
+        <h1 class="grad-title-animated text-4xl md:text-5xl font-bold leading-tight">
           风萧萧公益机场 · VPS 投喂榜
         </h1>
 
@@ -1106,7 +1185,7 @@ app.get('/donate/vps', c => {
   <header class="mb-10 animate-fade-in">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
       <div class="space-y-3">
-        <h1 class="grad-title text-4xl md:text-5xl font-bold leading-tight">风萧萧公益机场 · VPS 投喂中心</h1>
+        <h1 class="grad-title-animated text-4xl md:text-5xl font-bold leading-tight">风萧萧公益机场 · VPS 投喂中心</h1>
         <p class="text-sm muted flex items-center gap-2">
           <span class="text-lg">📍</span>
           <span>提交新 VPS / 查看我的投喂记录</span>
@@ -1598,7 +1677,7 @@ async function submitDonate(e){
   msg.textContent=''; msg.className='text-xs mt-1 min-h-[1.5rem]';
   const fd=new FormData(form);
   const payload={
-    ip:fd.get('ip')?.toString().trim(),
+    ip:fd.get('ip')?.toString().trim().replace(/[\r\n\t]/g, ''),
     port:Number(fd.get('port')||''),
     username:fd.get('username')?.toString().trim(),
     authType:fd.get('authType')?.toString(),
@@ -1733,8 +1812,12 @@ loadDonations();
 
 // 实时IP格式验证
 document.querySelector('input[name="ip"]').addEventListener('blur', function(){
-  const ip = this.value.trim();
+  // 自动清理输入：去除前后空格和换行符
+  this.value = this.value.trim().replace(/[\r\n\t]/g, '');
+  
+  const ip = this.value;
   if(!ip) return;
+  
   const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && ip.split('.').every(p => +p >= 0 && +p <= 255);
   const ipv6 = /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|::)/i.test(ip.replace(/^\[|\]$/g, ''));
   
@@ -1744,7 +1827,7 @@ document.querySelector('input[name="ip"]').addEventListener('blur', function(){
     setTimeout(()=>this.classList.remove('success'), 2000);
   } else {
     this.classList.add('error');
-    toast('IP 格式不正确','error');
+    toast('IP 格式不正确，请检查输入','error');
   }
 });
 
@@ -1891,7 +1974,7 @@ async function renderAdmin(root, name){
         '<div class="inline-flex items-center justify-center w-12 h-12 rounded-xl" style="background:#007AFF">'+
           '<span class="text-2xl">⚙️</span>'+
         '</div>'+
-        '<h1 class="grad-title text-3xl md:text-4xl font-bold">VPS 管理后台</h1>'+
+        '<h1 class="grad-title-animated text-3xl md:text-4xl font-bold">VPS 管理后台</h1>'+
       '</div>'+
       '<p class="text-sm muted flex items-center gap-2 ml-15">'+
         '<span class="text-base">🔒</span>'+
@@ -2342,7 +2425,8 @@ function renderVpsList(){
       '<div class="flex flex-wrap gap-2 pt-3 border-t">'+
         '<button class="btn-secondary text-xs" data-act="login" data-id="'+v.id+'">🔍 查看</button>'+
         '<button class="btn-secondary text-xs" data-act="verify" data-id="'+v.id+'">✅ 验证</button>'+
-        '<button class="btn-secondary text-xs" data-act="edit" data-id="'+v.id+'">✏️ 编辑</button>'+
+        '<button class="btn-secondary text-xs" data-act="editConfig" data-id="'+v.id+'">🔧 编辑配置</button>'+
+        '<button class="btn-secondary text-xs" data-act="edit" data-id="'+v.id+'">✏️ 编辑信息</button>'+
         '<button class="btn-danger text-xs" data-act="del" data-id="'+v.id+'">🗑️ 删除</button>'+
       '</div>';
 
@@ -2354,6 +2438,11 @@ function renderVpsList(){
 
         if(act==='login'){
           modalLoginInfo(v);
+          return;
+        }
+
+        if(act==='editConfig'){
+          openEditConfigModal(id);
           return;
         }
 
@@ -2476,8 +2565,264 @@ function renderVpsList(){
   });
 }
 
+/* ========== 编辑配置模态框函数 ========== */
+function openEditConfigModal(vpsId){
+  if(!vpsId) return;
+  
+  // 从 allVpsList 中找到对应的 VPS
+  const vps = allVpsList.find(v => v.id === vpsId);
+  if(!vps){
+    toast('VPS 不存在','error');
+    return;
+  }
+  
+  // 填充表单
+  document.getElementById('edit-vps-id').value = vps.id;
+  document.getElementById('edit-ip').value = vps.ip || '';
+  document.getElementById('edit-port').value = vps.port || '';
+  document.getElementById('edit-username').value = vps.username || '';
+  document.getElementById('edit-authType').value = vps.authType || 'password';
+  
+  // 清空密码和私钥字段（因为是编辑，不显示原值）
+  document.getElementById('edit-password').value = '';
+  document.getElementById('edit-privateKey').value = '';
+  
+  // 根据认证方式显示/隐藏字段
+  toggleAuthFields();
+  
+  // 显示模态框
+  const modal = document.getElementById('edit-config-modal');
+  modal.classList.remove('hidden');
+  
+  // 聚焦第一个输入框
+  setTimeout(() => {
+    document.getElementById('edit-ip').focus();
+  }, 100);
+}
+
+function closeEditModal(){
+  const modal = document.getElementById('edit-config-modal');
+  modal.classList.add('hidden');
+  
+  // 重置表单
+  document.getElementById('edit-config-form').reset();
+}
+
+function toggleAuthFields(){
+  const authType = document.getElementById('edit-authType').value;
+  const passwordField = document.getElementById('password-field-edit');
+  const keyField = document.getElementById('key-field-edit');
+  
+  if(authType === 'password'){
+    passwordField.classList.remove('hidden');
+    keyField.classList.add('hidden');
+  } else {
+    passwordField.classList.add('hidden');
+    keyField.classList.remove('hidden');
+  }
+}
+
+// 处理表单提交
+document.addEventListener('DOMContentLoaded', function(){
+  const form = document.getElementById('edit-config-form');
+  if(form){
+    form.addEventListener('submit', async function(e){
+      e.preventDefault();
+      
+      const vpsId = document.getElementById('edit-vps-id').value;
+      if(!vpsId){
+        toast('VPS ID 缺失','error');
+        return;
+      }
+      
+      // 收集表单数据
+      const formData = {
+        ip: document.getElementById('edit-ip').value.trim(),
+        port: parseInt(document.getElementById('edit-port').value, 10),
+        username: document.getElementById('edit-username').value.trim(),
+        authType: document.getElementById('edit-authType').value,
+        password: document.getElementById('edit-password').value,
+        privateKey: document.getElementById('edit-privateKey').value
+      };
+      
+      // 前端验证 - IP 地址
+      if(!formData.ip){
+        toast('请输入 IP 地址','warn');
+        document.getElementById('edit-ip').classList.add('error');
+        document.getElementById('edit-ip').focus();
+        return;
+      }
+      
+      // 验证 IP 格式（IPv4 或 IPv6）
+      const ipv4Pattern = /^(\\d{1,3}\\.){3}\\d{1,3}$/;
+      const ipv6Pattern = /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})|:((:[0-9a-f]{1,4}){1,7}|:)|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/i;
+      
+      const cleanIp = formData.ip.replace(/^\\[|\\]$/g, '');
+      const isValidIPv4 = ipv4Pattern.test(cleanIp) && cleanIp.split('.').every(p => {
+        const num = parseInt(p, 10);
+        return num >= 0 && num <= 255;
+      });
+      const isValidIPv6 = ipv6Pattern.test(cleanIp);
+      
+      if(!isValidIPv4 && !isValidIPv6){
+        toast('IP 格式不正确，请输入有效的 IPv4 或 IPv6 地址','error');
+        document.getElementById('edit-ip').classList.add('error');
+        document.getElementById('edit-ip').focus();
+        return;
+      }
+      document.getElementById('edit-ip').classList.remove('error');
+      
+      // 前端验证 - 端口
+      if(!formData.port || isNaN(formData.port) || formData.port < 1 || formData.port > 65535){
+        toast('端口范围必须在 1-65535 之间','warn');
+        document.getElementById('edit-port').classList.add('error');
+        document.getElementById('edit-port').focus();
+        return;
+      }
+      document.getElementById('edit-port').classList.remove('error');
+      
+      // 前端验证 - 用户名
+      if(!formData.username){
+        toast('请输入用户名','warn');
+        document.getElementById('edit-username').classList.add('error');
+        document.getElementById('edit-username').focus();
+        return;
+      }
+      document.getElementById('edit-username').classList.remove('error');
+      
+      // 验证认证方式与凭据的匹配
+      if(formData.authType === 'password'){
+        // 密码认证：如果没有输入新密码，则不发送 password 字段（保留原密码）
+        if(!formData.password){
+          delete formData.password;
+        }
+      } else if(formData.authType === 'key'){
+        // 密钥认证：如果没有输入新私钥，则不发送 privateKey 字段（保留原私钥）
+        if(!formData.privateKey){
+          delete formData.privateKey;
+        }
+      }
+      
+      // 显示加载状态
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = '保存中...';
+      submitBtn.classList.add('loading');
+      
+      try{
+        const response = await fetch('/api/admin/vps/' + vpsId + '/config', {
+          method: 'PUT',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if(!response.ok || !result.success){
+          toast(result.message || '保存失败','error');
+        } else {
+          toast('配置已更新','success');
+          closeEditModal();
+          
+          // 刷新 VPS 列表
+          await loadVps();
+        }
+      } catch(err){
+        console.error('Save config error:', err);
+        toast('保存异常：' + err.message,'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        submitBtn.classList.remove('loading');
+      }
+    });
+  }
+  
+  // ESC 键关闭模态框
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){
+      const modal = document.getElementById('edit-config-modal');
+      if(modal && !modal.classList.contains('hidden')){
+        closeEditModal();
+      }
+    }
+  });
+  
+  // 点击背景关闭模态框
+  const modal = document.getElementById('edit-config-modal');
+  if(modal){
+    modal.addEventListener('click', function(e){
+      if(e.target === modal){
+        closeEditModal();
+      }
+    });
+  }
+});
+
 checkAdmin();
 </script>
+
+<!-- 编辑配置模态框 -->
+<div id="edit-config-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>编辑 VPS 配置</h3>
+      <button class="modal-close" onclick="closeEditModal()" aria-label="关闭">×</button>
+    </div>
+    <form id="edit-config-form" class="modal-body">
+      <input type="hidden" id="edit-vps-id" />
+      
+      <div class="modal-form-group">
+        <label for="edit-ip">IP 地址 *</label>
+        <input type="text" id="edit-ip" name="ip" required placeholder="如：192.168.1.1 或 2001:db8::1" />
+      </div>
+      
+      <div class="modal-form-group">
+        <label for="edit-port">端口 *</label>
+        <input type="number" id="edit-port" name="port" required min="1" max="65535" placeholder="如：22" />
+      </div>
+      
+      <div class="modal-form-group">
+        <label for="edit-username">用户名 *</label>
+        <input type="text" id="edit-username" name="username" required placeholder="如：root" />
+      </div>
+      
+      <div class="modal-form-group">
+        <label for="edit-authType">认证方式 *</label>
+        <select id="edit-authType" name="authType" required onchange="toggleAuthFields()">
+          <option value="password">密码</option>
+          <option value="key">SSH 私钥</option>
+        </select>
+      </div>
+      
+      <div id="password-field-edit" class="modal-form-group">
+        <label for="edit-password">密码</label>
+        <input type="password" id="edit-password" name="password" placeholder="留空表示不修改" />
+        <small>留空表示保留原密码</small>
+      </div>
+      
+      <div id="key-field-edit" class="modal-form-group hidden">
+        <label for="edit-privateKey">SSH 私钥</label>
+        <textarea id="edit-privateKey" name="privateKey" rows="6" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;...&#10;-----END OPENSSH PRIVATE KEY-----"></textarea>
+        <small>留空表示保留原私钥</small>
+      </div>
+      
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" onclick="closeEditModal()">
+          取消
+        </button>
+        <button type="submit" class="btn-primary">
+          保存配置
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 </body></html>`;
   return c.html(html);
 });
@@ -2819,6 +3164,47 @@ body[data-theme="dark"] .muted{
 body[data-theme="dark"] .grad-title{
   color: #f5f5f7;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ========== 流光渐变标题 ========== */
+.grad-title-animated {
+  background: linear-gradient(
+    90deg,
+    #8b5cf6 0%,
+    #ec4899 25%,
+    #f59e0b 50%,
+    #10b981 75%,
+    #8b5cf6 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientFlow 4s linear infinite;
+  font-weight: 700;
+  will-change: background-position;
+}
+
+@keyframes gradientFlow {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+body[data-theme="dark"] .grad-title-animated {
+  background: linear-gradient(
+    90deg,
+    #a78bfa 0%,
+    #f472b6 25%,
+    #fbbf24 50%,
+    #34d399 75%,
+    #a78bfa 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 20px rgba(167, 139, 250, 0.3);
+  animation: gradientFlow 4s linear infinite;
 }
 
 /* ========== Toast 通知 ========== */
@@ -3450,6 +3836,144 @@ code{
 body[data-theme="dark"] code{
   background: rgba(255, 255, 255, 0.1);
   color: #f5f5f7;
+}
+
+/* ========== 模态框样式 ========== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.8);
+  width: min(680px, 92vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: scaleUp 0.25s ease-out;
+  padding: 24px;
+}
+
+body[data-theme="dark"] .modal-content {
+  background: rgba(28, 28, 30, 0.95);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-color: rgba(56, 56, 58, 0.6);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(56, 56, 58, 0.6);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(210, 210, 215, 0.3);
+}
+
+body[data-theme="dark"] .modal-header {
+  border-bottom-color: rgba(56, 56, 58, 0.5);
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0;
+}
+
+body[data-theme="dark"] .modal-header h3 {
+  color: #f5f5f7;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.05);
+  color: #1d1d1f;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(1.05);
+}
+
+body[data-theme="dark"] .modal-close {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f5f5f7;
+}
+
+body[data-theme="dark"] .modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-body {
+  margin-bottom: 20px;
+}
+
+.modal-form-group {
+  margin-bottom: 16px;
+}
+
+.modal-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1d1d1f;
+}
+
+body[data-theme="dark"] .modal-form-group label {
+  color: #f5f5f7;
+}
+
+.modal-form-group small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #86868b;
+}
+
+body[data-theme="dark"] .modal-form-group small {
+  color: #98989d;
+}
+
+.modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(210, 210, 215, 0.3);
+}
+
+body[data-theme="dark"] .modal-actions {
+  border-top-color: rgba(56, 56, 58, 0.5);
+}
+
+.hidden {
+  display: none !important;
 }
 
 /* ========== 可访问性 ========== */
