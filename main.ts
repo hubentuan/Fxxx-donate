@@ -1657,12 +1657,24 @@ function getCountryFlag(countryString) {
     return '🌍';
   }
   
-  // 使用正则表达式匹配Unicode国旗字符（区域指示符号范围：U+1F1E6 到 U+1F1FF）
-  // 国旗由两个连续的区域指示符号字符组成
-  const flagMatch = countryString.match(/[\u{1F1E6}-\u{1F1FF}]{2}/u);
+  // 把字符串按 Unicode code point 拆开
+  const chars = Array.from(countryString);
   
-  // 如果找到国旗emoji，返回它；否则返回默认的地球emoji
-  return flagMatch ? flagMatch[0] : '🌍';
+  for (let i = 0; i < chars.length - 1; i++) {
+    const cp1 = chars[i].codePointAt(0);
+    const cp2 = chars[i + 1].codePointAt(0);
+    if (!cp1 || !cp2) continue;
+    
+    // 国旗 emoji 是两个连续的区域指示符号（U+1F1E6 - U+1F1FF）
+    if (
+      cp1 >= 0x1f1e6 && cp1 <= 0x1f1ff &&
+      cp2 >= 0x1f1e6 && cp2 <= 0x1f1ff
+    ) {
+      return chars[i] + chars[i + 1];
+    }
+  }
+  
+  return '🌍';
 }
 
 /**
@@ -4123,15 +4135,21 @@ body[data-theme="dark"] #overview-flags {
           return '🌍';
         }
 
-        // 使用正则表达式匹配Unicode国旗字符
-        // 国旗emoji的Unicode范围是 U+1F1E6 到 U+1F1FF（区域指示符号字母）
-        // 国旗由两个连续的区域指示符号字母组成
-        const flagRegex = /[\u{1F1E6}-\u{1F1FF}]{2}/u;
-        const match = countryString.match(flagRegex);
-
-        // 如果找到国旗emoji，返回它
-        if (match && match[0]) {
-          return match[0];
+        // 把字符串按 Unicode code point 拆开
+        const chars = Array.from(countryString);
+        
+        for (let i = 0; i < chars.length - 1; i++) {
+          const cp1 = chars[i].codePointAt(0);
+          const cp2 = chars[i + 1].codePointAt(0);
+          if (!cp1 || !cp2) continue;
+          
+          // 国旗 emoji 是两个连续的区域指示符号（U+1F1E6 - U+1F1FF）
+          if (
+            cp1 >= 0x1f1e6 && cp1 <= 0x1f1ff &&
+            cp2 >= 0x1f1e6 && cp2 <= 0x1f1ff
+          ) {
+            return chars[i] + chars[i + 1];
+          }
         }
 
         // 如果没有找到国旗，返回默认的地球emoji
