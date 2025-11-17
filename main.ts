@@ -2035,7 +2035,6 @@ function geocode(location) {
   };
 
   if (!location || typeof location !== 'string') {
-    console.warn('无效的位置信息:', location);
     return null;
   }
 
@@ -2054,7 +2053,6 @@ function geocode(location) {
   for (let i = parts.length - 1; i >= 0; i--) {
     const part = parts[i];
     if (LOCATION_DB[part]) {
-      console.log('匹配到位置:', part, '→', LOCATION_DB[part]);
       return LOCATION_DB[part];
     }
   }
