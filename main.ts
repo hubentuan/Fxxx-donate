@@ -1542,7 +1542,19 @@ function calculateConnections(servers) {
   if (validServers.length === 0) return [];
   if (validServers.length === 1) return [];
   
-  validServers.forEach(server => {
+  // 性能优化：限制连接数量，避免过多连接导致卡顿
+  const maxServersForConnections = 50;
+  const serversToConnect = validServers.length > maxServersForConnections 
+    ? validServers.slice(0, maxServersForConnections) 
+    : validServers;
+  
+  // 性能优化：只为部分服务器生成连接
+  const connectionStep = Math.max(1, Math.floor(serversToConnect.length / 20));
+  
+  serversToConnect.forEach((server, index) => {
+    // 跳过一些服务器以减少连接数
+    if (index % connectionStep !== 0) return;
+    
     const distances = validServers
       .filter(s => s.id !== server.id)
       .map(s => ({
@@ -1553,7 +1565,8 @@ function calculateConnections(servers) {
     
     if (distances.length === 0) return;
     
-    const nearbyConnections = Math.min(2, distances.length);
+    // 减少每个节点的连接数
+    const nearbyConnections = Math.min(1, distances.length);
     distances.slice(0, nearbyConnections).forEach(({ server: target }) => {
       connections.push({
         startLat: server.coords.lat,
@@ -1565,9 +1578,10 @@ function calculateConnections(servers) {
       });
     });
     
+    // 减少中距离连接
     const mediumDistance = distances.filter(d => d.distance > 1000 && d.distance < 5000);
-    if (mediumDistance.length > 0) {
-      const mediumCount = Math.min(2, mediumDistance.length);
+    if (mediumDistance.length > 0 && index % (connectionStep * 2) === 0) {
+      const mediumCount = Math.min(1, mediumDistance.length);
       mediumDistance.slice(0, mediumCount).forEach(({ server: target }) => {
         connections.push({
           startLat: server.coords.lat,
@@ -1580,19 +1594,22 @@ function calculateConnections(servers) {
       });
     }
     
-    const longRangeCount = Math.min(2, Math.floor(distances.length / 2));
-    if (longRangeCount > 0) {
-      distances.slice(-longRangeCount).forEach(({ server: target, distance }) => {
-        connections.push({
-          startLat: server.coords.lat,
-          startLng: server.coords.lng,
-          endLat: target.coords.lat,
-          endLng: target.coords.lng,
-          color: 'rgba(255, 215, 0, 0.8)',
-          type: 'submarine',
-          distance: distance
+    // 减少长距离连接
+    if (distances.length > 10 && index % (connectionStep * 3) === 0) {
+      const longRangeCount = Math.min(1, Math.floor(distances.length / 3));
+      if (longRangeCount > 0) {
+        distances.slice(-longRangeCount).forEach(({ server: target, distance }) => {
+          connections.push({
+            startLat: server.coords.lat,
+            startLng: server.coords.lng,
+            endLat: target.coords.lat,
+            endLng: target.coords.lng,
+            color: 'rgba(255, 215, 0, 0.8)',
+            type: 'submarine',
+            distance: distance
+          });
         });
-      });
+      }
     }
   });
   
@@ -1610,7 +1627,9 @@ function calculateConnections(servers) {
     return true;
   });
   
-  return uniqueConnections;
+  // 限制最大连接数
+  const maxConnections = 100;
+  return uniqueConnections.slice(0, maxConnections);
 }
 
 function isWebGLAvailable() {
@@ -1778,14 +1797,14 @@ function initGlobe() {
       }
     })
     .arcStroke(d => {
-      if (d.type === 'submarine') return 0.7;
-      if (d.type === 'medium') return 0.5;
-      return 0.4;
+      if (d.type === 'submarine') return 0.5;
+      if (d.type === 'medium') return 0.4;
+      return 0.3;
     })
-    .arcAltitude(0.08)
-    .arcDashLength(0.5)
-    .arcDashGap(0.3)
-    .arcDashAnimateTime(3000)
+    .arcAltitude(0.06)
+    .arcDashLength(0.6)
+    .arcDashGap(0.4)
+    .arcDashAnimateTime(4000)
     .arcDashInitialGap(() => Math.random())
     
     .enablePointerInteraction(true);
@@ -1793,14 +1812,14 @@ function initGlobe() {
   if (globeInstance && globeInstance.controls) {
     const controls = globeInstance.controls();
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.3;
+    controls.autoRotateSpeed = 0.2;
     controls.enableRotate = true;
     controls.enableZoom = true;
     controls.minDistance = 101;
     controls.maxDistance = 500;
     controls.enablePan = false;
     controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
+    controls.dampingFactor = 0.08;
   }
   
     const container = document.getElementById('globe-container');
@@ -1830,7 +1849,7 @@ function updateGlobeData() {
 }
 
 let lastConnectionsUpdate = 0;
-const CONNECTIONS_UPDATE_INTERVAL = 60000;
+const CONNECTIONS_UPDATE_INTERVAL = 120000; // 增加到2分钟
 
 async function updateData() {
   const newServersData = await fetchServersFromLeaderboard();
@@ -1953,10 +1972,17 @@ function waitForGlobe() {
     toggleRotateBtn.addEventListener('click', toggleRotate);
   }
   
-  window.addEventListener('resize', handleResize);
+  // 使用防抖处理窗口大小调整
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    if(resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(handleResize, 300);
+  });
+  
   document.addEventListener('visibilitychange', handleVisibilityChange);
   
-  updateInterval = setInterval(updateData, 30000);
+  // 增加更新间隔到60秒，减少性能消耗
+  updateInterval = setInterval(updateData, 60000);
 })();
 </script>
 </body></html>`;
@@ -2641,21 +2667,12 @@ loadDonations();
 // 实时IP格式验证（与后端完全一致）
 const ipInput = document.querySelector('input[name="ip"]');
 
-// 获得焦点时清除错误状态
-ipInput.addEventListener('focus', function(){
-  this.classList.remove('error');
-  this.classList.remove('success');
-});
-
-// 失去焦点时验证
-ipInput.addEventListener('blur', function(){
-  const ip = this.value.trim();
-  if(!ip) return;
-
+if(ipInput){
   // IPv4 验证（与后端一致）
   const isIPv4 = (ip) => {
-    if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) return false;
-    return ip.split('.').every(p => {
+    const trimmed = ip.trim();
+    if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(trimmed)) return false;
+    return trimmed.split('.').every(p => {
       const num = parseInt(p, 10);
       return num >= 0 && num <= 255;
     });
@@ -2663,44 +2680,88 @@ ipInput.addEventListener('blur', function(){
 
   // IPv6 验证（与后端一致）
   const isIPv6 = (ip) => {
-    const trimmed = ip.replace(/^\[|\]$/g, '');
+    const trimmed = ip.trim().replace(/^\[|\]$/g, '');
     const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]+|::(ffff(:0{1,4})?:)?((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))$/;
     return ipv6Regex.test(trimmed);
   };
 
-  if(isIPv4(ip) || isIPv6(ip)){
+  // 获得焦点时清除错误状态
+  ipInput.addEventListener('focus', function(){
     this.classList.remove('error');
-    this.classList.add('success');
-    setTimeout(()=>this.classList.remove('success'), 2000);
-  } else {
-    this.classList.add('error');
-    toast('IP 格式不正确，请检查输入','error');
-  }
-});
+    this.classList.remove('success');
+  });
+
+  // 输入时实时验证（防抖）
+  let ipValidateTimer = null;
+  ipInput.addEventListener('input', function(){
+    const ip = this.value.trim();
+    
+    // 清除之前的定时器
+    if(ipValidateTimer) clearTimeout(ipValidateTimer);
+    
+    // 如果为空，清除所有状态
+    if(!ip) {
+      this.classList.remove('error');
+      this.classList.remove('success');
+      return;
+    }
+    
+    // 防抖：500ms 后验证
+    ipValidateTimer = setTimeout(() => {
+      if(isIPv4(ip) || isIPv6(ip)){
+        this.classList.remove('error');
+        this.classList.add('success');
+      } else {
+        this.classList.remove('success');
+        this.classList.add('error');
+      }
+    }, 500);
+  });
+
+  // 失去焦点时最终验证
+  ipInput.addEventListener('blur', function(){
+    const ip = this.value.trim();
+    if(!ip) {
+      this.classList.remove('error');
+      this.classList.remove('success');
+      return;
+    }
+
+    if(isIPv4(ip) || isIPv6(ip)){
+      this.classList.remove('error');
+      this.classList.add('success');
+    } else {
+      this.classList.add('error');
+      toast('IP 格式不正确，请检查输入','error');
+    }
+  });
+}
 
 // 端口范围验证
 const portInput = document.querySelector('input[name="port"]');
 
-// 获得焦点时清除错误状态
-portInput.addEventListener('focus', function(){
-  this.classList.remove('error');
-  this.classList.remove('success');
-});
-
-// 失去焦点时验证
-portInput.addEventListener('blur', function(){
-  const port = parseInt(this.value);
-  if(!port) return;
-
-  if(port < 1 || port > 65535){
-    this.classList.add('error');
-    toast('端口范围应在 1-65535 之间','error');
-  } else {
+if(portInput){
+  // 获得焦点时清除错误状态
+  portInput.addEventListener('focus', function(){
     this.classList.remove('error');
-    this.classList.add('success');
-    setTimeout(()=>this.classList.remove('success'), 2000);
-  }
-});
+    this.classList.remove('success');
+  });
+
+  // 失去焦点时验证
+  portInput.addEventListener('blur', function(){
+    const port = parseInt(this.value);
+    if(!port) return;
+
+    if(port < 1 || port > 65535){
+      this.classList.add('error');
+      toast('端口范围应在 1-65535 之间','error');
+    } else {
+      this.classList.remove('error');
+      this.classList.add('success');
+      setTimeout(()=>this.classList.remove('success'), 2000);
+    }
+  });
+}
 </script>
 </body></html>`;
   return c.html(html);
