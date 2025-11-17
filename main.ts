@@ -2426,7 +2426,7 @@ function handleVisibilityChange() {
       globeInstance.controls().autoRotate = shouldRotate;
     }
     if (!updateInterval) {
-      updateInterval = setInterval(updateData, 10000);
+      updateInterval = setInterval(updateData, 30000);  // 优化：30秒间隔
     }
   }
 }
@@ -2482,8 +2482,8 @@ function waitForGlobe() {
   // 绑定页面可见性变化事件
   document.addEventListener('visibilitychange', handleVisibilityChange);
   
-  // 启动数据轮询（10秒间隔）
-  updateInterval = setInterval(updateData, 10000);
+  // 启动数据轮询（优化：30秒间隔，减少服务器负担和渲染压力）
+  updateInterval = setInterval(updateData, 30000);
   
   console.log('3D地球可视化已启动');
 })();
