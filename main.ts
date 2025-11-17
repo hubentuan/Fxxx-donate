@@ -1702,8 +1702,7 @@ function haversineDistance(coords1, coords2) {
 }
 
 /**
- * 简化的连接算法：确保所有节点都有连接
- * 使用混合策略：区域内密集连接 + 跨区域长距离连接
+ * 混合连接算法：近距离 + 远距离，确保跨大洲连接
  * @param {Array} servers - 服务器数组
  * @returns {Array} 连接弧线数据数组
  */
@@ -1723,10 +1722,8 @@ function calculateConnections(servers) {
   
   console.log('🌐 开始计算连接，共', validServers.length, '个节点');
   
-  // 策略1：每个节点连接最近的 3-5 个邻居（局部密集连接）
-  const nearbyCount = validServers.length > 50 ? 3 : validServers.length > 20 ? 4 : 5;
-  
   validServers.forEach(server => {
+    // 计算到所有其他节点的距离
     const distances = validServers
       .filter(s => s.id !== server.id)
       .map(s => ({
@@ -1735,51 +1732,60 @@ function calculateConnections(servers) {
       }))
       .sort((a, b) => a.distance - b.distance);
     
-    // 连接最近的邻居
-    distances.slice(0, nearbyCount).forEach(({ server: target }) => {
+    if (distances.length === 0) return;
+    
+    // 策略1：连接最近的 2 个邻居（局部连接）
+    const nearbyConnections = Math.min(2, distances.length);
+    distances.slice(0, nearbyConnections).forEach(({ server: target }) => {
       connections.push({
         startLat: server.coords.lat,
         startLng: server.coords.lng,
         endLat: target.coords.lat,
         endLng: target.coords.lng,
-        color: 'rgba(255, 215, 0, 0.6)',
+        color: 'rgba(255, 215, 0, 0.5)',
         type: 'nearby'
       });
     });
-  });
-  
-  console.log('✅ 阶段1完成：最近邻连接', connections.length, '条');
-  
-  // 策略2：添加跨区域长距离连接（模拟跨海光缆）
-  // 为每个节点额外连接 1-2 个远距离节点
-  const longRangeCount = validServers.length > 50 ? 1 : 2;
-  
-  validServers.forEach(server => {
-    const distances = validServers
-      .filter(s => s.id !== server.id)
-      .map(s => ({
-        server: s,
-        distance: haversineDistance(server.coords, s.coords)
-      }))
-      .sort((a, b) => b.distance - a.distance); // 按距离降序排列
     
-    // 连接最远的节点（跨海光缆）
-    distances.slice(0, longRangeCount).forEach(({ server: target, distance }) => {
-      // 只有距离超过 3000km 才算跨海光缆
-      if (distance > 3000) {
+    // 策略2：连接中等距离的节点（1000-5000km）
+    const mediumDistance = distances.filter(d => d.distance > 1000 && d.distance < 5000);
+    if (mediumDistance.length > 0) {
+      const mediumCount = Math.min(2, mediumDistance.length);
+      mediumDistance.slice(0, mediumCount).forEach(({ server: target }) => {
+        connections.push({
+          startLat: server.coords.lat,
+          startLng: server.coords.lng,
+          endLat: target.coords.lat,
+          endLng: target.coords.lng,
+          color: 'rgba(255, 215, 0, 0.6)',
+          type: 'medium'
+        });
+      });
+    }
+    
+    // 策略3：强制连接最远的 2 个节点（跨大洲光缆）
+    // 从距离列表的末尾取（最远的）
+    const longRangeCount = Math.min(2, Math.floor(distances.length / 2));
+    if (longRangeCount > 0) {
+      // 取最远的节点
+      distances.slice(-longRangeCount).forEach(({ server: target, distance }) => {
         connections.push({
           startLat: server.coords.lat,
           startLng: server.coords.lng,
           endLat: target.coords.lat,
           endLng: target.coords.lng,
           color: 'rgba(255, 215, 0, 0.8)',
-          type: 'submarine'
+          type: 'submarine',
+          distance: distance
         });
-      }
-    });
+      });
+    }
   });
   
-  console.log('✅ 阶段2完成：跨海光缆连接', connections.filter(c => c.type === 'submarine').length, '条');
+  console.log('✅ 连接创建完成');
+  console.log('   最近邻:', connections.filter(c => c.type === 'nearby').length);
+  console.log('   中等距离:', connections.filter(c => c.type === 'medium').length);
+  console.log('   跨海光缆:', connections.filter(c => c.type === 'submarine').length);
   
   // 去重
   const seen = new Set();
@@ -1796,32 +1802,10 @@ function calculateConnections(servers) {
     return true;
   });
   
-  // 统计每个节点的连接数
-  const nodeConnections = new Map();
-  validServers.forEach(s => nodeConnections.set(s.id, 0));
-  
-  uniqueConnections.forEach(conn => {
-    validServers.forEach(s => {
-      if (Math.abs(s.coords.lat - conn.startLat) < 0.01 && Math.abs(s.coords.lng - conn.startLng) < 0.01) {
-        nodeConnections.set(s.id, nodeConnections.get(s.id) + 1);
-      }
-      if (Math.abs(s.coords.lat - conn.endLat) < 0.01 && Math.abs(s.coords.lng - conn.endLng) < 0.01) {
-        nodeConnections.set(s.id, nodeConnections.get(s.id) + 1);
-      }
-    });
-  });
-  
-  // 检查孤立节点
-  const isolatedNodes = validServers.filter(s => nodeConnections.get(s.id) === 0);
-  console.log('📊 统计：');
-  console.log('   总连接数:', uniqueConnections.length);
+  console.log('📊 去重后总连接数:', uniqueConnections.length);
   console.log('   最近邻:', uniqueConnections.filter(c => c.type === 'nearby').length);
+  console.log('   中等距离:', uniqueConnections.filter(c => c.type === 'medium').length);
   console.log('   跨海光缆:', uniqueConnections.filter(c => c.type === 'submarine').length);
-  console.log('   孤立节点:', isolatedNodes.length);
-  
-  if (isolatedNodes.length > 0) {
-    console.log('⚠️ 孤立节点列表:', isolatedNodes.map(s => s.donatedByUsername).join(', '));
-  }
   
   return uniqueConnections;
 }
@@ -2214,23 +2198,24 @@ function initGlobe() {
     .arcColor(d => {
       // 根据连接类型使用不同的金色
       if (d.type === 'submarine') {
-        // 跨海光缆：亮金色
-        return ['rgba(255, 215, 0, 0.7)', 'rgba(255, 223, 0, 0.8)'];
-      } else if (d.type === 'regional') {
-        // 区域内连接：柔和金色
-        return ['rgba(255, 215, 0, 0.5)', 'rgba(255, 200, 0, 0.6)'];
-      } else if (d.type === 'other') {
-        // 其他区域连接：中等金色
+        // 跨海光缆：最亮的金色
+        return ['rgba(255, 215, 0, 0.8)', 'rgba(255, 223, 0, 0.9)'];
+      } else if (d.type === 'medium') {
+        // 中等距离：中等金色
         return ['rgba(255, 215, 0, 0.6)', 'rgba(255, 205, 0, 0.7)'];
-      } else if (d.type === 'emergency') {
-        // 应急连接：亮金色
-        return ['rgba(255, 215, 0, 0.7)', 'rgba(255, 210, 0, 0.8)'];
+      } else if (d.type === 'nearby') {
+        // 最近邻：柔和金色
+        return ['rgba(255, 215, 0, 0.5)', 'rgba(255, 200, 0, 0.6)'];
       } else {
         // 默认：淡金色
         return ['rgba(255, 215, 0, 0.4)', 'rgba(255, 190, 0, 0.5)'];
       }
     })
-    .arcStroke(d => d.type === 'submarine' ? 0.6 : 0.4)  // 跨海光缆更粗
+    .arcStroke(d => {
+      if (d.type === 'submarine') return 0.7;  // 跨海光缆最粗
+      if (d.type === 'medium') return 0.5;     // 中等距离
+      return 0.4;                               // 最近邻
+    })
     .arcAltitude(0.08)
     .arcDashLength(0.5)
     .arcDashGap(0.3)
