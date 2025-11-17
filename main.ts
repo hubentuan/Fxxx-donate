@@ -2227,7 +2227,6 @@ async function getVisitorLocation() {
       if (res.ok) {
         const data = await res.json();
         if (data.latitude && data.longitude) {
-          console.log('✅ 使用 ipwhois.app 获取位置:', data.city, data.country);
           return {
             lat: data.latitude,
             lng: data.longitude,
@@ -2248,7 +2247,6 @@ async function getVisitorLocation() {
         return result;
       }
     } catch (e) {
-      console.log('API调用失败，尝试下一个...');
       continue;
     }
   }
