@@ -1402,16 +1402,6 @@ let connectionsData = [];
 let updateInterval = null;
 let visitorLocation = null; // 访问者位置
 
-// 性能监控
-let frameCount = 0;
-let lastFPSCheck = Date.now();
-let currentFPS = 60;
-let performanceMode = 'high'; // 'high', 'medium', 'low'
-
-// 创意效果：动态颜色和脉冲
-let colorPhase = 0;
-let pulsePhase = 0;
-
 /**
  * 地理编码函数：将位置字符串转换为经纬度坐标
  * 扩展版 - 包含更多国家和城市
@@ -1473,22 +1463,7 @@ function geocode(location) {
     'India': { lat: 20.5937, lng: 78.9629 },
     '印度': { lat: 20.5937, lng: 78.9629 },
     'Mumbai': { lat: 19.0760, lng: 72.8777 },
-    'Bombay': { lat: 19.0760, lng: 72.8777 },
     'Delhi': { lat: 28.7041, lng: 77.1025 },
-    'New Delhi': { lat: 28.6139, lng: 77.2090 },
-    'Bangalore': { lat: 12.9716, lng: 77.5946 },
-    'Bengaluru': { lat: 12.9716, lng: 77.5946 },
-    'Hyderabad': { lat: 17.3850, lng: 78.4867 },
-    'Chennai': { lat: 13.0827, lng: 80.2707 },
-    'Kolkata': { lat: 22.5726, lng: 88.3639 },
-    'Pune': { lat: 18.5204, lng: 73.8567 },
-    'Ahmedabad': { lat: 23.0225, lng: 72.5714 },
-    'Pakistan': { lat: 30.3753, lng: 69.3451 },
-    '巴基斯坦': { lat: 30.3753, lng: 69.3451 },
-    'Bangladesh': { lat: 23.6850, lng: 90.3563 },
-    '孟加拉国': { lat: 23.6850, lng: 90.3563 },
-    'Sri Lanka': { lat: 7.8731, lng: 80.7718 },
-    '斯里兰卡': { lat: 7.8731, lng: 80.7718 },
     
     // 欧洲 - 西欧
     'United Kingdom': { lat: 55.3781, lng: -3.4360 },
@@ -2089,35 +2064,24 @@ function initGlobe() {
   const validServers = serversData.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
   
   try {
-    globeInstance = Globe({
-      // 性能优化：启用 WebGL 抗锯齿但降低渲染质量
-      rendererConfig: {
-        antialias: true,
-        alpha: true,
-        powerPreference: 'high-performance' // 使用高性能模式
-      }
-    })
+    globeInstance = Globe()
       (document.getElementById('globe-container'))
     
     .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
     .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
     .backgroundColor('#000000')
     
-    // 性能优化：降低地球细节
-    .atmosphereColor('#4a90e2')
-    .atmosphereAltitude(0.15)
-    
     .pointsData(validServers)
     .pointLat(d => d.coords.lat)
     .pointLng(d => d.coords.lng)
     .pointColor(d => {
-      if (d.status === 'active') return '#10b981';
+      if (d.status === 'active') return '#10b981'; // 更鲜艳的绿色
       if (d.status === 'failed') return '#ef4444';
       return '#94a3b8';
     })
-    .pointAltitude(0.015)
-    .pointRadius(0.35)
-    .pointResolution(8) // 降低点的分辨率（12→8），提升性能
+    .pointAltitude(0.015) // 稍微提高一点
+    .pointRadius(0.35) // 稍微大一点，更明显
+    .pointResolution(12) // 增加点的分辨率，更圆滑
     
     .pointLabel(d => {
       const flag = getCountryFlag(d.country);
@@ -2217,54 +2181,46 @@ function initGlobe() {
       return 0.05;
     })
     .arcDashLength(d => {
+      // 访问者主连接 - 更长的虚线段（流光效果）
       if (d.type === 'visitor-primary') return 0.8;
+      // 超长距离 - 长虚线
       if (d.type === 'mesh-ultra-long') return 0.7;
       return 0.6;
     })
     .arcDashGap(d => {
+      // 访问者主连接 - 更小的间隙（更连续）
       if (d.type === 'visitor-primary') return 0.2;
+      // 超长距离 - 较小间隙
       if (d.type === 'mesh-ultra-long') return 0.3;
       return 0.4;
     })
     .arcDashAnimateTime(d => {
-      // 高优先级连接更快
-      if (d.type === 'visitor-primary') {
-        return d.priority === 'high' ? 1500 : 2000;
+      // 访问者主连接 - 更快的动画（流光效果）
+      if (d.type === 'visitor-primary') return 2000;
+      // 超长距离 - 最慢（强调距离感）
+      if (d.type === 'mesh-ultra-long') return 6000;
+      // 长距离 - 较慢
+      if (d.type === 'mesh-long') return 5000;
+      // 中距离 - 中等
       if (d.type === 'mesh-medium') return 4000;
+      // 近距离 - 较快
       return 3000;
     })
     .arcDashInitialGap(() => Math.random())
-    
-    // 性能优化：降低弧线分辨率
-    .arcCurveResolution(32) // 降低弧线曲线分辨率（默认64→32）
-    .arcCircularResolution(4) // 降低弧线圆形分辨率（默认6→4）
     
     .enablePointerInteraction(true);
   
   if (globeInstance && globeInstance.controls) {
     const controls = globeInstance.controls();
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.15; // 降低旋转速度（0.2→0.15）
+    controls.autoRotateSpeed = 0.2;
     controls.enableRotate = true;
     controls.enableZoom = true;
     controls.minDistance = 101;
     controls.maxDistance = 500;
     controls.enablePan = false;
     controls.enableDamping = true;
-    controls.dampingFactor = 0.1; // 增加阻尼（0.08→0.1），更平滑
-  }
-  
-  // 性能优化：设置渲染器参数
-  if (globeInstance && globeInstance.renderer) {
-    const renderer = globeInstance.renderer();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // 限制像素比，提升性能
-    renderer.shadowMap.enabled = false; // 禁用阴影，提升性能
-  }
-  
-  // 性能优化：使用 requestAnimationFrame 优化渲染循环
-  if (globeInstance && globeInstance.scene) {
-    const scene = globeInstance.scene();
-    scene.matrixAutoUpdate = false; // 禁用自动矩阵更新，手动控制
+    controls.dampingFactor = 0.08;
   }
   
     const container = document.getElementById('globe-container');
@@ -2281,32 +2237,14 @@ function initGlobe() {
   }
 }
 
-// 性能优化：缓存上次的数据，避免不必要的更新min(d.distance / 10000, 1);
-        return baseAlt + distanceFactor * 0.15;
-      }
-      // 枢纽连接 - 中高弧线
-      if (d.type === 'hub-ring') return 0.12;
-      if (d.type === 'hub-cross') return 0.20;
-      // 超长距离连接 - 最高的弧线
-      if (d.type === 'mesh-ultra-long') return 0.25;
-      // 长距离连接 - 较高
-      if (d.type === 'mesh-long') return 0.15;
-      // 中距离连接 - 中等
-      if (d.type === 'mesh-medium') return 0.08;
-      // 近距离连接 - 最低
-      return 0.05;
-    })
-  if (pointsChanged) {
-    globeInstance.pointsData(validServers);
-    lastPointsDataLength = validServers.length;
-  }
+function updateGlobeData() {
+  if (!globeInstance) return;
   
-  if (connectionsChanged) {
-    globeInstance.arcsData(connectionsData);
-    lastConnectionsDataLength = connectionsData.length;
-  }
+  const validServers = serversData.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
   
-  // htmlElementsData 通常不变，只在初始化时设置
+  globeInstance.pointsData(validServers);
+  globeInstance.htmlElementsData([]);
+  globeInstance.arcsData(connectionsData);
   
   updateStats(serversData, connectionsData);
 }
@@ -2369,31 +2307,18 @@ function toggleRotate() {
   button.textContent = controls.autoRotate ? '暂停旋转' : '继续旋转';
 }
 
-// 性能优化：使用 RAF 优化窗口调整
-let resizeRAF = null;
-
 function handleResize() {
   if (!globeInstance) return;
   
-  // 取消之前的 RAF
-  if (resizeRAF) {
-    cancelAnimationFrame(resizeRAF);
+  const container = document.getElementById('globe-container');
+  if (container) {
+    globeInstance.width(container.clientWidth);
+    globeInstance.height(container.clientHeight);
   }
-  
-  // 使用 RAF 确保在下一帧执行
-  resizeRAF = requestAnimationFrame(() => {
-    const container = document.getElementById('globe-container');
-    if (container && globeInstance) {
-      globeInstance.width(container.clientWidth);
-      globeInstance.height(container.clientHeight);
-    }
-    resizeRAF = null;
-  });
 }
 
 function handleVisibilityChange() {
   if (document.hidden) {
-    // 页面隐藏时，停止所有动画和更新
     if (globeInstance && globeInstance.controls) {
       globeInstance.controls().autoRotate = false;
     }
@@ -2401,23 +2326,14 @@ function handleVisibilityChange() {
       clearInterval(updateInterval);
       updateInterval = null;
     }
-    // 性能优化：暂停渲染循环
-    if (globeInstance && globeInstance.pauseAnimation) {
-      globeInstance.pauseAnimation();
-    }
   } else {
-    // 页面可见时，恢复动画和更新
     if (globeInstance && globeInstance.controls) {
       const button = document.getElementById('toggle-rotate');
       const shouldRotate = !button || button.textContent === '暂停旋转';
       globeInstance.controls().autoRotate = shouldRotate;
     }
     if (!updateInterval) {
-      updateInterval = setInterval(updateData, 60000); // 增加到60秒
-    }
-    // 性能优化：恢复渲染循环
-    if (globeInstance && globeInstance.resumeAnimation) {
-      globeInstance.resumeAnimation();
+      updateInterval = setInterval(updateData, 30000);
     }
   }
 }
@@ -2440,129 +2356,6 @@ function waitForGlobe() {
       }, 10000);
     }
   });
-}
-
-/**
- * 创意效果：动态颜色渐变
- */
-function getDynamicColor(baseColor, type) {
-  // 根据时间创建动态颜色效果
-  const time = Date.now() / 1000;
-  const phase = Math.sin(time * 0.5) * 0.5 + 0.5; // 0-1 之间波动
-  
-  if (type === 'visitor-primary') {
-    // 主连接：青色到金色，带脉冲效果
-    const intensity = 0.8 + phase * 0.2;
-    return [
-      \`rgba(6, 182, 212, \${intensity})\`,
-      \`rgba(251, 191, 36, \${intensity})\`
-    ];
-  }
-  
-  return baseColor;
-}
-
-/**
- * 创意效果：脉冲大小
- */
-function getPulseSize(baseSize) {
-  const time = Date.now() / 1000;
-  const pulse = Math.sin(time * 2) * 0.1 + 1; // 0.9-1.1 之间波动
-  return baseSize * pulse;
-}
-
-/**
- * 创意效果：粒子轨迹（使用 rings 模拟）
- */
-function addParticleTrails() {
-  if (!globeInstance || performanceMode === 'low') return;
-  
-  // 在主要连接上添加环形粒子效果
-  const particleData = connectionsData
-    .filter(c => c.type === 'visitor-primary')
-    .slice(0, 10) // 只在前10条主连接上添加
-    .map(c => ({
-      lat: c.endLat,
-      lng: c.endLng,
-      maxR: 2,
-      propagationSpeed: 2,
-      repeatPeriod: 1000
-    }));
-  
-  if (globeInstance.ringsData) {
-    globeInstance
-      .ringsData(particleData)
-      .ringColor(() => 'rgba(251, 191, 36, 0.8)')
-      .ringMaxRadius('maxR')
-      .ringPropagationSpeed('propagationSpeed')
-      .ringRepeatPeriod('repeatPeriod');
-  }
-}
-
-/**
- * 性能监控：检测 FPS 并自适应调整
- */
-function monitorPerformance() {
-  frameCount++;
-  const now = Date.now();
-  const elapsed = now - lastFPSCheck;
-  
-  // 每秒检查一次 FPS
-  if (elapsed >= 1000) {
-    currentFPS = Math.round((frameCount * 1000) / elapsed);
-    frameCount = 0;
-    lastFPSCheck = now;
-    
-    // 根据 FPS 自适应调整性能模式
-    if (currentFPS < 30 && performanceMode !== 'low') {
-      console.warn('⚠️ FPS 过低 (' + currentFPS + ')，切换到低性能模式');
-      performanceMode = 'low';
-      applyPerformanceMode();
-    } else if (currentFPS >= 30 && currentFPS < 50 && performanceMode === 'high') {
-      console.log('ℹ️ FPS 中等 (' + currentFPS + ')，切换到中性能模式');
-      performanceMode = 'medium';
-      applyPerformanceMode();
-    } else if (currentFPS >= 55 && performanceMode !== 'high') {
-      console.log('✅ FPS 良好 (' + currentFPS + ')，切换到高性能模式');
-      performanceMode = 'high';
-      applyPerformanceMode();
-    }
-  }
-  
-  // 继续监控
-  requestAnimationFrame(monitorPerformance);
-}
-
-/**
- * 应用性能模式
- */
-function applyPerformanceMode() {
-  if (!globeInstance || !globeInstance.controls) return;
-  
-  const controls = globeInstance.controls();
-  
-  if (performanceMode === 'low') {
-    // 低性能模式：降低所有动画和细节
-    controls.autoRotateSpeed = 0.1;
-    controls.dampingFactor = 0.15;
-    if (globeInstance.renderer) {
-      globeInstance.renderer().setPixelRatio(1); // 降低像素比
-    }
-  } else if (performanceMode === 'medium') {
-    // 中性能模式：平衡性能和效果
-    controls.autoRotateSpeed = 0.15;
-    controls.dampingFactor = 0.1;
-    if (globeInstance.renderer) {
-      globeInstance.renderer().setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-    }
-  } else {
-    // 高性能模式：最佳效果
-    controls.autoRotateSpeed = 0.2;
-    controls.dampingFactor = 0.08;
-    if (globeInstance.renderer) {
-      globeInstance.renderer().setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    }
-  }
 }
 
 (async function() {
@@ -2623,11 +2416,6 @@ function applyPerformanceMode() {
   
   // 增加更新间隔到60秒，减少性能消耗
   updateInterval = setInterval(updateData, 60000);
-  
-  // 启动性能监控
-  requestAnimationFrame(monitorPerformance);
-  
-  console.log('🚀 3D 地球已初始化，性能监控已启动');
 })();
 </script>
 </body></html>`;
