@@ -1797,7 +1797,7 @@ function calculateConnections(servers) {
     serversByRegion.get(region).push(server);
   });
   
-  console.log('🌍 区域分布:', Array.from(serversByRegion.entries()).map(([r, s]) => `${r}:${s.length}`).join(', '));
+  console.log('🌍 区域分布:', Array.from(serversByRegion.entries()).map(([r, s]) => r + ':' + s.length).join(', '));
   
   // 阶段1：区域内连接（局部密集连接）
   serversByRegion.forEach((regionServers, regionName) => {
