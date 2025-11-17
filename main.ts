@@ -3030,6 +3030,10 @@ document.querySelector('input[name="port"]').addEventListener('blur', function()
 app.get('/donate/globe', c => {
   return c.redirect('/donate');
 });
+
+/* ==================== /admin 管理后台 ==================== */
+app.get('/admin', c => {
+  const head = commonHead('VPS 管理后台');
   const html = `<!doctype html><html lang="zh-CN"><head>${head}
 <style>
 /* 3D地球页面专用样式 */
