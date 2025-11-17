@@ -2207,7 +2207,6 @@ async function getVisitorLocation() {
         if (data.loc) {
           const [lat, lng] = data.loc.split(',').map(Number);
           if (lat && lng) {
-            console.log('✅ 使用 ipinfo.io 获取位置:', data.city, data.country);
             return {
               lat: lat,
               lng: lng,
