@@ -25,6 +25,7 @@ interface VPSServer {
   note?: string;
   adminNote?: string;
   country: string;
+  region?: string;
   traffic: string;
   expiryDate: string;
   specs: string;
@@ -368,6 +369,7 @@ app.get('/api/user/donations', requireAuth, async c => {
       status: d.status,
       note: d.note,
       country: d.country,
+      region: d.region,
       traffic: d.traffic,
       expiryDate: d.expiryDate,
       specs: d.specs,
@@ -414,6 +416,7 @@ app.get('/api/leaderboard', async c => {
       rec.servers.push({
         ipLocation: v.ipLocation || '未知地区',
         country: v.country || '未填写',
+        region: v.region || '',
         traffic: v.traffic || '未填写',
         expiryDate: v.expiryDate || '未填写',
         specs: v.specs || '未填写',
@@ -444,6 +447,7 @@ app.post('/api/donate', requireAuth, async c => {
     password,
     privateKey,
     country,
+    region,
     traffic,
     expiryDate,
     specs,
@@ -509,6 +513,7 @@ app.post('/api/donate', requireAuth, async c => {
     password,
     privateKey,
     country,
+    region: region ? String(region).trim() : undefined,
     traffic,
     expiryDate,
     specs,
@@ -516,7 +521,7 @@ app.post('/api/donate', requireAuth, async c => {
     donatedBy: s.userId,
     donatedByUsername: s.username,
     donatedAt: now,
-    status: 'pending',
+    status: 'active',
     ipLocation: ipLoc,
     verifyStatus: 'verified',
     lastVerifyAt: now,
@@ -622,7 +627,7 @@ app.put('/api/admin/vps/:id/status', requireAdmin, async c => {
 
 app.put('/api/admin/vps/:id/notes', requireAdmin, async c => {
   const id = c.req.param('id');
-  const { note, adminNote, country, traffic, expiryDate, specs } = await c.req.json();
+  const { note, adminNote, country, region, traffic, expiryDate, specs } = await c.req.json();
 
   const r = await kv.get<VPSServer>(['vps', id]);
   if (!r.value) return c.json({ success: false, message: '不存在' }, 404);
@@ -630,6 +635,7 @@ app.put('/api/admin/vps/:id/notes', requireAdmin, async c => {
   if (note !== undefined) r.value.note = String(note);
   if (adminNote !== undefined) r.value.adminNote = String(adminNote);
   if (country !== undefined) r.value.country = String(country);
+  if (region !== undefined) r.value.region = String(region);
   if (traffic !== undefined) r.value.traffic = String(traffic);
   if (expiryDate !== undefined) r.value.expiryDate = String(expiryDate);
   if (specs !== undefined) r.value.specs = String(specs);
@@ -1155,7 +1161,7 @@ function renderLeaderboard(){
           '<div class="flex items-center gap-2.5 flex-1 min-w-0">'+
             '<span class="text-xl flex-shrink-0">🌍</span>'+
             '<div class="flex flex-col gap-1 min-w-0">'+
-              '<span class="font-semibold text-sm truncate">'+(srv.country||'未填写')+'</span>'+
+              '<span class="font-semibold text-sm truncate">'+(srv.country||'未填写')+(srv.region?' · '+srv.region:'')+'</span>'+
               (srv.ipLocation?'<span class="text-xs muted truncate">'+srv.ipLocation+'</span>':'')+
             '</div>'+
           '</div>'+
@@ -2100,6 +2106,9 @@ app.get('/donate/vps', c => {
   <!-- 中亚 -->
   <option value="🇰🇿 哈萨克斯坦">🇰🇿 哈萨克斯坦</option>
   <option value="🇺🇿 乌兹别克斯坦">🇺🇿 乌兹别克斯坦</option>
+  <option value="🇹🇲 土库曼斯坦">🇹🇲 土库曼斯坦</option>
+  <option value="🇹🇯 塔吉克斯坦">🇹🇯 塔吉克斯坦</option>
+  <option value="🇰🇬 吉尔吉斯斯坦">🇰🇬 吉尔吉斯斯坦</option>
 </optgroup>
 
 <!-- 🌏 中东 / 西亚 -->
@@ -2202,6 +2211,8 @@ app.get('/donate/vps', c => {
   <option value="🇱🇨 圣卢西亚">🇱🇨 圣卢西亚</option>
   <option value="🇰🇳 圣基茨和尼维斯">🇰🇳 圣基茨和尼维斯</option>
   <option value="🇻🇨 圣文森特和格林纳丁斯">🇻🇨 圣文森特和格林纳丁斯</option>
+  <option value="🇦🇬 安提瓜和巴布达">🇦🇬 安提瓜和巴布达</option>
+  <option value="🇩🇲 多米尼克">🇩🇲 多米尼克</option>
 </optgroup>
 
 <!-- 🌎 南美 -->
@@ -2218,6 +2229,7 @@ app.get('/donate/vps', c => {
   <option value="🇻🇪 委内瑞拉">🇻🇪 委内瑞拉</option>
   <option value="🇬🇾 圭亚那">🇬🇾 圭亚那</option>
   <option value="🇸🇷 苏里南">🇸🇷 苏里南</option>
+  <option value="🇬🇫 法属圭亚那">🇬🇫 法属圭亚那</option>
 </optgroup>
 
 <!-- 🌏 大洋洲 -->
@@ -2280,9 +2292,30 @@ app.get('/donate/vps', c => {
   <option value="🇪🇷 厄立特里亚">🇪🇷 厄立特里亚</option>
   <option value="🇩🇯 吉布提">🇩🇯 吉布提</option>
   <option value="🇸🇴 索马里">🇸🇴 索马里</option>
+  <option value="🇹🇩 乍得">🇹🇩 乍得</option>
+  <option value="🇧🇫 布基纳法索">🇧🇫 布基纳法索</option>
+  <option value="🇹🇬 多哥">🇹🇬 多哥</option>
+  <option value="🇧🇯 贝宁">🇧🇯 贝宁</option>
+  <option value="🇲🇷 毛里塔尼亚">🇲🇷 毛里塔尼亚</option>
+  <option value="🇬🇲 冈比亚">🇬🇲 冈比亚</option>
+  <option value="🇨🇻 佛得角">🇨🇻 佛得角</option>
+  <option value="🇰🇲 科摩罗">🇰🇲 科摩罗</option>
+  <option value="🇸🇿 斯威士兰">🇸🇿 斯威士兰</option>
+  <option value="🇱🇸 莱索托">🇱🇸 莱索托</option>
+  <option value="🇲🇼 马拉维">🇲🇼 马拉维</option>
 </optgroup>
 
             </select>
+          </div>
+          
+          <!-- 新增：可选的地区/城市字段 -->
+          <div>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>📍</span> 地区 / 城市 <span class="text-gray-400 text-xs">(可选)</span>
+            </label>
+            <input name="region" placeholder="示例：东京、洛杉矶、法兰克福等"
+                   class="w-full" />
+            <p class="text-xs text-gray-400 mt-1.5">可填写具体城市或地区，留空则自动检测</p>
           </div>
           <div>
             <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
@@ -2469,6 +2502,7 @@ async function submitDonate(e){
     password:fd.get('password')?.toString(),
     privateKey:fd.get('privateKey')?.toString(),
     country:fd.get('country')?.toString().trim(),
+    region:fd.get('region')?.toString().trim(),
     traffic:fd.get('traffic')?.toString().trim(),
     expiryDate:fd.get('expiryDate')?.toString().trim(),
     specs:fd.get('specs')?.toString().trim(),
@@ -2575,7 +2609,7 @@ async function loadDonations(){
         '<div class="'+scls(v.status)+' text-xs px-2.5 py-1 rounded-full font-semibold">'+stxt(v.status)+'</div></div>'+
         '<div class="text-sm mb-3">投喂者：<a href="'+p+'" target="_blank" class="underline hover:text-cyan-300 transition-colors">@'+uname+'</a></div>'+
         '<div class="grid grid-cols-2 gap-3 text-sm mt-3">'+
-          '<div class="flex items-center gap-2"><span class="opacity-60">🌍</span><span class="truncate">'+(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'')+'</span></div>'+
+          '<div class="flex items-center gap-2"><span class="opacity-60">🌍</span><span class="truncate">'+(v.country||'未填写')+(v.region?' · '+v.region:'')+(v.ipLocation?' · '+v.ipLocation:'')+'</span></div>'+
           '<div class="flex items-center gap-2"><span class="opacity-60">📊</span><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
           '<div class="flex items-center gap-2"><span class="opacity-60">📅</span><span class="truncate">'+(v.expiryDate||'未填写')+'</span></div>'+
         '</div>'+
@@ -3171,7 +3205,7 @@ function renderVpsList(){
     else if(statusFilter==='today') ok=v.donatedAt && isTodayLocal(v.donatedAt);
     if(userFilter) ok=ok && v.donatedByUsername===userFilter;
     if(kw){
-      const hay=[v.ip,String(v.port),v.donatedByUsername,v.country,v.traffic,v.specs,v.note,v.adminNote].join(' ').toLowerCase();
+      const hay=[v.ip,String(v.port),v.donatedByUsername,v.country,v.region,v.traffic,v.specs,v.note,v.adminNote].join(' ').toLowerCase();
       ok=ok && hay.includes(kw);
     }
     return ok;
@@ -3205,7 +3239,7 @@ function renderVpsList(){
         '</div>'+
         '<div class="flex items-center gap-2">'+
           '<span class="opacity-60">🌍</span>'+
-          '<span>'+(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'')+'</span>'+
+          '<span>'+(v.country||'未填写')+(v.region?' · '+v.region:'')+(v.ipLocation?' · '+v.ipLocation:'')+'</span>'+
         '</div>'+
         '<div class="grid grid-cols-2 gap-2">'+
           '<div class="flex items-center gap-1.5 panel border rounded-lg px-2 py-1.5"><span class="opacity-60">📊</span><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
@@ -3321,7 +3355,8 @@ function renderVpsList(){
         }
         else if(act==='edit'){
           modalEdit('编辑 VPS 信息（用户备注前台可见）',[
-            {key:'country',label:'国家/区域',value:v.country||'',placeholder:'如：HK - Hong Kong, Kowloon, Hong Kong'},
+            {key:'country',label:'国家/区域',value:v.country||'',placeholder:'如：🇭🇰 中国香港'},
+            {key:'region',label:'地区/城市',value:v.region||'',placeholder:'如：东京、洛杉矶、法兰克福（可选）'},
             {key:'traffic',label:'流量/带宽',value:v.traffic||'',placeholder:'如：400G/月 · 1Gbps'},
             {key:'expiryDate',label:'到期时间',value:v.expiryDate||'',placeholder:'YYYY-MM-DD'},
             {key:'specs',label:'配置描述',value:v.specs||'',placeholder:'如：1C1G · 10Gbps · 1T/月'},
@@ -5075,7 +5110,7 @@ function modalLoginInfo(v){
   }
 
   const flag=guessCountryFlag(v);
-  const ipLoc=(v.country||'未填写')+(v.ipLocation?' · '+v.ipLocation:'');
+  const ipLoc=(v.country||'未填写')+(v.region?' · '+v.region:'')+(v.ipLocation?' · '+v.ipLocation:'');
   addRow('IP 归属',(flag?flag+' ':'')+ipLoc,true,false);
 
   addRow('IP 地址', v.ip || '', true,false);
