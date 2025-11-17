@@ -819,7 +819,78 @@ app.post('/api/admin/verify-all', requireAdmin, async c => {
 /* ==================== /donate 榜单页 ==================== */
 app.get('/donate', c => {
   const head = commonHead('风萧萧公益机场 · VPS 投喂榜');
-  const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
+  const html = `<!doctype html><html lang="zh-CN"><head>${head}
+<script src="https://unpkg.com/globe.gl"></script>
+<style>
+  /* 3D地球容器样式 */
+  #globe-container {
+    width: 100%;
+    height: 500px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+    transition: height 0.3s ease;
+  }
+  
+  /* 最小化状态 */
+  #globe-container.minimized {
+    height: 200px;
+  }
+  
+  /* 地球控制按钮样式 */
+  #globe-controls {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  /* 统计信息样式 */
+  #globe-stats {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.875rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  
+  /* 移动端响应式样式 */
+  @media (max-width: 768px) {
+    #globe-container {
+      height: 300px;
+    }
+    
+    #globe-container.minimized {
+      height: 150px;
+    }
+    
+    #globe-stats {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    #globe-controls {
+      width: 100%;
+      justify-content: stretch;
+    }
+    
+    #globe-controls button {
+      flex: 1;
+    }
+  }
+  
+  /* 小屏幕优化 */
+  @media (max-width: 480px) {
+    #globe-container {
+      height: 250px;
+      border-radius: 4px;
+    }
+    
+    #globe-container.minimized {
+      height: 120px;
+    }
+  }
+</style>
+</head>
 <body class="min-h-screen" data-theme="dark">
 <div class="max-w-6xl mx-auto px-6 py-8 md:py-12">
 
@@ -864,6 +935,44 @@ app.get('/donate', c => {
       </div>
     </div>
   </header>
+
+  <!-- 3D地球可视化区域 -->
+  <section id="globe-section" class="mb-8 animate-in">
+    <div class="panel border p-6">
+      <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">🌍</span>
+          <div>
+            <h2 class="text-2xl font-bold leading-tight">全球服务器分布</h2>
+            <p class="text-sm muted mt-1">实时展示全球VPS节点位置与连接</p>
+          </div>
+        </div>
+        <div id="globe-controls" class="flex gap-2 flex-wrap">
+          <button id="toggle-size" class="btn-secondary text-sm">最小化</button>
+          <button id="toggle-rotate" class="btn-secondary text-sm">暂停旋转</button>
+        </div>
+      </div>
+      
+      <!-- 地球容器 -->
+      <div id="globe-container" style="width: 100%; height: 500px; border-radius: 8px; overflow: hidden; background: #000;"></div>
+      
+      <!-- 统计信息 -->
+      <div id="globe-stats" class="mt-4 flex gap-6 text-sm flex-wrap">
+        <div class="flex items-center gap-2">
+          <span class="muted">总服务器:</span>
+          <span id="total-servers" class="font-bold">0</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="muted">活跃:</span>
+          <span id="active-servers" class="font-bold text-green-500">0</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="muted">连接数:</span>
+          <span id="total-connections" class="font-bold text-blue-500">0</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section class="mb-8">
     <div class="flex items-center gap-3 mb-6">
@@ -1107,6 +1216,652 @@ async function loadLeaderboard(){
 }
 
 loadLeaderboard();
+
+// ==================== Globe.gl 初始化和渲染 ====================
+
+let globeInstance = null;
+let serversData = [];
+let connectionsData = [];
+let updateInterval = null;
+
+/**
+ * 地理编码函数：将位置字符串转换为经纬度坐标
+ */
+function geocode(location) {
+  const CITY_COORDS = {
+    'China': { lat: 35.8617, lng: 104.1954 },
+    'Japan': { lat: 36.2048, lng: 138.2529 },
+    'South Korea': { lat: 35.9078, lng: 127.7669 },
+    'India': { lat: 20.5937, lng: 78.9629 },
+    'Singapore': { lat: 1.3521, lng: 103.8198 },
+    'Thailand': { lat: 15.8700, lng: 100.9925 },
+    'Vietnam': { lat: 14.0583, lng: 108.2772 },
+    'Malaysia': { lat: 4.2105, lng: 101.9758 },
+    'Indonesia': { lat: -0.7893, lng: 113.9213 },
+    'Philippines': { lat: 12.8797, lng: 121.7740 },
+    'Taiwan': { lat: 23.6978, lng: 120.9605 },
+    'Hong Kong': { lat: 22.3193, lng: 114.1694 },
+    'Macau': { lat: 22.1987, lng: 113.5439 },
+    'United States': { lat: 37.0902, lng: -95.7129 },
+    'Canada': { lat: 56.1304, lng: -106.3468 },
+    'Mexico': { lat: 23.6345, lng: -102.5528 },
+    'United Kingdom': { lat: 55.3781, lng: -3.4360 },
+    'Germany': { lat: 51.1657, lng: 10.4515 },
+    'France': { lat: 46.2276, lng: 2.2137 },
+    'Netherlands': { lat: 52.1326, lng: 5.2913 },
+    'Russia': { lat: 61.5240, lng: 105.3188 },
+    'Italy': { lat: 41.8719, lng: 12.5674 },
+    'Spain': { lat: 40.4637, lng: -3.7492 },
+    'Poland': { lat: 51.9194, lng: 19.1451 },
+    'Sweden': { lat: 60.1282, lng: 18.6435 },
+    'Norway': { lat: 60.4720, lng: 8.4689 },
+    'Finland': { lat: 61.9241, lng: 25.7482 },
+    'Switzerland': { lat: 46.8182, lng: 8.2275 },
+    'Austria': { lat: 47.5162, lng: 14.5501 },
+    'Belgium': { lat: 50.5039, lng: 4.4699 },
+    'Denmark': { lat: 56.2639, lng: 9.5018 },
+    'Ireland': { lat: 53.4129, lng: -8.2439 },
+    'Portugal': { lat: 39.3999, lng: -8.2245 },
+    'Czech Republic': { lat: 49.8175, lng: 15.4730 },
+    'Greece': { lat: 39.0742, lng: 21.8243 },
+    'Romania': { lat: 45.9432, lng: 24.9668 },
+    'Ukraine': { lat: 48.3794, lng: 31.1656 },
+    'Australia': { lat: -25.2744, lng: 133.7751 },
+    'New Zealand': { lat: -40.9006, lng: 174.8860 },
+    'Brazil': { lat: -14.2350, lng: -51.9253 },
+    'Argentina': { lat: -38.4161, lng: -63.6167 },
+    'Chile': { lat: -35.6751, lng: -71.5430 },
+    'South Africa': { lat: -30.5595, lng: 22.9375 },
+    'Egypt': { lat: 26.8206, lng: 30.8025 },
+    'Turkey': { lat: 38.9637, lng: 35.2433 },
+    'Israel': { lat: 31.0461, lng: 34.8516 },
+    'United Arab Emirates': { lat: 23.4241, lng: 53.8478 },
+    'Saudi Arabia': { lat: 23.8859, lng: 45.0792 },
+    'Beijing': { lat: 39.9042, lng: 116.4074 },
+    'Shanghai': { lat: 31.2304, lng: 121.4737 },
+    'Guangzhou': { lat: 23.1291, lng: 113.2644 },
+    'Shenzhen': { lat: 22.5431, lng: 114.0579 },
+    'Chengdu': { lat: 30.5728, lng: 104.0668 },
+    'Hangzhou': { lat: 30.2741, lng: 120.1551 },
+    'Chongqing': { lat: 29.4316, lng: 106.9123 },
+    'Wuhan': { lat: 30.5928, lng: 114.3055 },
+    'Xi\\'an': { lat: 34.3416, lng: 108.9398 },
+    'Nanjing': { lat: 32.0603, lng: 118.7969 },
+    'New York': { lat: 40.7128, lng: -74.0060 },
+    'Los Angeles': { lat: 34.0522, lng: -118.2437 },
+    'Chicago': { lat: 41.8781, lng: -87.6298 },
+    'San Francisco': { lat: 37.7749, lng: -122.4194 },
+    'Seattle': { lat: 47.6062, lng: -122.3321 },
+    'Miami': { lat: 25.7617, lng: -80.1918 },
+    'Dallas': { lat: 32.7767, lng: -96.7970 },
+    'Boston': { lat: 42.3601, lng: -71.0589 },
+    'Washington': { lat: 38.9072, lng: -77.0369 },
+    'Atlanta': { lat: 33.7490, lng: -84.3880 },
+    'London': { lat: 51.5074, lng: -0.1278 },
+    'Paris': { lat: 48.8566, lng: 2.3522 },
+    'Berlin': { lat: 52.5200, lng: 13.4050 },
+    'Amsterdam': { lat: 52.3676, lng: 4.9041 },
+    'Frankfurt': { lat: 50.1109, lng: 8.6821 },
+    'Madrid': { lat: 40.4168, lng: -3.7038 },
+    'Rome': { lat: 41.9028, lng: 12.4964 },
+    'Milan': { lat: 45.4642, lng: 9.1900 },
+    'Munich': { lat: 48.1351, lng: 11.5820 },
+    'Stockholm': { lat: 59.3293, lng: 18.0686 },
+    'Copenhagen': { lat: 55.6761, lng: 12.5683 },
+    'Vienna': { lat: 48.2082, lng: 16.3738 },
+    'Zurich': { lat: 47.3769, lng: 8.5417 },
+    'Brussels': { lat: 50.8503, lng: 4.3517 },
+    'Dublin': { lat: 53.3498, lng: -6.2603 },
+    'Moscow': { lat: 55.7558, lng: 37.6173 },
+    'Warsaw': { lat: 52.2297, lng: 21.0122 },
+    'Tokyo': { lat: 35.6762, lng: 139.6503 },
+    'Osaka': { lat: 34.6937, lng: 135.5023 },
+    'Seoul': { lat: 37.5665, lng: 126.9780 },
+    'Mumbai': { lat: 19.0760, lng: 72.8777 },
+    'Delhi': { lat: 28.7041, lng: 77.1025 },
+    'Bangkok': { lat: 13.7563, lng: 100.5018 },
+    'Kuala Lumpur': { lat: 3.1390, lng: 101.6869 },
+    'Jakarta': { lat: -6.2088, lng: 106.8456 },
+    'Manila': { lat: 14.5995, lng: 120.9842 },
+    'Taipei': { lat: 25.0330, lng: 121.5654 },
+    'Dubai': { lat: 25.2048, lng: 55.2708 },
+    'Tel Aviv': { lat: 32.0853, lng: 34.7818 },
+    'Istanbul': { lat: 41.0082, lng: 28.9784 },
+    'Toronto': { lat: 43.6532, lng: -79.3832 },
+    'Vancouver': { lat: 49.2827, lng: -123.1207 },
+    'Montreal': { lat: 45.5017, lng: -73.5673 },
+    'Sydney': { lat: -33.8688, lng: 151.2093 },
+    'Melbourne': { lat: -37.8136, lng: 144.9631 },
+    'Brisbane': { lat: -27.4698, lng: 153.0251 },
+    'Perth': { lat: -31.9505, lng: 115.8605 },
+    'Auckland': { lat: -36.8485, lng: 174.7633 }
+  };
+
+  if (!location || typeof location !== 'string') {
+    return null;
+  }
+
+  const cleanLocation = location.trim();
+  if (!cleanLocation) {
+    return null;
+  }
+
+  if (CITY_COORDS[cleanLocation]) {
+    return CITY_COORDS[cleanLocation];
+  }
+
+  const parts = cleanLocation.split(',').map(s => s.trim()).filter(Boolean);
+
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i];
+    if (CITY_COORDS[part]) {
+      return CITY_COORDS[part];
+    }
+  }
+
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i];
+    const partLower = part.toLowerCase();
+    
+    for (const key in CITY_COORDS) {
+      const keyLower = key.toLowerCase();
+      if (keyLower.includes(partLower) || partLower.includes(keyLower)) {
+        return CITY_COORDS[key];
+      }
+    }
+  }
+
+  const cleanLower = cleanLocation.toLowerCase();
+  for (const key in CITY_COORDS) {
+    const keyLower = key.toLowerCase();
+    if (cleanLower.includes(keyLower) || keyLower.includes(cleanLower)) {
+      return CITY_COORDS[key];
+    }
+  }
+
+  return null;
+}
+
+function addJitter(coords, index) {
+  if (!coords) return null;
+  
+  const jitterAmount = 0.5;
+  const seed = index || 0;
+  const pseudoRandom1 = (Math.sin(seed * 12.9898) * 43758.5453) % 1;
+  const pseudoRandom2 = (Math.cos(seed * 78.233) * 43758.5453) % 1;
+  
+  return {
+    lat: coords.lat + (pseudoRandom1 - 0.5) * jitterAmount,
+    lng: coords.lng + (pseudoRandom2 - 0.5) * jitterAmount
+  };
+}
+
+function getCountryFlag(countryString) {
+  if (!countryString || typeof countryString !== 'string') {
+    return '🌍';
+  }
+  
+  const chars = Array.from(countryString);
+  
+  for (let i = 0; i < chars.length - 1; i++) {
+    const cp1 = chars[i].codePointAt(0);
+    const cp2 = chars[i + 1].codePointAt(0);
+    if (!cp1 || !cp2) continue;
+    
+    if (
+      cp1 >= 0x1f1e6 && cp1 <= 0x1f1ff &&
+      cp2 >= 0x1f1e6 && cp2 <= 0x1f1ff
+    ) {
+      return chars[i] + chars[i + 1];
+    }
+  }
+  
+  return '🌍';
+}
+
+function haversineDistance(coords1, coords2) {
+  const R = 6371;
+  const toRadians = (degrees) => degrees * Math.PI / 180;
+  const dLat = toRadians(coords2.lat - coords1.lat);
+  const dLng = toRadians(coords2.lng - coords1.lng);
+  const lat1Rad = toRadians(coords1.lat);
+  const lat2Rad = toRadians(coords2.lat);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function calculateConnections(servers) {
+  const connections = [];
+  
+  const validServers = servers.filter(s => 
+    s.coords && 
+    s.coords.lat !== null && 
+    s.coords.lng !== null && 
+    !(s.coords.lat === 0 && s.coords.lng === 0)
+  );
+  
+  if (validServers.length === 0) return [];
+  if (validServers.length === 1) return [];
+  
+  validServers.forEach(server => {
+    const distances = validServers
+      .filter(s => s.id !== server.id)
+      .map(s => ({
+        server: s,
+        distance: haversineDistance(server.coords, s.coords)
+      }))
+      .sort((a, b) => a.distance - b.distance);
+    
+    if (distances.length === 0) return;
+    
+    const nearbyConnections = Math.min(2, distances.length);
+    distances.slice(0, nearbyConnections).forEach(({ server: target }) => {
+      connections.push({
+        startLat: server.coords.lat,
+        startLng: server.coords.lng,
+        endLat: target.coords.lat,
+        endLng: target.coords.lng,
+        color: 'rgba(255, 215, 0, 0.5)',
+        type: 'nearby'
+      });
+    });
+    
+    const mediumDistance = distances.filter(d => d.distance > 1000 && d.distance < 5000);
+    if (mediumDistance.length > 0) {
+      const mediumCount = Math.min(2, mediumDistance.length);
+      mediumDistance.slice(0, mediumCount).forEach(({ server: target }) => {
+        connections.push({
+          startLat: server.coords.lat,
+          startLng: server.coords.lng,
+          endLat: target.coords.lat,
+          endLng: target.coords.lng,
+          color: 'rgba(255, 215, 0, 0.6)',
+          type: 'medium'
+        });
+      });
+    }
+    
+    const longRangeCount = Math.min(2, Math.floor(distances.length / 2));
+    if (longRangeCount > 0) {
+      distances.slice(-longRangeCount).forEach(({ server: target, distance }) => {
+        connections.push({
+          startLat: server.coords.lat,
+          startLng: server.coords.lng,
+          endLat: target.coords.lat,
+          endLng: target.coords.lng,
+          color: 'rgba(255, 215, 0, 0.8)',
+          type: 'submarine',
+          distance: distance
+        });
+      });
+    }
+  });
+  
+  const seen = new Set();
+  const uniqueConnections = connections.filter(conn => {
+    const key = [
+      conn.startLat.toFixed(4),
+      conn.startLng.toFixed(4),
+      conn.endLat.toFixed(4),
+      conn.endLng.toFixed(4)
+    ].sort().join(',');
+    
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  
+  return uniqueConnections;
+}
+
+function isWebGLAvailable() {
+  try {
+    const canvas = document.createElement('canvas');
+    return !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+  } catch(e) {
+    return false;
+  }
+}
+
+async function fetchServersFromLeaderboard() {
+  try {
+    const res = await fetch('/api/leaderboard', {
+      credentials: 'same-origin',
+      cache: 'no-store'
+    });
+    
+    if (!res.ok) {
+      return serversData;
+    }
+    
+    const data = await res.json();
+    if (!data.success || !data.data) {
+      return serversData;
+    }
+    
+    const allServers = [];
+    let serverIndex = 0;
+    
+    data.data.forEach(donor => {
+      if (!donor.servers || !Array.isArray(donor.servers)) {
+        return;
+      }
+      
+      donor.servers.forEach(server => {
+        const serverId = donor.username + '_' + serverIndex;
+        serverIndex++;
+        
+        const location = server.ipLocation || server.country || '未知地区';
+        let coords = geocode(location);
+        
+        if (coords) {
+          coords = addJitter(coords, serverIndex);
+        }
+        
+        allServers.push({
+          id: serverId,
+          coords: coords,
+          country: server.country || '未填写',
+          ipLocation: server.ipLocation || '未知地区',
+          status: server.status || 'active',
+          donatedByUsername: donor.username,
+          traffic: server.traffic,
+          expiryDate: server.expiryDate,
+          specs: server.specs,
+          note: server.note,
+          donatedAt: server.donatedAt
+        });
+      });
+    });
+    
+    return allServers;
+    
+  } catch (error) {
+    return serversData;
+  }
+}
+
+function updateStats(servers, connections) {
+  const total = servers.length;
+  const active = servers.filter(s => s.status === 'active').length;
+  
+  document.getElementById('total-servers').textContent = total;
+  document.getElementById('active-servers').textContent = active;
+  document.getElementById('total-connections').textContent = connections.length;
+}
+
+function initGlobe() {
+  if (typeof Globe === 'undefined') {
+    const container = document.getElementById('globe-container');
+    if (container) {
+      container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 20px;"><div><div style="font-size: 48px; margin-bottom: 16px;">⚠️</div><div style="font-size: 18px; margin-bottom: 8px;">3D地球库加载失败</div><div style="font-size: 14px; opacity: 0.7;">请刷新页面重试</div></div></div>';
+    }
+    return;
+  }
+  
+  if (!isWebGLAvailable()) {
+    const container = document.getElementById('globe-container');
+    if (container) {
+      container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 20px;"><div><div style="font-size: 48px; margin-bottom: 16px;">⚠️</div><div style="font-size: 18px; margin-bottom: 8px;">您的浏览器不支持WebGL</div><div style="font-size: 14px; opacity: 0.7;">请使用现代浏览器访问</div></div></div>';
+    }
+    return;
+  }
+  
+  const validServers = serversData.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
+  
+  try {
+    globeInstance = Globe()
+      (document.getElementById('globe-container'))
+    
+    .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+    .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+    .backgroundColor('#000000')
+    
+    .pointsData(validServers)
+    .pointLat(d => d.coords.lat)
+    .pointLng(d => d.coords.lng)
+    .pointColor(d => {
+      if (d.status === 'active') return '#4ade80';
+      if (d.status === 'failed') return '#ef4444';
+      return '#94a3b8';
+    })
+    .pointAltitude(0.01)
+    .pointRadius(0.3)
+    
+    .pointLabel(d => {
+      const flag = getCountryFlag(d.country);
+      const statusEmoji = d.status === 'active' ? '✅' : '❌';
+      const statusText = d.status === 'active' ? '运行中' : '离线';
+      
+      return \`
+        <div style="
+          background: rgba(0,0,0,0.9);
+          padding: 12px 16px;
+          border-radius: 8px;
+          color: white;
+          font-family: system-ui, -apple-system, sans-serif;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(255,255,255,0.1);
+        ">
+          <div style="font-size: 18px; margin-bottom: 8px; font-weight: 600;">
+            \${flag} @\${d.donatedByUsername}
+          </div>
+          <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">
+            📍 \${d.country}
+          </div>
+          <div style="font-size: 13px; opacity: 0.8; margin-bottom: 8px;">
+            \${d.ipLocation || '未知位置'}
+          </div>
+          <div style="font-size: 14px; font-weight: 500;">
+            状态: \${statusEmoji} \${statusText}
+          </div>
+        </div>
+      \`;
+    })
+    
+    .htmlElementsData([])
+    
+    .arcsData(connectionsData)
+    .arcStartLat(d => d.startLat)
+    .arcStartLng(d => d.startLng)
+    .arcEndLat(d => d.endLat)
+    .arcEndLng(d => d.endLng)
+    .arcColor(d => {
+      if (d.type === 'submarine') {
+        return ['rgba(255, 215, 0, 0.8)', 'rgba(255, 223, 0, 0.9)'];
+      } else if (d.type === 'medium') {
+        return ['rgba(255, 215, 0, 0.6)', 'rgba(255, 205, 0, 0.7)'];
+      } else if (d.type === 'nearby') {
+        return ['rgba(255, 215, 0, 0.5)', 'rgba(255, 200, 0, 0.6)'];
+      } else {
+        return ['rgba(255, 215, 0, 0.4)', 'rgba(255, 190, 0, 0.5)'];
+      }
+    })
+    .arcStroke(d => {
+      if (d.type === 'submarine') return 0.7;
+      if (d.type === 'medium') return 0.5;
+      return 0.4;
+    })
+    .arcAltitude(0.08)
+    .arcDashLength(0.5)
+    .arcDashGap(0.3)
+    .arcDashAnimateTime(3000)
+    .arcDashInitialGap(() => Math.random())
+    
+    .enablePointerInteraction(true);
+  
+  if (globeInstance && globeInstance.controls) {
+    const controls = globeInstance.controls();
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.3;
+    controls.enableRotate = true;
+    controls.enableZoom = true;
+    controls.minDistance = 101;
+    controls.maxDistance = 500;
+    controls.enablePan = false;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+  }
+  
+    const container = document.getElementById('globe-container');
+    if (container && globeInstance) {
+      globeInstance.width(container.clientWidth);
+      globeInstance.height(container.clientHeight);
+    }
+  } catch (error) {
+    const container = document.getElementById('globe-container');
+    if (container) {
+      const errorMsg = error && error.message ? error.message : '未知错误';
+      container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 20px;"><div><div style="font-size: 48px; margin-bottom: 16px;">⚠️</div><div style="font-size: 18px; margin-bottom: 8px;">3D地球初始化失败</div><div style="font-size: 14px; opacity: 0.7;">错误: ' + errorMsg + '</div></div></div>';
+    }
+  }
+}
+
+function updateGlobeData() {
+  if (!globeInstance) return;
+  
+  const validServers = serversData.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
+  
+  globeInstance.pointsData(validServers);
+  globeInstance.htmlElementsData([]);
+  globeInstance.arcsData(connectionsData);
+  
+  updateStats(serversData, connectionsData);
+}
+
+let lastConnectionsUpdate = 0;
+const CONNECTIONS_UPDATE_INTERVAL = 60000;
+
+async function updateData() {
+  const newServersData = await fetchServersFromLeaderboard();
+  
+  const serverCountChanged = newServersData.length !== serversData.length;
+  const now = Date.now();
+  const shouldUpdateConnections = serverCountChanged || (now - lastConnectionsUpdate > CONNECTIONS_UPDATE_INTERVAL);
+  
+  serversData = newServersData;
+  
+  if (shouldUpdateConnections) {
+    connectionsData = calculateConnections(serversData);
+    lastConnectionsUpdate = now;
+  }
+  
+  if (globeInstance) {
+    updateGlobeData();
+  }
+  
+  updateStats(serversData, connectionsData);
+}
+
+function toggleSize() {
+  const container = document.getElementById('globe-container');
+  const button = document.getElementById('toggle-size');
+  
+  if (!container || !button) return;
+  
+  if (container.classList.contains('minimized')) {
+    container.classList.remove('minimized');
+    button.textContent = '最小化';
+  } else {
+    container.classList.add('minimized');
+    button.textContent = '最大化';
+  }
+  
+  if (globeInstance) {
+    setTimeout(() => {
+      globeInstance.width(container.clientWidth);
+      globeInstance.height(container.clientHeight);
+    }, 300);
+  }
+}
+
+function toggleRotate() {
+  const button = document.getElementById('toggle-rotate');
+  
+  if (!globeInstance || !globeInstance.controls || !button) return;
+  
+  const controls = globeInstance.controls();
+  controls.autoRotate = !controls.autoRotate;
+  
+  button.textContent = controls.autoRotate ? '暂停旋转' : '继续旋转';
+}
+
+function handleResize() {
+  if (!globeInstance) return;
+  
+  const container = document.getElementById('globe-container');
+  if (container) {
+    globeInstance.width(container.clientWidth);
+    globeInstance.height(container.clientHeight);
+  }
+}
+
+function handleVisibilityChange() {
+  if (document.hidden) {
+    if (globeInstance && globeInstance.controls) {
+      globeInstance.controls().autoRotate = false;
+    }
+    if (updateInterval) {
+      clearInterval(updateInterval);
+      updateInterval = null;
+    }
+  } else {
+    if (globeInstance && globeInstance.controls) {
+      const button = document.getElementById('toggle-rotate');
+      const shouldRotate = !button || button.textContent === '暂停旋转';
+      globeInstance.controls().autoRotate = shouldRotate;
+    }
+    if (!updateInterval) {
+      updateInterval = setInterval(updateData, 30000);
+    }
+  }
+}
+
+function waitForGlobe() {
+  return new Promise((resolve) => {
+    if (typeof Globe !== 'undefined') {
+      resolve();
+    } else {
+      const checkInterval = setInterval(() => {
+        if (typeof Globe !== 'undefined') {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 100);
+      
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        resolve();
+      }, 10000);
+    }
+  });
+}
+
+(async function() {
+  await waitForGlobe();
+  await updateData();
+  initGlobe();
+  
+  const toggleSizeBtn = document.getElementById('toggle-size');
+  const toggleRotateBtn = document.getElementById('toggle-rotate');
+  
+  if (toggleSizeBtn) {
+    toggleSizeBtn.addEventListener('click', toggleSize);
+  }
+  
+  if (toggleRotateBtn) {
+    toggleRotateBtn.addEventListener('click', toggleRotate);
+  }
+  
+  window.addEventListener('resize', handleResize);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  
+  updateInterval = setInterval(updateData, 30000);
+})();
 </script>
 </body></html>`;
   return c.html(html);
