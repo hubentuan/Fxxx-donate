@@ -2064,24 +2064,35 @@ function initGlobe() {
   const validServers = serversData.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
   
   try {
-    globeInstance = Globe()
+    globeInstance = Globe({
+      // 性能优化：启用 WebGL 抗锯齿但降低渲染质量
+      rendererConfig: {
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance' // 使用高性能模式
+      }
+    })
       (document.getElementById('globe-container'))
     
     .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
     .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
     .backgroundColor('#000000')
     
+    // 性能优化：降低地球细节
+    .atmosphereColor('#4a90e2')
+    .atmosphereAltitude(0.15)
+    
     .pointsData(validServers)
     .pointLat(d => d.coords.lat)
     .pointLng(d => d.coords.lng)
     .pointColor(d => {
-      if (d.status === 'active') return '#10b981'; // 更鲜艳的绿色
+      if (d.status === 'active') return '#10b981';
       if (d.status === 'failed') return '#ef4444';
       return '#94a3b8';
     })
-    .pointAltitude(0.015) // 稍微提高一点
-    .pointRadius(0.35) // 稍微大一点，更明显
-    .pointResolution(12) // 增加点的分辨率，更圆滑
+    .pointAltitude(0.015)
+    .pointRadius(0.35)
+    .pointResolution(8) // 降低点的分辨率（12→8），提升性能
     
     .pointLabel(d => {
       const flag = getCountryFlag(d.country);
@@ -2181,46 +2192,54 @@ function initGlobe() {
       return 0.05;
     })
     .arcDashLength(d => {
-      // 访问者主连接 - 更长的虚线段（流光效果）
       if (d.type === 'visitor-primary') return 0.8;
-      // 超长距离 - 长虚线
       if (d.type === 'mesh-ultra-long') return 0.7;
       return 0.6;
     })
     .arcDashGap(d => {
-      // 访问者主连接 - 更小的间隙（更连续）
       if (d.type === 'visitor-primary') return 0.2;
-      // 超长距离 - 较小间隙
       if (d.type === 'mesh-ultra-long') return 0.3;
       return 0.4;
     })
     .arcDashAnimateTime(d => {
-      // 访问者主连接 - 更快的动画（流光效果）
       if (d.type === 'visitor-primary') return 2000;
-      // 超长距离 - 最慢（强调距离感）
       if (d.type === 'mesh-ultra-long') return 6000;
-      // 长距离 - 较慢
       if (d.type === 'mesh-long') return 5000;
-      // 中距离 - 中等
       if (d.type === 'mesh-medium') return 4000;
-      // 近距离 - 较快
       return 3000;
     })
     .arcDashInitialGap(() => Math.random())
+    
+    // 性能优化：降低弧线分辨率
+    .arcCurveResolution(32) // 降低弧线曲线分辨率（默认64→32）
+    .arcCircularResolution(4) // 降低弧线圆形分辨率（默认6→4）
     
     .enablePointerInteraction(true);
   
   if (globeInstance && globeInstance.controls) {
     const controls = globeInstance.controls();
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.2;
+    controls.autoRotateSpeed = 0.15; // 降低旋转速度（0.2→0.15）
     controls.enableRotate = true;
     controls.enableZoom = true;
     controls.minDistance = 101;
     controls.maxDistance = 500;
     controls.enablePan = false;
     controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
+    controls.dampingFactor = 0.1; // 增加阻尼（0.08→0.1），更平滑
+  }
+  
+  // 性能优化：设置渲染器参数
+  if (globeInstance && globeInstance.renderer) {
+    const renderer = globeInstance.renderer();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // 限制像素比，提升性能
+    renderer.shadowMap.enabled = false; // 禁用阴影，提升性能
+  }
+  
+  // 性能优化：使用 requestAnimationFrame 优化渲染循环
+  if (globeInstance && globeInstance.scene) {
+    const scene = globeInstance.scene();
+    scene.matrixAutoUpdate = false; // 禁用自动矩阵更新，手动控制
   }
   
     const container = document.getElementById('globe-container');
@@ -2237,14 +2256,30 @@ function initGlobe() {
   }
 }
 
+// 性能优化：缓存上次的数据，避免不必要的更新
+let lastPointsDataLength = 0;
+let lastConnectionsDataLength = 0;
+
 function updateGlobeData() {
   if (!globeInstance) return;
   
   const validServers = serversData.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
   
-  globeInstance.pointsData(validServers);
-  globeInstance.htmlElementsData([]);
-  globeInstance.arcsData(connectionsData);
+  // 性能优化：只在数据真正变化时才更新
+  const pointsChanged = validServers.length !== lastPointsDataLength;
+  const connectionsChanged = connectionsData.length !== lastConnectionsDataLength;
+  
+  if (pointsChanged) {
+    globeInstance.pointsData(validServers);
+    lastPointsDataLength = validServers.length;
+  }
+  
+  if (connectionsChanged) {
+    globeInstance.arcsData(connectionsData);
+    lastConnectionsDataLength = connectionsData.length;
+  }
+  
+  // htmlElementsData 通常不变，只在初始化时设置
   
   updateStats(serversData, connectionsData);
 }
