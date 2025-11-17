@@ -665,6 +665,87 @@ app.put('/api/admin/config/password', requireAdmin, async c => {
   return c.json({ success: true, message: '管理员密码已更新' });
 });
 
+/* VPS 配置编辑 */
+app.put('/api/admin/vps/:id/config', requireAdmin, async c => {
+  const id = c.req.param('id');
+  const { ip, port, username, authType, password, privateKey } = await c.req.json();
+
+  // 验证必填字段
+  if (!ip || !port || !username || !authType) {
+    return c.json({ success: false, message: 'IP / 端口 / 用户名 / 认证方式 必填' }, 400);
+  }
+
+  // 验证认证凭据
+  if (authType === 'password' && !password) {
+    return c.json({ success: false, message: '密码认证需要密码' }, 400);
+  }
+  if (authType === 'key' && !privateKey) {
+    return c.json({ success: false, message: '密钥认证需要私钥' }, 400);
+  }
+
+  // 清理并验证IP
+  const ipClean = String(ip).trim();
+  if (!isValidIP(ipClean)) {
+    return c.json({ success: false, message: 'IP 格式不正确' }, 400);
+  }
+
+  // 验证端口范围
+  const p = parseInt(String(port), 10);
+  if (p < 1 || p > 65535) {
+    return c.json({ success: false, message: '端口范围 1 ~ 65535' }, 400);
+  }
+
+  // 获取现有VPS记录
+  const r = await kv.get<VPSServer>(['vps', id]);
+  if (!r.value) {
+    return c.json({ success: false, message: 'VPS 不存在' }, 404);
+  }
+
+  // 更新配置字段
+  r.value.ip = ipClean;
+  r.value.port = p;
+  r.value.username = String(username).trim();
+  r.value.authType = authType as 'password' | 'key';
+  
+  if (authType === 'password') {
+    r.value.password = String(password);
+    r.value.privateKey = undefined;
+  } else {
+    r.value.privateKey = String(privateKey);
+    r.value.password = undefined;
+  }
+
+  // 测试连通性
+  const isConnectable = await portOK(ipClean, p);
+  r.value.lastVerifyAt = Date.now();
+
+  if (isConnectable) {
+    r.value.status = 'active';
+    r.value.verifyStatus = 'verified';
+    r.value.verifyErrorMsg = '';
+  } else {
+    r.value.verifyStatus = 'failed';
+    r.value.verifyErrorMsg = '无法连接到该服务器，请检查配置是否正确';
+  }
+
+  // 保存更新
+  await kv.set(['vps', id], r.value);
+
+  return c.json({
+    success: true,
+    message: isConnectable 
+      ? '✅ 配置更新成功，连通性验证通过' 
+      : '⚠️ 配置已保存，但无法连接到服务器，请检查配置',
+    data: {
+      id: r.value.id,
+      status: r.value.status,
+      verifyStatus: r.value.verifyStatus,
+      lastVerifyAt: r.value.lastVerifyAt,
+      verifyErrorMsg: r.value.verifyErrorMsg
+    }
+  });
+});
+
 /* 后端统计：今日新增按固定东八区日期判断 */
 app.get('/api/admin/stats', requireAdmin, async c => {
   try {
@@ -2696,7 +2777,7 @@ async function renderAdmin(root, name){
         '<div class="inline-flex items-center justify-center w-12 h-12 rounded-xl" style="background:#007AFF">'+
           '<span class="text-2xl">⚙️</span>'+
         '</div>'+
-        '<h1 class="grad-title text-3xl md:text-4xl font-bold">VPS 管理后台</h1>'+
+        '<h1 class="grad-title-animated text-3xl md:text-4xl font-bold">VPS 管理后台</h1>'+
       '</div>'+
       '<p class="text-sm muted flex items-center gap-2 ml-15">'+
         '<span class="text-base">🔒</span>'+
@@ -3147,7 +3228,8 @@ function renderVpsList(){
       '<div class="flex flex-wrap gap-2 pt-3 border-t">'+
         '<button class="btn-secondary text-xs" data-act="login" data-id="'+v.id+'">🔍 查看</button>'+
         '<button class="btn-secondary text-xs" data-act="verify" data-id="'+v.id+'">✅ 验证</button>'+
-        '<button class="btn-secondary text-xs" data-act="edit" data-id="'+v.id+'">✏️ 编辑</button>'+
+        '<button class="btn-secondary text-xs" data-act="editConfig" data-id="'+v.id+'">⚙️ 编辑配置</button>'+
+        '<button class="btn-secondary text-xs" data-act="edit" data-id="'+v.id+'">✏️ 编辑信息</button>'+
         '<button class="btn-danger text-xs" data-act="del" data-id="'+v.id+'">🗑️ 删除</button>'+
       '</div>';
 
@@ -3159,6 +3241,11 @@ function renderVpsList(){
 
         if(act==='login'){
           modalLoginInfo(v);
+          return;
+        }
+
+        if(act==='editConfig'){
+          openEditModal(id);
           return;
         }
 
@@ -3279,6 +3366,236 @@ function renderVpsList(){
     }
     list.appendChild(card);
   });
+}
+
+/* ==================== 配置编辑模态框相关函数 ==================== */
+
+function openEditModal(vpsId) {
+  const vps = allVpsList.find(v => v.id === vpsId);
+  if (!vps) {
+    toast('VPS不存在', 'error');
+    return;
+  }
+  
+  // 创建模态框
+  const modal = document.createElement('div');
+  modal.id = 'edit-config-modal';
+  modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
+  modal.style.background = 'rgba(0, 0, 0, 0.5)';
+  modal.style.backdropFilter = 'blur(4px)';
+  
+  modal.innerHTML = \`
+    <div class="panel border max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in">
+      <div class="sticky top-0 bg-inherit border-b px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">⚙️</span>
+          <h3 class="text-xl font-bold">编辑 VPS 配置</h3>
+        </div>
+        <button onclick="closeEditModal()" class="text-2xl hover:opacity-70 transition-opacity">✕</button>
+      </div>
+      
+      <form id="edit-config-form" class="p-6 space-y-5">
+        <div class="alert-warning text-sm leading-relaxed rounded-xl px-4 py-3">
+          ⚠️ 修改配置后将自动进行连通性测试。即使测试失败，配置也会被保存。
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-5">
+          <div>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>🌐</span> 服务器 IP <span class="text-red-400">*</span>
+            </label>
+            <input name="ip" required value="\${vps.ip}" placeholder="示例：203.0.113.8"
+                   class="w-full rounded-lg border px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>🔌</span> 端口 <span class="text-red-400">*</span>
+            </label>
+            <input name="port" required type="number" min="1" max="65535" value="\${vps.port}"
+                   class="w-full rounded-lg border px-3 py-2 text-sm" />
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-5">
+          <div>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>👤</span> 系统用户名 <span class="text-red-400">*</span>
+            </label>
+            <input name="username" required value="\${vps.username}" placeholder="示例：root"
+                   class="w-full rounded-lg border px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>🔐</span> 认证方式
+            </label>
+            <select name="authType" class="w-full rounded-lg border px-3 py-2 text-sm">
+              <option value="password" \${vps.authType === 'password' ? 'selected' : ''}>🔑 密码</option>
+              <option value="key" \${vps.authType === 'key' ? 'selected' : ''}>🗝️ SSH 私钥</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="edit-password-field" class="\${vps.authType === 'password' ? '' : 'hidden'}">
+          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+            <span>🔑</span> 密码
+          </label>
+          <input name="password" type="password" placeholder="留空则不修改密码"
+                 class="w-full rounded-lg border px-3 py-2 text-sm" />
+          <div class="help mt-1.5 flex items-center gap-1">
+            <span class="opacity-60">💡</span>当前已设置密码，留空则保持不变
+          </div>
+        </div>
+
+        <div id="edit-key-field" class="\${vps.authType === 'key' ? '' : 'hidden'}">
+          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+            <span>🗝️</span> SSH 私钥
+          </label>
+          <textarea name="privateKey" rows="4" placeholder="留空则不修改私钥"
+                    class="w-full rounded-lg border px-3 py-2 text-sm font-mono"></textarea>
+          <div class="help mt-1.5 flex items-center gap-1">
+            <span class="opacity-60">💡</span>当前已设置私钥，留空则保持不变
+          </div>
+        </div>
+
+        <div id="edit-message" class="text-sm min-h-[1.5rem] font-medium"></div>
+
+        <div class="flex gap-3 pt-4 border-t">
+          <button type="button" onclick="closeEditModal()" class="btn-secondary flex-1">
+            取消
+          </button>
+          <button type="submit" id="edit-submit-btn" class="btn-primary flex-1">
+            <span>💾</span> 保存配置
+          </button>
+        </div>
+      </form>
+    </div>
+  \`;
+  
+  document.body.appendChild(modal);
+  
+  // 设置VPS ID
+  const form = document.getElementById('edit-config-form');
+  form.dataset.vpsId = vpsId;
+  
+  // 绑定认证方式切换
+  const authTypeSelect = form.querySelector('select[name="authType"]');
+  authTypeSelect.addEventListener('change', function() {
+    toggleEditAuthFields(this.value);
+  });
+  
+  // 绑定表单提交
+  form.addEventListener('submit', submitConfigEdit);
+  
+  // 点击背景关闭
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeEditModal();
+    }
+  });
+}
+
+function closeEditModal() {
+  const modal = document.getElementById('edit-config-modal');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+function toggleEditAuthFields(authType) {
+  const passwordField = document.getElementById('edit-password-field');
+  const keyField = document.getElementById('edit-key-field');
+  
+  if (authType === 'password') {
+    passwordField.classList.remove('hidden');
+    keyField.classList.add('hidden');
+  } else {
+    passwordField.classList.add('hidden');
+    keyField.classList.remove('hidden');
+  }
+}
+
+async function submitConfigEdit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const vpsId = form.dataset.vpsId;
+  const msg = document.getElementById('edit-message');
+  const btn = document.getElementById('edit-submit-btn');
+  
+  msg.textContent = '';
+  msg.className = 'text-sm min-h-[1.5rem] font-medium';
+  
+  // 收集表单数据
+  const formData = new FormData(form);
+  const vps = allVpsList.find(v => v.id === vpsId);
+  
+  const payload = {
+    ip: formData.get('ip').toString().trim(),
+    port: Number(formData.get('port')),
+    username: formData.get('username').toString().trim(),
+    authType: formData.get('authType').toString(),
+    password: formData.get('password').toString() || vps.password,
+    privateKey: formData.get('privateKey').toString() || vps.privateKey
+  };
+  
+  // 显示加载状态
+  btn.disabled = true;
+  const originalHTML = btn.innerHTML;
+  btn.innerHTML = '<span>保存中...</span>';
+  
+  try {
+    const res = await fetch(\`/api/admin/vps/\${vpsId}/config\`, {
+      method: 'PUT',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    const json = await res.json();
+    
+    if (res.ok && json.success) {
+      msg.textContent = json.message || '配置更新成功';
+      msg.className = 'text-sm min-h-[1.5rem] font-medium text-green-500';
+      toast(json.message || '配置更新成功', 'success');
+      
+      // 更新本地数据
+      if (vps && json.data) {
+        vps.ip = payload.ip;
+        vps.port = payload.port;
+        vps.username = payload.username;
+        vps.authType = payload.authType;
+        if (payload.authType === 'password') {
+          vps.password = payload.password;
+          vps.privateKey = undefined;
+        } else {
+          vps.privateKey = payload.privateKey;
+          vps.password = undefined;
+        }
+        vps.status = json.data.status;
+        vps.verifyStatus = json.data.verifyStatus;
+        vps.lastVerifyAt = json.data.lastVerifyAt;
+        vps.verifyErrorMsg = json.data.verifyErrorMsg || '';
+      }
+      
+      // 延迟关闭模态框并刷新列表
+      setTimeout(() => {
+        closeEditModal();
+        renderVpsList();
+        loadStats();
+      }, 1500);
+    } else {
+      msg.textContent = json.message || '配置更新失败';
+      msg.className = 'text-sm min-h-[1.5rem] font-medium text-red-400';
+      toast(json.message || '配置更新失败', 'error');
+    }
+  } catch (err) {
+    console.error('Config update error:', err);
+    msg.textContent = '更新异常';
+    msg.className = 'text-sm min-h-[1.5rem] font-medium text-red-400';
+    toast('更新异常', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+  }
 }
 
 checkAdmin();
@@ -3628,6 +3945,44 @@ body[data-theme="dark"] .muted{
 body[data-theme="dark"] .grad-title{
   color: #f5f5f7;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ========== 流光渐变标题 ========== */
+.grad-title-animated {
+  background: linear-gradient(
+    90deg,
+    #8b5cf6 0%,
+    #a855f7 25%,
+    #d946ef 50%,
+    #a855f7 75%,
+    #8b5cf6 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientFlow 3s linear infinite;
+  font-weight: 700;
+}
+
+@keyframes gradientFlow {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+body[data-theme="dark"] .grad-title-animated {
+  background: linear-gradient(
+    90deg,
+    #a78bfa 0%,
+    #c084fc 25%,
+    #e879f9 50%,
+    #c084fc 75%,
+    #a78bfa 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* ========== Toast 通知 ========== */
