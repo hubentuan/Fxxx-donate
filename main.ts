@@ -2227,9 +2227,9 @@ function initGlobe() {
       return 0.4;
     })
     .arcDashAnimateTime(d => {
-      if (d.type === 'visitor-primary') return 2000;
-      if (d.type === 'mesh-ultra-long') return 6000;
-      if (d.type === 'mesh-long') return 5000;
+      // 高优先级连接更快
+      if (d.type === 'visitor-primary') {
+        return d.priority === 'high' ? 1500 : 2000;
       if (d.type === 'mesh-medium') return 4000;
       return 3000;
     })
@@ -2281,19 +2281,21 @@ function initGlobe() {
   }
 }
 
-// 性能优化：缓存上次的数据，避免不必要的更新
-let lastPointsDataLength = 0;
-let lastConnectionsDataLength = 0;
-
-function updateGlobeData() {
-  if (!globeInstance) return;
-  
-  const validServers = serversData.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
-  
-  // 性能优化：只在数据真正变化时才更新
-  const pointsChanged = validServers.length !== lastPointsDataLength;
-  const connectionsChanged = connectionsData.length !== lastConnectionsDataLength;
-  
+// 性能优化：缓存上次的数据，避免不必要的更新min(d.distance / 10000, 1);
+        return baseAlt + distanceFactor * 0.15;
+      }
+      // 枢纽连接 - 中高弧线
+      if (d.type === 'hub-ring') return 0.12;
+      if (d.type === 'hub-cross') return 0.20;
+      // 超长距离连接 - 最高的弧线
+      if (d.type === 'mesh-ultra-long') return 0.25;
+      // 长距离连接 - 较高
+      if (d.type === 'mesh-long') return 0.15;
+      // 中距离连接 - 中等
+      if (d.type === 'mesh-medium') return 0.08;
+      // 近距离连接 - 最低
+      return 0.05;
+    })
   if (pointsChanged) {
     globeInstance.pointsData(validServers);
     lastPointsDataLength = validServers.length;
