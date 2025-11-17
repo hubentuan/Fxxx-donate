@@ -2167,7 +2167,6 @@ async function getVisitorLocation() {
       if (res.ok) {
         const data = await res.json();
         if (data.latitude && data.longitude) {
-          console.log('✅ 使用 ipapi.co 获取位置:', data.city, data.country_name);
           return {
             lat: data.latitude,
             lng: data.longitude,
@@ -2187,7 +2186,6 @@ async function getVisitorLocation() {
       if (res.ok) {
         const data = await res.json();
         if (data.status === 'success' && data.lat && data.lon) {
-          console.log('✅ 使用 ip-api.com 获取位置:', data.city, data.country);
           return {
             lat: data.lat,
             lng: data.lon,
