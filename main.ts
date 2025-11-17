@@ -1702,15 +1702,15 @@ function haversineDistance(coords1, coords2) {
 }
 
 /**
- * 基于真实网络拓扑的连接算法
- * 模拟跨海光缆和国际骨干网络的连接模式
- * @param {Array} servers - 服务器数组，每个服务器需要包含 id 和 coords 属性
- * @returns {Array} 连接弧线数据数组，每个连接包含起点和终点的经纬度坐标
+ * 简化的连接算法：确保所有节点都有连接
+ * 使用混合策略：区域内密集连接 + 跨区域长距离连接
+ * @param {Array} servers - 服务器数组
+ * @returns {Array} 连接弧线数据数组
  */
 function calculateConnections(servers) {
   const connections = [];
   
-  // 过滤掉没有有效坐标的服务器
+  // 过滤有效服务器
   const validServers = servers.filter(s => 
     s.coords && 
     s.coords.lat !== null && 
@@ -1721,233 +1721,65 @@ function calculateConnections(servers) {
   if (validServers.length === 0) return [];
   if (validServers.length === 1) return [];
   
-  // 定义主要的网络区域和跨海光缆路由（扩大范围以覆盖更多节点）
-  const regions = {
-    // 亚太地区
-    asia: { lat: 35, lng: 105, range: 50 },      // 扩大中国区域范围
-    japan: { lat: 36, lng: 138, range: 25 },     // 扩大日本区域范围
-    singapore: { lat: 1.35, lng: 103.8, range: 30 },
-    
-    // 北美地区
-    usWest: { lat: 34, lng: -118, range: 30 },   // 扩大美西范围，中心点移到洛杉矶
-    usEast: { lat: 40, lng: -74, range: 25 },    // 扩大美东范围
-    usCentral: { lat: 41, lng: -87, range: 20 },
-    
-    // 欧洲地区
-    europe: { lat: 51, lng: 10, range: 40 },     // 扩大欧洲范围
-    uk: { lat: 51.5, lng: -0.1, range: 15 },
-    
-    // 其他
-    australia: { lat: -33, lng: 151, range: 30 }
-  };
+  console.log('🌐 开始计算连接，共', validServers.length, '个节点');
   
-  // 定义跨海光缆路由（模拟真实的海底光缆）
-  const submarineCables = [
-    // 跨太平洋光缆
-    { from: 'usWest', to: 'japan', priority: 'high' },      // 美西-日本
-    { from: 'usWest', to: 'singapore', priority: 'medium' }, // 美西-新加坡
-    { from: 'usWest', to: 'asia', priority: 'medium' },      // 美西-中国
-    
-    // 跨大西洋光缆
-    { from: 'usEast', to: 'uk', priority: 'high' },          // 美东-英国
-    { from: 'usEast', to: 'europe', priority: 'high' },      // 美东-欧洲
-    
-    // 美国内陆
-    { from: 'usWest', to: 'usEast', priority: 'high' },      // 美西-美东
-    { from: 'usWest', to: 'usCentral', priority: 'medium' }, // 美西-美中
-    { from: 'usCentral', to: 'usEast', priority: 'medium' }, // 美中-美东
-    
-    // 亚太区域
-    { from: 'japan', to: 'asia', priority: 'high' },         // 日本-中国
-    { from: 'japan', to: 'singapore', priority: 'medium' },  // 日本-新加坡
-    { from: 'asia', to: 'singapore', priority: 'medium' },   // 中国-新加坡
-    
-    // 欧亚光缆
-    { from: 'europe', to: 'asia', priority: 'low' },         // 欧洲-亚洲
-    { from: 'uk', to: 'asia', priority: 'low' },             // 英国-亚洲
-    
-    // 其他
-    { from: 'singapore', to: 'australia', priority: 'medium' }, // 新加坡-澳洲
-    { from: 'usWest', to: 'australia', priority: 'low' }        // 美西-澳洲
-  ];
+  // 策略1：每个节点连接最近的 3-5 个邻居（局部密集连接）
+  const nearbyCount = validServers.length > 50 ? 3 : validServers.length > 20 ? 4 : 5;
   
-  // 判断服务器属于哪个区域
-  function getRegion(server) {
-    let closestRegion = null;
-    let minDistance = Infinity;
-    
-    for (const [name, region] of Object.entries(regions)) {
-      const distance = haversineDistance(server.coords, { lat: region.lat, lng: region.lng });
-      if (distance < region.range && distance < minDistance) {
-        minDistance = distance;
-        closestRegion = name;
-      }
-    }
-    
-    return closestRegion;
-  }
-  
-  // 为每个服务器分配区域
-  const serversByRegion = new Map();
   validServers.forEach(server => {
-    const region = getRegion(server) || 'other';
-    if (!serversByRegion.has(region)) {
-      serversByRegion.set(region, []);
-    }
-    serversByRegion.get(region).push(server);
+    const distances = validServers
+      .filter(s => s.id !== server.id)
+      .map(s => ({
+        server: s,
+        distance: haversineDistance(server.coords, s.coords)
+      }))
+      .sort((a, b) => a.distance - b.distance);
     
-    // 调试：输出每个服务器的区域分配
-    console.log('📍', server.donatedByUsername, '→', region, 
-                '(', server.coords.lat.toFixed(2), ',', server.coords.lng.toFixed(2), ')');
-  });
-  
-  console.log('🌍 区域分布:', Array.from(serversByRegion.entries()).map(([r, s]) => r + ':' + s.length).join(', '));
-  
-  // 阶段1：区域内连接（局部密集连接）
-  serversByRegion.forEach((regionServers, regionName) => {
-    if (regionServers.length <= 1) return;
-    
-    // 区域内全连接或最近邻
-    if (regionServers.length <= 5) {
-      // 小区域：全连接
-      for (let i = 0; i < regionServers.length; i++) {
-        for (let j = i + 1; j < regionServers.length; j++) {
-          connections.push({
-            startLat: regionServers[i].coords.lat,
-            startLng: regionServers[i].coords.lng,
-            endLat: regionServers[j].coords.lat,
-            endLng: regionServers[j].coords.lng,
-            color: 'rgba(255, 215, 0, 0.6)',  // 金色
-            type: 'regional'
-          });
-        }
-      }
-    } else {
-      // 大区域：每个节点连接最近的3个
-      regionServers.forEach(server => {
-        const distances = regionServers
-          .filter(s => s.id !== server.id)
-          .map(s => ({
-            server: s,
-            distance: haversineDistance(server.coords, s.coords)
-          }))
-          .sort((a, b) => a.distance - b.distance)
-          .slice(0, 3);
-        
-        distances.forEach(({ server: target }) => {
-          connections.push({
-            startLat: server.coords.lat,
-            startLng: server.coords.lng,
-            endLat: target.coords.lat,
-            endLng: target.coords.lng,
-            color: 'rgba(255, 215, 0, 0.6)',  // 金色
-            type: 'regional'
-          });
-        });
+    // 连接最近的邻居
+    distances.slice(0, nearbyCount).forEach(({ server: target }) => {
+      connections.push({
+        startLat: server.coords.lat,
+        startLng: server.coords.lng,
+        endLat: target.coords.lat,
+        endLng: target.coords.lng,
+        color: 'rgba(255, 215, 0, 0.6)',
+        type: 'nearby'
       });
-    }
+    });
   });
   
-  // 阶段2：跨区域连接（模拟海底光缆）
-  submarineCables.forEach(cable => {
-    const fromServers = serversByRegion.get(cable.from) || [];
-    const toServers = serversByRegion.get(cable.to) || [];
+  console.log('✅ 阶段1完成：最近邻连接', connections.length, '条');
+  
+  // 策略2：添加跨区域长距离连接（模拟跨海光缆）
+  // 为每个节点额外连接 1-2 个远距离节点
+  const longRangeCount = validServers.length > 50 ? 1 : 2;
+  
+  validServers.forEach(server => {
+    const distances = validServers
+      .filter(s => s.id !== server.id)
+      .map(s => ({
+        server: s,
+        distance: haversineDistance(server.coords, s.coords)
+      }))
+      .sort((a, b) => b.distance - a.distance); // 按距离降序排列
     
-    if (fromServers.length === 0 || toServers.length === 0) return;
-    
-    // 根据优先级决定连接数量
-    let connectionCount = 1;
-    if (cable.priority === 'high') connectionCount = Math.min(3, fromServers.length, toServers.length);
-    else if (cable.priority === 'medium') connectionCount = Math.min(2, fromServers.length, toServers.length);
-    
-    // 选择每个区域中最"中心"的节点进行连接
-    const fromCandidates = fromServers.slice(0, connectionCount);
-    const toCandidates = toServers.slice(0, connectionCount);
-    
-    fromCandidates.forEach(fromServer => {
-      toCandidates.forEach(toServer => {
+    // 连接最远的节点（跨海光缆）
+    distances.slice(0, longRangeCount).forEach(({ server: target, distance }) => {
+      // 只有距离超过 3000km 才算跨海光缆
+      if (distance > 3000) {
         connections.push({
-          startLat: fromServer.coords.lat,
-          startLng: fromServer.coords.lng,
-          endLat: toServer.coords.lat,
-          endLng: toServer.coords.lng,
-          color: 'rgba(255, 215, 0, 0.7)',  // 金色，稍微亮一点
+          startLat: server.coords.lat,
+          startLng: server.coords.lng,
+          endLat: target.coords.lat,
+          endLng: target.coords.lng,
+          color: 'rgba(255, 215, 0, 0.8)',
           type: 'submarine'
         });
-      });
-    });
-  });
-  
-  // 阶段3：处理"other"区域的节点（未分配到任何区域的节点）
-  const otherServers = serversByRegion.get('other') || [];
-  if (otherServers.length > 0) {
-    console.log('⚠️ 发现', otherServers.length, '个未分配区域的节点，为它们创建连接...');
-    otherServers.forEach(server => {
-      // 连接到最近的5个节点（确保连通性）
-      const distances = validServers
-        .filter(s => s.id !== server.id)
-        .map(s => ({
-          server: s,
-          distance: haversineDistance(server.coords, s.coords)
-        }))
-        .sort((a, b) => a.distance - b.distance)
-        .slice(0, 5);
-      
-      distances.forEach(({ server: target }) => {
-        connections.push({
-          startLat: server.coords.lat,
-          startLng: server.coords.lng,
-          endLat: target.coords.lat,
-          endLng: target.coords.lng,
-          color: 'rgba(255, 215, 0, 0.6)',  // 金色
-          type: 'other'
-        });
-      });
-    });
-  }
-  
-  // 阶段4：最终检查 - 确保所有节点都有至少一个连接
-  const connectedNodes = new Set();
-  connections.forEach(conn => {
-    // 通过坐标找到对应的服务器（使用更宽松的精度）
-    validServers.forEach(s => {
-      if (Math.abs(s.coords.lat - conn.startLat) < 0.1 && Math.abs(s.coords.lng - conn.startLng) < 0.1) {
-        connectedNodes.add(s.id);
-      }
-      if (Math.abs(s.coords.lat - conn.endLat) < 0.1 && Math.abs(s.coords.lng - conn.endLng) < 0.1) {
-        connectedNodes.add(s.id);
       }
     });
   });
   
-  // 为仍然孤立的节点添加连接
-  const isolatedNodes = validServers.filter(s => !connectedNodes.has(s.id));
-  if (isolatedNodes.length > 0) {
-    console.log('🔧 发现', isolatedNodes.length, '个孤立节点，强制创建连接...');
-    isolatedNodes.forEach(server => {
-      // 连接到最近的5个节点
-      const distances = validServers
-        .filter(s => s.id !== server.id)
-        .map(s => ({
-          server: s,
-          distance: haversineDistance(server.coords, s.coords)
-        }))
-        .sort((a, b) => a.distance - b.distance)
-        .slice(0, 5);
-      
-      distances.forEach(({ server: target }) => {
-        connections.push({
-          startLat: server.coords.lat,
-          startLng: server.coords.lng,
-          endLat: target.coords.lat,
-          endLng: target.coords.lng,
-          color: 'rgba(255, 215, 0, 0.7)',  // 金色
-          type: 'emergency'
-        });
-        connectedNodes.add(server.id);
-      });
-    });
-  }
+  console.log('✅ 阶段2完成：跨海光缆连接', connections.filter(c => c.type === 'submarine').length, '条');
   
   // 去重
   const seen = new Set();
@@ -1964,12 +1796,32 @@ function calculateConnections(servers) {
     return true;
   });
   
-  console.log('✅ 网络拓扑模式:', validServers.length, '节点,', uniqueConnections.length, '连接');
-  console.log('   区域内连接:', uniqueConnections.filter(c => c.type === 'regional').length);
+  // 统计每个节点的连接数
+  const nodeConnections = new Map();
+  validServers.forEach(s => nodeConnections.set(s.id, 0));
+  
+  uniqueConnections.forEach(conn => {
+    validServers.forEach(s => {
+      if (Math.abs(s.coords.lat - conn.startLat) < 0.01 && Math.abs(s.coords.lng - conn.startLng) < 0.01) {
+        nodeConnections.set(s.id, nodeConnections.get(s.id) + 1);
+      }
+      if (Math.abs(s.coords.lat - conn.endLat) < 0.01 && Math.abs(s.coords.lng - conn.endLng) < 0.01) {
+        nodeConnections.set(s.id, nodeConnections.get(s.id) + 1);
+      }
+    });
+  });
+  
+  // 检查孤立节点
+  const isolatedNodes = validServers.filter(s => nodeConnections.get(s.id) === 0);
+  console.log('📊 统计：');
+  console.log('   总连接数:', uniqueConnections.length);
+  console.log('   最近邻:', uniqueConnections.filter(c => c.type === 'nearby').length);
   console.log('   跨海光缆:', uniqueConnections.filter(c => c.type === 'submarine').length);
-  console.log('   其他区域:', uniqueConnections.filter(c => c.type === 'other').length);
-  console.log('   应急连接:', uniqueConnections.filter(c => c.type === 'emergency').length);
-  console.log('   已连接节点数:', connectedNodes.size, '/', validServers.length);
+  console.log('   孤立节点:', isolatedNodes.length);
+  
+  if (isolatedNodes.length > 0) {
+    console.log('⚠️ 孤立节点列表:', isolatedNodes.map(s => s.donatedByUsername).join(', '));
+  }
   
   return uniqueConnections;
 }
