@@ -2367,8 +2367,14 @@ function initGlobe() {
       } else if (d.type === 'regional') {
         // 区域内连接：柔和金色
         return ['rgba(255, 215, 0, 0.5)', 'rgba(255, 200, 0, 0.6)'];
+      } else if (d.type === 'other') {
+        // 其他区域连接：中等金色
+        return ['rgba(255, 215, 0, 0.6)', 'rgba(255, 205, 0, 0.7)'];
+      } else if (d.type === 'emergency') {
+        // 应急连接：亮金色
+        return ['rgba(255, 215, 0, 0.7)', 'rgba(255, 210, 0, 0.8)'];
       } else {
-        // 备用连接：淡金色
+        // 默认：淡金色
         return ['rgba(255, 215, 0, 0.4)', 'rgba(255, 190, 0, 0.5)'];
       }
     })
