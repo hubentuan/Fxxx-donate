@@ -1230,7 +1230,7 @@ app.post('/api/admin/verify-all', requireAdmin, async c => {
 app.get('/donate', c => {
   const head = commonHead('风萧萧公益机场 · VPS 投喂榜');
   const html = `<!doctype html><html lang="zh-CN"><head>${head}
-<script src="//unpkg.com/globe.gl"></script>
+<script src="https://unpkg.com/globe.gl"></script>
 <style>
   /* 3D地球容器样式 */
   #globe-container {
@@ -2041,10 +2041,22 @@ function updateStats(servers, connections) {
  * 配置地球纹理、节点、弧线和交互控制
  */
 function initGlobe() {
+  // 检查Globe.gl库是否加载
+  if (typeof Globe === 'undefined') {
+    console.error('Globe.gl库未加载');
+    const container = document.getElementById('globe-container');
+    if (container) {
+      container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 20px;"><div><div style="font-size: 48px; margin-bottom: 16px;">⚠️</div><div style="font-size: 18px; margin-bottom: 8px;">3D地球库加载失败</div><div style="font-size: 14px; opacity: 0.7;">请刷新页面重试</div></div></div>';
+    }
+    return;
+  }
+  
   // 检查WebGL支持
   if (!isWebGLAvailable()) {
     const container = document.getElementById('globe-container');
-    container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 20px;"><div><div style="font-size: 48px; margin-bottom: 16px;">⚠️</div><div style="font-size: 18px; margin-bottom: 8px;">您的浏览器不支持WebGL</div><div style="font-size: 14px; opacity: 0.7;">请使用现代浏览器（Chrome、Firefox、Safari、Edge）访问</div></div></div>';
+    if (container) {
+      container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 20px;"><div><div style="font-size: 48px; margin-bottom: 16px;">⚠️</div><div style="font-size: 18px; margin-bottom: 8px;">您的浏览器不支持WebGL</div><div style="font-size: 14px; opacity: 0.7;">请使用现代浏览器（Chrome、Firefox、Safari、Edge）访问</div></div></div>';
+    }
     return;
   }
   
@@ -2052,8 +2064,9 @@ function initGlobe() {
   const validServers = serversData.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
   
   // 创建Globe实例
-  globeInstance = Globe()
-    (document.getElementById('globe-container'))
+  try {
+    globeInstance = Globe()
+      (document.getElementById('globe-container'))
     
     // ===== 地球纹理配置 =====
     .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
@@ -2176,16 +2189,23 @@ function initGlobe() {
     controls.enablePan = false;
   }
   
-  // 设置容器宽度和高度自适应
-  const container = document.getElementById('globe-container');
-  if (container && globeInstance) {
-    globeInstance.width(container.clientWidth);
-    globeInstance.height(container.clientHeight);
+    // 设置容器宽度和高度自适应
+    const container = document.getElementById('globe-container');
+    if (container && globeInstance) {
+      globeInstance.width(container.clientWidth);
+      globeInstance.height(container.clientHeight);
+    }
+    
+    console.log('Globe.gl 初始化完成');
+    console.log('- 服务器节点数:', validServers.length);
+    console.log('- 连接弧线数:', connectionsData.length);
+  } catch (error) {
+    console.error('Globe初始化失败:', error);
+    const container = document.getElementById('globe-container');
+    if (container) {
+      container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 20px;"><div><div style="font-size: 48px; margin-bottom: 16px;">⚠️</div><div style="font-size: 18px; margin-bottom: 8px;">3D地球初始化失败</div><div style="font-size: 14px; opacity: 0.7;">错误: ' + error.message + '</div></div></div>';
+    }
   }
-  
-  console.log('Globe.gl 初始化完成');
-  console.log('- 服务器节点数:', validServers.length);
-  console.log('- 连接弧线数:', connectionsData.length);
 }
 
 /**
@@ -2303,7 +2323,32 @@ function handleVisibilityChange() {
 }
 
 // ===== 初始化Globe =====
+// 等待Globe.gl库加载完成
+function waitForGlobe() {
+  return new Promise((resolve) => {
+    if (typeof Globe !== 'undefined') {
+      resolve();
+    } else {
+      const checkInterval = setInterval(() => {
+        if (typeof Globe !== 'undefined') {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 100);
+      
+      // 10秒超时
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        resolve();
+      }, 10000);
+    }
+  });
+}
+
 (async function() {
+  // 等待Globe.gl库加载
+  await waitForGlobe();
+  
   // 初始加载数据
   await updateData();
   
