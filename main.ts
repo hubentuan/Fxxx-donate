@@ -2982,290 +2982,27 @@ app.get('/donate/vps', c => {
 <script>
 console.log('=== 投喂页面 JavaScript 开始执行 ===');
 
-/* ==================== 错误HTML生成辅助函数 ==================== */
-
-/**
- * 生成登录验证失败时的错误HTML
- * 根据不同的错误类型提供相应的错误消息和恢复操作
- * @param {Object} loginResult - 登录验证结果对象
- * @param {string} loginResult.error - 错误类型（UNAUTHORIZED, TIMEOUT, NETWORK_ERROR等）
- * @param {string} loginResult.message - 错误消息
- * @returns {string} 错误页面的HTML字符串
- */
-function generateErrorHTML(loginResult) {
-  let html = '<div class="text-center py-12">';
-  html += '<div class="text-6xl mb-4">⚠️</div>';
-  html += '<div class="text-xl font-bold mb-3">' + (loginResult.message || '发生错误') + '</div>';
-  
-  // 根据错误类型提供不同的操作按钮
-  if (loginResult.error === 'UNAUTHORIZED') {
-    // 未登录或会话过期
-    html += '<div class="text-sm muted mb-4">您的登录状态已失效，请重新登录</div>';
-    html += '<a href="/oauth/login?redirect=' + encodeURIComponent('/donate/vps') + '" class="btn-primary mt-4">去登录</a>';
-  } else if (loginResult.error === 'TIMEOUT' || loginResult.error === 'NETWORK_ERROR') {
-    // 超时或网络错误
-    html += '<div class="text-sm muted mb-4">请检查网络连接后重试</div>';
-    html += '<button onclick="location.reload()" class="btn-primary mt-4">重试</button>';
-  } else if (loginResult.error === 'MAX_ATTEMPTS') {
-    // 达到最大重试次数
-    html += '<div class="text-sm muted mb-4">请稍后再试</div>';
-    html += '<a href="/donate" class="btn-primary mt-4">返回首页</a>';
-  } else {
-    // 其他错误
-    html += '<div class="text-sm muted mb-4">请尝试刷新页面或返回首页</div>';
-    html += '<div class="flex gap-3 justify-center mt-4">';
-    html += '<a href="/donate" class="btn-secondary">返回首页</a>';
-    html += '<button onclick="location.reload()" class="btn-primary">重试</button>';
-    html += '</div>';
-  }
-  
-  html += '</div>';
-  return html;
-}
-
-/**
- * 生成投喂记录加载失败时的错误HTML
- * 处理各种HTTP错误、超时错误和网络错误
- * @param {number|null} statusCode - HTTP状态码（如果有）
- * @param {string|null} message - 错误消息（如果有）
- * @param {Error|null} error - 错误对象（如果有）
- * @returns {string} 错误页面的HTML字符串
- */
-function generateLoadErrorHTML(statusCode, message, error) {
-  let html = '<div class="text-center py-12">';
-  html += '<div class="text-6xl mb-4">⚠️</div>';
-  
-  if (statusCode === 401) {
-    // 未登录或会话过期
-    html += '<div class="text-xl font-bold mb-3">登录已过期</div>';
-    html += '<div class="text-sm muted mb-4">您的登录状态已失效，请重新登录</div>';
-    html += '<a href="/oauth/login?redirect=' + encodeURIComponent('/donate/vps') + '" class="btn-primary">重新登录</a>';
-  } else if (statusCode === 403) {
-    // 权限不足
-    html += '<div class="text-xl font-bold mb-3">权限不足</div>';
-    html += '<div class="text-sm muted mb-4">您没有权限访问此资源</div>';
-    html += '<a href="/donate" class="btn-primary">返回首页</a>';
-  } else if (statusCode && statusCode >= 500) {
-    // 服务器错误
-    html += '<div class="text-xl font-bold mb-3">服务器错误</div>';
-    html += '<div class="text-sm muted mb-4">服务器遇到问题 (错误码: ' + statusCode + ')</div>';
-    html += '<button onclick="loadDonations()" class="btn-primary">重试</button>';
-  } else if (error && error.name === 'AbortError') {
-    // 超时错误
-    html += '<div class="text-xl font-bold mb-3">加载超时</div>';
-    html += '<div class="text-sm muted mb-4">请求超过15秒未响应，请检查网络连接</div>';
-    html += '<button onclick="loadDonations()" class="btn-primary">重试</button>';
-  } else if (error && error instanceof TypeError) {
-    // 网络错误
-    html += '<div class="text-xl font-bold mb-3">网络连接失败</div>';
-    html += '<div class="text-sm muted mb-4">无法连接到服务器，请检查网络</div>';
-    html += '<button onclick="loadDonations()" class="btn-primary">重试</button>';
-  } else if (statusCode) {
-    // 其他HTTP错误
-    html += '<div class="text-xl font-bold mb-3">加载失败</div>';
-    html += '<div class="text-sm muted mb-4">HTTP错误: ' + statusCode + '</div>';
-    html += '<div class="flex gap-3 justify-center">';
-    html += '<a href="/donate" class="btn-secondary">返回首页</a>';
-    html += '<button onclick="loadDonations()" class="btn-primary">重试</button>';
-    html += '</div>';
-  } else {
-    // 其他未知错误
-    html += '<div class="text-xl font-bold mb-3">加载失败</div>';
-    html += '<div class="text-sm muted mb-4">' + (message || '未知错误') + '</div>';
-    html += '<button onclick="loadDonations()" class="btn-primary">重试</button>';
-  }
-  
-  html += '</div>';
-  return html;
-}
-
-// 防止无限重定向的标记
-let loginCheckAttempts = 0;
-const MAX_LOGIN_ATTEMPTS = 3;
-
-/**
- * 改进的会话验证函数
- * 不再自动重定向，而是返回验证结果供调用方处理
- * @returns {Promise<{success: boolean, user?: object, error?: string}>}
- */
 async function ensureLogin(){
-  // 防止无限重试
-  if (loginCheckAttempts >= MAX_LOGIN_ATTEMPTS) {
-    console.error('登录检查失败次数过多，停止重试');
-    return {
-      success: false,
-      error: 'MAX_ATTEMPTS',
-      message: '登录验证失败次数过多，请返回首页重试'
-    };
-  }
-  
-  loginCheckAttempts++;
-  
   try{
-    // 添加超时控制，防止请求卡住
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
-    
-    console.log('[ensureLogin] 尝试验证会话 (第 ' + loginCheckAttempts + ' 次)');
-    
-    const res = await fetch('/api/user/info',{
-      credentials:'same-origin',
-      cache:'no-store',
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    
-    // 处理HTTP错误状态
-    if(!res.ok){ 
-      console.error('[ensureLogin] HTTP错误:', res.status);
-      
-      if (res.status === 401) {
-        // 未登录或会话过期
-        return {
-          success: false,
-          error: 'UNAUTHORIZED',
-          message: '您还未登录或登录已过期，请重新登录',
-          statusCode: 401
-        };
-      } else if (res.status === 403) {
-        // 权限不足
-        return {
-          success: false,
-          error: 'FORBIDDEN',
-          message: '权限不足，无法访问',
-          statusCode: 403
-        };
-      } else {
-        // 其他HTTP错误
-        return {
-          success: false,
-          error: 'HTTP_ERROR',
-          message: '服务器错误 (HTTP ' + res.status + ')',
-          statusCode: res.status
-        };
-      }
-    }
-    
-    // 解析响应
-    const j = await res.json();
-    
-    if(!j.success){ 
-      console.error('[ensureLogin] API返回失败:', j.message);
-      return {
-        success: false,
-        error: 'API_ERROR',
-        message: j.message || '登录验证失败'
-      };
-    }
-    
-    // 登录成功，重置计数器
-    loginCheckAttempts = 0;
-    console.log('[ensureLogin] 验证成功:', j.data.username);
-    
-    // 更新用户信息显示
-    const u = j.data;
-    const p = 'https://linux.do/u/' + encodeURIComponent(u.username);
+    const res = await fetch('/api/user/info',{credentials:'same-origin',cache:'no-store'});
+    if(!res.ok){ location.href='/donate'; return; }
+    const j=await res.json();
+    if(!j.success){ location.href='/donate'; return; }
+    const u=j.data;
+    const p='https://linux.do/u/'+encodeURIComponent(u.username);
     const infoEl = document.getElementById('user-info');
     if(infoEl) {
-      infoEl.innerHTML = '投喂者：<a href="'+p+'" target="_blank" class="underline text-sky-300">@'+u.username+'</a> · 已投喂 '+(u.donationCount||0)+' 台';
+      infoEl.innerHTML='投喂者：<a href="'+p+'" target="_blank" class="underline text-sky-300">@'+u.username+'</a> · 已投喂 '+(u.donationCount||0)+' 台';
     }
-    
-    return {
-      success: true,
-      user: {
-        username: u.username,
-        donationCount: u.donationCount || 0,
-        avatarUrl: u.avatarUrl,
-        isAdmin: u.isAdmin
-      }
-    };
-    
   }catch(err){
-    console.error('[ensureLogin] 异常:', err);
-    
-    // 处理超时错误
-    if (err.name === 'AbortError') {
-      return {
-        success: false,
-        error: 'TIMEOUT',
-        message: '登录验证超时，请检查网络连接'
-      };
-    }
-    
-    // 处理网络错误
-    if (err instanceof TypeError) {
-      return {
-        success: false,
-        error: 'NETWORK_ERROR',
-        message: '网络连接失败，请检查网络'
-      };
-    }
-    
-    // 其他未知错误
-    return {
-      success: false,
-      error: 'UNKNOWN_ERROR',
-      message: '发生未知错误: ' + (err.message || err)
-    };
+    console.error('Login check error:', err);
+    location.href='/donate';
   }
 }
 
-/**
- * 退出登录函数
- * 必须在页面初始化之前定义，因为HTML中的按钮会调用它
- * 添加了视觉反馈、超时控制和详细的错误处理
- */
 async function logout(){
-  console.log('[logout] 开始退出登录流程');
-  
-  // 获取触发事件的按钮元素
-  const btn = event?.target;
-  
-  // 禁用按钮并显示加载状态
-  if (btn && btn instanceof HTMLButtonElement) {
-    btn.disabled = true;
-    const originalHTML = btn.innerHTML;
-    btn.innerHTML = '<span>退出中...</span>';
-    btn.classList.add('loading');
-    
-    console.log('[logout] 按钮已禁用，显示加载状态');
-  }
-  
-  try {
-    // 添加超时控制（5秒）
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      console.warn('[logout] 退出登录请求超时');
-      controller.abort();
-    }, 5000);
-    
-    await fetch('/api/logout', {
-      credentials: 'same-origin',
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    console.log('[logout] ✅ 退出登录API调用成功');
-    
-  } catch(err) {
-    // 即使退出登录请求失败，也继续清除本地状态并重定向
-    if (err.name === 'AbortError') {
-      console.error('[logout] 退出登录请求超时，但仍将继续重定向');
-    } else {
-      console.error('[logout] 退出登录请求失败:', err.message || err, '但仍将继续重定向');
-    }
-  }
-  
-  // 清除登录检查计数器
-  loginCheckAttempts = 0;
-  console.log('[logout] 已清除登录检查计数器');
-  
-  // 延迟重定向，确保请求完成
-  setTimeout(() => {
-    console.log('[logout] 重定向到首页');
-    location.href = '/donate';
-  }, 300);
+  try{ await fetch('/api/logout',{credentials:'same-origin'});}catch{}
+  location.href='/donate';
 }
 
 /**
@@ -3410,79 +3147,38 @@ async function submitDonate(e){
   }
 }
 
-/**
- * 改进的投喂记录加载函数
- * 添加详细的错误分类和处理
- */
 async function loadDonations(){
-  console.log('[loadDonations] 函数被调用');
-  
   const box=document.getElementById('donations-list');
-  if (!box) {
-    console.error('[loadDonations] 错误：找不到 donations-list 元素');
-    return;
-  }
-  
-  // 显示简单的加载状态指示器（替代骨架屏）
-  console.log('[loadDonations] 显示加载状态');
-  box.innerHTML='<div class="text-center py-12">'+
-    '<div class="flex flex-col items-center gap-3">'+
-    '<div class="loading-spinner"></div>'+
-    '<div class="muted text-sm">正在加载投喂记录...</div>'+
+  box.innerHTML='<div class="space-y-4">'+
+    '<div class="skeleton-card"><div class="skeleton-header">'+
+    '<div class="skeleton skeleton-avatar"></div>'+
+    '<div class="flex-1"><div class="skeleton skeleton-title"></div></div>'+
+    '</div>'+
+    '<div class="skeleton skeleton-text"></div>'+
+    '<div class="skeleton skeleton-text medium"></div>'+
+    '<div class="skeleton skeleton-text short"></div>'+
+    '</div>'+
+    '<div class="skeleton-card"><div class="skeleton-header">'+
+    '<div class="skeleton skeleton-avatar"></div>'+
+    '<div class="flex-1"><div class="skeleton skeleton-title"></div></div>'+
+    '</div>'+
+    '<div class="skeleton skeleton-text"></div>'+
+    '<div class="skeleton skeleton-text medium"></div>'+
     '</div>'+
     '</div>';
   
   try{
-    // 添加超时控制
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      console.warn('[loadDonations] 请求超时，中止请求');
-      controller.abort();
-    }, 15000); // 15秒超时
-    
-    console.log('[loadDonations] 开始发送 fetch 请求到 /api/user/donations');
-    
-    const r=await fetch('/api/user/donations',{
-      credentials:'same-origin',
-      cache:'no-store',
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    
-    // 详细的HTTP错误处理
-    if(!r.ok){
-      console.error('[loadDonations] HTTP错误:', r.status);
-      
-      // 使用辅助函数生成错误HTML
-      box.innerHTML = generateLoadErrorHTML(r.status, null, null);
-      return;
-    }
-    
-    // 解析响应
+    const r=await fetch('/api/user/donations',{credentials:'same-origin',cache:'no-store'});
     const j=await r.json();
-    
-    if(!j.success){
-      console.error('[loadDonations] API返回失败:', j.message);
-      
-      // 使用辅助函数生成错误HTML
-      box.innerHTML = generateLoadErrorHTML(null, j.message, null);
+    if(!r.ok||!j.success){
+      box.innerHTML='<div class="text-red-400 text-sm">加载失败</div>';
       return;
     }
-    
-    // 成功获取数据
     const data=j.data||[];
-    
     if(!data.length){
-      box.innerHTML='<div class="text-center py-12">'+
-        '<div class="text-6xl mb-4">📦</div>'+
-        '<div class="text-xl font-bold mb-3">还没有投喂记录</div>'+
-        '<div class="text-sm muted">先在左侧提交一台VPS吧～</div>'+
-        '</div>';
+      box.innerHTML='<div class="muted text-sm py-8 text-center">还没有投喂记录，先在左侧提交一台吧～</div>';
       return;
     }
-    
-    // 渲染投喂记录
     box.innerHTML='';
     data.forEach(v=>{
       const div=document.createElement('div');
@@ -3504,82 +3200,16 @@ async function loadDonations(){
         (t?'<div class="text-xs muted mt-3 flex items-center gap-2"><span class="opacity-60">🕐</span><span>'+t+'</span></div>':'');
       box.appendChild(div);
     });
-    
-    console.log('[loadDonations] ✅ 投喂记录加载成功:', data.length, '条');
-    
   }catch(err){
-    console.error('[loadDonations] 异常:', err);
-    
-    // 使用辅助函数生成错误HTML
-    box.innerHTML = generateLoadErrorHTML(null, null, err);
+    console.error('Load donations error:', err);
+    box.innerHTML='<div class="text-red-400 text-sm">加载异常</div>';
   }
 }
 
-// 初始化页面
-(async function initPage() {
-  console.log('[initPage] 页面初始化开始');
-  
-  try {
-    // 0. 立即显示加载状态，避免用户看到空白区域
-    const box = document.getElementById('donations-list');
-    if (!box) {
-      console.error('[initPage] 错误：找不到 donations-list 元素');
-      return;
-    }
-    
-    console.log('[initPage] 显示初始加载状态');
-    box.innerHTML = '<div class="text-center py-12">' +
-      '<div class="flex flex-col items-center gap-3">' +
-      '<div class="loading-spinner"></div>' +
-      '<div class="muted text-sm">正在验证登录状态...</div>' +
-      '</div>' +
-      '</div>';
-    
-    // 1. 验证登录状态
-    console.log('[initPage] 开始调用 ensureLogin()');
-    const loginResult = await ensureLogin();
-    console.log('[initPage] ensureLogin() 返回结果:', loginResult);
-    
-    // 2. 根据登录结果处理
-    if (!loginResult.success) {
-      console.error('[initPage] 登录验证失败:', loginResult.error);
-      
-      // 使用辅助函数生成错误HTML
-      box.innerHTML = generateErrorHTML(loginResult);
-      
-      // 登录失败时不继续加载数据
-      console.log('[initPage] 由于登录验证失败，停止初始化');
-      return;
-    }
-    
-    // 3. 登录成功，继续初始化
-    console.log('[initPage] 登录验证成功，开始加载数据');
-    bindAuthType();
-    
-    const form = document.getElementById('donate-form');
-    if (form) {
-      form.addEventListener('submit', submitDonate);
-      console.log('[initPage] 表单事件监听器已绑定');
-    } else {
-      console.error('[initPage] 警告：找不到 donate-form 元素');
-    }
-    
-    console.log('[initPage] 开始调用 loadDonations()');
-    loadDonations();
-    
-  } catch (error) {
-    console.error('[initPage] 初始化过程中发生异常:', error);
-    const box = document.getElementById('donations-list');
-    if (box) {
-      box.innerHTML = '<div class="text-center py-12">' +
-        '<div class="text-6xl mb-4">⚠️</div>' +
-        '<div class="text-xl font-bold mb-3">初始化失败</div>' +
-        '<div class="text-sm muted mb-4">页面初始化时发生错误: ' + (error.message || error) + '</div>' +
-        '<button onclick="location.reload()" class="btn-primary">重新加载</button>' +
-        '</div>';
-    }
-  }
-})();
+ensureLogin();
+bindAuthType();
+document.getElementById('donate-form').addEventListener('submit', submitDonate);
+loadDonations();
 
 // 实时IP格式验证（等待DOM加载完成）
 const ipInput = document.querySelector('input[name="ip"]');
