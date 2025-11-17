@@ -998,6 +998,10 @@ app.get('/donate', c => {
     background: linear-gradient(90deg, rgba(168, 85, 247, 0.6), rgba(192, 132, 252, 0.7));
   }
   
+  .legend-ultra-long {
+    background: linear-gradient(90deg, rgba(236, 72, 153, 0.7), rgba(244, 114, 182, 0.8));
+  }
+  
   /* 移动端响应式样式 */
   @media (max-width: 768px) {
     #globe-container {
@@ -1129,15 +1133,19 @@ app.get('/donate', c => {
         </div>
         <div class="legend-item">
           <div class="legend-line legend-nearby"></div>
-          <span class="muted">近距离互联</span>
+          <span class="muted">近距离互联（&lt;3000km）</span>
         </div>
         <div class="legend-item">
           <div class="legend-line legend-medium"></div>
-          <span class="muted">跨区域互联</span>
+          <span class="muted">跨区域互联（1000-5000km）</span>
         </div>
         <div class="legend-item">
           <div class="legend-line legend-long"></div>
-          <span class="muted">跨大洲互联</span>
+          <span class="muted">跨大洲互联（5000-8000km）</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line legend-ultra-long"></div>
+          <span class="muted">全球对角线（&gt;8000km）</span>
         </div>
       </div>
     </div>
@@ -1636,9 +1644,29 @@ async function getVisitorLocation() {
 }
 
 /**
- * 计算连接线 - 新算法：星联网络
+ * 提取国家/地区标识
+ */
+function getRegionKey(server) {
+  // 从国家字符串中提取主要标识（去除 emoji）
+  const country = server.country || '';
+  const region = server.ipLocation || '';
+  
+  // 提取国家名称（去除 emoji）
+  const countryName = country.replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '').trim();
+  
+  // 如果有详细位置信息，使用第一部分作为区域标识
+  if (region) {
+    const parts = region.split(',').map(s => s.trim());
+    return parts[0] || countryName;
+  }
+  
+  return countryName;
+}
+
+/**
+ * 计算连接线 - 优化算法：避免同区域自连接
  * 1. 从访问者位置向所有服务器发射主连接（流光效果）
- * 2. 服务器之间形成网状互联（渐变效果）
+ * 2. 服务器之间形成全球化网状互联（避免同区域扎堆）
  */
 function calculateConnections(servers, visitor) {
   const connections = [];
@@ -1672,26 +1700,65 @@ function calculateConnections(servers, visitor) {
     }
   });
   
-  // ========== 第二层：服务器之间的网状互联 ==========
+  // ========== 第二层：服务器之间的全球化网状互联 ==========
+  // 按地区分组
+  const regionGroups = new Map();
+  validServers.forEach(server => {
+    const regionKey = getRegionKey(server);
+    if (!regionGroups.has(regionKey)) {
+      regionGroups.set(regionKey, []);
+    }
+    regionGroups.get(regionKey).push(server);
+  });
+  
+  console.log('地区分组:', Array.from(regionGroups.keys()));
+  
   // 性能优化：限制处理的服务器数量
   const maxServersForMesh = Math.min(40, validServers.length);
   const meshServers = validServers.slice(0, maxServersForMesh);
   
   meshServers.forEach((server, index) => {
-    // 计算到其他服务器的距离
+    const serverRegion = getRegionKey(server);
+    
+    // 计算到其他服务器的距离，并标记是否同区域
     const distances = meshServers
       .filter(s => s.id !== server.id)
       .map(s => ({
         server: s,
-        distance: haversineDistance(server.coords, s.coords)
+        distance: haversineDistance(server.coords, s.coords),
+        sameRegion: getRegionKey(s) === serverRegion,
+        region: getRegionKey(s)
       }))
       .sort((a, b) => a.distance - b.distance);
     
     if (distances.length === 0) return;
     
-    // 1. 近距离连接（同区域）- 每个节点连接1-2个最近的
-    const nearbyCount = Math.min(2, distances.length);
-    distances.slice(0, nearbyCount).forEach(({ server: target, distance }) => {
+    // 分离同区域和不同区域的服务器
+    const sameRegionServers = distances.filter(d => d.sameRegion);
+    const differentRegionServers = distances.filter(d => !d.sameRegion);
+    
+    // 1. 近距离连接 - 优先连接不同区域的服务器
+    // 如果同区域服务器很少（≤2个），可以连接1个同区域
+    // 否则，只连接不同区域的服务器
+    if (sameRegionServers.length <= 2 && sameRegionServers.length > 0) {
+      // 同区域服务器很少，连接1个最近的同区域服务器
+      const target = sameRegionServers[0];
+      connections.push({
+        startLat: server.coords.lat,
+        startLng: server.coords.lng,
+        endLat: target.server.coords.lat,
+        endLng: target.server.coords.lng,
+        type: 'mesh-nearby',
+        distance: target.distance
+      });
+    }
+    
+    // 连接1-2个不同区域的近距离服务器
+    const nearbyDifferentRegion = differentRegionServers
+      .filter(d => d.distance < 3000) // 3000km 内
+      .slice(0, 2);
+    
+    nearbyDifferentRegion.forEach(({ server: target, distance }) => {
       connections.push({
         startLat: server.coords.lat,
         startLng: server.coords.lng,
@@ -1702,11 +1769,16 @@ function calculateConnections(servers, visitor) {
       });
     });
     
-    // 2. 中距离连接（跨区域）- 部分节点连接
-    if (index % 2 === 0 && distances.length > 5) {
-      const mediumDistance = distances.filter(d => d.distance > 1000 && d.distance < 5000);
+    // 2. 中距离连接（跨区域）- 每个服务器连接1个中距离的不同区域服务器
+    if (index % 2 === 0) {
+      const mediumDistance = differentRegionServers.filter(
+        d => d.distance >= 1000 && d.distance < 5000
+      );
+      
       if (mediumDistance.length > 0) {
-        const target = mediumDistance[0];
+        // 轮流选择不同的目标，避免总是连接同一个
+        const targetIndex = index % mediumDistance.length;
+        const target = mediumDistance[targetIndex];
         connections.push({
           startLat: server.coords.lat,
           startLng: server.coords.lng,
@@ -1718,17 +1790,39 @@ function calculateConnections(servers, visitor) {
       }
     }
     
-    // 3. 长距离连接（跨大洲）- 少量节点连接
-    if (index % 4 === 0 && distances.length > 10) {
-      const longDistance = distances.filter(d => d.distance > 5000);
+    // 3. 长距离连接（跨大洲）- 确保全球互联
+    if (index % 3 === 0) {
+      const longDistance = differentRegionServers.filter(d => d.distance >= 5000);
+      
       if (longDistance.length > 0) {
-        const target = longDistance[Math.floor(longDistance.length / 2)];
+        // 选择一个远距离的不同大洲服务器
+        // 使用索引轮换，确保连接分散
+        const targetIndex = Math.floor(index / 3) % longDistance.length;
+        const target = longDistance[targetIndex];
         connections.push({
           startLat: server.coords.lat,
           startLng: server.coords.lng,
           endLat: target.server.coords.lat,
           endLng: target.server.coords.lng,
           type: 'mesh-long',
+          distance: target.distance
+        });
+      }
+    }
+    
+    // 4. 超长距离连接（对角线连接）- 少量，连接地球两端
+    if (index % 5 === 0) {
+      const ultraLongDistance = differentRegionServers.filter(d => d.distance >= 8000);
+      
+      if (ultraLongDistance.length > 0) {
+        // 选择最远的服务器之一
+        const target = ultraLongDistance[ultraLongDistance.length - 1];
+        connections.push({
+          startLat: server.coords.lat,
+          startLng: server.coords.lng,
+          endLat: target.server.coords.lat,
+          endLng: target.server.coords.lng,
+          type: 'mesh-ultra-long',
           distance: target.distance
         });
       }
@@ -1748,6 +1842,15 @@ function calculateConnections(servers, visitor) {
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
+  });
+  
+  console.log('连接统计:', {
+    总连接数: uniqueConnections.length,
+    访问者主线: uniqueConnections.filter(c => c.type === 'visitor-primary').length,
+    近距离: uniqueConnections.filter(c => c.type === 'mesh-nearby').length,
+    中距离: uniqueConnections.filter(c => c.type === 'mesh-medium').length,
+    长距离: uniqueConnections.filter(c => c.type === 'mesh-long').length,
+    超长距离: uniqueConnections.filter(c => c.type === 'mesh-ultra-long').length
   });
   
   return uniqueConnections;
@@ -1938,15 +2041,23 @@ function initGlobe() {
       else if (d.type === 'mesh-long') {
         return ['rgba(168, 85, 247, 0.6)', 'rgba(192, 132, 252, 0.7)'];
       }
+      // 网状互联 - 超长距离（红紫色渐变）
+      else if (d.type === 'mesh-ultra-long') {
+        return ['rgba(236, 72, 153, 0.7)', 'rgba(244, 114, 182, 0.8)'];
+      }
       // 默认
       return ['rgba(255, 215, 0, 0.4)', 'rgba(255, 190, 0, 0.5)'];
     })
     .arcStroke(d => {
       // 访问者主连接 - 更粗，更明显
       if (d.type === 'visitor-primary') return 0.8;
-      // 网状互联 - 较细
+      // 超长距离 - 较粗，突出全球连接
+      if (d.type === 'mesh-ultra-long') return 0.6;
+      // 长距离
       if (d.type === 'mesh-long') return 0.5;
+      // 中距离
       if (d.type === 'mesh-medium') return 0.4;
+      // 近距离
       if (d.type === 'mesh-nearby') return 0.3;
       return 0.3;
     })
@@ -1958,9 +2069,11 @@ function initGlobe() {
         const distanceFactor = Math.min(d.distance / 10000, 1);
         return baseAlt + distanceFactor * 0.15;
       }
-      // 长距离连接 - 中等高度
-      if (d.type === 'mesh-long') return 0.12;
-      // 中距离连接 - 较低
+      // 超长距离连接 - 最高的弧线
+      if (d.type === 'mesh-ultra-long') return 0.25;
+      // 长距离连接 - 较高
+      if (d.type === 'mesh-long') return 0.15;
+      // 中距离连接 - 中等
       if (d.type === 'mesh-medium') return 0.08;
       // 近距离连接 - 最低
       return 0.05;
@@ -1968,16 +2081,22 @@ function initGlobe() {
     .arcDashLength(d => {
       // 访问者主连接 - 更长的虚线段（流光效果）
       if (d.type === 'visitor-primary') return 0.8;
+      // 超长距离 - 长虚线
+      if (d.type === 'mesh-ultra-long') return 0.7;
       return 0.6;
     })
     .arcDashGap(d => {
       // 访问者主连接 - 更小的间隙（更连续）
       if (d.type === 'visitor-primary') return 0.2;
+      // 超长距离 - 较小间隙
+      if (d.type === 'mesh-ultra-long') return 0.3;
       return 0.4;
     })
     .arcDashAnimateTime(d => {
       // 访问者主连接 - 更快的动画（流光效果）
       if (d.type === 'visitor-primary') return 2000;
+      // 超长距离 - 最慢（强调距离感）
+      if (d.type === 'mesh-ultra-long') return 6000;
       // 长距离 - 较慢
       if (d.type === 'mesh-long') return 5000;
       // 中距离 - 中等
