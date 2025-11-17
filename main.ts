@@ -1404,57 +1404,14 @@ let visitorLocation = null; // 访问者位置
 
 /**
  * 地理编码函数：将位置字符串转换为经纬度坐标
+ * 扩展版 - 包含更多国家和城市
  */
 function geocode(location) {
-  const CITY_COORDS = {
+  const LOCATION_DB = {
+    // 亚洲 - 东亚
     'China': { lat: 35.8617, lng: 104.1954 },
-    'Japan': { lat: 36.2048, lng: 138.2529 },
-    'South Korea': { lat: 35.9078, lng: 127.7669 },
-    'India': { lat: 20.5937, lng: 78.9629 },
-    'Singapore': { lat: 1.3521, lng: 103.8198 },
-    'Thailand': { lat: 15.8700, lng: 100.9925 },
-    'Vietnam': { lat: 14.0583, lng: 108.2772 },
-    'Malaysia': { lat: 4.2105, lng: 101.9758 },
-    'Indonesia': { lat: -0.7893, lng: 113.9213 },
-    'Philippines': { lat: 12.8797, lng: 121.7740 },
-    'Taiwan': { lat: 23.6978, lng: 120.9605 },
-    'Hong Kong': { lat: 22.3193, lng: 114.1694 },
-    'Macau': { lat: 22.1987, lng: 113.5439 },
-    'United States': { lat: 37.0902, lng: -95.7129 },
-    'Canada': { lat: 56.1304, lng: -106.3468 },
-    'Mexico': { lat: 23.6345, lng: -102.5528 },
-    'United Kingdom': { lat: 55.3781, lng: -3.4360 },
-    'Germany': { lat: 51.1657, lng: 10.4515 },
-    'France': { lat: 46.2276, lng: 2.2137 },
-    'Netherlands': { lat: 52.1326, lng: 5.2913 },
-    'Russia': { lat: 61.5240, lng: 105.3188 },
-    'Italy': { lat: 41.8719, lng: 12.5674 },
-    'Spain': { lat: 40.4637, lng: -3.7492 },
-    'Poland': { lat: 51.9194, lng: 19.1451 },
-    'Sweden': { lat: 60.1282, lng: 18.6435 },
-    'Norway': { lat: 60.4720, lng: 8.4689 },
-    'Finland': { lat: 61.9241, lng: 25.7482 },
-    'Switzerland': { lat: 46.8182, lng: 8.2275 },
-    'Austria': { lat: 47.5162, lng: 14.5501 },
-    'Belgium': { lat: 50.5039, lng: 4.4699 },
-    'Denmark': { lat: 56.2639, lng: 9.5018 },
-    'Ireland': { lat: 53.4129, lng: -8.2439 },
-    'Portugal': { lat: 39.3999, lng: -8.2245 },
-    'Czech Republic': { lat: 49.8175, lng: 15.4730 },
-    'Greece': { lat: 39.0742, lng: 21.8243 },
-    'Romania': { lat: 45.9432, lng: 24.9668 },
-    'Ukraine': { lat: 48.3794, lng: 31.1656 },
-    'Australia': { lat: -25.2744, lng: 133.7751 },
-    'New Zealand': { lat: -40.9006, lng: 174.8860 },
-    'Brazil': { lat: -14.2350, lng: -51.9253 },
-    'Argentina': { lat: -38.4161, lng: -63.6167 },
-    'Chile': { lat: -35.6751, lng: -71.5430 },
-    'South Africa': { lat: -30.5595, lng: 22.9375 },
-    'Egypt': { lat: 26.8206, lng: 30.8025 },
-    'Turkey': { lat: 38.9637, lng: 35.2433 },
-    'Israel': { lat: 31.0461, lng: 34.8516 },
-    'United Arab Emirates': { lat: 23.4241, lng: 53.8478 },
-    'Saudi Arabia': { lat: 23.8859, lng: 45.0792 },
+    '中国': { lat: 35.8617, lng: 104.1954 },
+    '中国大陆': { lat: 35.8617, lng: 104.1954 },
     'Beijing': { lat: 39.9042, lng: 116.4074 },
     'Shanghai': { lat: 31.2304, lng: 121.4737 },
     'Guangzhou': { lat: 23.1291, lng: 113.2644 },
@@ -1465,6 +1422,126 @@ function geocode(location) {
     'Wuhan': { lat: 30.5928, lng: 114.3055 },
     'Xi\\'an': { lat: 34.3416, lng: 108.9398 },
     'Nanjing': { lat: 32.0603, lng: 118.7969 },
+    'Hong Kong': { lat: 22.3193, lng: 114.1694 },
+    '香港': { lat: 22.3193, lng: 114.1694 },
+    '中国香港': { lat: 22.3193, lng: 114.1694 },
+    'Macau': { lat: 22.1987, lng: 113.5439 },
+    '澳门': { lat: 22.1987, lng: 113.5439 },
+    '中国澳门': { lat: 22.1987, lng: 113.5439 },
+    'Taiwan': { lat: 23.6978, lng: 120.9605 },
+    '台湾': { lat: 23.6978, lng: 120.9605 },
+    '中国台湾': { lat: 23.6978, lng: 120.9605 },
+    'Taipei': { lat: 25.0330, lng: 121.5654 },
+    'Japan': { lat: 36.2048, lng: 138.2529 },
+    '日本': { lat: 36.2048, lng: 138.2529 },
+    'Tokyo': { lat: 35.6762, lng: 139.6503 },
+    'Osaka': { lat: 34.6937, lng: 135.5023 },
+    'South Korea': { lat: 35.9078, lng: 127.7669 },
+    'Korea': { lat: 35.9078, lng: 127.7669 },
+    '韩国': { lat: 35.9078, lng: 127.7669 },
+    'Seoul': { lat: 37.5665, lng: 126.9780 },
+    
+    // 亚洲 - 东南亚
+    'Singapore': { lat: 1.3521, lng: 103.8198 },
+    '新加坡': { lat: 1.3521, lng: 103.8198 },
+    'Thailand': { lat: 15.8700, lng: 100.9925 },
+    '泰国': { lat: 15.8700, lng: 100.9925 },
+    'Bangkok': { lat: 13.7563, lng: 100.5018 },
+    'Vietnam': { lat: 14.0583, lng: 108.2772 },
+    '越南': { lat: 14.0583, lng: 108.2772 },
+    'Malaysia': { lat: 4.2105, lng: 101.9758 },
+    '马来西亚': { lat: 4.2105, lng: 101.9758 },
+    'Kuala Lumpur': { lat: 3.1390, lng: 101.6869 },
+    'Indonesia': { lat: -0.7893, lng: 113.9213 },
+    '印度尼西亚': { lat: -0.7893, lng: 113.9213 },
+    'Jakarta': { lat: -6.2088, lng: 106.8456 },
+    'Philippines': { lat: 12.8797, lng: 121.7740 },
+    '菲律宾': { lat: 12.8797, lng: 121.7740 },
+    'Manila': { lat: 14.5995, lng: 120.9842 },
+    
+    // 亚洲 - 南亚
+    'India': { lat: 20.5937, lng: 78.9629 },
+    '印度': { lat: 20.5937, lng: 78.9629 },
+    'Mumbai': { lat: 19.0760, lng: 72.8777 },
+    'Delhi': { lat: 28.7041, lng: 77.1025 },
+    
+    // 欧洲 - 西欧
+    'United Kingdom': { lat: 55.3781, lng: -3.4360 },
+    'UK': { lat: 55.3781, lng: -3.4360 },
+    '英国': { lat: 55.3781, lng: -3.4360 },
+    'London': { lat: 51.5074, lng: -0.1278 },
+    'France': { lat: 46.2276, lng: 2.2137 },
+    '法国': { lat: 46.2276, lng: 2.2137 },
+    'Paris': { lat: 48.8566, lng: 2.3522 },
+    'Germany': { lat: 51.1657, lng: 10.4515 },
+    '德国': { lat: 51.1657, lng: 10.4515 },
+    'Berlin': { lat: 52.5200, lng: 13.4050 },
+    'Frankfurt': { lat: 50.1109, lng: 8.6821 },
+    'Munich': { lat: 48.1351, lng: 11.5820 },
+    'Netherlands': { lat: 52.1326, lng: 5.2913 },
+    '荷兰': { lat: 52.1326, lng: 5.2913 },
+    'Amsterdam': { lat: 52.3676, lng: 4.9041 },
+    'Belgium': { lat: 50.5039, lng: 4.4699 },
+    '比利时': { lat: 50.5039, lng: 4.4699 },
+    'Brussels': { lat: 50.8503, lng: 4.3517 },
+    'Switzerland': { lat: 46.8182, lng: 8.2275 },
+    '瑞士': { lat: 46.8182, lng: 8.2275 },
+    'Zurich': { lat: 47.3769, lng: 8.5417 },
+    'Austria': { lat: 47.5162, lng: 14.5501 },
+    '奥地利': { lat: 47.5162, lng: 14.5501 },
+    'Vienna': { lat: 48.2082, lng: 16.3738 },
+    
+    // 欧洲 - 北欧
+    'Sweden': { lat: 60.1282, lng: 18.6435 },
+    '瑞典': { lat: 60.1282, lng: 18.6435 },
+    'Stockholm': { lat: 59.3293, lng: 18.0686 },
+    'Norway': { lat: 60.4720, lng: 8.4689 },
+    '挪威': { lat: 60.4720, lng: 8.4689 },
+    'Finland': { lat: 61.9241, lng: 25.7482 },
+    '芬兰': { lat: 61.9241, lng: 25.7482 },
+    'Denmark': { lat: 56.2639, lng: 9.5018 },
+    '丹麦': { lat: 56.2639, lng: 9.5018 },
+    'Copenhagen': { lat: 55.6761, lng: 12.5683 },
+    'Ireland': { lat: 53.4129, lng: -8.2439 },
+    '爱尔兰': { lat: 53.4129, lng: -8.2439 },
+    'Dublin': { lat: 53.3498, lng: -6.2603 },
+    
+    // 欧洲 - 南欧
+    'Italy': { lat: 41.8719, lng: 12.5674 },
+    '意大利': { lat: 41.8719, lng: 12.5674 },
+    'Rome': { lat: 41.9028, lng: 12.4964 },
+    'Milan': { lat: 45.4642, lng: 9.1900 },
+    'Spain': { lat: 40.4637, lng: -3.7492 },
+    '西班牙': { lat: 40.4637, lng: -3.7492 },
+    'Madrid': { lat: 40.4168, lng: -3.7038 },
+    'Portugal': { lat: 39.3999, lng: -8.2245 },
+    '葡萄牙': { lat: 39.3999, lng: -8.2245 },
+    'Greece': { lat: 39.0742, lng: 21.8243 },
+    '希腊': { lat: 39.0742, lng: 21.8243 },
+    
+    // 欧洲 - 东欧
+    'Poland': { lat: 51.9194, lng: 19.1451 },
+    '波兰': { lat: 51.9194, lng: 19.1451 },
+    'Warsaw': { lat: 52.2297, lng: 21.0122 },
+    'Czech Republic': { lat: 49.8175, lng: 15.4730 },
+    'Czechia': { lat: 49.8175, lng: 15.4730 },
+    '捷克': { lat: 49.8175, lng: 15.4730 },
+    'Romania': { lat: 45.9432, lng: 24.9668 },
+    '罗马尼亚': { lat: 45.9432, lng: 24.9668 },
+    'Ukraine': { lat: 48.3794, lng: 31.1656 },
+    '乌克兰': { lat: 48.3794, lng: 31.1656 },
+    'Russia': { lat: 61.5240, lng: 105.3188 },
+    '俄罗斯': { lat: 61.5240, lng: 105.3188 },
+    'Moscow': { lat: 55.7558, lng: 37.6173 },
+    'Moldova': { lat: 47.4116, lng: 28.3699 },
+    '摩尔多瓦': { lat: 47.4116, lng: 28.3699 },
+    'Chisinau': { lat: 47.0105, lng: 28.8638 },
+    
+    // 北美
+    'United States': { lat: 37.0902, lng: -95.7129 },
+    'USA': { lat: 37.0902, lng: -95.7129 },
+    'US': { lat: 37.0902, lng: -95.7129 },
+    '美国': { lat: 37.0902, lng: -95.7129 },
     'New York': { lat: 40.7128, lng: -74.0060 },
     'Los Angeles': { lat: 34.0522, lng: -118.2437 },
     'Chicago': { lat: 41.8781, lng: -87.6298 },
@@ -1475,47 +1552,59 @@ function geocode(location) {
     'Boston': { lat: 42.3601, lng: -71.0589 },
     'Washington': { lat: 38.9072, lng: -77.0369 },
     'Atlanta': { lat: 33.7490, lng: -84.3880 },
-    'London': { lat: 51.5074, lng: -0.1278 },
-    'Paris': { lat: 48.8566, lng: 2.3522 },
-    'Berlin': { lat: 52.5200, lng: 13.4050 },
-    'Amsterdam': { lat: 52.3676, lng: 4.9041 },
-    'Frankfurt': { lat: 50.1109, lng: 8.6821 },
-    'Madrid': { lat: 40.4168, lng: -3.7038 },
-    'Rome': { lat: 41.9028, lng: 12.4964 },
-    'Milan': { lat: 45.4642, lng: 9.1900 },
-    'Munich': { lat: 48.1351, lng: 11.5820 },
-    'Stockholm': { lat: 59.3293, lng: 18.0686 },
-    'Copenhagen': { lat: 55.6761, lng: 12.5683 },
-    'Vienna': { lat: 48.2082, lng: 16.3738 },
-    'Zurich': { lat: 47.3769, lng: 8.5417 },
-    'Brussels': { lat: 50.8503, lng: 4.3517 },
-    'Dublin': { lat: 53.3498, lng: -6.2603 },
-    'Moscow': { lat: 55.7558, lng: 37.6173 },
-    'Warsaw': { lat: 52.2297, lng: 21.0122 },
-    'Tokyo': { lat: 35.6762, lng: 139.6503 },
-    'Osaka': { lat: 34.6937, lng: 135.5023 },
-    'Seoul': { lat: 37.5665, lng: 126.9780 },
-    'Mumbai': { lat: 19.0760, lng: 72.8777 },
-    'Delhi': { lat: 28.7041, lng: 77.1025 },
-    'Bangkok': { lat: 13.7563, lng: 100.5018 },
-    'Kuala Lumpur': { lat: 3.1390, lng: 101.6869 },
-    'Jakarta': { lat: -6.2088, lng: 106.8456 },
-    'Manila': { lat: 14.5995, lng: 120.9842 },
-    'Taipei': { lat: 25.0330, lng: 121.5654 },
-    'Dubai': { lat: 25.2048, lng: 55.2708 },
-    'Tel Aviv': { lat: 32.0853, lng: 34.7818 },
-    'Istanbul': { lat: 41.0082, lng: 28.9784 },
+    'Canada': { lat: 56.1304, lng: -106.3468 },
+    '加拿大': { lat: 56.1304, lng: -106.3468 },
     'Toronto': { lat: 43.6532, lng: -79.3832 },
     'Vancouver': { lat: 49.2827, lng: -123.1207 },
     'Montreal': { lat: 45.5017, lng: -73.5673 },
+    'Mexico': { lat: 23.6345, lng: -102.5528 },
+    '墨西哥': { lat: 23.6345, lng: -102.5528 },
+    
+    // 南美
+    'Brazil': { lat: -14.2350, lng: -51.9253 },
+    '巴西': { lat: -14.2350, lng: -51.9253 },
+    'Argentina': { lat: -38.4161, lng: -63.6167 },
+    '阿根廷': { lat: -38.4161, lng: -63.6167 },
+    'Chile': { lat: -35.6751, lng: -71.5430 },
+    '智利': { lat: -35.6751, lng: -71.5430 },
+    
+    // 大洋洲
+    'Australia': { lat: -25.2744, lng: 133.7751 },
+    '澳大利亚': { lat: -25.2744, lng: 133.7751 },
+    '澳洲': { lat: -25.2744, lng: 133.7751 },
     'Sydney': { lat: -33.8688, lng: 151.2093 },
     'Melbourne': { lat: -37.8136, lng: 144.9631 },
     'Brisbane': { lat: -27.4698, lng: 153.0251 },
     'Perth': { lat: -31.9505, lng: 115.8605 },
-    'Auckland': { lat: -36.8485, lng: 174.7633 }
+    'Adelaide': { lat: -34.9285, lng: 138.6007 },
+    'Canberra': { lat: -35.2809, lng: 149.1300 },
+    'New Zealand': { lat: -40.9006, lng: 174.8860 },
+    '新西兰': { lat: -40.9006, lng: 174.8860 },
+    'Auckland': { lat: -36.8485, lng: 174.7633 },
+    
+    // 中东
+    'Turkey': { lat: 38.9637, lng: 35.2433 },
+    '土耳其': { lat: 38.9637, lng: 35.2433 },
+    'Istanbul': { lat: 41.0082, lng: 28.9784 },
+    'Israel': { lat: 31.0461, lng: 34.8516 },
+    '以色列': { lat: 31.0461, lng: 34.8516 },
+    'Tel Aviv': { lat: 32.0853, lng: 34.7818 },
+    'United Arab Emirates': { lat: 23.4241, lng: 53.8478 },
+    'UAE': { lat: 23.4241, lng: 53.8478 },
+    '阿联酋': { lat: 23.4241, lng: 53.8478 },
+    'Dubai': { lat: 25.2048, lng: 55.2708 },
+    'Saudi Arabia': { lat: 23.8859, lng: 45.0792 },
+    '沙特阿拉伯': { lat: 23.8859, lng: 45.0792 },
+    
+    // 非洲
+    'South Africa': { lat: -30.5595, lng: 22.9375 },
+    '南非': { lat: -30.5595, lng: 22.9375 },
+    'Egypt': { lat: 26.8206, lng: 30.8025 },
+    '埃及': { lat: 26.8206, lng: 30.8025 }
   };
 
   if (!location || typeof location !== 'string') {
+    console.warn('无效的位置信息:', location);
     return null;
   }
 
@@ -1524,39 +1613,45 @@ function geocode(location) {
     return null;
   }
 
-  if (CITY_COORDS[cleanLocation]) {
-    return CITY_COORDS[cleanLocation];
+  // 1. 精确匹配
+  if (LOCATION_DB[cleanLocation]) {
+    return LOCATION_DB[cleanLocation];
   }
 
+  // 2. 分割并逐部分匹配（从后往前，因为通常国家在后面）
   const parts = cleanLocation.split(',').map(s => s.trim()).filter(Boolean);
-
   for (let i = parts.length - 1; i >= 0; i--) {
     const part = parts[i];
-    if (CITY_COORDS[part]) {
-      return CITY_COORDS[part];
+    if (LOCATION_DB[part]) {
+      console.log('匹配到位置:', part, '→', LOCATION_DB[part]);
+      return LOCATION_DB[part];
     }
   }
 
+  // 3. 模糊匹配（不区分大小写）
+  const cleanLower = cleanLocation.toLowerCase();
+  for (const [key, coords] of Object.entries(LOCATION_DB)) {
+    const keyLower = key.toLowerCase();
+    if (cleanLower.includes(keyLower) || keyLower.includes(cleanLower)) {
+      console.log('模糊匹配到位置:', key, '→', coords);
+      return coords;
+    }
+  }
+
+  // 4. 分部分模糊匹配
   for (let i = parts.length - 1; i >= 0; i--) {
-    const part = parts[i];
-    const partLower = part.toLowerCase();
-    
-    for (const key in CITY_COORDS) {
+    const partLower = parts[i].toLowerCase();
+    for (const [key, coords] of Object.entries(LOCATION_DB)) {
       const keyLower = key.toLowerCase();
       if (keyLower.includes(partLower) || partLower.includes(keyLower)) {
-        return CITY_COORDS[key];
+        console.log('分部分模糊匹配到位置:', key, '→', coords);
+        return coords;
       }
     }
   }
 
-  const cleanLower = cleanLocation.toLowerCase();
-  for (const key in CITY_COORDS) {
-    const keyLower = key.toLowerCase();
-    if (cleanLower.includes(keyLower) || keyLower.includes(cleanLower)) {
-      return CITY_COORDS[key];
-    }
-  }
-
+  // 5. 无法匹配，记录日志
+  console.warn('⚠️ 无法识别位置:', cleanLocation, '- 请添加到数据库');
   return null;
 }
 
