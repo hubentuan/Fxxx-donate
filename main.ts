@@ -1413,15 +1413,74 @@ function geocode(location) {
     '中国': { lat: 35.8617, lng: 104.1954 },
     '中国大陆': { lat: 35.8617, lng: 104.1954 },
     'Beijing': { lat: 39.9042, lng: 116.4074 },
+    '北京': { lat: 39.9042, lng: 116.4074 },
     'Shanghai': { lat: 31.2304, lng: 121.4737 },
+    '上海': { lat: 31.2304, lng: 121.4737 },
     'Guangzhou': { lat: 23.1291, lng: 113.2644 },
+    '广州': { lat: 23.1291, lng: 113.2644 },
     'Shenzhen': { lat: 22.5431, lng: 114.0579 },
+    '深圳': { lat: 22.5431, lng: 114.0579 },
     'Chengdu': { lat: 30.5728, lng: 104.0668 },
+    '成都': { lat: 30.5728, lng: 104.0668 },
     'Hangzhou': { lat: 30.2741, lng: 120.1551 },
+    '杭州': { lat: 30.2741, lng: 120.1551 },
     'Chongqing': { lat: 29.4316, lng: 106.9123 },
+    '重庆': { lat: 29.4316, lng: 106.9123 },
     'Wuhan': { lat: 30.5928, lng: 114.3055 },
+    '武汉': { lat: 30.5928, lng: 114.3055 },
     'Xi\\'an': { lat: 34.3416, lng: 108.9398 },
+    'Xian': { lat: 34.3416, lng: 108.9398 },
+    '西安': { lat: 34.3416, lng: 108.9398 },
     'Nanjing': { lat: 32.0603, lng: 118.7969 },
+    '南京': { lat: 32.0603, lng: 118.7969 },
+    'Tianjin': { lat: 39.3434, lng: 117.3616 },
+    '天津': { lat: 39.3434, lng: 117.3616 },
+    'Suzhou': { lat: 31.2989, lng: 120.5853 },
+    '苏州': { lat: 31.2989, lng: 120.5853 },
+    'Qingdao': { lat: 36.0671, lng: 120.3826 },
+    '青岛': { lat: 36.0671, lng: 120.3826 },
+    'Dalian': { lat: 38.9140, lng: 121.6147 },
+    '大连': { lat: 38.9140, lng: 121.6147 },
+    'Xiamen': { lat: 24.4798, lng: 118.0894 },
+    '厦门': { lat: 24.4798, lng: 118.0894 },
+    'Changsha': { lat: 28.2282, lng: 112.9388 },
+    '长沙': { lat: 28.2282, lng: 112.9388 },
+    'Zhengzhou': { lat: 34.7466, lng: 113.6253 },
+    '郑州': { lat: 34.7466, lng: 113.6253 },
+    'Shenyang': { lat: 41.8057, lng: 123.4328 },
+    '沈阳': { lat: 41.8057, lng: 123.4328 },
+    'Harbin': { lat: 45.8038, lng: 126.5340 },
+    '哈尔滨': { lat: 45.8038, lng: 126.5340 },
+    'Kunming': { lat: 25.0406, lng: 102.7129 },
+    '昆明': { lat: 25.0406, lng: 102.7129 },
+    'Guiyang': { lat: 26.6470, lng: 106.6302 },
+    '贵阳': { lat: 26.6470, lng: 106.6302 },
+    'Nanning': { lat: 22.8170, lng: 108.3665 },
+    '南宁': { lat: 22.8170, lng: 108.3665 },
+    'Fuzhou': { lat: 26.0745, lng: 119.2965 },
+    '福州': { lat: 26.0745, lng: 119.2965 },
+    'Jinan': { lat: 36.6512, lng: 117.1209 },
+    '济南': { lat: 36.6512, lng: 117.1209 },
+    'Taiyuan': { lat: 37.8706, lng: 112.5489 },
+    '太原': { lat: 37.8706, lng: 112.5489 },
+    'Shijiazhuang': { lat: 38.0428, lng: 114.5149 },
+    '石家庄': { lat: 38.0428, lng: 114.5149 },
+    'Urumqi': { lat: 43.8256, lng: 87.6168 },
+    '乌鲁木齐': { lat: 43.8256, lng: 87.6168 },
+    'Lanzhou': { lat: 36.0611, lng: 103.8343 },
+    '兰州': { lat: 36.0611, lng: 103.8343 },
+    'Hohhot': { lat: 40.8414, lng: 111.7519 },
+    '呼和浩特': { lat: 40.8414, lng: 111.7519 },
+    'Yinchuan': { lat: 38.4681, lng: 106.2731 },
+    '银川': { lat: 38.4681, lng: 106.2731 },
+    'Xining': { lat: 36.6171, lng: 101.7782 },
+    '西宁': { lat: 36.6171, lng: 101.7782 },
+    'Lhasa': { lat: 29.6520, lng: 91.1721 },
+    '拉萨': { lat: 29.6520, lng: 91.1721 },
+    'Haikou': { lat: 20.0444, lng: 110.1999 },
+    '海口': { lat: 20.0444, lng: 110.1999 },
+    'Sanya': { lat: 18.2528, lng: 109.5117 },
+    '三亚': { lat: 18.2528, lng: 109.5117 },
     'Hong Kong': { lat: 22.3193, lng: 114.1694 },
     '香港': { lat: 22.3193, lng: 114.1694 },
     '中国香港': { lat: 22.3193, lng: 114.1694 },
@@ -1432,110 +1491,286 @@ function geocode(location) {
     '台湾': { lat: 23.6978, lng: 120.9605 },
     '中国台湾': { lat: 23.6978, lng: 120.9605 },
     'Taipei': { lat: 25.0330, lng: 121.5654 },
+    '台北': { lat: 25.0330, lng: 121.5654 },
+    'Kaohsiung': { lat: 22.6273, lng: 120.3014 },
+    '高雄': { lat: 22.6273, lng: 120.3014 },
+    'Taichung': { lat: 24.1477, lng: 120.6736 },
+    '台中': { lat: 24.1477, lng: 120.6736 },
+    
     'Japan': { lat: 36.2048, lng: 138.2529 },
     '日本': { lat: 36.2048, lng: 138.2529 },
     'Tokyo': { lat: 35.6762, lng: 139.6503 },
+    '东京': { lat: 35.6762, lng: 139.6503 },
     'Osaka': { lat: 34.6937, lng: 135.5023 },
+    '大阪': { lat: 34.6937, lng: 135.5023 },
+    'Nagoya': { lat: 35.1815, lng: 136.9066 },
+    '名古屋': { lat: 35.1815, lng: 136.9066 },
+    'Kyoto': { lat: 35.0116, lng: 135.7681 },
+    '京都': { lat: 35.0116, lng: 135.7681 },
+    'Fukuoka': { lat: 33.5904, lng: 130.4017 },
+    '福冈': { lat: 33.5904, lng: 130.4017 },
+    'Sapporo': { lat: 43.0642, lng: 141.3469 },
+    '札幌': { lat: 43.0642, lng: 141.3469 },
+    'Yokohama': { lat: 35.4437, lng: 139.6380 },
+    '横滨': { lat: 35.4437, lng: 139.6380 },
+    
     'South Korea': { lat: 35.9078, lng: 127.7669 },
     'Korea': { lat: 35.9078, lng: 127.7669 },
     '韩国': { lat: 35.9078, lng: 127.7669 },
     'Seoul': { lat: 37.5665, lng: 126.9780 },
+    '首尔': { lat: 37.5665, lng: 126.9780 },
+    'Busan': { lat: 35.1796, lng: 129.0756 },
+    '釜山': { lat: 35.1796, lng: 129.0756 },
+    'Incheon': { lat: 37.4563, lng: 126.7052 },
+    '仁川': { lat: 37.4563, lng: 126.7052 },
+    'Daegu': { lat: 35.8714, lng: 128.6014 },
+    '大邱': { lat: 35.8714, lng: 128.6014 },
     
     // 亚洲 - 东南亚
     'Singapore': { lat: 1.3521, lng: 103.8198 },
     '新加坡': { lat: 1.3521, lng: 103.8198 },
+    
     'Thailand': { lat: 15.8700, lng: 100.9925 },
     '泰国': { lat: 15.8700, lng: 100.9925 },
     'Bangkok': { lat: 13.7563, lng: 100.5018 },
+    '曼谷': { lat: 13.7563, lng: 100.5018 },
+    'Phuket': { lat: 7.8804, lng: 98.3923 },
+    '普吉': { lat: 7.8804, lng: 98.3923 },
+    
     'Vietnam': { lat: 14.0583, lng: 108.2772 },
     '越南': { lat: 14.0583, lng: 108.2772 },
+    'Hanoi': { lat: 21.0285, lng: 105.8542 },
+    '河内': { lat: 21.0285, lng: 105.8542 },
+    'Ho Chi Minh': { lat: 10.8231, lng: 106.6297 },
+    '胡志明市': { lat: 10.8231, lng: 106.6297 },
+    'Saigon': { lat: 10.8231, lng: 106.6297 },
+    '西贡': { lat: 10.8231, lng: 106.6297 },
+    
     'Malaysia': { lat: 4.2105, lng: 101.9758 },
     '马来西亚': { lat: 4.2105, lng: 101.9758 },
     'Kuala Lumpur': { lat: 3.1390, lng: 101.6869 },
+    '吉隆坡': { lat: 3.1390, lng: 101.6869 },
+    'Penang': { lat: 5.4164, lng: 100.3327 },
+    '槟城': { lat: 5.4164, lng: 100.3327 },
+    
     'Indonesia': { lat: -0.7893, lng: 113.9213 },
     '印度尼西亚': { lat: -0.7893, lng: 113.9213 },
     'Jakarta': { lat: -6.2088, lng: 106.8456 },
+    '雅加达': { lat: -6.2088, lng: 106.8456 },
+    'Bali': { lat: -8.3405, lng: 115.0920 },
+    '巴厘岛': { lat: -8.3405, lng: 115.0920 },
+    'Surabaya': { lat: -7.2575, lng: 112.7521 },
+    '泗水': { lat: -7.2575, lng: 112.7521 },
+    
     'Philippines': { lat: 12.8797, lng: 121.7740 },
     '菲律宾': { lat: 12.8797, lng: 121.7740 },
     'Manila': { lat: 14.5995, lng: 120.9842 },
+    '马尼拉': { lat: 14.5995, lng: 120.9842 },
+    'Cebu': { lat: 10.3157, lng: 123.8854 },
+    '宿务': { lat: 10.3157, lng: 123.8854 },
     
-    // 亚洲 - 南亚
+    'Myanmar': { lat: 21.9162, lng: 95.9560 },
+    '缅甸': { lat: 21.9162, lng: 95.9560 },
+    'Yangon': { lat: 16.8661, lng: 96.1951 },
+    '仰光': { lat: 16.8661, lng: 96.1951 },
+    
+    'Cambodia': { lat: 12.5657, lng: 104.9910 },
+    '柬埔寨': { lat: 12.5657, lng: 104.9910 },
+    'Phnom Penh': { lat: 11.5564, lng: 104.9282 },
+    '金边': { lat: 11.5564, lng: 104.9282 },
+    
+    'Laos': { lat: 19.8563, lng: 102.4955 },
+    '老挝': { lat: 19.8563, lng: 102.4955 },
+    'Vientiane': { lat: 17.9757, lng: 102.6331 },
+    '万象': { lat: 17.9757, lng: 102.6331 },
+    
+    // 亚洲 - 南亚（扩展印度城市）
     'India': { lat: 20.5937, lng: 78.9629 },
     '印度': { lat: 20.5937, lng: 78.9629 },
     'Mumbai': { lat: 19.0760, lng: 72.8777 },
+    '孟买': { lat: 19.0760, lng: 72.8777 },
     'Delhi': { lat: 28.7041, lng: 77.1025 },
+    '德里': { lat: 28.7041, lng: 77.1025 },
+    'New Delhi': { lat: 28.6139, lng: 77.2090 },
+    '新德里': { lat: 28.6139, lng: 77.2090 },
+    'Bangalore': { lat: 12.9716, lng: 77.5946 },
+    '班加罗尔': { lat: 12.9716, lng: 77.5946 },
+    'Hyderabad': { lat: 17.3850, lng: 78.4867 },
+    '海得拉巴': { lat: 17.3850, lng: 78.4867 },
+    'Chennai': { lat: 13.0827, lng: 80.2707 },
+    '金奈': { lat: 13.0827, lng: 80.2707 },
+    'Kolkata': { lat: 22.5726, lng: 88.3639 },
+    '加尔各答': { lat: 22.5726, lng: 88.3639 },
+    'Pune': { lat: 18.5204, lng: 73.8567 },
+    '浦那': { lat: 18.5204, lng: 73.8567 },
+    'Ahmedabad': { lat: 23.0225, lng: 72.5714 },
+    '艾哈迈达巴德': { lat: 23.0225, lng: 72.5714 },
+    'Jaipur': { lat: 26.9124, lng: 75.7873 },
+    '斋浦尔': { lat: 26.9124, lng: 75.7873 },
+    'Pakistan': { lat: 30.3753, lng: 69.3451 },
+    '巴基斯坦': { lat: 30.3753, lng: 69.3451 },
+    'Karachi': { lat: 24.8607, lng: 67.0011 },
+    '卡拉奇': { lat: 24.8607, lng: 67.0011 },
+    'Islamabad': { lat: 33.6844, lng: 73.0479 },
+    '伊斯兰堡': { lat: 33.6844, lng: 73.0479 },
+    'Bangladesh': { lat: 23.6850, lng: 90.3563 },
+    '孟加拉国': { lat: 23.6850, lng: 90.3563 },
+    'Dhaka': { lat: 23.8103, lng: 90.4125 },
+    '达卡': { lat: 23.8103, lng: 90.4125 },
+    'Sri Lanka': { lat: 7.8731, lng: 80.7718 },
+    '斯里兰卡': { lat: 7.8731, lng: 80.7718 },
+    'Colombo': { lat: 6.9271, lng: 79.8612 },
+    '科伦坡': { lat: 6.9271, lng: 79.8612 },
     
     // 欧洲 - 西欧
     'United Kingdom': { lat: 55.3781, lng: -3.4360 },
     'UK': { lat: 55.3781, lng: -3.4360 },
     '英国': { lat: 55.3781, lng: -3.4360 },
     'London': { lat: 51.5074, lng: -0.1278 },
+    '伦敦': { lat: 51.5074, lng: -0.1278 },
+    'Manchester': { lat: 53.4808, lng: -2.2426 },
+    '曼彻斯特': { lat: 53.4808, lng: -2.2426 },
+    
     'France': { lat: 46.2276, lng: 2.2137 },
     '法国': { lat: 46.2276, lng: 2.2137 },
     'Paris': { lat: 48.8566, lng: 2.3522 },
+    '巴黎': { lat: 48.8566, lng: 2.3522 },
+    'Marseille': { lat: 43.2965, lng: 5.3698 },
+    '马赛': { lat: 43.2965, lng: 5.3698 },
+    'Lyon': { lat: 45.7640, lng: 4.8357 },
+    '里昂': { lat: 45.7640, lng: 4.8357 },
+    
     'Germany': { lat: 51.1657, lng: 10.4515 },
     '德国': { lat: 51.1657, lng: 10.4515 },
     'Berlin': { lat: 52.5200, lng: 13.4050 },
+    '柏林': { lat: 52.5200, lng: 13.4050 },
     'Frankfurt': { lat: 50.1109, lng: 8.6821 },
+    '法兰克福': { lat: 50.1109, lng: 8.6821 },
     'Munich': { lat: 48.1351, lng: 11.5820 },
+    '慕尼黑': { lat: 48.1351, lng: 11.5820 },
+    'Hamburg': { lat: 53.5511, lng: 9.9937 },
+    '汉堡': { lat: 53.5511, lng: 9.9937 },
+    'Cologne': { lat: 50.9375, lng: 6.9603 },
+    '科隆': { lat: 50.9375, lng: 6.9603 },
     'Netherlands': { lat: 52.1326, lng: 5.2913 },
     '荷兰': { lat: 52.1326, lng: 5.2913 },
     'Amsterdam': { lat: 52.3676, lng: 4.9041 },
+    '阿姆斯特丹': { lat: 52.3676, lng: 4.9041 },
+    'Rotterdam': { lat: 51.9225, lng: 4.4792 },
+    '鹿特丹': { lat: 51.9225, lng: 4.4792 },
+    
     'Belgium': { lat: 50.5039, lng: 4.4699 },
     '比利时': { lat: 50.5039, lng: 4.4699 },
     'Brussels': { lat: 50.8503, lng: 4.3517 },
+    '布鲁塞尔': { lat: 50.8503, lng: 4.3517 },
+    
     'Switzerland': { lat: 46.8182, lng: 8.2275 },
     '瑞士': { lat: 46.8182, lng: 8.2275 },
     'Zurich': { lat: 47.3769, lng: 8.5417 },
+    '苏黎世': { lat: 47.3769, lng: 8.5417 },
+    'Geneva': { lat: 46.2044, lng: 6.1432 },
+    '日内瓦': { lat: 46.2044, lng: 6.1432 },
+    
     'Austria': { lat: 47.5162, lng: 14.5501 },
     '奥地利': { lat: 47.5162, lng: 14.5501 },
     'Vienna': { lat: 48.2082, lng: 16.3738 },
+    '维也纳': { lat: 48.2082, lng: 16.3738 },
     
     // 欧洲 - 北欧
     'Sweden': { lat: 60.1282, lng: 18.6435 },
     '瑞典': { lat: 60.1282, lng: 18.6435 },
     'Stockholm': { lat: 59.3293, lng: 18.0686 },
+    '斯德哥尔摩': { lat: 59.3293, lng: 18.0686 },
+    
     'Norway': { lat: 60.4720, lng: 8.4689 },
     '挪威': { lat: 60.4720, lng: 8.4689 },
+    'Oslo': { lat: 59.9139, lng: 10.7522 },
+    '奥斯陆': { lat: 59.9139, lng: 10.7522 },
+    
     'Finland': { lat: 61.9241, lng: 25.7482 },
     '芬兰': { lat: 61.9241, lng: 25.7482 },
+    'Helsinki': { lat: 60.1699, lng: 24.9384 },
+    '赫尔辛基': { lat: 60.1699, lng: 24.9384 },
+    
     'Denmark': { lat: 56.2639, lng: 9.5018 },
     '丹麦': { lat: 56.2639, lng: 9.5018 },
     'Copenhagen': { lat: 55.6761, lng: 12.5683 },
+    '哥本哈根': { lat: 55.6761, lng: 12.5683 },
+    
     'Ireland': { lat: 53.4129, lng: -8.2439 },
     '爱尔兰': { lat: 53.4129, lng: -8.2439 },
     'Dublin': { lat: 53.3498, lng: -6.2603 },
+    '都柏林': { lat: 53.3498, lng: -6.2603 },
     
     // 欧洲 - 南欧
     'Italy': { lat: 41.8719, lng: 12.5674 },
     '意大利': { lat: 41.8719, lng: 12.5674 },
     'Rome': { lat: 41.9028, lng: 12.4964 },
+    '罗马': { lat: 41.9028, lng: 12.4964 },
     'Milan': { lat: 45.4642, lng: 9.1900 },
+    '米兰': { lat: 45.4642, lng: 9.1900 },
+    'Venice': { lat: 45.4408, lng: 12.3155 },
+    '威尼斯': { lat: 45.4408, lng: 12.3155 },
+    'Florence': { lat: 43.7696, lng: 11.2558 },
+    '佛罗伦萨': { lat: 43.7696, lng: 11.2558 },
+    
     'Spain': { lat: 40.4637, lng: -3.7492 },
     '西班牙': { lat: 40.4637, lng: -3.7492 },
     'Madrid': { lat: 40.4168, lng: -3.7038 },
+    '马德里': { lat: 40.4168, lng: -3.7038 },
+    'Barcelona': { lat: 41.3851, lng: 2.1734 },
+    '巴塞罗那': { lat: 41.3851, lng: 2.1734 },
+    
     'Portugal': { lat: 39.3999, lng: -8.2245 },
     '葡萄牙': { lat: 39.3999, lng: -8.2245 },
+    'Lisbon': { lat: 38.7223, lng: -9.1393 },
+    '里斯本': { lat: 38.7223, lng: -9.1393 },
+    
     'Greece': { lat: 39.0742, lng: 21.8243 },
     '希腊': { lat: 39.0742, lng: 21.8243 },
+    'Athens': { lat: 37.9838, lng: 23.7275 },
+    '雅典': { lat: 37.9838, lng: 23.7275 },
     
     // 欧洲 - 东欧
     'Poland': { lat: 51.9194, lng: 19.1451 },
     '波兰': { lat: 51.9194, lng: 19.1451 },
     'Warsaw': { lat: 52.2297, lng: 21.0122 },
+    '华沙': { lat: 52.2297, lng: 21.0122 },
+    'Krakow': { lat: 50.0647, lng: 19.9450 },
+    '克拉科夫': { lat: 50.0647, lng: 19.9450 },
+    
     'Czech Republic': { lat: 49.8175, lng: 15.4730 },
     'Czechia': { lat: 49.8175, lng: 15.4730 },
     '捷克': { lat: 49.8175, lng: 15.4730 },
+    'Prague': { lat: 50.0755, lng: 14.4378 },
+    '布拉格': { lat: 50.0755, lng: 14.4378 },
+    
     'Romania': { lat: 45.9432, lng: 24.9668 },
     '罗马尼亚': { lat: 45.9432, lng: 24.9668 },
+    'Bucharest': { lat: 44.4268, lng: 26.1025 },
+    '布加勒斯特': { lat: 44.4268, lng: 26.1025 },
+    
+    'Hungary': { lat: 47.1625, lng: 19.5033 },
+    '匈牙利': { lat: 47.1625, lng: 19.5033 },
+    'Budapest': { lat: 47.4979, lng: 19.0402 },
+    '布达佩斯': { lat: 47.4979, lng: 19.0402 },
+    
     'Ukraine': { lat: 48.3794, lng: 31.1656 },
     '乌克兰': { lat: 48.3794, lng: 31.1656 },
+    'Kyiv': { lat: 50.4501, lng: 30.5234 },
+    '基辅': { lat: 50.4501, lng: 30.5234 },
+    
     'Russia': { lat: 61.5240, lng: 105.3188 },
     '俄罗斯': { lat: 61.5240, lng: 105.3188 },
     'Moscow': { lat: 55.7558, lng: 37.6173 },
+    '莫斯科': { lat: 55.7558, lng: 37.6173 },
+    'Saint Petersburg': { lat: 59.9343, lng: 30.3351 },
+    '圣彼得堡': { lat: 59.9343, lng: 30.3351 },
+    
     'Moldova': { lat: 47.4116, lng: 28.3699 },
     '摩尔多瓦': { lat: 47.4116, lng: 28.3699 },
     'Chisinau': { lat: 47.0105, lng: 28.8638 },
+    '基希讷乌': { lat: 47.0105, lng: 28.8638 },
     
     // 北美
     'United States': { lat: 37.0902, lng: -95.7129 },
@@ -1543,64 +1778,172 @@ function geocode(location) {
     'US': { lat: 37.0902, lng: -95.7129 },
     '美国': { lat: 37.0902, lng: -95.7129 },
     'New York': { lat: 40.7128, lng: -74.0060 },
+    '纽约': { lat: 40.7128, lng: -74.0060 },
     'Los Angeles': { lat: 34.0522, lng: -118.2437 },
+    '洛杉矶': { lat: 34.0522, lng: -118.2437 },
     'Chicago': { lat: 41.8781, lng: -87.6298 },
+    '芝加哥': { lat: 41.8781, lng: -87.6298 },
     'San Francisco': { lat: 37.7749, lng: -122.4194 },
+    '旧金山': { lat: 37.7749, lng: -122.4194 },
     'Seattle': { lat: 47.6062, lng: -122.3321 },
+    '西雅图': { lat: 47.6062, lng: -122.3321 },
     'Miami': { lat: 25.7617, lng: -80.1918 },
+    '迈阿密': { lat: 25.7617, lng: -80.1918 },
     'Dallas': { lat: 32.7767, lng: -96.7970 },
+    '达拉斯': { lat: 32.7767, lng: -96.7970 },
     'Boston': { lat: 42.3601, lng: -71.0589 },
+    '波士顿': { lat: 42.3601, lng: -71.0589 },
     'Washington': { lat: 38.9072, lng: -77.0369 },
+    '华盛顿': { lat: 38.9072, lng: -77.0369 },
     'Atlanta': { lat: 33.7490, lng: -84.3880 },
+    '亚特兰大': { lat: 33.7490, lng: -84.3880 },
+    'Houston': { lat: 29.7604, lng: -95.3698 },
+    '休斯顿': { lat: 29.7604, lng: -95.3698 },
+    'Phoenix': { lat: 33.4484, lng: -112.0740 },
+    '凤凰城': { lat: 33.4484, lng: -112.0740 },
+    'Philadelphia': { lat: 39.9526, lng: -75.1652 },
+    '费城': { lat: 39.9526, lng: -75.1652 },
+    'San Diego': { lat: 32.7157, lng: -117.1611 },
+    '圣地亚哥': { lat: 32.7157, lng: -117.1611 },
+    'Denver': { lat: 39.7392, lng: -104.9903 },
+    '丹佛': { lat: 39.7392, lng: -104.9903 },
+    'Las Vegas': { lat: 36.1699, lng: -115.1398 },
+    '拉斯维加斯': { lat: 36.1699, lng: -115.1398 },
+    'Portland': { lat: 45.5152, lng: -122.6784 },
+    '波特兰': { lat: 45.5152, lng: -122.6784 },
+    'Austin': { lat: 30.2672, lng: -97.7431 },
+    '奥斯汀': { lat: 30.2672, lng: -97.7431 },
     'Canada': { lat: 56.1304, lng: -106.3468 },
     '加拿大': { lat: 56.1304, lng: -106.3468 },
     'Toronto': { lat: 43.6532, lng: -79.3832 },
+    '多伦多': { lat: 43.6532, lng: -79.3832 },
     'Vancouver': { lat: 49.2827, lng: -123.1207 },
+    '温哥华': { lat: 49.2827, lng: -123.1207 },
     'Montreal': { lat: 45.5017, lng: -73.5673 },
+    '蒙特利尔': { lat: 45.5017, lng: -73.5673 },
+    'Calgary': { lat: 51.0447, lng: -114.0719 },
+    '卡尔加里': { lat: 51.0447, lng: -114.0719 },
+    'Ottawa': { lat: 45.4215, lng: -75.6972 },
+    '渥太华': { lat: 45.4215, lng: -75.6972 },
     'Mexico': { lat: 23.6345, lng: -102.5528 },
     '墨西哥': { lat: 23.6345, lng: -102.5528 },
     
     // 南美
     'Brazil': { lat: -14.2350, lng: -51.9253 },
     '巴西': { lat: -14.2350, lng: -51.9253 },
+    'Sao Paulo': { lat: -23.5505, lng: -46.6333 },
+    '圣保罗': { lat: -23.5505, lng: -46.6333 },
+    'Rio de Janeiro': { lat: -22.9068, lng: -43.1729 },
+    '里约热内卢': { lat: -22.9068, lng: -43.1729 },
+    'Brasilia': { lat: -15.8267, lng: -47.9218 },
+    '巴西利亚': { lat: -15.8267, lng: -47.9218 },
+    
     'Argentina': { lat: -38.4161, lng: -63.6167 },
     '阿根廷': { lat: -38.4161, lng: -63.6167 },
+    'Buenos Aires': { lat: -34.6037, lng: -58.3816 },
+    '布宜诺斯艾利斯': { lat: -34.6037, lng: -58.3816 },
+    
     'Chile': { lat: -35.6751, lng: -71.5430 },
     '智利': { lat: -35.6751, lng: -71.5430 },
+    'Santiago': { lat: -33.4489, lng: -70.6693 },
+    '圣地亚哥': { lat: -33.4489, lng: -70.6693 },
+    
+    'Colombia': { lat: 4.5709, lng: -74.2973 },
+    '哥伦比亚': { lat: 4.5709, lng: -74.2973 },
+    'Bogota': { lat: 4.7110, lng: -74.0721 },
+    '波哥大': { lat: 4.7110, lng: -74.0721 },
+    
+    'Peru': { lat: -9.1900, lng: -75.0152 },
+    '秘鲁': { lat: -9.1900, lng: -75.0152 },
+    'Lima': { lat: -12.0464, lng: -77.0428 },
+    '利马': { lat: -12.0464, lng: -77.0428 },
     
     // 大洋洲
     'Australia': { lat: -25.2744, lng: 133.7751 },
     '澳大利亚': { lat: -25.2744, lng: 133.7751 },
     '澳洲': { lat: -25.2744, lng: 133.7751 },
     'Sydney': { lat: -33.8688, lng: 151.2093 },
+    '悉尼': { lat: -33.8688, lng: 151.2093 },
     'Melbourne': { lat: -37.8136, lng: 144.9631 },
+    '墨尔本': { lat: -37.8136, lng: 144.9631 },
     'Brisbane': { lat: -27.4698, lng: 153.0251 },
+    '布里斯班': { lat: -27.4698, lng: 153.0251 },
     'Perth': { lat: -31.9505, lng: 115.8605 },
+    '珀斯': { lat: -31.9505, lng: 115.8605 },
     'Adelaide': { lat: -34.9285, lng: 138.6007 },
+    '阿德莱德': { lat: -34.9285, lng: 138.6007 },
     'Canberra': { lat: -35.2809, lng: 149.1300 },
+    '堪培拉': { lat: -35.2809, lng: 149.1300 },
+    
     'New Zealand': { lat: -40.9006, lng: 174.8860 },
     '新西兰': { lat: -40.9006, lng: 174.8860 },
     'Auckland': { lat: -36.8485, lng: 174.7633 },
+    '奥克兰': { lat: -36.8485, lng: 174.7633 },
+    'Wellington': { lat: -41.2865, lng: 174.7762 },
+    '惠灵顿': { lat: -41.2865, lng: 174.7762 },
     
     // 中东
     'Turkey': { lat: 38.9637, lng: 35.2433 },
     '土耳其': { lat: 38.9637, lng: 35.2433 },
     'Istanbul': { lat: 41.0082, lng: 28.9784 },
+    '伊斯坦布尔': { lat: 41.0082, lng: 28.9784 },
+    'Ankara': { lat: 39.9334, lng: 32.8597 },
+    '安卡拉': { lat: 39.9334, lng: 32.8597 },
+    
     'Israel': { lat: 31.0461, lng: 34.8516 },
     '以色列': { lat: 31.0461, lng: 34.8516 },
     'Tel Aviv': { lat: 32.0853, lng: 34.7818 },
+    '特拉维夫': { lat: 32.0853, lng: 34.7818 },
+    'Jerusalem': { lat: 31.7683, lng: 35.2137 },
+    '耶路撒冷': { lat: 31.7683, lng: 35.2137 },
+    
     'United Arab Emirates': { lat: 23.4241, lng: 53.8478 },
     'UAE': { lat: 23.4241, lng: 53.8478 },
     '阿联酋': { lat: 23.4241, lng: 53.8478 },
     'Dubai': { lat: 25.2048, lng: 55.2708 },
+    '迪拜': { lat: 25.2048, lng: 55.2708 },
+    'Abu Dhabi': { lat: 24.4539, lng: 54.3773 },
+    '阿布扎比': { lat: 24.4539, lng: 54.3773 },
+    
     'Saudi Arabia': { lat: 23.8859, lng: 45.0792 },
     '沙特阿拉伯': { lat: 23.8859, lng: 45.0792 },
+    'Riyadh': { lat: 24.7136, lng: 46.6753 },
+    '利雅得': { lat: 24.7136, lng: 46.6753 },
+    'Jeddah': { lat: 21.5433, lng: 39.1728 },
+    '吉达': { lat: 21.5433, lng: 39.1728 },
+    
+    'Iran': { lat: 32.4279, lng: 53.6880 },
+    '伊朗': { lat: 32.4279, lng: 53.6880 },
+    'Tehran': { lat: 35.6892, lng: 51.3890 },
+    '德黑兰': { lat: 35.6892, lng: 51.3890 },
     
     // 非洲
     'South Africa': { lat: -30.5595, lng: 22.9375 },
     '南非': { lat: -30.5595, lng: 22.9375 },
+    'Johannesburg': { lat: -26.2041, lng: 28.0473 },
+    '约翰内斯堡': { lat: -26.2041, lng: 28.0473 },
+    'Cape Town': { lat: -33.9249, lng: 18.4241 },
+    '开普敦': { lat: -33.9249, lng: 18.4241 },
+    
     'Egypt': { lat: 26.8206, lng: 30.8025 },
-    '埃及': { lat: 26.8206, lng: 30.8025 }
+    '埃及': { lat: 26.8206, lng: 30.8025 },
+    'Cairo': { lat: 30.0444, lng: 31.2357 },
+    '开罗': { lat: 30.0444, lng: 31.2357 },
+    
+    'Nigeria': { lat: 9.0820, lng: 8.6753 },
+    '尼日利亚': { lat: 9.0820, lng: 8.6753 },
+    'Lagos': { lat: 6.5244, lng: 3.3792 },
+    '拉各斯': { lat: 6.5244, lng: 3.3792 },
+    
+    'Kenya': { lat: -0.0236, lng: 37.9062 },
+    '肯尼亚': { lat: -0.0236, lng: 37.9062 },
+    'Nairobi': { lat: -1.2864, lng: 36.8172 },
+    '内罗毕': { lat: -1.2864, lng: 36.8172 },
+    
+    'Morocco': { lat: 31.7917, lng: -7.0926 },
+    '摩洛哥': { lat: 31.7917, lng: -7.0926 },
+    'Casablanca': { lat: 33.5731, lng: -7.5898 },
+    '卡萨布兰卡': { lat: 33.5731, lng: -7.5898 }
   };
 
   if (!location || typeof location !== 'string') {
@@ -1707,29 +2050,110 @@ function haversineDistance(coords1, coords2) {
 }
 
 /**
- * 获取访问者的地理位置
+ * 获取访问者的地理位置（多API备份策略）
  */
 async function getVisitorLocation() {
-  try {
-    const res = await fetch('https://ipapi.co/json/', { 
-      signal: AbortSignal.timeout(3000) 
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.latitude && data.longitude) {
-        return {
-          lat: data.latitude,
-          lng: data.longitude,
-          city: data.city || '未知',
-          country: data.country_name || '未知'
-        };
+  // API列表（按优先级排序）
+  const apis = [
+    // API 1: ipapi.co（免费，无需密钥，精确度高）
+    async () => {
+      const res = await fetch('https://ipapi.co/json/', { 
+        signal: AbortSignal.timeout(3000) 
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.latitude && data.longitude) {
+          console.log('✅ 使用 ipapi.co 获取位置:', data.city, data.country_name);
+          return {
+            lat: data.latitude,
+            lng: data.longitude,
+            city: data.city || '未知',
+            country: data.country_name || '未知'
+          };
+        }
       }
+      return null;
+    },
+    
+    // API 2: ip-api.com（免费，无需密钥，速度快）
+    async () => {
+      const res = await fetch('http://ip-api.com/json/?fields=status,country,city,lat,lon', { 
+        signal: AbortSignal.timeout(3000) 
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'success' && data.lat && data.lon) {
+          console.log('✅ 使用 ip-api.com 获取位置:', data.city, data.country);
+          return {
+            lat: data.lat,
+            lng: data.lon,
+            city: data.city || '未知',
+            country: data.country || '未知'
+          };
+        }
+      }
+      return null;
+    },
+    
+    // API 3: ipinfo.io（免费，无需密钥）
+    async () => {
+      const res = await fetch('https://ipinfo.io/json', { 
+        signal: AbortSignal.timeout(3000) 
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.loc) {
+          const [lat, lng] = data.loc.split(',').map(Number);
+          if (lat && lng) {
+            console.log('✅ 使用 ipinfo.io 获取位置:', data.city, data.country);
+            return {
+              lat: lat,
+              lng: lng,
+              city: data.city || '未知',
+              country: data.country || '未知'
+            };
+          }
+        }
+      }
+      return null;
+    },
+    
+    // API 4: ipwhois.app（免费，无需密钥）
+    async () => {
+      const res = await fetch('https://ipwhois.app/json/', { 
+        signal: AbortSignal.timeout(3000) 
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.latitude && data.longitude) {
+          console.log('✅ 使用 ipwhois.app 获取位置:', data.city, data.country);
+          return {
+            lat: data.latitude,
+            lng: data.longitude,
+            city: data.city || '未知',
+            country: data.country || '未知'
+          };
+        }
+      }
+      return null;
     }
-  } catch (e) {
-    console.log('无法获取访问者位置，使用默认位置');
+  ];
+  
+  // 依次尝试每个API
+  for (const api of apis) {
+    try {
+      const result = await api();
+      if (result) {
+        return result;
+      }
+    } catch (e) {
+      console.log('API调用失败，尝试下一个...');
+      continue;
+    }
   }
   
-  // 默认位置：中国北京
+  // 所有API都失败，使用默认位置（中国北京）
+  console.log('⚠️ 所有地理位置API都失败，使用默认位置');
   return {
     lat: 39.9042,
     lng: 116.4074,
@@ -2075,13 +2499,16 @@ function initGlobe() {
     .pointLat(d => d.coords.lat)
     .pointLng(d => d.coords.lng)
     .pointColor(d => {
-      if (d.status === 'active') return '#10b981'; // 更鲜艳的绿色
+      // 活跃服务器：鲜艳的翠绿色（带发光效果）
+      if (d.status === 'active') return '#10b981';
+      // 失败服务器：鲜红色
       if (d.status === 'failed') return '#ef4444';
+      // 未启用：灰色
       return '#94a3b8';
     })
-    .pointAltitude(0.015) // 稍微提高一点
-    .pointRadius(0.35) // 稍微大一点，更明显
-    .pointResolution(12) // 增加点的分辨率，更圆滑
+    .pointAltitude(0.018) // 稍微提高，更突出
+    .pointRadius(0.40) // 更大一点，更醒目
+    .pointResolution(16) // 更高分辨率，更圆滑
     
     .pointLabel(d => {
       const flag = getCountryFlag(d.country);
@@ -2123,88 +2550,92 @@ function initGlobe() {
     .arcEndLat(d => d.endLat)
     .arcEndLng(d => d.endLng)
     .arcColor(d => {
-      // 访问者主连接 - 流光渐变（青色到金色）
+      // 访问者主连接 - 超炫流光渐变（青色→金色→粉色）
       if (d.type === 'visitor-primary') {
         if (d.serverStatus === 'active') {
-          return ['rgba(6, 182, 212, 0.9)', 'rgba(251, 191, 36, 1.0)']; // 青色到金色
+          // 活跃服务器：青色到金色的流光效果
+          return ['rgba(6, 182, 212, 1.0)', 'rgba(251, 191, 36, 1.0)']; // 更鲜艳的青金渐变
         } else {
-          return ['rgba(100, 116, 139, 0.5)', 'rgba(148, 163, 184, 0.6)']; // 灰色
+          // 离线服务器：灰色
+          return ['rgba(100, 116, 139, 0.5)', 'rgba(148, 163, 184, 0.6)'];
         }
       }
-      // 网状互联 - 近距离（绿色渐变）
+      // 网状互联 - 近距离（翠绿色渐变，更鲜艳）
       else if (d.type === 'mesh-nearby') {
-        return ['rgba(34, 197, 94, 0.4)', 'rgba(74, 222, 128, 0.5)'];
+        return ['rgba(34, 197, 94, 0.5)', 'rgba(74, 222, 128, 0.6)'];
       }
-      // 网状互联 - 中距离（蓝色渐变）
+      // 网状互联 - 中距离（天蓝色渐变，更明亮）
       else if (d.type === 'mesh-medium') {
-        return ['rgba(59, 130, 246, 0.5)', 'rgba(96, 165, 250, 0.6)'];
+        return ['rgba(59, 130, 246, 0.6)', 'rgba(96, 165, 250, 0.7)'];
       }
-      // 网状互联 - 长距离（紫色渐变）
+      // 网状互联 - 长距离（紫罗兰渐变，更梦幻）
       else if (d.type === 'mesh-long') {
-        return ['rgba(168, 85, 247, 0.6)', 'rgba(192, 132, 252, 0.7)'];
+        return ['rgba(168, 85, 247, 0.7)', 'rgba(192, 132, 252, 0.8)'];
       }
-      // 网状互联 - 超长距离（红紫色渐变）
+      // 网状互联 - 超长距离（玫瑰粉渐变，最炫目）
       else if (d.type === 'mesh-ultra-long') {
-        return ['rgba(236, 72, 153, 0.7)', 'rgba(244, 114, 182, 0.8)'];
+        return ['rgba(236, 72, 153, 0.8)', 'rgba(244, 114, 182, 0.9)'];
       }
-      // 默认
-      return ['rgba(255, 215, 0, 0.4)', 'rgba(255, 190, 0, 0.5)'];
+      // 默认（金色）
+      return ['rgba(255, 215, 0, 0.5)', 'rgba(255, 190, 0, 0.6)'];
     })
     .arcStroke(d => {
-      // 访问者主连接 - 更粗，更明显
-      if (d.type === 'visitor-primary') return 0.8;
+      // 访问者主连接 - 最粗，最醒目（星联主线）
+      if (d.type === 'visitor-primary') return 1.0;
       // 超长距离 - 较粗，突出全球连接
-      if (d.type === 'mesh-ultra-long') return 0.6;
+      if (d.type === 'mesh-ultra-long') return 0.7;
       // 长距离
-      if (d.type === 'mesh-long') return 0.5;
+      if (d.type === 'mesh-long') return 0.6;
       // 中距离
-      if (d.type === 'mesh-medium') return 0.4;
+      if (d.type === 'mesh-medium') return 0.5;
       // 近距离
-      if (d.type === 'mesh-nearby') return 0.3;
-      return 0.3;
+      if (d.type === 'mesh-nearby') return 0.4;
+      return 0.4;
     })
     .arcAltitude(d => {
-      // 访问者主连接 - 更高的弧线
+      // 访问者主连接 - 动态高度（根据距离自适应）
       if (d.type === 'visitor-primary') {
-        // 根据距离调整高度，远距离更高
-        const baseAlt = 0.15;
+        // 根据距离调整高度，远距离更高，形成优美的弧线
+        const baseAlt = 0.18;
         const distanceFactor = Math.min(d.distance / 10000, 1);
-        return baseAlt + distanceFactor * 0.15;
+        return baseAlt + distanceFactor * 0.18; // 最高可达0.36
       }
-      // 超长距离连接 - 最高的弧线
-      if (d.type === 'mesh-ultra-long') return 0.25;
-      // 长距离连接 - 较高
-      if (d.type === 'mesh-long') return 0.15;
-      // 中距离连接 - 中等
-      if (d.type === 'mesh-medium') return 0.08;
-      // 近距离连接 - 最低
-      return 0.05;
+      // 超长距离连接 - 最高的弧线（跨越半个地球）
+      if (d.type === 'mesh-ultra-long') return 0.28;
+      // 长距离连接 - 较高（跨大洲）
+      if (d.type === 'mesh-long') return 0.18;
+      // 中距离连接 - 中等（跨区域）
+      if (d.type === 'mesh-medium') return 0.10;
+      // 近距离连接 - 最低（同区域）
+      return 0.06;
     })
     .arcDashLength(d => {
-      // 访问者主连接 - 更长的虚线段（流光效果）
-      if (d.type === 'visitor-primary') return 0.8;
+      // 访问者主连接 - 更长的虚线段（流光效果更明显）
+      if (d.type === 'visitor-primary') return 0.9;
       // 超长距离 - 长虚线
-      if (d.type === 'mesh-ultra-long') return 0.7;
+      if (d.type === 'mesh-ultra-long') return 0.75;
+      // 长距离
+      if (d.type === 'mesh-long') return 0.65;
       return 0.6;
     })
     .arcDashGap(d => {
-      // 访问者主连接 - 更小的间隙（更连续）
-      if (d.type === 'visitor-primary') return 0.2;
+      // 访问者主连接 - 更小的间隙（更连续的流光）
+      if (d.type === 'visitor-primary') return 0.15;
       // 超长距离 - 较小间隙
-      if (d.type === 'mesh-ultra-long') return 0.3;
-      return 0.4;
+      if (d.type === 'mesh-ultra-long') return 0.25;
+      return 0.35;
     })
     .arcDashAnimateTime(d => {
-      // 访问者主连接 - 更快的动画（流光效果）
-      if (d.type === 'visitor-primary') return 2000;
+      // 访问者主连接 - 更快的动画（流光飞速）
+      if (d.type === 'visitor-primary') return 1800;
       // 超长距离 - 最慢（强调距离感）
-      if (d.type === 'mesh-ultra-long') return 6000;
+      if (d.type === 'mesh-ultra-long') return 6500;
       // 长距离 - 较慢
-      if (d.type === 'mesh-long') return 5000;
+      if (d.type === 'mesh-long') return 5500;
       // 中距离 - 中等
-      if (d.type === 'mesh-medium') return 4000;
+      if (d.type === 'mesh-medium') return 4500;
       // 近距离 - 较快
-      return 3000;
+      return 3500;
     })
     .arcDashInitialGap(() => Math.random())
     
@@ -2369,7 +2800,7 @@ function waitForGlobe() {
   await updateData();
   initGlobe();
   
-  // 如果有访问者位置，添加一个特殊的标记点
+  // 如果有访问者位置，添加一个特殊的标记点（超炫动画效果）
   if (visitorLocation && globeInstance) {
     const visitorPoint = [{
       lat: visitorLocation.lat,
@@ -2379,17 +2810,48 @@ function waitForGlobe() {
       country: visitorLocation.country
     }];
     
-    // 添加访问者位置的标记（使用 htmlElements）
+    // 添加访问者位置的标记（使用 htmlElements，带脉冲动画）
     globeInstance.htmlElementsData(visitorPoint)
       .htmlLat(d => d.lat)
       .htmlLng(d => d.lng)
-      .htmlAltitude(0.02)
+      .htmlAltitude(0.025)
       .htmlElement(d => {
         const el = document.createElement('div');
-        el.innerHTML = '📍';
-        el.style.fontSize = '24px';
-        el.style.cursor = 'pointer';
+        el.style.cssText = \`
+          position: relative;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+        \`;
+        
+        // 创建脉冲动画背景
+        const pulse = document.createElement('div');
+        pulse.style.cssText = \`
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          background: radial-gradient(circle, rgba(6, 182, 212, 0.6), transparent);
+          border-radius: 50%;
+          animation: pulse-glow 2s ease-in-out infinite;
+        \`;
+        
+        // 创建图标
+        const icon = document.createElement('div');
+        icon.innerHTML = '📍';
+        icon.style.cssText = \`
+          font-size: 28px;
+          position: relative;
+          z-index: 1;
+          filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.8));
+        \`;
+        
+        el.appendChild(pulse);
+        el.appendChild(icon);
         el.title = \`您的位置：\${d.city}, \${d.country}\`;
+        
         return el;
       });
   }
