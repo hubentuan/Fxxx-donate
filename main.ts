@@ -2468,7 +2468,7 @@ app.get('/donate/vps', c => {
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
-        <div id="user-info" class="text-sm panel px-5 py-2.5 border"></div>
+        <!-- <div id="user-info" class="text-sm panel px-5 py-2.5 border"></div> -->
         <a href="/donate" class="btn-secondary flex items-center gap-2">
           <span>🏠</span>
           <span>首页</span>
@@ -5555,14 +5555,30 @@ checkAdmin();
 
 /* ==================== 公共 head（主题 + 全局样式 + 工具） ==================== */
 function commonHead(title: string): string {
+  // 获取服务器环境变量并注入到前端
+  const nodeEnv = Deno.env.get('NODE_ENV') || '';
+  const disableLogs = Deno.env.get('DISABLE_LOGS') || '';
   return `
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>${title}</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🧡</text></svg>" />
+<script>
+// 服务器环境变量注入
+window.SERVER_ENV = {
+  NODE_ENV: '${nodeEnv}',
+  DISABLE_LOGS: '${disableLogs}'
+};
+</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <script>
+const serverEnv = window.SERVER_ENV || {};
+const disableLogs = serverEnv.NODE_ENV === 'production' ||
+  serverEnv.DISABLE_LOGS === '1';
+if (disableLogs) {
+  console.log = () => {};
+}
 tailwind.config = {
   theme: {
     extend: {
