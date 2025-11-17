@@ -2161,33 +2161,8 @@ function initGlobe() {
       \`;
     })
     
-    // ===== HTML标签显示（性能优化：仅显示活跃节点）=====
-    .htmlElementsData(validServers.filter(s => s.status === 'active'))  // 只显示活跃节点的标签，减少DOM元素
-    .htmlLat(d => d.coords.lat)
-    .htmlLng(d => d.coords.lng)
-    .htmlAltitude(0.02)
-    .htmlElement(d => {
-      const el = document.createElement('div');
-      const flag = getCountryFlag(d.country);
-      el.innerHTML = \`
-        <div style="
-          background: rgba(0,0,0,0.7);
-          padding: 4px 10px;
-          border-radius: 6px;
-          color: white;
-          font-size: 12px;
-          white-space: nowrap;
-          pointer-events: none;
-          backdrop-filter: blur(4px);
-          border: 1px solid rgba(255,255,255,0.1);
-          font-family: system-ui, -apple-system, sans-serif;
-          font-weight: 500;
-        ">
-          \${flag} @\${d.donatedByUsername}
-        </div>
-      \`;
-      return el;
-    })
+    // ===== HTML标签显示（已禁用，只显示连接线）=====
+    .htmlElementsData([])  // 不显示任何标签
     
     // ===== 连接弧线配置（金色主题）=====
     .arcsData(connectionsData)
@@ -2284,8 +2259,8 @@ function updateGlobeData() {
   // 更新节点数据
   globeInstance.pointsData(validServers);
   
-  // 只更新活跃节点的HTML标签，减少DOM操作
-  globeInstance.htmlElementsData(activeServers);
+  // 不显示HTML标签
+  globeInstance.htmlElementsData([]);
   
   // 更新弧线数据
   globeInstance.arcsData(connectionsData);
