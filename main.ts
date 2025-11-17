@@ -54,6 +54,143 @@ interface Session {
 
 const kv = await Deno.openKv();
 
+/* ==================== 城市坐标数据库 ==================== */
+const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
+  // 主要国家（按大洲分组）
+  // 亚洲
+  'China': { lat: 35.8617, lng: 104.1954 },
+  'Japan': { lat: 36.2048, lng: 138.2529 },
+  'South Korea': { lat: 35.9078, lng: 127.7669 },
+  'India': { lat: 20.5937, lng: 78.9629 },
+  'Singapore': { lat: 1.3521, lng: 103.8198 },
+  'Thailand': { lat: 15.8700, lng: 100.9925 },
+  'Vietnam': { lat: 14.0583, lng: 108.2772 },
+  'Malaysia': { lat: 4.2105, lng: 101.9758 },
+  'Indonesia': { lat: -0.7893, lng: 113.9213 },
+  'Philippines': { lat: 12.8797, lng: 121.7740 },
+  'Taiwan': { lat: 23.6978, lng: 120.9605 },
+  'Hong Kong': { lat: 22.3193, lng: 114.1694 },
+  'Macau': { lat: 22.1987, lng: 113.5439 },
+  
+  // 北美洲
+  'United States': { lat: 37.0902, lng: -95.7129 },
+  'Canada': { lat: 56.1304, lng: -106.3468 },
+  'Mexico': { lat: 23.6345, lng: -102.5528 },
+  
+  // 欧洲
+  'United Kingdom': { lat: 55.3781, lng: -3.4360 },
+  'Germany': { lat: 51.1657, lng: 10.4515 },
+  'France': { lat: 46.2276, lng: 2.2137 },
+  'Netherlands': { lat: 52.1326, lng: 5.2913 },
+  'Russia': { lat: 61.5240, lng: 105.3188 },
+  'Italy': { lat: 41.8719, lng: 12.5674 },
+  'Spain': { lat: 40.4637, lng: -3.7492 },
+  'Poland': { lat: 51.9194, lng: 19.1451 },
+  'Sweden': { lat: 60.1282, lng: 18.6435 },
+  'Norway': { lat: 60.4720, lng: 8.4689 },
+  'Finland': { lat: 61.9241, lng: 25.7482 },
+  'Switzerland': { lat: 46.8182, lng: 8.2275 },
+  'Austria': { lat: 47.5162, lng: 14.5501 },
+  'Belgium': { lat: 50.5039, lng: 4.4699 },
+  'Denmark': { lat: 56.2639, lng: 9.5018 },
+  'Ireland': { lat: 53.4129, lng: -8.2439 },
+  'Portugal': { lat: 39.3999, lng: -8.2245 },
+  'Czech Republic': { lat: 49.8175, lng: 15.4730 },
+  'Greece': { lat: 39.0742, lng: 21.8243 },
+  'Romania': { lat: 45.9432, lng: 24.9668 },
+  'Ukraine': { lat: 48.3794, lng: 31.1656 },
+  
+  // 大洋洲
+  'Australia': { lat: -25.2744, lng: 133.7751 },
+  'New Zealand': { lat: -40.9006, lng: 174.8860 },
+  
+  // 南美洲
+  'Brazil': { lat: -14.2350, lng: -51.9253 },
+  'Argentina': { lat: -38.4161, lng: -63.6167 },
+  'Chile': { lat: -35.6751, lng: -71.5430 },
+  
+  // 非洲
+  'South Africa': { lat: -30.5595, lng: 22.9375 },
+  'Egypt': { lat: 26.8206, lng: 30.8025 },
+  
+  // 中东
+  'Turkey': { lat: 38.9637, lng: 35.2433 },
+  'Israel': { lat: 31.0461, lng: 34.8516 },
+  'United Arab Emirates': { lat: 23.4241, lng: 53.8478 },
+  'Saudi Arabia': { lat: 23.8859, lng: 45.0792 },
+  
+  // 主要城市
+  // 中国城市
+  'Beijing': { lat: 39.9042, lng: 116.4074 },
+  'Shanghai': { lat: 31.2304, lng: 121.4737 },
+  'Guangzhou': { lat: 23.1291, lng: 113.2644 },
+  'Shenzhen': { lat: 22.5431, lng: 114.0579 },
+  'Chengdu': { lat: 30.5728, lng: 104.0668 },
+  'Hangzhou': { lat: 30.2741, lng: 120.1551 },
+  'Chongqing': { lat: 29.4316, lng: 106.9123 },
+  'Wuhan': { lat: 30.5928, lng: 114.3055 },
+  'Xi\'an': { lat: 34.3416, lng: 108.9398 },
+  'Nanjing': { lat: 32.0603, lng: 118.7969 },
+  
+  // 美国城市
+  'New York': { lat: 40.7128, lng: -74.0060 },
+  'Los Angeles': { lat: 34.0522, lng: -118.2437 },
+  'Chicago': { lat: 41.8781, lng: -87.6298 },
+  'San Francisco': { lat: 37.7749, lng: -122.4194 },
+  'Seattle': { lat: 47.6062, lng: -122.3321 },
+  'Miami': { lat: 25.7617, lng: -80.1918 },
+  'Dallas': { lat: 32.7767, lng: -96.7970 },
+  'Boston': { lat: 42.3601, lng: -71.0589 },
+  'Washington': { lat: 38.9072, lng: -77.0369 },
+  'Atlanta': { lat: 33.7490, lng: -84.3880 },
+  
+  // 欧洲城市
+  'London': { lat: 51.5074, lng: -0.1278 },
+  'Paris': { lat: 48.8566, lng: 2.3522 },
+  'Berlin': { lat: 52.5200, lng: 13.4050 },
+  'Amsterdam': { lat: 52.3676, lng: 4.9041 },
+  'Frankfurt': { lat: 50.1109, lng: 8.6821 },
+  'Madrid': { lat: 40.4168, lng: -3.7038 },
+  'Rome': { lat: 41.9028, lng: 12.4964 },
+  'Milan': { lat: 45.4642, lng: 9.1900 },
+  'Munich': { lat: 48.1351, lng: 11.5820 },
+  'Stockholm': { lat: 59.3293, lng: 18.0686 },
+  'Copenhagen': { lat: 55.6761, lng: 12.5683 },
+  'Vienna': { lat: 48.2082, lng: 16.3738 },
+  'Zurich': { lat: 47.3769, lng: 8.5417 },
+  'Brussels': { lat: 50.8503, lng: 4.3517 },
+  'Dublin': { lat: 53.3498, lng: -6.2603 },
+  'Moscow': { lat: 55.7558, lng: 37.6173 },
+  'Warsaw': { lat: 52.2297, lng: 21.0122 },
+  
+  // 亚洲其他主要城市
+  'Tokyo': { lat: 35.6762, lng: 139.6503 },
+  'Osaka': { lat: 34.6937, lng: 135.5023 },
+  'Seoul': { lat: 37.5665, lng: 126.9780 },
+  'Mumbai': { lat: 19.0760, lng: 72.8777 },
+  'Delhi': { lat: 28.7041, lng: 77.1025 },
+  'Bangkok': { lat: 13.7563, lng: 100.5018 },
+  'Kuala Lumpur': { lat: 3.1390, lng: 101.6869 },
+  'Jakarta': { lat: -6.2088, lng: 106.8456 },
+  'Manila': { lat: 14.5995, lng: 120.9842 },
+  'Taipei': { lat: 25.0330, lng: 121.5654 },
+  'Dubai': { lat: 25.2048, lng: 55.2708 },
+  'Tel Aviv': { lat: 32.0853, lng: 34.7818 },
+  'Istanbul': { lat: 41.0082, lng: 28.9784 },
+  
+  // 加拿大城市
+  'Toronto': { lat: 43.6532, lng: -79.3832 },
+  'Vancouver': { lat: 49.2827, lng: -123.1207 },
+  'Montreal': { lat: 45.5017, lng: -73.5673 },
+  
+  // 澳洲城市
+  'Sydney': { lat: -33.8688, lng: 151.2093 },
+  'Melbourne': { lat: -37.8136, lng: 144.9631 },
+  'Brisbane': { lat: -27.4698, lng: 153.0251 },
+  'Perth': { lat: -31.9505, lng: 115.8605 },
+  'Auckland': { lat: -36.8485, lng: 174.7633 }
+};
+
 /* ==================== 工具函数 ==================== */
 const genId = () => crypto.randomUUID();
 
@@ -69,6 +206,210 @@ async function getIPLocation(ip: string): Promise<string> {
     }
   } catch (_) { }
   return '未知地区';
+}
+
+/**
+ * 地理编码函数：将位置字符串转换为经纬度坐标
+ * 提供多级后备方案，确保总能返回有效坐标
+ * @param location - 位置字符串，格式："国家, 地区, 城市" 或单个地名
+ * @returns 包含 lat 和 lng 的坐标对象
+ */
+function geocode(location: string | undefined): { lat: number; lng: number } {
+  try {
+    // 第一级后备：检查输入是否为空或无效
+    if (!location || typeof location !== 'string') {
+      console.warn('地理编码失败: 位置信息为空或无效类型', location);
+      return { lat: 0, lng: 0 };
+    }
+
+    // 清理输入：去除首尾空格
+    const cleanLocation = location.trim();
+    if (!cleanLocation) {
+      console.warn('地理编码失败: 位置信息为空字符串');
+      return { lat: 0, lng: 0 };
+    }
+
+    // 第二级后备：直接匹配
+    if (CITY_COORDS[cleanLocation]) {
+      return CITY_COORDS[cleanLocation];
+    }
+
+    // 第三级后备：解析逗号分隔的位置字符串
+    const parts = cleanLocation.split(',').map(s => s.trim()).filter(Boolean);
+
+    // 第四级后备：部分匹配（从最具体的部分开始）
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const part = parts[i];
+      if (CITY_COORDS[part]) {
+        return CITY_COORDS[part];
+      }
+    }
+
+    // 第五级后备：模糊匹配（逐部分匹配）
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const part = parts[i];
+      const partLower = part.toLowerCase();
+      
+      for (const key in CITY_COORDS) {
+        const keyLower = key.toLowerCase();
+        if (keyLower.includes(partLower) || partLower.includes(keyLower)) {
+          return CITY_COORDS[key];
+        }
+      }
+    }
+
+    // 第六级后备：尝试匹配整个字符串
+    const cleanLower = cleanLocation.toLowerCase();
+    for (const key in CITY_COORDS) {
+      const keyLower = key.toLowerCase();
+      if (cleanLower.includes(keyLower) || keyLower.includes(cleanLower)) {
+        return CITY_COORDS[key];
+      }
+    }
+
+    // 第七级后备：尝试提取国家名称（通常是第一部分）
+    if (parts.length > 0) {
+      const firstPart = parts[0];
+      for (const key in CITY_COORDS) {
+        if (key.toLowerCase().includes(firstPart.toLowerCase())) {
+          console.warn(`国家级后备匹配: "${key}" (来自 "${cleanLocation}")`);
+          return CITY_COORDS[key];
+        }
+      }
+    }
+
+    // 最终后备：记录无法编码的位置并返回默认坐标
+    console.warn(`无法为位置 "${cleanLocation}" 找到坐标，使用默认坐标 (0, 0)`);
+    
+    return { lat: 0, lng: 0 };
+    
+  } catch (error) {
+    // 异常处理：捕获任何意外错误
+    console.error('地理编码过程中发生异常:', error);
+    console.error('  输入位置:', location);
+    
+    // 返回默认坐标作为最终后备
+    return { lat: 0, lng: 0 };
+  }
+}
+
+/**
+ * Haversine距离计算函数：计算地球表面两点之间的球面距离
+ * @param coords1 - 第一个点的坐标 { lat: 纬度, lng: 经度 }
+ * @param coords2 - 第二个点的坐标 { lat: 纬度, lng: 经度 }
+ * @returns 两点之间的距离（单位：公里）
+ */
+function haversineDistance(
+  coords1: { lat: number; lng: number },
+  coords2: { lat: number; lng: number }
+): number {
+  // 地球平均半径（单位：公里）
+  const R = 6371;
+
+  // 将角度转换为弧度
+  const toRadians = (degrees: number) => degrees * Math.PI / 180;
+
+  // 计算纬度和经度的差值（弧度）
+  const dLat = toRadians(coords2.lat - coords1.lat);
+  const dLng = toRadians(coords2.lng - coords1.lng);
+
+  // 将起点和终点的纬度转换为弧度
+  const lat1Rad = toRadians(coords1.lat);
+  const lat2Rad = toRadians(coords2.lat);
+
+  // Haversine公式
+  // a = sin²(Δlat/2) + cos(lat1) * cos(lat2) * sin²(Δlng/2)
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+  // c = 2 * atan2(√a, √(1-a))
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  // 距离 = 半径 * c
+  const distance = R * c;
+
+  return distance;
+}
+
+/**
+ * 计算服务器之间的连接关系
+ * @param servers - 服务器数组，每个服务器需要包含 id 和 coords 属性
+ * @returns 连接弧线数据数组，每个连接包含起点和终点的经纬度坐标
+ */
+function calculateConnections(
+  servers: Array<{ id: string; coords: { lat: number; lng: number } }>
+): Array<{
+  startLat: number;
+  startLng: number;
+  endLat: number;
+  endLng: number;
+  color: string;
+}> {
+  const connections: Array<{
+    startLat: number;
+    startLng: number;
+    endLat: number;
+    endLng: number;
+    color: string;
+  }> = [];
+
+  // 根据服务器总数动态调整每个节点的连接数
+  // 服务器数>50时，每个节点最多连接3个；否则连接5个
+  const maxConnectionsPerServer = servers.length > 50 ? 3 : 5;
+
+  // 为每个服务器找到最近的N个服务器并创建连接
+  servers.forEach(server => {
+    // 跳过没有有效坐标的服务器（坐标为 0,0 表示未知位置）
+    if (!server.coords || server.coords.lat === 0) {
+      return;
+    }
+
+    // 计算当前服务器到其他所有服务器的距离
+    const distances = servers
+      .filter(s => s.id !== server.id && s.coords && s.coords.lat !== 0)
+      .map(s => ({
+        server: s,
+        distance: haversineDistance(server.coords, s.coords)
+      }))
+      .sort((a, b) => a.distance - b.distance);
+
+    // 连接到最近的N个服务器
+    distances.slice(0, maxConnectionsPerServer).forEach(({ server: target }) => {
+      connections.push({
+        startLat: server.coords.lat,
+        startLng: server.coords.lng,
+        endLat: target.coords.lat,
+        endLng: target.coords.lng,
+        color: '#4a9eff'
+      });
+    });
+  });
+
+  // 去重逻辑：避免双向重复连接
+  // 使用 Set 来跟踪已经添加的连接
+  const seen = new Set<string>();
+  const uniqueConnections = connections.filter(conn => {
+    // 创建一个标准化的键：将起点和终点坐标排序后组合
+    // 这样 A->B 和 B->A 会生成相同的键
+    const key = [
+      conn.startLat,
+      conn.startLng,
+      conn.endLat,
+      conn.endLng
+    ].sort().join(',');
+
+    // 如果这个键已经存在，说明是重复连接，过滤掉
+    if (seen.has(key)) {
+      return false;
+    }
+
+    // 否则，记录这个键并保留这个连接
+    seen.add(key);
+    return true;
+  });
+
+  return uniqueConnections;
 }
 
 const isIPv4 = (ip: string) =>
@@ -927,6 +1268,9 @@ app.get('/donate', c => {
         <div class="flex flex-wrap items-center gap-3">
           <button onclick="gotoDonatePage()" class="btn-primary">
             <span class="text-lg">🧡</span> 我要投喂 VPS
+          </button>
+          <button onclick="location.href='/donate/globe'" class="btn-primary">
+            <span class="text-lg">🌍</span> 查看3D地球
           </button>
           <button id="theme-toggle" onclick="toggleTheme()">浅色模式</button>
         </div>
@@ -1846,6 +2190,1087 @@ document.querySelector('input[name="port"]').addEventListener('blur', function()
   }
 });
 </script>
+</body></html>`;
+  return c.html(html);
+});
+
+/* ==================== /donate/globe 3D地球可视化 ==================== */
+app.get('/donate/globe', c => {
+  const head = commonHead('风萧萧公益机场 · 全球服务器分布');
+  const html = `<!doctype html><html lang="zh-CN"><head>${head}
+<style>
+/* 3D地球页面专用样式 */
+#globe-container {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+#controls {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+}
+
+body[data-theme="dark"] #controls {
+  background: rgba(28, 28, 30, 0.9);
+  border-color: rgba(56, 56, 58, 0.6);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+#controls button {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+#controls button:last-of-type {
+  margin-bottom: 0;
+}
+
+#stats {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(210, 210, 215, 0.3);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+body[data-theme="dark"] #stats {
+  border-top-color: rgba(56, 56, 58, 0.5);
+}
+
+#stats > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+#stats > div:last-child {
+  margin-bottom: 0;
+}
+
+#stats span {
+  font-weight: 600;
+  color: #007AFF;
+}
+
+body[data-theme="dark"] #stats span {
+  color: #0A84FF;
+}
+
+#list-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg,
+    #f0e6ff 0%,
+    #e9d5ff 20%,
+    #ddd6fe 40%,
+    #c4b5fd 60%,
+    #e9d5ff 80%,
+    #f0e6ff 100%
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  overflow-y: auto;
+  padding: 20px;
+  z-index: 99;
+}
+
+body[data-theme="dark"] #list-view {
+  background: linear-gradient(135deg,
+    #1a0a2e 0%,
+    #16213e 25%,
+    #0f3460 50%,
+    #1a1a2e 75%,
+    #0a0e27 100%
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+#list-view .max-w-6xl {
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+#servers-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+#servers-table thead {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px 12px 0 0;
+}
+
+body[data-theme="dark"] #servers-table thead {
+  background: rgba(28, 28, 30, 0.8);
+  border-color: rgba(56, 56, 58, 0.6);
+}
+
+#servers-table th {
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1d1d1f;
+}
+
+body[data-theme="dark"] #servers-table th {
+  color: #f5f5f7;
+}
+
+#servers-table tbody tr {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-top: none;
+  transition: all 0.2s ease;
+}
+
+body[data-theme="dark"] #servers-table tbody tr {
+  background: rgba(28, 28, 30, 0.8);
+  border-color: rgba(56, 56, 58, 0.6);
+}
+
+#servers-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateX(4px);
+}
+
+body[data-theme="dark"] #servers-table tbody tr:hover {
+  background: rgba(44, 44, 46, 0.9);
+}
+
+#servers-table tbody tr:last-child {
+  border-radius: 0 0 12px 12px;
+}
+
+#servers-table td {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: #1d1d1f;
+}
+
+body[data-theme="dark"] #servers-table td {
+  color: #f5f5f7;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  #controls {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    padding: 15px;
+    min-width: auto;
+  }
+
+  #controls button {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  #stats {
+    font-size: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+
+  #stats > div {
+    margin-bottom: 5px;
+  }
+
+  #list-view {
+    padding: 15px;
+  }
+
+  #servers-table {
+    font-size: 12px;
+  }
+
+  #servers-table th,
+  #servers-table td {
+    padding: 10px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  #controls {
+    top: 8px;
+    right: 8px;
+    left: 8px;
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  #controls button {
+    padding: 8px 12px;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  #stats {
+    font-size: 11px;
+    line-height: 1.6;
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  #stats > div {
+    margin-bottom: 4px;
+  }
+
+  #list-view {
+    padding: 10px;
+  }
+
+  #servers-table {
+    font-size: 11px;
+  }
+
+  #servers-table th,
+  #servers-table td {
+    padding: 8px 6px;
+    font-size: 11px;
+  }
+
+  #servers-table th {
+    font-size: 12px;
+  }
+}
+
+/* 超小屏幕优化 (320px) */
+@media (max-width: 360px) {
+  #controls {
+    top: 5px;
+    right: 5px;
+    left: 5px;
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  #controls button {
+    padding: 7px 10px;
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  #stats {
+    font-size: 10px;
+    line-height: 1.5;
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  #stats > div {
+    margin-bottom: 3px;
+    font-size: 10px;
+  }
+
+  #stats .muted {
+    font-size: 10px;
+  }
+
+  #list-view {
+    padding: 8px;
+  }
+
+  #list-view .max-w-6xl {
+    padding: 0;
+  }
+
+  #list-view h2 {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  #servers-table {
+    font-size: 10px;
+  }
+
+  #servers-table th,
+  #servers-table td {
+    padding: 6px 4px;
+    font-size: 10px;
+  }
+
+  #servers-table th {
+    font-size: 11px;
+  }
+
+  /* 隐藏部分列以适应小屏幕 */
+  #servers-table th:nth-child(4),
+  #servers-table td:nth-child(4),
+  #servers-table th:nth-child(5),
+  #servers-table td:nth-child(5) {
+    display: none;
+  }
+}
+</style>
+</head>
+<body class="min-h-screen" data-theme="dark">
+  
+  <!-- 3D地球容器 -->
+  <div id="globe-container"></div>
+  
+  <!-- 控制面板 -->
+  <div id="controls">
+    <button id="toggle-view" class="btn-primary">切换列表视图</button>
+    <button id="toggle-rotate" class="btn-secondary">暂停旋转</button>
+    <button id="back-to-donate" class="btn-secondary" onclick="location.href='/donate'">返回榜单</button>
+    
+    <div id="stats">
+      <div>
+        <span class="muted">总服务器:</span>
+        <span id="total-servers">0</span>
+      </div>
+      <div>
+        <span class="muted">活跃:</span>
+        <span id="active-servers" style="color: #34C759;">0</span>
+      </div>
+      <div>
+        <span class="muted">连接数:</span>
+        <span id="total-connections">0</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 列表视图 -->
+  <div id="list-view" style="display:none">
+    <div class="max-w-6xl">
+      <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-2xl font-bold grad-title-animated">服务器列表</h2>
+        <button id="back-to-globe" class="btn-primary">返回3D地球</button>
+      </div>
+      
+      <div class="panel border rounded-xl overflow-hidden">
+        <table id="servers-table">
+          <thead>
+            <tr>
+              <th>IP地址</th>
+              <th>位置</th>
+              <th>国家</th>
+              <th>流量</th>
+              <th>配置</th>
+              <th>到期时间</th>
+              <th>状态</th>
+              <th>投喂者</th>
+            </tr>
+          </thead>
+          <tbody id="servers-table-body">
+            <tr>
+              <td colspan="8" class="text-center muted py-8">加载中...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-root"></div>
+
+  <!-- Globe.gl 库 -->
+  <script src="//unpkg.com/globe.gl"></script>
+  
+  <script>
+    // 主题切换功能
+    updateThemeBtn();
+
+    // 全局变量
+    let globe = null;
+    let serversData = [];
+    let connectionsData = [];
+    let updateInterval = null;
+    let isRotating = true;
+
+    /**
+     * WebGL可用性检测函数
+     * 检测浏览器是否支持WebGL
+     * @returns {boolean} 如果WebGL可用返回true，否则返回false
+     */
+    function isWebGLAvailable() {
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        
+        if (!gl) {
+          return false;
+        }
+        
+        // 进一步检查WebGL是否真正可用
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        if (debugInfo) {
+          const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+          // 检查是否是软件渲染器（性能较差）
+          if (renderer && renderer.toLowerCase().includes('swiftshader')) {
+            console.warn('检测到软件渲染器，WebGL性能可能较差');
+          }
+        }
+        
+        return true;
+      } catch (e) {
+        console.error('WebGL检测失败:', e);
+        return false;
+      }
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      // 检查WebGL可用性
+      if (!isWebGLAvailable()) {
+        console.error('WebGL不可用，自动切换到列表视图');
+        
+        // 显示提示信息
+        const globeContainer = document.getElementById('globe-container');
+        globeContainer.innerHTML = \`
+          <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div style="background: rgba(255,255,255,0.95); padding: 40px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 500px; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+              <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: #1d1d1f;">WebGL不可用</h2>
+              <p style="color: #6e6e73; margin-bottom: 24px; line-height: 1.6;">
+                您的浏览器不支持WebGL或WebGL已被禁用。<br>
+                3D地球可视化需要WebGL支持。<br>
+                请使用现代浏览器（Chrome、Firefox、Safari、Edge）或启用WebGL。
+              </p>
+              <button onclick="document.getElementById('toggle-view').click()" style="background: #007AFF; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                查看列表视图
+              </button>
+            </div>
+          </div>
+        \`;
+        
+        // 自动切换到列表视图
+        setTimeout(() => {
+          document.getElementById('toggle-view').click();
+        }, 3000);
+        
+        // 仍然获取数据以显示列表
+        fetchAndUpdateData();
+        startDataPolling();
+        setupEventListeners();
+        
+        return;
+      }
+      
+      // WebGL可用，正常初始化
+      initGlobe();
+      fetchAndUpdateData();
+      startDataPolling();
+      setupEventListeners();
+    });
+
+    // 设置事件监听器
+    function setupEventListeners() {
+      // 切换视图
+      document.getElementById('toggle-view').addEventListener('click', () => {
+        document.getElementById('globe-container').style.display = 'none';
+        document.getElementById('controls').style.display = 'none';
+        document.getElementById('list-view').style.display = 'block';
+      });
+
+      document.getElementById('back-to-globe').addEventListener('click', () => {
+        document.getElementById('list-view').style.display = 'none';
+        document.getElementById('globe-container').style.display = 'block';
+        document.getElementById('controls').style.display = 'block';
+      });
+
+      // 切换旋转
+      document.getElementById('toggle-rotate').addEventListener('click', () => {
+        isRotating = !isRotating;
+        if (globe && globe.controls()) {
+          globe.controls().autoRotate = isRotating;
+          document.getElementById('toggle-rotate').textContent = isRotating ? '暂停旋转' : '继续旋转';
+        }
+      });
+
+      // 页面可见性变化
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          if (globe && globe.controls()) {
+            globe.controls().autoRotate = false;
+          }
+          if (updateInterval) {
+            clearInterval(updateInterval);
+            updateInterval = null;
+          }
+        } else {
+          if (globe && globe.controls() && isRotating) {
+            globe.controls().autoRotate = true;
+          }
+          startDataPolling();
+        }
+      });
+
+      // 窗口大小变化 - 使用防抖优化性能
+      let resizeTimeout;
+      window.addEventListener('resize', () => {
+        // 清除之前的定时器
+        if (resizeTimeout) {
+          clearTimeout(resizeTimeout);
+        }
+        
+        // 设置新的定时器，500ms后执行resize操作
+        resizeTimeout = setTimeout(() => {
+          if (globe) {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+            
+            console.log(\`窗口大小变化: \${newWidth}x\${newHeight}\`);
+            
+            // 更新globe容器尺寸
+            globe.width(newWidth);
+            globe.height(newHeight);
+            
+            // 更新相机视角
+            if (globe.camera()) {
+              const camera = globe.camera();
+              camera.aspect = newWidth / newHeight;
+              camera.updateProjectionMatrix();
+            }
+            
+            // 如果有renderer，也更新它的尺寸
+            if (globe.renderer()) {
+              globe.renderer().setSize(newWidth, newHeight);
+            }
+            
+            console.log('Globe尺寸已更新');
+          }
+        }, 500);
+      });
+    }
+
+    // 初始化Globe
+    function initGlobe() {
+      try {
+        globe = Globe()
+          (document.getElementById('globe-container'))
+          .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+          .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+          .backgroundColor('#000000')
+          .width(window.innerWidth)
+          .height(window.innerHeight);
+
+        // 启用交互
+        globe.enablePointerInteraction(true);
+
+        // 设置自动旋转
+        if (globe.controls()) {
+          globe.controls().autoRotate = true;
+          globe.controls().autoRotateSpeed = 0.5;
+        }
+
+        console.log('Globe initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize globe:', error);
+        showToast('无法初始化3D地球，请刷新页面重试', 'error');
+      }
+    }
+
+    /**
+     * 获取服务器数据
+     * 调用 /api/admin/vps API获取服务器数据
+     * 为每个服务器添加coords属性（调用geocode函数）
+     * 添加错误处理和超时处理
+     * @returns {Promise<Array>} 服务器数据数组
+     */
+    async function fetchServers() {
+      // 创建超时Promise（8秒超时）
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('请求超时，请检查网络连接')), 8000);
+      });
+
+      try {
+        // 创建fetch Promise
+        const fetchPromise = fetch('/api/admin/vps', {
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        // 使用Promise.race实现超时控制
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
+
+        // 检查HTTP状态
+        if (!response.ok) {
+          const errorMsg = \`HTTP错误: \${response.status} \${response.statusText}\`;
+          console.error(errorMsg);
+          throw new Error(errorMsg);
+        }
+
+        // 解析JSON响应
+        let result;
+        try {
+          result = await response.json();
+        } catch (jsonError) {
+          console.error('JSON解析失败:', jsonError);
+          throw new Error('服务器返回的数据格式错误');
+        }
+        
+        // 检查业务逻辑成功状态
+        if (!result.success) {
+          const errorMsg = result.message || '获取服务器数据失败';
+          console.error('API返回错误:', errorMsg);
+          throw new Error(errorMsg);
+        }
+
+        // 验证数据结构
+        if (!Array.isArray(result.data)) {
+          console.error('服务器数据格式错误，期望数组，收到:', typeof result.data);
+          throw new Error('服务器数据格式错误');
+        }
+
+        // 处理服务器数据，为每个服务器添加coords属性
+        const servers = result.data.map(server => {
+          try {
+            // 调用geocode函数获取坐标
+            const coords = geocode(server.ipLocation || server.country);
+            return {
+              ...server,
+              coords: coords
+            };
+          } catch (err) {
+            console.warn(\`为服务器 \${server.ip} 获取坐标失败:\`, err);
+            // 如果geocode失败，使用默认坐标
+            return {
+              ...server,
+              coords: { lat: 0, lng: 0 }
+            };
+          }
+        });
+
+        console.log(\`✅ 成功获取 \${servers.length} 台服务器数据\`);
+        return servers;
+
+      } catch (error) {
+        // 详细的错误日志记录
+        console.error('❌ 获取服务器数据失败:', {
+          message: error.message,
+          type: error.name,
+          stack: error.stack
+        });
+        
+        // 如果有缓存数据，返回缓存数据
+        if (serversData && serversData.length > 0) {
+          console.warn('⚠️ 使用缓存的服务器数据 (\${serversData.length} 台服务器)');
+          showToast(\`网络请求失败: \${error.message}，显示缓存数据\`, 'warning');
+          return serversData;
+        }
+        
+        // 没有缓存数据，返回空数组而不是抛出错误
+        console.error('⚠️ 无缓存数据可用，返回空数组');
+        showToast(\`无法获取服务器数据: \${error.message}\`, 'error');
+        return [];
+      }
+    }
+
+    /**
+     * 更新数据函数
+     * 创建updateData函数更新serversData和connectionsData
+     * 更新统计信息显示
+     */
+    async function updateData() {
+      try {
+        // 获取最新的服务器数据
+        const newServersData = await fetchServers();
+        
+        // 性能优化：当服务器数量超过100时，只显示活跃服务器
+        let filteredServersData = newServersData;
+        let isFiltered = false;
+        
+        if (newServersData.length > 100) {
+          filteredServersData = newServersData.filter(s => s.status === 'active');
+          isFiltered = true;
+          console.log(\`⚡ 性能优化: 服务器总数 \${newServersData.length} 超过100，仅显示 \${filteredServersData.length} 台活跃服务器\`);
+        }
+        
+        // 更新全局变量
+        serversData = filteredServersData;
+        
+        // 计算连接关系
+        connectionsData = calculateConnections(serversData);
+        
+        console.log(\`数据更新完成: \${serversData.length} 台服务器, \${connectionsData.length} 条连接\`);
+        
+        // 更新Globe显示
+        updateGlobe();
+        
+        // 更新统计信息（传入是否过滤的标志和原始总数）
+        updateStats(isFiltered, newServersData.length);
+        
+        // 更新列表视图
+        renderListView();
+        
+      } catch (error) {
+        console.error('更新数据失败:', error);
+        showToast(\`数据更新失败: \${error.message}\`, 'error');
+      }
+    }
+
+    /**
+     * 获取并更新数据（向后兼容的包装函数）
+     */
+    async function fetchAndUpdateData() {
+      await updateData();
+    }
+
+    // 更新Globe显示
+    function updateGlobe() {
+      if (!globe) return;
+
+      try {
+        // 更新服务器节点
+        globe
+          .pointsData(serversData)
+          .pointLat(d => d.coords.lat)
+          .pointLng(d => d.coords.lng)
+          .pointColor(d => {
+            if (d.status === 'active') return '#4ade80';
+            if (d.status === 'failed') return '#ef4444';
+            return '#94a3b8';
+          })
+          .pointAltitude(0.01)
+          .pointRadius(0.3)
+          .pointLabel(d => \`
+            <div style="background: rgba(0,0,0,0.85); padding: 10px 14px; border-radius: 8px; color: white; font-size: 13px; line-height: 1.6;">
+              <div style="font-weight: 600; margin-bottom: 6px; font-size: 14px;">\${d.country || '未知'}</div>
+              <div style="color: #d1d1d6; margin-bottom: 4px;">\${d.ipLocation || '未知位置'}</div>
+              <div style="color: #d1d1d6; margin-bottom: 4px;">IP: \${d.ip}</div>
+              <div style="color: \${d.status === 'active' ? '#4ade80' : '#ef4444'}; font-weight: 500;">
+                状态: \${d.status === 'active' ? '运行中' : '离线'}
+              </div>
+            </div>
+          \`);
+
+        // 更新连接弧线
+        globe
+          .arcsData(connectionsData)
+          .arcStartLat(d => d.startLat)
+          .arcStartLng(d => d.startLng)
+          .arcEndLat(d => d.endLat)
+          .arcEndLng(d => d.endLng)
+          .arcColor(() => ['#4a9eff', '#60a5fa'])
+          .arcStroke(0.5)
+          .arcDashLength(0.4)
+          .arcDashGap(0.2)
+          .arcDashAnimateTime(2000);
+
+        console.log(\`Updated globe with \${serversData.length} servers and \${connectionsData.length} connections\`);
+      } catch (error) {
+        console.error('Failed to update globe:', error);
+      }
+    }
+
+    // 更新统计信息
+    function updateStats(isFiltered = false, originalTotal = 0) {
+      const total = serversData.length;
+      const active = serversData.filter(s => s.status === 'active').length;
+      const connections = connectionsData.length;
+
+      document.getElementById('total-servers').textContent = total;
+      document.getElementById('active-servers').textContent = active;
+      document.getElementById('total-connections').textContent = connections;
+      
+      // 显示过滤提示
+      const statsDiv = document.getElementById('stats');
+      let filterNotice = document.getElementById('filter-notice');
+      
+      if (isFiltered && originalTotal > 100) {
+        if (!filterNotice) {
+          filterNotice = document.createElement('div');
+          filterNotice.id = 'filter-notice';
+          filterNotice.style.cssText = 'margin-top: 12px; padding: 10px; background: rgba(255, 193, 7, 0.15); border-left: 3px solid #ffc107; border-radius: 4px; font-size: 12px; line-height: 1.5;';
+          statsDiv.appendChild(filterNotice);
+        }
+        filterNotice.innerHTML = \`
+          <div style="font-weight: 600; color: #f59e0b; margin-bottom: 4px;">⚡ 性能优化模式</div>
+          <div style="color: #92400e;">服务器总数 \${originalTotal} 台<br>仅显示 \${total} 台活跃服务器</div>
+        \`;
+      } else if (filterNotice) {
+        filterNotice.remove();
+      }
+    }
+
+    /**
+     * 渲染列表视图
+     * 创建renderListView函数
+     * 根据serversData生成表格行
+     * 根据状态显示不同的徽章样式
+     */
+    function renderListView() {
+      const tbody = document.getElementById('servers-table-body');
+      
+      if (serversData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center muted py-8">暂无服务器数据</td></tr>';
+        return;
+      }
+
+      // 根据状态生成徽章样式
+      const getStatusBadge = (status) => {
+        if (status === 'active') {
+          return '<span class="badge-ok">运行中</span>';
+        } else if (status === 'failed') {
+          return '<span class="badge-fail">失败</span>';
+        } else {
+          return '<span class="badge-idle">未启用</span>';
+        }
+      };
+
+      // 格式化日期显示
+      const formatDate = (dateStr) => {
+        if (!dateStr || dateStr === '未填写') return '未填写';
+        return dateStr;
+      };
+
+      // 生成表格行
+      tbody.innerHTML = serversData.map(server => \`
+        <tr>
+          <td>
+            <code style="font-size: 12px; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;">
+              \${server.ip}:\${server.port || 22}
+            </code>
+          </td>
+          <td>\${server.ipLocation || '未知位置'}</td>
+          <td>\${server.country || '未知'}</td>
+          <td>\${server.traffic || '未填写'}</td>
+          <td>\${server.specs || '未填写'}</td>
+          <td>\${formatDate(server.expiryDate)}</td>
+          <td>\${getStatusBadge(server.status)}</td>
+          <td>\${server.donatedByUsername || '匿名'}</td>
+        </tr>
+      \`).join('');
+    }
+
+    /**
+     * 开始数据轮询
+     * 实现10秒轮询机制（使用setInterval）
+     */
+    function startDataPolling() {
+      // 清除现有的轮询定时器（如果存在）
+      if (updateInterval) {
+        clearInterval(updateInterval);
+        updateInterval = null;
+      }
+      
+      // 设置新的轮询定时器，每10秒更新一次数据
+      updateInterval = setInterval(() => {
+        console.log('执行定时数据更新...');
+        updateData();
+      }, 10000); // 10秒 = 10000毫秒
+      
+      console.log('数据轮询已启动，每10秒更新一次');
+    }
+
+    // Toast通知
+    function showToast(message, type = 'info') {
+      const root = document.getElementById('toast-root');
+      const toast = document.createElement('div');
+      toast.className = \`toast \${type}\`;
+      toast.textContent = message;
+      root.appendChild(toast);
+      
+      setTimeout(() => toast.classList.add('show'), 10);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => root.removeChild(toast), 300);
+      }, 3000);
+    }
+
+    // 城市坐标数据库（客户端版本）
+    const CITY_COORDS = ${JSON.stringify(CITY_COORDS, null, 2)};
+
+    /**
+     * 地理编码函数：将位置字符串转换为经纬度坐标
+     * 提供多级后备方案，确保总能返回有效坐标
+     * @param {string} location - 位置字符串
+     * @returns {{lat: number, lng: number}} 坐标对象
+     */
+    function geocode(location) {
+      try {
+        // 第一级后备：检查输入是否为空或无效
+        if (!location || typeof location !== 'string') {
+          console.warn('地理编码失败: 位置信息为空或无效类型', location);
+          return { lat: 0, lng: 0 };
+        }
+
+        // 清理输入字符串
+        const cleanLocation = location.trim();
+        if (!cleanLocation) {
+          console.warn('地理编码失败: 位置信息为空字符串');
+          return { lat: 0, lng: 0 };
+        }
+
+        // 第二级后备：直接匹配
+        if (CITY_COORDS[cleanLocation]) {
+          console.log(\`✅ 直接匹配成功: "\${cleanLocation}"\`);
+          return CITY_COORDS[cleanLocation];
+        }
+
+        // 第三级后备：解析逗号分隔的位置字符串
+        const parts = cleanLocation.split(',').map(s => s.trim()).filter(Boolean);
+
+        // 第四级后备：部分匹配（从最具体的部分开始）
+        for (let i = parts.length - 1; i >= 0; i--) {
+          const part = parts[i];
+          if (CITY_COORDS[part]) {
+            console.log(\`✅ 部分匹配成功: "\${part}" (来自 "\${cleanLocation}")\`);
+            return CITY_COORDS[part];
+          }
+        }
+
+        // 第五级后备：模糊匹配（逐部分匹配）
+        for (let i = parts.length - 1; i >= 0; i--) {
+          const part = parts[i];
+          const partLower = part.toLowerCase();
+          
+          for (const key in CITY_COORDS) {
+            const keyLower = key.toLowerCase();
+            if (keyLower.includes(partLower) || partLower.includes(keyLower)) {
+              console.log(\`✅ 模糊匹配成功: "\${key}" (匹配 "\${part}" 来自 "\${cleanLocation}")\`);
+              return CITY_COORDS[key];
+            }
+          }
+        }
+
+        // 第六级后备：尝试匹配整个字符串
+        const cleanLower = cleanLocation.toLowerCase();
+        for (const key in CITY_COORDS) {
+          const keyLower = key.toLowerCase();
+          if (cleanLower.includes(keyLower) || keyLower.includes(cleanLower)) {
+            console.log(\`✅ 全字符串模糊匹配成功: "\${key}" (来自 "\${cleanLocation}")\`);
+            return CITY_COORDS[key];
+          }
+        }
+
+        // 第七级后备：尝试提取国家名称（通常是第一部分）
+        if (parts.length > 0) {
+          const firstPart = parts[0];
+          // 尝试匹配第一部分（通常是国家）
+          for (const key in CITY_COORDS) {
+            if (key.toLowerCase().includes(firstPart.toLowerCase())) {
+              console.log(\`⚠️ 国家级后备匹配: "\${key}" (来自 "\${cleanLocation}")\`);
+              return CITY_COORDS[key];
+            }
+          }
+        }
+
+        // 最终后备：记录无法编码的位置并返回默认坐标
+        console.warn(\`⚠️ 无法为位置 "\${cleanLocation}" 找到坐标，使用默认坐标 (0, 0)\`);
+        console.warn('  可用的位置关键词示例:', Object.keys(CITY_COORDS).slice(0, 10).join(', '));
+        
+        return { lat: 0, lng: 0 };
+        
+      } catch (error) {
+        // 异常处理：捕获任何意外错误
+        console.error('地理编码过程中发生异常:', error);
+        console.error('  输入位置:', location);
+        console.error('  错误详情:', error.message, error.stack);
+        
+        // 返回默认坐标作为最终后备
+        return { lat: 0, lng: 0 };
+      }
+    }
+
+    /**
+     * Haversine距离计算函数
+     * @param {{lat: number, lng: number}} coords1 - 第一个点的坐标
+     * @param {{lat: number, lng: number}} coords2 - 第二个点的坐标
+     * @returns {number} 距离（公里）
+     */
+    function haversineDistance(coords1, coords2) {
+      const R = 6371; // 地球半径（公里）
+      const toRadians = (degrees) => degrees * Math.PI / 180;
+
+      const dLat = toRadians(coords2.lat - coords1.lat);
+      const dLng = toRadians(coords2.lng - coords1.lng);
+      const lat1Rad = toRadians(coords1.lat);
+      const lat2Rad = toRadians(coords2.lat);
+
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+                Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+      return R * c;
+    }
+
+    /**
+     * 计算服务器之间的连接关系
+     * @param {Array} servers - 服务器数组
+     * @returns {Array} 连接弧线数据数组
+     */
+    function calculateConnections(servers) {
+      const connections = [];
+      const maxConnectionsPerServer = servers.length > 50 ? 3 : 5;
+
+      servers.forEach(server => {
+        if (!server.coords || server.coords.lat === 0) {
+          return;
+        }
+
+        const distances = servers
+          .filter(s => s.id !== server.id && s.coords && s.coords.lat !== 0)
+          .map(s => ({
+            server: s,
+            distance: haversineDistance(server.coords, s.coords)
+          }))
+          .sort((a, b) => a.distance - b.distance);
+
+        distances.slice(0, maxConnectionsPerServer).forEach(({ server: target }) => {
+          connections.push({
+            startLat: server.coords.lat,
+            startLng: server.coords.lng,
+            endLat: target.coords.lat,
+            endLng: target.coords.lng,
+            color: '#4a9eff'
+          });
+        });
+      });
+
+      // 去重
+      const seen = new Set();
+      return connections.filter(conn => {
+        const key = [
+          conn.startLat,
+          conn.startLng,
+          conn.endLat,
+          conn.endLng
+        ].sort().join(',');
+
+        if (seen.has(key)) {
+          return false;
+        }
+
+        seen.add(key);
+        return true;
+      });
+    }
+  </script>
 </body></html>`;
   return c.html(html);
 });
