@@ -54,143 +54,6 @@ interface Session {
 
 const kv = await Deno.openKv();
 
-/* ==================== 城市坐标数据库 ==================== */
-const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
-  // 主要国家（按大洲分组）
-  // 亚洲
-  'China': { lat: 35.8617, lng: 104.1954 },
-  'Japan': { lat: 36.2048, lng: 138.2529 },
-  'South Korea': { lat: 35.9078, lng: 127.7669 },
-  'India': { lat: 20.5937, lng: 78.9629 },
-  'Singapore': { lat: 1.3521, lng: 103.8198 },
-  'Thailand': { lat: 15.8700, lng: 100.9925 },
-  'Vietnam': { lat: 14.0583, lng: 108.2772 },
-  'Malaysia': { lat: 4.2105, lng: 101.9758 },
-  'Indonesia': { lat: -0.7893, lng: 113.9213 },
-  'Philippines': { lat: 12.8797, lng: 121.7740 },
-  'Taiwan': { lat: 23.6978, lng: 120.9605 },
-  'Hong Kong': { lat: 22.3193, lng: 114.1694 },
-  'Macau': { lat: 22.1987, lng: 113.5439 },
-  
-  // 北美洲
-  'United States': { lat: 37.0902, lng: -95.7129 },
-  'Canada': { lat: 56.1304, lng: -106.3468 },
-  'Mexico': { lat: 23.6345, lng: -102.5528 },
-  
-  // 欧洲
-  'United Kingdom': { lat: 55.3781, lng: -3.4360 },
-  'Germany': { lat: 51.1657, lng: 10.4515 },
-  'France': { lat: 46.2276, lng: 2.2137 },
-  'Netherlands': { lat: 52.1326, lng: 5.2913 },
-  'Russia': { lat: 61.5240, lng: 105.3188 },
-  'Italy': { lat: 41.8719, lng: 12.5674 },
-  'Spain': { lat: 40.4637, lng: -3.7492 },
-  'Poland': { lat: 51.9194, lng: 19.1451 },
-  'Sweden': { lat: 60.1282, lng: 18.6435 },
-  'Norway': { lat: 60.4720, lng: 8.4689 },
-  'Finland': { lat: 61.9241, lng: 25.7482 },
-  'Switzerland': { lat: 46.8182, lng: 8.2275 },
-  'Austria': { lat: 47.5162, lng: 14.5501 },
-  'Belgium': { lat: 50.5039, lng: 4.4699 },
-  'Denmark': { lat: 56.2639, lng: 9.5018 },
-  'Ireland': { lat: 53.4129, lng: -8.2439 },
-  'Portugal': { lat: 39.3999, lng: -8.2245 },
-  'Czech Republic': { lat: 49.8175, lng: 15.4730 },
-  'Greece': { lat: 39.0742, lng: 21.8243 },
-  'Romania': { lat: 45.9432, lng: 24.9668 },
-  'Ukraine': { lat: 48.3794, lng: 31.1656 },
-  
-  // 大洋洲
-  'Australia': { lat: -25.2744, lng: 133.7751 },
-  'New Zealand': { lat: -40.9006, lng: 174.8860 },
-  
-  // 南美洲
-  'Brazil': { lat: -14.2350, lng: -51.9253 },
-  'Argentina': { lat: -38.4161, lng: -63.6167 },
-  'Chile': { lat: -35.6751, lng: -71.5430 },
-  
-  // 非洲
-  'South Africa': { lat: -30.5595, lng: 22.9375 },
-  'Egypt': { lat: 26.8206, lng: 30.8025 },
-  
-  // 中东
-  'Turkey': { lat: 38.9637, lng: 35.2433 },
-  'Israel': { lat: 31.0461, lng: 34.8516 },
-  'United Arab Emirates': { lat: 23.4241, lng: 53.8478 },
-  'Saudi Arabia': { lat: 23.8859, lng: 45.0792 },
-  
-  // 主要城市
-  // 中国城市
-  'Beijing': { lat: 39.9042, lng: 116.4074 },
-  'Shanghai': { lat: 31.2304, lng: 121.4737 },
-  'Guangzhou': { lat: 23.1291, lng: 113.2644 },
-  'Shenzhen': { lat: 22.5431, lng: 114.0579 },
-  'Chengdu': { lat: 30.5728, lng: 104.0668 },
-  'Hangzhou': { lat: 30.2741, lng: 120.1551 },
-  'Chongqing': { lat: 29.4316, lng: 106.9123 },
-  'Wuhan': { lat: 30.5928, lng: 114.3055 },
-  'Xi\'an': { lat: 34.3416, lng: 108.9398 },
-  'Nanjing': { lat: 32.0603, lng: 118.7969 },
-  
-  // 美国城市
-  'New York': { lat: 40.7128, lng: -74.0060 },
-  'Los Angeles': { lat: 34.0522, lng: -118.2437 },
-  'Chicago': { lat: 41.8781, lng: -87.6298 },
-  'San Francisco': { lat: 37.7749, lng: -122.4194 },
-  'Seattle': { lat: 47.6062, lng: -122.3321 },
-  'Miami': { lat: 25.7617, lng: -80.1918 },
-  'Dallas': { lat: 32.7767, lng: -96.7970 },
-  'Boston': { lat: 42.3601, lng: -71.0589 },
-  'Washington': { lat: 38.9072, lng: -77.0369 },
-  'Atlanta': { lat: 33.7490, lng: -84.3880 },
-  
-  // 欧洲城市
-  'London': { lat: 51.5074, lng: -0.1278 },
-  'Paris': { lat: 48.8566, lng: 2.3522 },
-  'Berlin': { lat: 52.5200, lng: 13.4050 },
-  'Amsterdam': { lat: 52.3676, lng: 4.9041 },
-  'Frankfurt': { lat: 50.1109, lng: 8.6821 },
-  'Madrid': { lat: 40.4168, lng: -3.7038 },
-  'Rome': { lat: 41.9028, lng: 12.4964 },
-  'Milan': { lat: 45.4642, lng: 9.1900 },
-  'Munich': { lat: 48.1351, lng: 11.5820 },
-  'Stockholm': { lat: 59.3293, lng: 18.0686 },
-  'Copenhagen': { lat: 55.6761, lng: 12.5683 },
-  'Vienna': { lat: 48.2082, lng: 16.3738 },
-  'Zurich': { lat: 47.3769, lng: 8.5417 },
-  'Brussels': { lat: 50.8503, lng: 4.3517 },
-  'Dublin': { lat: 53.3498, lng: -6.2603 },
-  'Moscow': { lat: 55.7558, lng: 37.6173 },
-  'Warsaw': { lat: 52.2297, lng: 21.0122 },
-  
-  // 亚洲其他主要城市
-  'Tokyo': { lat: 35.6762, lng: 139.6503 },
-  'Osaka': { lat: 34.6937, lng: 135.5023 },
-  'Seoul': { lat: 37.5665, lng: 126.9780 },
-  'Mumbai': { lat: 19.0760, lng: 72.8777 },
-  'Delhi': { lat: 28.7041, lng: 77.1025 },
-  'Bangkok': { lat: 13.7563, lng: 100.5018 },
-  'Kuala Lumpur': { lat: 3.1390, lng: 101.6869 },
-  'Jakarta': { lat: -6.2088, lng: 106.8456 },
-  'Manila': { lat: 14.5995, lng: 120.9842 },
-  'Taipei': { lat: 25.0330, lng: 121.5654 },
-  'Dubai': { lat: 25.2048, lng: 55.2708 },
-  'Tel Aviv': { lat: 32.0853, lng: 34.7818 },
-  'Istanbul': { lat: 41.0082, lng: 28.9784 },
-  
-  // 加拿大城市
-  'Toronto': { lat: 43.6532, lng: -79.3832 },
-  'Vancouver': { lat: 49.2827, lng: -123.1207 },
-  'Montreal': { lat: 45.5017, lng: -73.5673 },
-  
-  // 澳洲城市
-  'Sydney': { lat: -33.8688, lng: 151.2093 },
-  'Melbourne': { lat: -37.8136, lng: 144.9631 },
-  'Brisbane': { lat: -27.4698, lng: 153.0251 },
-  'Perth': { lat: -31.9505, lng: 115.8605 },
-  'Auckland': { lat: -36.8485, lng: 174.7633 }
-};
-
 /* ==================== 工具函数 ==================== */
 const genId = () => crypto.randomUUID();
 
@@ -208,216 +71,12 @@ async function getIPLocation(ip: string): Promise<string> {
   return '未知地区';
 }
 
-/**
- * 地理编码函数：将位置字符串转换为经纬度坐标
- * 提供多级后备方案，确保总能返回有效坐标
- * @param location - 位置字符串，格式："国家, 地区, 城市" 或单个地名
- * @returns 包含 lat 和 lng 的坐标对象
- */
-function geocode(location: string | undefined): { lat: number; lng: number } {
-  try {
-    // 第一级后备：检查输入是否为空或无效
-    if (!location || typeof location !== 'string') {
-      console.warn('地理编码失败: 位置信息为空或无效类型', location);
-      return { lat: 0, lng: 0 };
-    }
-
-    // 清理输入：去除首尾空格
-    const cleanLocation = location.trim();
-    if (!cleanLocation) {
-      console.warn('地理编码失败: 位置信息为空字符串');
-      return { lat: 0, lng: 0 };
-    }
-
-    // 第二级后备：直接匹配
-    if (CITY_COORDS[cleanLocation]) {
-      return CITY_COORDS[cleanLocation];
-    }
-
-    // 第三级后备：解析逗号分隔的位置字符串
-    const parts = cleanLocation.split(',').map(s => s.trim()).filter(Boolean);
-
-    // 第四级后备：部分匹配（从最具体的部分开始）
-    for (let i = parts.length - 1; i >= 0; i--) {
-      const part = parts[i];
-      if (CITY_COORDS[part]) {
-        return CITY_COORDS[part];
-      }
-    }
-
-    // 第五级后备：模糊匹配（逐部分匹配）
-    for (let i = parts.length - 1; i >= 0; i--) {
-      const part = parts[i];
-      const partLower = part.toLowerCase();
-      
-      for (const key in CITY_COORDS) {
-        const keyLower = key.toLowerCase();
-        if (keyLower.includes(partLower) || partLower.includes(keyLower)) {
-          return CITY_COORDS[key];
-        }
-      }
-    }
-
-    // 第六级后备：尝试匹配整个字符串
-    const cleanLower = cleanLocation.toLowerCase();
-    for (const key in CITY_COORDS) {
-      const keyLower = key.toLowerCase();
-      if (cleanLower.includes(keyLower) || keyLower.includes(cleanLower)) {
-        return CITY_COORDS[key];
-      }
-    }
-
-    // 第七级后备：尝试提取国家名称（通常是第一部分）
-    if (parts.length > 0) {
-      const firstPart = parts[0];
-      for (const key in CITY_COORDS) {
-        if (key.toLowerCase().includes(firstPart.toLowerCase())) {
-          console.warn(`国家级后备匹配: "${key}" (来自 "${cleanLocation}")`);
-          return CITY_COORDS[key];
-        }
-      }
-    }
-
-    // 最终后备：记录无法编码的位置并返回默认坐标
-    console.warn(`无法为位置 "${cleanLocation}" 找到坐标，使用默认坐标 (0, 0)`);
-    
-    return { lat: 0, lng: 0 };
-    
-  } catch (error) {
-    // 异常处理：捕获任何意外错误
-    console.error('地理编码过程中发生异常:', error);
-    console.error('  输入位置:', location);
-    
-    // 返回默认坐标作为最终后备
-    return { lat: 0, lng: 0 };
-  }
-}
-
-/**
- * Haversine距离计算函数：计算地球表面两点之间的球面距离
- * @param coords1 - 第一个点的坐标 { lat: 纬度, lng: 经度 }
- * @param coords2 - 第二个点的坐标 { lat: 纬度, lng: 经度 }
- * @returns 两点之间的距离（单位：公里）
- */
-function haversineDistance(
-  coords1: { lat: number; lng: number },
-  coords2: { lat: number; lng: number }
-): number {
-  // 地球平均半径（单位：公里）
-  const R = 6371;
-
-  // 将角度转换为弧度
-  const toRadians = (degrees: number) => degrees * Math.PI / 180;
-
-  // 计算纬度和经度的差值（弧度）
-  const dLat = toRadians(coords2.lat - coords1.lat);
-  const dLng = toRadians(coords2.lng - coords1.lng);
-
-  // 将起点和终点的纬度转换为弧度
-  const lat1Rad = toRadians(coords1.lat);
-  const lat2Rad = toRadians(coords2.lat);
-
-  // Haversine公式
-  // a = sin²(Δlat/2) + cos(lat1) * cos(lat2) * sin²(Δlng/2)
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1Rad) * Math.cos(lat2Rad) *
-            Math.sin(dLng / 2) * Math.sin(dLng / 2);
-
-  // c = 2 * atan2(√a, √(1-a))
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  // 距离 = 半径 * c
-  const distance = R * c;
-
-  return distance;
-}
-
-/**
- * 计算服务器之间的连接关系
- * @param servers - 服务器数组，每个服务器需要包含 id 和 coords 属性
- * @returns 连接弧线数据数组，每个连接包含起点和终点的经纬度坐标
- */
-function calculateConnections(
-  servers: Array<{ id: string; coords: { lat: number; lng: number } }>
-): Array<{
-  startLat: number;
-  startLng: number;
-  endLat: number;
-  endLng: number;
-  color: string;
-}> {
-  const connections: Array<{
-    startLat: number;
-    startLng: number;
-    endLat: number;
-    endLng: number;
-    color: string;
-  }> = [];
-
-  // 根据服务器总数动态调整每个节点的连接数
-  // 服务器数>50时，每个节点最多连接3个；否则连接5个
-  const maxConnectionsPerServer = servers.length > 50 ? 3 : 5;
-
-  // 为每个服务器找到最近的N个服务器并创建连接
-  servers.forEach(server => {
-    // 跳过没有有效坐标的服务器（坐标为 0,0 表示未知位置）
-    if (!server.coords || server.coords.lat === 0) {
-      return;
-    }
-
-    // 计算当前服务器到其他所有服务器的距离
-    const distances = servers
-      .filter(s => s.id !== server.id && s.coords && s.coords.lat !== 0)
-      .map(s => ({
-        server: s,
-        distance: haversineDistance(server.coords, s.coords)
-      }))
-      .sort((a, b) => a.distance - b.distance);
-
-    // 连接到最近的N个服务器
-    distances.slice(0, maxConnectionsPerServer).forEach(({ server: target }) => {
-      connections.push({
-        startLat: server.coords.lat,
-        startLng: server.coords.lng,
-        endLat: target.coords.lat,
-        endLng: target.coords.lng,
-        color: '#4a9eff'
-      });
-    });
-  });
-
-  // 去重逻辑：避免双向重复连接
-  // 使用 Set 来跟踪已经添加的连接
-  const seen = new Set<string>();
-  const uniqueConnections = connections.filter(conn => {
-    // 创建一个标准化的键：将起点和终点坐标排序后组合
-    // 这样 A->B 和 B->A 会生成相同的键
-    const key = [
-      conn.startLat,
-      conn.startLng,
-      conn.endLat,
-      conn.endLng
-    ].sort().join(',');
-
-    // 如果这个键已经存在，说明是重复连接，过滤掉
-    if (seen.has(key)) {
-      return false;
-    }
-
-    // 否则，记录这个键并保留这个连接
-    seen.add(key);
-    return true;
-  });
-
-  return uniqueConnections;
-}
-
 const isIPv4 = (ip: string) =>
   /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && ip.split('.').every(p => +p >= 0 && +p <= 255);
-const isIPv6 = (ip: string) => {
-  const cleanIp = ip.replace(/^\[/, '').replace(/\]$/, '');
-  return /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})|:((:[0-9a-f]{1,4}){1,7}|:)|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/i.test(cleanIp);
-};
+const isIPv6 = (ip: string) =>
+  /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})|:((:[0-9a-f]{1,4}){1,7}|:)|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/i.test(
+    ip.replace(/^\[|\]$/g, ''),
+  );
 const isValidIP = (ip: string) => isIPv4(ip) || isIPv6(ip);
 
 async function getAllVPS(): Promise<VPSServer[]> {
@@ -433,9 +92,8 @@ async function ipDup(ip: string, port: number) {
 
 async function portOK(ip: string, port: number) {
   try {
-    const cleanIp = ip.replace(/^\[/, '').replace(/\]$/, '');
     const conn = await Deno.connect({
-      hostname: cleanIp,
+      hostname: ip.replace(/^\[|\]$/g, ''),
       port,
       transport: 'tcp'
     });
@@ -809,11 +467,21 @@ app.post('/api/donate', requireAuth, async c => {
   }
 
   // ✅ 新增：统一把 IP 做 trim，去掉复制带来的空格/换行
-  const ipClean = String(ip).trim().replace(/[\r\n\t]/g, '');
+  const ipClean = String(ip).trim();
+
+  // 🔍 调试日志：查看收到的IP值
+  console.log('===== IP验证调试 =====');
+  console.log('原始IP值:', JSON.stringify(ip));
+  console.log('IP类型:', typeof ip);
+  console.log('清理后IP:', JSON.stringify(ipClean));
+  console.log('IPv4验证:', isIPv4(ipClean));
+  console.log('IPv6验证:', isIPv6(ipClean));
+  console.log('最终验证结果:', isValidIP(ipClean));
+  console.log('====================');
 
   // ✅ 下面开始都用 ipClean
   if (!isValidIP(ipClean)) {
-    return c.json({ success: false, message: 'IP 格式不正确，请检查输入' }, 400);
+    return c.json({ success: false, message: 'IP 格式不正确' }, 400);
   }
 
   const p = parseInt(String(port), 10);
@@ -848,7 +516,7 @@ app.post('/api/donate', requireAuth, async c => {
     donatedBy: s.userId,
     donatedByUsername: s.username,
     donatedAt: now,
-    status: 'active',
+    status: 'pending',
     ipLocation: ipLoc,
     verifyStatus: 'verified',
     lastVerifyAt: now,
@@ -995,85 +663,6 @@ app.put('/api/admin/config/password', requireAdmin, async c => {
 
   await setAdminPwd(String(password));
   return c.json({ success: true, message: '管理员密码已更新' });
-});
-
-/* 编辑 VPS 配置 */
-app.put('/api/admin/vps/:id/config', requireAdmin, async c => {
-  const id = c.req.param('id');
-  const { ip, port, username, authType, password, privateKey } = await c.req.json();
-
-  // 从 KV 数据库读取现有 VPS 配置
-  const r = await kv.get<VPSServer>(['vps', id]);
-  if (!r.value) return c.json({ success: false, message: 'VPS 不存在' }, 404);
-
-  const vps = r.value;
-
-  // 验证 IP 格式（如果提供了新的 IP）
-  if (ip !== undefined && ip !== '') {
-    const ipClean = String(ip).trim().replace(/[\r\n\t]/g, '');
-    if (!isValidIP(ipClean)) {
-      return c.json({ success: false, message: 'IP 格式不正确' }, 400);
-    }
-    vps.ip = ipClean;
-  }
-
-  // 验证端口范围（如果提供了新的端口）
-  if (port !== undefined && port !== '') {
-    const p = parseInt(String(port), 10);
-    if (isNaN(p) || p < 1 || p > 65535) {
-      return c.json({ success: false, message: '端口范围必须在 1-65535 之间' }, 400);
-    }
-    vps.port = p;
-  }
-
-  // 更新用户名（如果提供）
-  if (username !== undefined && username !== '') {
-    vps.username = String(username);
-  }
-
-  // 更新认证方式（如果提供）
-  if (authType !== undefined && authType !== '') {
-    if (authType !== 'password' && authType !== 'key') {
-      return c.json({ success: false, message: '认证方式必须是 password 或 key' }, 400);
-    }
-    vps.authType = authType;
-  }
-
-  // 验证认证方式与凭据的匹配
-  if (vps.authType === 'password') {
-    // 如果是密码认证，且提供了新密码，则更新
-    if (password !== undefined && password !== '') {
-      vps.password = String(password);
-    }
-    // 如果是密码认证但没有密码（既没有旧密码也没有新密码），返回错误
-    if (!vps.password) {
-      return c.json({ success: false, message: '密码认证需要提供密码' }, 400);
-    }
-  } else if (vps.authType === 'key') {
-    // 如果是密钥认证，且提供了新私钥，则更新
-    if (privateKey !== undefined && privateKey !== '') {
-      vps.privateKey = String(privateKey);
-    }
-    // 如果是密钥认证但没有私钥（既没有旧私钥也没有新私钥），返回错误
-    if (!vps.privateKey) {
-      return c.json({ success: false, message: '密钥认证需要提供私钥' }, 400);
-    }
-  }
-
-  // 保存更新后的配置到 KV 数据库
-  await kv.set(['vps', id], vps);
-
-  return c.json({
-    success: true,
-    message: '配置已更新',
-    data: {
-      id: vps.id,
-      ip: vps.ip,
-      port: vps.port,
-      username: vps.username,
-      authType: vps.authType
-    }
-  });
 });
 
 /* 后端统计：今日新增按固定东八区日期判断 */
@@ -1230,85 +819,14 @@ app.post('/api/admin/verify-all', requireAdmin, async c => {
 /* ==================== /donate 榜单页 ==================== */
 app.get('/donate', c => {
   const head = commonHead('风萧萧公益机场 · VPS 投喂榜');
-  const html = `<!doctype html><html lang="zh-CN"><head>${head}
-<script src="https://unpkg.com/globe.gl"></script>
-<style>
-  /* 3D地球容器样式 */
-  #globe-container {
-    width: 100%;
-    height: 500px;
-    border-radius: 8px;
-    overflow: hidden;
-    background: #000;
-    transition: height 0.3s ease;
-  }
-  
-  /* 最小化状态 */
-  #globe-container.minimized {
-    height: 200px;
-  }
-  
-  /* 地球控制按钮样式 */
-  #globe-controls {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-  
-  /* 统计信息样式 */
-  #globe-stats {
-    display: flex;
-    gap: 1.5rem;
-    font-size: 0.875rem;
-    margin-top: 1rem;
-    flex-wrap: wrap;
-  }
-  
-  /* 移动端响应式样式 */
-  @media (max-width: 768px) {
-    #globe-container {
-      height: 300px;
-    }
-    
-    #globe-container.minimized {
-      height: 150px;
-    }
-    
-    #globe-stats {
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    
-    #globe-controls {
-      width: 100%;
-      justify-content: stretch;
-    }
-    
-    #globe-controls button {
-      flex: 1;
-    }
-  }
-  
-  /* 小屏幕优化 */
-  @media (max-width: 480px) {
-    #globe-container {
-      height: 250px;
-      border-radius: 4px;
-    }
-    
-    #globe-container.minimized {
-      height: 120px;
-    }
-  }
-</style>
-</head>
+  const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
 <body class="min-h-screen" data-theme="dark">
 <div class="max-w-6xl mx-auto px-6 py-8 md:py-12">
 
   <header class="mb-10 animate-in">
     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
       <div class="flex-1 space-y-5">
-        <h1 class="grad-title-animated text-4xl md:text-5xl font-bold leading-tight">
+        <h1 class="grad-title text-4xl md:text-5xl font-bold leading-tight">
           风萧萧公益机场 · VPS 投喂榜
         </h1>
 
@@ -1347,44 +865,6 @@ app.get('/donate', c => {
     </div>
   </header>
 
-  <!-- 3D地球可视化区域 -->
-  <section id="globe-section" class="mb-8 animate-in">
-    <div class="panel border p-6">
-      <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
-        <div class="flex items-center gap-3">
-          <span class="text-3xl">🌍</span>
-          <div>
-            <h2 class="text-2xl font-bold leading-tight">全球服务器分布</h2>
-            <p class="text-sm muted mt-1">实时展示全球VPS节点位置与连接</p>
-          </div>
-        </div>
-        <div id="globe-controls" class="flex gap-2 flex-wrap">
-          <button id="toggle-size" class="btn-secondary text-sm">最小化</button>
-          <button id="toggle-rotate" class="btn-secondary text-sm">暂停旋转</button>
-        </div>
-      </div>
-      
-      <!-- 地球容器 -->
-      <div id="globe-container" style="width: 100%; height: 500px; border-radius: 8px; overflow: hidden; background: #000;"></div>
-      
-      <!-- 统计信息 -->
-      <div id="globe-stats" class="mt-4 flex gap-6 text-sm flex-wrap">
-        <div class="flex items-center gap-2">
-          <span class="muted">总服务器:</span>
-          <span id="total-servers" class="font-bold">0</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="muted">活跃:</span>
-          <span id="active-servers" class="font-bold text-green-500">0</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="muted">连接数:</span>
-          <span id="total-connections" class="font-bold text-blue-500">0</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <section class="mb-8">
     <div class="flex items-center gap-3 mb-6">
       <span class="text-3xl">🏆</span>
@@ -1421,408 +901,6 @@ updateThemeBtn();
 
 let allLeaderboardData = [];
 
-/**
- * 地理编码函数：将位置字符串转换为经纬度坐标
- * 实现多级匹配策略：直接匹配 -> 从后往前匹配（优先城市）-> 模糊匹配
- * @param {string} location - 位置字符串，格式："国家, 地区, 城市" 或单个地名
- * @returns {{lat: number, lng: number}|null} 坐标对象或null（无法匹配时）
- */
-function geocode(location) {
-  // 城市坐标数据库（与服务端CITY_COORDS保持一致）
-  const CITY_COORDS = {
-    // 主要国家（按大洲分组）
-    // 亚洲
-    'China': { lat: 35.8617, lng: 104.1954 },
-    'Japan': { lat: 36.2048, lng: 138.2529 },
-    'South Korea': { lat: 35.9078, lng: 127.7669 },
-    'India': { lat: 20.5937, lng: 78.9629 },
-    'Singapore': { lat: 1.3521, lng: 103.8198 },
-    'Thailand': { lat: 15.8700, lng: 100.9925 },
-    'Vietnam': { lat: 14.0583, lng: 108.2772 },
-    'Malaysia': { lat: 4.2105, lng: 101.9758 },
-    'Indonesia': { lat: -0.7893, lng: 113.9213 },
-    'Philippines': { lat: 12.8797, lng: 121.7740 },
-    'Taiwan': { lat: 23.6978, lng: 120.9605 },
-    'Hong Kong': { lat: 22.3193, lng: 114.1694 },
-    'Macau': { lat: 22.1987, lng: 113.5439 },
-    
-    // 北美洲
-    'United States': { lat: 37.0902, lng: -95.7129 },
-    'Canada': { lat: 56.1304, lng: -106.3468 },
-    'Mexico': { lat: 23.6345, lng: -102.5528 },
-    
-    // 欧洲
-    'United Kingdom': { lat: 55.3781, lng: -3.4360 },
-    'Germany': { lat: 51.1657, lng: 10.4515 },
-    'France': { lat: 46.2276, lng: 2.2137 },
-    'Netherlands': { lat: 52.1326, lng: 5.2913 },
-    'Russia': { lat: 61.5240, lng: 105.3188 },
-    'Italy': { lat: 41.8719, lng: 12.5674 },
-    'Spain': { lat: 40.4637, lng: -3.7492 },
-    'Poland': { lat: 51.9194, lng: 19.1451 },
-    'Sweden': { lat: 60.1282, lng: 18.6435 },
-    'Norway': { lat: 60.4720, lng: 8.4689 },
-    'Finland': { lat: 61.9241, lng: 25.7482 },
-    'Switzerland': { lat: 46.8182, lng: 8.2275 },
-    'Austria': { lat: 47.5162, lng: 14.5501 },
-    'Belgium': { lat: 50.5039, lng: 4.4699 },
-    'Denmark': { lat: 56.2639, lng: 9.5018 },
-    'Ireland': { lat: 53.4129, lng: -8.2439 },
-    'Portugal': { lat: 39.3999, lng: -8.2245 },
-    'Czech Republic': { lat: 49.8175, lng: 15.4730 },
-    'Greece': { lat: 39.0742, lng: 21.8243 },
-    'Romania': { lat: 45.9432, lng: 24.9668 },
-    'Ukraine': { lat: 48.3794, lng: 31.1656 },
-    
-    // 大洋洲
-    'Australia': { lat: -25.2744, lng: 133.7751 },
-    'New Zealand': { lat: -40.9006, lng: 174.8860 },
-    
-    // 南美洲
-    'Brazil': { lat: -14.2350, lng: -51.9253 },
-    'Argentina': { lat: -38.4161, lng: -63.6167 },
-    'Chile': { lat: -35.6751, lng: -71.5430 },
-    
-    // 非洲
-    'South Africa': { lat: -30.5595, lng: 22.9375 },
-    'Egypt': { lat: 26.8206, lng: 30.8025 },
-    
-    // 中东
-    'Turkey': { lat: 38.9637, lng: 35.2433 },
-    'Israel': { lat: 31.0461, lng: 34.8516 },
-    'United Arab Emirates': { lat: 23.4241, lng: 53.8478 },
-    'Saudi Arabia': { lat: 23.8859, lng: 45.0792 },
-    
-    // 主要城市
-    // 中国城市
-    'Beijing': { lat: 39.9042, lng: 116.4074 },
-    'Shanghai': { lat: 31.2304, lng: 121.4737 },
-    'Guangzhou': { lat: 23.1291, lng: 113.2644 },
-    'Shenzhen': { lat: 22.5431, lng: 114.0579 },
-    'Chengdu': { lat: 30.5728, lng: 104.0668 },
-    'Hangzhou': { lat: 30.2741, lng: 120.1551 },
-    'Chongqing': { lat: 29.4316, lng: 106.9123 },
-    'Wuhan': { lat: 30.5928, lng: 114.3055 },
-    'Xi\\'an': { lat: 34.3416, lng: 108.9398 },
-    'Nanjing': { lat: 32.0603, lng: 118.7969 },
-    
-    // 美国城市
-    'New York': { lat: 40.7128, lng: -74.0060 },
-    'Los Angeles': { lat: 34.0522, lng: -118.2437 },
-    'Chicago': { lat: 41.8781, lng: -87.6298 },
-    'San Francisco': { lat: 37.7749, lng: -122.4194 },
-    'Seattle': { lat: 47.6062, lng: -122.3321 },
-    'Miami': { lat: 25.7617, lng: -80.1918 },
-    'Dallas': { lat: 32.7767, lng: -96.7970 },
-    'Boston': { lat: 42.3601, lng: -71.0589 },
-    'Washington': { lat: 38.9072, lng: -77.0369 },
-    'Atlanta': { lat: 33.7490, lng: -84.3880 },
-    
-    // 欧洲城市
-    'London': { lat: 51.5074, lng: -0.1278 },
-    'Paris': { lat: 48.8566, lng: 2.3522 },
-    'Berlin': { lat: 52.5200, lng: 13.4050 },
-    'Amsterdam': { lat: 52.3676, lng: 4.9041 },
-    'Frankfurt': { lat: 50.1109, lng: 8.6821 },
-    'Madrid': { lat: 40.4168, lng: -3.7038 },
-    'Rome': { lat: 41.9028, lng: 12.4964 },
-    'Milan': { lat: 45.4642, lng: 9.1900 },
-    'Munich': { lat: 48.1351, lng: 11.5820 },
-    'Stockholm': { lat: 59.3293, lng: 18.0686 },
-    'Copenhagen': { lat: 55.6761, lng: 12.5683 },
-    'Vienna': { lat: 48.2082, lng: 16.3738 },
-    'Zurich': { lat: 47.3769, lng: 8.5417 },
-    'Brussels': { lat: 50.8503, lng: 4.3517 },
-    'Dublin': { lat: 53.3498, lng: -6.2603 },
-    'Moscow': { lat: 55.7558, lng: 37.6173 },
-    'Warsaw': { lat: 52.2297, lng: 21.0122 },
-    
-    // 亚洲其他主要城市
-    'Tokyo': { lat: 35.6762, lng: 139.6503 },
-    'Osaka': { lat: 34.6937, lng: 135.5023 },
-    'Seoul': { lat: 37.5665, lng: 126.9780 },
-    'Mumbai': { lat: 19.0760, lng: 72.8777 },
-    'Delhi': { lat: 28.7041, lng: 77.1025 },
-    'Bangkok': { lat: 13.7563, lng: 100.5018 },
-    'Kuala Lumpur': { lat: 3.1390, lng: 101.6869 },
-    'Jakarta': { lat: -6.2088, lng: 106.8456 },
-    'Manila': { lat: 14.5995, lng: 120.9842 },
-    'Taipei': { lat: 25.0330, lng: 121.5654 },
-    'Dubai': { lat: 25.2048, lng: 55.2708 },
-    'Tel Aviv': { lat: 32.0853, lng: 34.7818 },
-    'Istanbul': { lat: 41.0082, lng: 28.9784 },
-    
-    // 加拿大城市
-    'Toronto': { lat: 43.6532, lng: -79.3832 },
-    'Vancouver': { lat: 49.2827, lng: -123.1207 },
-    'Montreal': { lat: 45.5017, lng: -73.5673 },
-    
-    // 澳洲城市
-    'Sydney': { lat: -33.8688, lng: 151.2093 },
-    'Melbourne': { lat: -37.8136, lng: 144.9631 },
-    'Brisbane': { lat: -27.4698, lng: 153.0251 },
-    'Perth': { lat: -31.9505, lng: 115.8605 },
-    'Auckland': { lat: -36.8485, lng: 174.7633 }
-  };
-
-  // 第一级：检查输入是否为空或无效
-  if (!location || typeof location !== 'string') {
-    console.warn('地理编码失败: 位置信息为空或无效类型', location);
-    return null;
-  }
-
-  // 清理输入：去除首尾空格
-  const cleanLocation = location.trim();
-  if (!cleanLocation) {
-    console.warn('地理编码失败: 位置信息为空字符串');
-    return null;
-  }
-
-  // 第二级：直接匹配完整字符串
-  if (CITY_COORDS[cleanLocation]) {
-    console.log('直接匹配成功:', cleanLocation);
-    return CITY_COORDS[cleanLocation];
-  }
-
-  // 第三级：解析逗号分隔的位置字符串（格式："国家, 地区, 城市"）
-  const parts = cleanLocation.split(',').map(s => s.trim()).filter(Boolean);
-
-  // 第四级：从后往前匹配（优先城市 -> 地区 -> 国家）
-  for (let i = parts.length - 1; i >= 0; i--) {
-    const part = parts[i];
-    if (CITY_COORDS[part]) {
-      console.log('部分匹配成功 (优先城市):', part, '来自', cleanLocation);
-      return CITY_COORDS[part];
-    }
-  }
-
-  // 第五级：模糊匹配（逐部分匹配，从后往前）
-  for (let i = parts.length - 1; i >= 0; i--) {
-    const part = parts[i];
-    const partLower = part.toLowerCase();
-    
-    for (const key in CITY_COORDS) {
-      const keyLower = key.toLowerCase();
-      if (keyLower.includes(partLower) || partLower.includes(keyLower)) {
-        console.log('模糊匹配成功:', key, '匹配部分', part, '来自', cleanLocation);
-        return CITY_COORDS[key];
-      }
-    }
-  }
-
-  // 第六级：尝试匹配整个字符串（模糊匹配）
-  const cleanLower = cleanLocation.toLowerCase();
-  for (const key in CITY_COORDS) {
-    const keyLower = key.toLowerCase();
-    if (cleanLower.includes(keyLower) || keyLower.includes(cleanLower)) {
-      console.log('整体模糊匹配成功:', key, '来自', cleanLocation);
-      return CITY_COORDS[key];
-    }
-  }
-
-  // 无法匹配时返回null并记录警告
-  console.warn('无法为位置找到坐标:', cleanLocation);
-  return null;
-}
-
-/**
- * 为同城市的多个服务器添加微小偏移，避免节点重叠
- * @param {{lat: number, lng: number}|null} coords - 原始坐标
- * @param {number} index - 服务器索引（用于生成不同的偏移）
- * @returns {{lat: number, lng: number}|null} 添加偏移后的坐标或null
- */
-function addJitter(coords, index) {
-  if (!coords) return null;
-  
-  // 偏移量：约0.5度（大约55公里）
-  const jitterAmount = 0.5;
-  
-  // 使用索引生成伪随机偏移，确保相同索引产生相同偏移
-  const seed = index || 0;
-  const pseudoRandom1 = (Math.sin(seed * 12.9898) * 43758.5453) % 1;
-  const pseudoRandom2 = (Math.cos(seed * 78.233) * 43758.5453) % 1;
-  
-  return {
-    lat: coords.lat + (pseudoRandom1 - 0.5) * jitterAmount,
-    lng: coords.lng + (pseudoRandom2 - 0.5) * jitterAmount
-  };
-}
-
-/**
- * 从国家字符串中提取国旗emoji
- * @param {string} countryString - 国家字符串，格式如 "🇨🇳 中国大陆"
- * @returns {string} 国旗emoji，如果没有则返回默认的🌍
- */
-function getCountryFlag(countryString) {
-  if (!countryString || typeof countryString !== 'string') {
-    return '🌍';
-  }
-  
-  // 把字符串按 Unicode code point 拆开
-  const chars = Array.from(countryString);
-  
-  for (let i = 0; i < chars.length - 1; i++) {
-    const cp1 = chars[i].codePointAt(0);
-    const cp2 = chars[i + 1].codePointAt(0);
-    if (!cp1 || !cp2) continue;
-    
-    // 国旗 emoji 是两个连续的区域指示符号（U+1F1E6 - U+1F1FF）
-    if (
-      cp1 >= 0x1f1e6 && cp1 <= 0x1f1ff &&
-      cp2 >= 0x1f1e6 && cp2 <= 0x1f1ff
-    ) {
-      return chars[i] + chars[i + 1];
-    }
-  }
-  
-  return '🌍';
-}
-
-/**
- * Haversine距离计算函数：计算地球表面两点之间的球面距离
- * @param {{lat: number, lng: number}} coords1 - 第一个点的坐标
- * @param {{lat: number, lng: number}} coords2 - 第二个点的坐标
- * @returns {number} 两点之间的距离（单位：公里）
- */
-function haversineDistance(coords1, coords2) {
-  // 地球平均半径（单位：公里）
-  const R = 6371;
-
-  // 将角度转换为弧度
-  const toRadians = (degrees) => degrees * Math.PI / 180;
-
-  // 计算纬度和经度的差值（弧度）
-  const dLat = toRadians(coords2.lat - coords1.lat);
-  const dLng = toRadians(coords2.lng - coords1.lng);
-
-  // 将起点和终点的纬度转换为弧度
-  const lat1Rad = toRadians(coords1.lat);
-  const lat2Rad = toRadians(coords2.lat);
-
-  // Haversine公式
-  // a = sin²(Δlat/2) + cos(lat1) * cos(lat2) * sin²(Δlng/2)
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1Rad) * Math.cos(lat2Rad) *
-            Math.sin(dLng / 2) * Math.sin(dLng / 2);
-
-  // c = 2 * atan2(√a, √(1-a))
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  // 距离 = 半径 * c
-  const distance = R * c;
-
-  return distance;
-}
-
-/**
- * 混合连接算法：近距离 + 远距离，确保跨大洲连接
- * @param {Array} servers - 服务器数组
- * @returns {Array} 连接弧线数据数组
- */
-function calculateConnections(servers) {
-  const connections = [];
-  
-  // 过滤有效服务器
-  const validServers = servers.filter(s => 
-    s.coords && 
-    s.coords.lat !== null && 
-    s.coords.lng !== null && 
-    !(s.coords.lat === 0 && s.coords.lng === 0)
-  );
-  
-  if (validServers.length === 0) return [];
-  if (validServers.length === 1) return [];
-  
-  console.log('🌐 开始计算连接，共', validServers.length, '个节点');
-  
-  validServers.forEach(server => {
-    // 计算到所有其他节点的距离
-    const distances = validServers
-      .filter(s => s.id !== server.id)
-      .map(s => ({
-        server: s,
-        distance: haversineDistance(server.coords, s.coords)
-      }))
-      .sort((a, b) => a.distance - b.distance);
-    
-    if (distances.length === 0) return;
-    
-    // 策略1：连接最近的 2 个邻居（局部连接）
-    const nearbyConnections = Math.min(2, distances.length);
-    distances.slice(0, nearbyConnections).forEach(({ server: target }) => {
-      connections.push({
-        startLat: server.coords.lat,
-        startLng: server.coords.lng,
-        endLat: target.coords.lat,
-        endLng: target.coords.lng,
-        color: 'rgba(255, 215, 0, 0.5)',
-        type: 'nearby'
-      });
-    });
-    
-    // 策略2：连接中等距离的节点（1000-5000km）
-    const mediumDistance = distances.filter(d => d.distance > 1000 && d.distance < 5000);
-    if (mediumDistance.length > 0) {
-      const mediumCount = Math.min(2, mediumDistance.length);
-      mediumDistance.slice(0, mediumCount).forEach(({ server: target }) => {
-        connections.push({
-          startLat: server.coords.lat,
-          startLng: server.coords.lng,
-          endLat: target.coords.lat,
-          endLng: target.coords.lng,
-          color: 'rgba(255, 215, 0, 0.6)',
-          type: 'medium'
-        });
-      });
-    }
-    
-    // 策略3：强制连接最远的 2 个节点（跨大洲光缆）
-    // 从距离列表的末尾取（最远的）
-    const longRangeCount = Math.min(2, Math.floor(distances.length / 2));
-    if (longRangeCount > 0) {
-      // 取最远的节点
-      distances.slice(-longRangeCount).forEach(({ server: target, distance }) => {
-        connections.push({
-          startLat: server.coords.lat,
-          startLng: server.coords.lng,
-          endLat: target.coords.lat,
-          endLng: target.coords.lng,
-          color: 'rgba(255, 215, 0, 0.8)',
-          type: 'submarine',
-          distance: distance
-        });
-      });
-    }
-  });
-  
-  console.log('✅ 连接创建完成');
-  console.log('   最近邻:', connections.filter(c => c.type === 'nearby').length);
-  console.log('   中等距离:', connections.filter(c => c.type === 'medium').length);
-  console.log('   跨海光缆:', connections.filter(c => c.type === 'submarine').length);
-  
-  // 去重
-  const seen = new Set();
-  const uniqueConnections = connections.filter(conn => {
-    const key = [
-      conn.startLat.toFixed(4),
-      conn.startLng.toFixed(4),
-      conn.endLat.toFixed(4),
-      conn.endLng.toFixed(4)
-    ].sort().join(',');
-    
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-  
-  console.log('📊 去重后总连接数:', uniqueConnections.length);
-  console.log('   最近邻:', uniqueConnections.filter(c => c.type === 'nearby').length);
-  console.log('   中等距离:', uniqueConnections.filter(c => c.type === 'medium').length);
-  console.log('   跨海光缆:', uniqueConnections.filter(c => c.type === 'submarine').length);
-  
-  return uniqueConnections;
-}
-
 async function gotoDonatePage(){
   try{
     const r = await fetch('/api/user/info',{credentials:'same-origin',cache:'no-store'});
@@ -1848,113 +926,131 @@ function statusCls(s){ return s==='active'?'badge-ok':(s==='failed'?'badge-fail'
 function renderLeaderboard(){
   const box = document.getElementById('leaderboard');
   const countEl = document.getElementById('leaderboard-count');
-  
+
   countEl.textContent = allLeaderboardData.length ? ('共 '+allLeaderboardData.length+' 位投喂者') : '';
-  
+
   if(!allLeaderboardData.length){
     box.innerHTML='<div class="muted text-sm py-8 text-center">暂时还没有投喂记录</div>';
     return;
   }
-  
-  box.innerHTML='';
-  allLeaderboardData.forEach((it,idx)=>{
-    const wrap=document.createElement('div');
-    wrap.className='card border transition-all animate-slide-in';
-    wrap.style.animationDelay = (idx * 0.05) + 's';
-    const cardId = 'card-'+idx;
-    const isExpanded = localStorage.getItem(cardId) !== 'collapsed';
 
-    const head=document.createElement('div');
-    head.className='flex items-center justify-between p-5 pb-4 border-b gap-4 bg-gradient-to-r cursor-pointer';
-    
+  // 性能优化：批量读取localStorage
+  const expandedStates = {};
+  for(let i = 0; i < allLeaderboardData.length; i++){
+    expandedStates['card-'+i] = localStorage.getItem('card-'+i) !== 'collapsed';
+  }
+
+  // 性能优化：使用DocumentFragment批量插入DOM
+  const fragment = document.createDocumentFragment();
+
+  // 性能优化：限制动画数量，只给前20个添加入场动画
+  const animationLimit = 20;
+
+  allLeaderboardData.forEach((it,idx)=>{
+    const cardId = 'card-'+idx;
+    const isExpanded = expandedStates[cardId];
+
     let gradientClass = '';
     if(idx === 0) gradientClass = 'from-amber-500/5 to-transparent';
     else if(idx === 1) gradientClass = 'from-slate-400/5 to-transparent';
     else if(idx === 2) gradientClass = 'from-orange-600/5 to-transparent';
-    head.className += ' ' + gradientClass;
-    
+
     const badge=getBadge(it.count);
-    head.innerHTML='<div class="flex items-center gap-4 flex-1 min-w-0">'+
-      '<div class="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl">'+medalByRank(idx)+'</div>'+
-      '<div class="flex flex-col gap-1.5 min-w-0">'+
-        '<a class="font-bold text-xl hover:opacity-80 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'" onclick="event.stopPropagation()">@'+it.username+'</a>'+
-        '<div class="flex items-center gap-2 flex-wrap">'+
-          renderBadge(badge)+
-          '<span class="text-xs muted">共投喂 '+it.count+' 台服务器</span>'+
-        '</div>'+
-      '</div>'+
-      '</div>'+
-      '<div class="flex items-center gap-3">'+
-        '<div class="flex-shrink-0 flex items-center justify-center w-16 h-16 panel border rounded-2xl">'+
-          '<div class="text-center">'+
-            '<div class="font-bold text-2xl leading-none mb-1">'+it.count+'</div>'+
-            '<div class="text-xs muted leading-none">VPS</div>'+
-          '</div>'+
-        '</div>'+
-        '<button class="toggle-expand flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg panel border hover:bg-sky-500/10 transition-all" data-card="'+cardId+'" onclick="event.stopPropagation()" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
-          '<span class="text-lg transition-transform duration-300 '+(isExpanded ? 'rotate-0' : '-rotate-90')+'">'+'▼'+'</span>'+
-        '</button>'+
-      '</div>';
-    
-    head.onclick = () => {
-      const listEl = wrap.querySelector('.server-list');
-      const toggleBtn = wrap.querySelector('.toggle-expand');
-      const toggleIcon = toggleBtn.querySelector('span');
-      const isCurrentlyExpanded = !listEl.classList.contains('expandable');
 
-      if(isCurrentlyExpanded){
-        // 收起
-        listEl.classList.add('expandable');
-        toggleIcon.classList.remove('rotate-0');
-        toggleIcon.classList.add('-rotate-90');
-        toggleBtn.setAttribute('title', '展开列表');
-        localStorage.setItem(cardId, 'collapsed');
-      } else {
-        // 展开
-        listEl.classList.remove('expandable');
-        toggleIcon.classList.remove('-rotate-90');
-        toggleIcon.classList.add('rotate-0');
-        toggleBtn.setAttribute('title', '收起列表');
-        localStorage.removeItem(cardId);
-      }
-    };
-    
-    wrap.appendChild(head);
-
-    const list=document.createElement('div');
-    list.className='server-list px-5 pb-5 pt-4 space-y-3';
-    if(!isExpanded){
-      list.classList.add('expandable');
-    }
+    // 性能优化：构建服务器列表HTML
+    let serversHTML = '';
     (it.servers||[]).forEach(srv=>{
-      const d=document.createElement('div');
-      d.className='panel border rounded-xl p-4 transition-all hover:shadow-sm';
-      d.innerHTML = '<div class="flex items-start justify-between gap-3 mb-3">'+
-        '<div class="flex items-center gap-2.5 flex-1 min-w-0">'+
-          '<span class="text-xl flex-shrink-0">🌍</span>'+
-          '<div class="flex flex-col gap-1 min-w-0">'+
-            '<span class="font-semibold text-sm truncate">'+(srv.country||'未填写')+'</span>'+
-            (srv.ipLocation?'<span class="text-xs muted truncate">'+srv.ipLocation+'</span>':'')+
+      serversHTML += '<div class="panel border rounded-xl p-4 transition-all hover:shadow-sm">'+
+        '<div class="flex items-start justify-between gap-3 mb-3">'+
+          '<div class="flex items-center gap-2.5 flex-1 min-w-0">'+
+            '<span class="text-xl flex-shrink-0">🌍</span>'+
+            '<div class="flex flex-col gap-1 min-w-0">'+
+              '<span class="font-semibold text-sm truncate">'+(srv.country||'未填写')+'</span>'+
+              (srv.ipLocation?'<span class="text-xs muted truncate">'+srv.ipLocation+'</span>':'')+
+            '</div>'+
+          '</div>'+
+          '<span class="'+statusCls(srv.status)+' text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0">'+statusText(srv.status)+'</span>'+
+        '</div>'+
+        '<div class="grid grid-cols-2 gap-3 text-sm">'+
+          '<div class="flex items-center gap-2 panel border rounded-lg px-3 py-2">'+
+            '<span class="opacity-60">📊</span>'+
+            '<span class="truncate font-medium">'+(srv.traffic||'未填写')+'</span>'+
+          '</div>'+
+          '<div class="flex items-center gap-2 panel border rounded-lg px-3 py-2">'+
+            '<span class="opacity-60">📅</span>'+
+            '<span class="truncate font-medium">'+(srv.expiryDate||'未填写')+'</span>'+
           '</div>'+
         '</div>'+
-        '<span class="'+statusCls(srv.status)+' text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0">'+statusText(srv.status)+'</span>'+
-      '</div>'+
-      '<div class="grid grid-cols-2 gap-3 text-sm">'+
-        '<div class="flex items-center gap-2 panel border rounded-lg px-3 py-2">'+
-          '<span class="opacity-60">📊</span>'+
-          '<span class="truncate font-medium">'+(srv.traffic||'未填写')+'</span>'+
-        '</div>'+
-        '<div class="flex items-center gap-2 panel border rounded-lg px-3 py-2">'+
-          '<span class="opacity-60">📅</span>'+
-          '<span class="truncate font-medium">'+(srv.expiryDate||'未填写')+'</span>'+
-        '</div>'+
-      '</div>'+
-      (srv.specs?'<div class="text-sm mt-3 panel border rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">⚙️</span><span class="flex-1">'+srv.specs+'</span></div>':'')+
-      (srv.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">💬</span><span class="flex-1">'+srv.note+'</span></div>':'');
-      list.appendChild(d);
+        (srv.specs?'<div class="text-sm mt-3 panel border rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">⚙️</span><span class="flex-1">'+srv.specs+'</span></div>':'')+
+        (srv.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">💬</span><span class="flex-1">'+srv.note+'</span></div>':'');
+      serversHTML += '</div>';
     });
-    wrap.appendChild(list);
-    box.appendChild(wrap);
+
+    // 性能优化：一次性构建完整的卡片HTML
+    const wrap=document.createElement('div');
+    wrap.className='card border transition-all' + (idx < animationLimit ? ' animate-slide-in' : '');
+    if(idx < animationLimit) wrap.style.animationDelay = (idx * 0.05) + 's';
+    wrap.dataset.cardId = cardId;
+
+    wrap.innerHTML =
+      '<div class="flex items-center justify-between p-5 pb-4 border-b gap-4 bg-gradient-to-r '+gradientClass+'">'+
+        '<div class="flex items-center gap-4 flex-1 min-w-0">'+
+          '<div class="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl">'+medalByRank(idx)+'</div>'+
+          '<div class="flex flex-col gap-1.5 min-w-0">'+
+            '<a class="font-bold text-xl hover:opacity-80 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a>'+
+            '<div class="flex items-center gap-2 flex-wrap">'+
+              renderBadge(badge)+
+              '<span class="text-xs muted">共投喂 '+it.count+' 台服务器</span>'+
+            '</div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="flex items-center gap-3">'+
+          '<div class="flex-shrink-0 flex items-center justify-center w-16 h-16 panel border rounded-2xl">'+
+            '<div class="text-center">'+
+              '<div class="font-bold text-2xl leading-none mb-1">'+it.count+'</div>'+
+              '<div class="text-xs muted leading-none">VPS</div>'+
+            '</div>'+
+          '</div>'+
+          '<button class="toggle-expand flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg panel border hover:bg-sky-500/10 transition-all cursor-pointer" data-card="'+cardId+'" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
+            '<span class="text-lg transition-transform duration-300 '+(isExpanded ? 'rotate-0' : '-rotate-90')+'">'+'▼'+'</span>'+
+          '</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="server-list px-5 pb-5 pt-4 space-y-3'+(isExpanded ? '' : ' expandable')+'">'+
+        serversHTML+
+      '</div>';
+
+    fragment.appendChild(wrap);
+  });
+
+  // 性能优化：一次性插入所有DOM
+  box.innerHTML = '';
+  box.appendChild(fragment);
+
+  // 性能优化：使用事件委托处理所有按钮点击
+  box.addEventListener('click', (e) => {
+    const toggleBtn = e.target.closest('.toggle-expand');
+    if(!toggleBtn) return;
+
+    const cardId = toggleBtn.dataset.card;
+    const wrap = toggleBtn.closest('[data-card-id]');
+    const listEl = wrap.querySelector('.server-list');
+    const toggleIcon = toggleBtn.querySelector('span');
+    const isCurrentlyExpanded = !listEl.classList.contains('expandable');
+
+    if(isCurrentlyExpanded){
+      listEl.classList.add('expandable');
+      toggleIcon.classList.remove('rotate-0');
+      toggleIcon.classList.add('-rotate-90');
+      toggleBtn.setAttribute('title', '展开列表');
+      localStorage.setItem(cardId, 'collapsed');
+    } else {
+      listEl.classList.remove('expandable');
+      toggleIcon.classList.remove('-rotate-90');
+      toggleIcon.classList.add('rotate-0');
+      toggleBtn.setAttribute('title', '收起列表');
+      localStorage.removeItem(cardId);
+    }
   });
 }
 
@@ -2011,553 +1107,6 @@ async function loadLeaderboard(){
 }
 
 loadLeaderboard();
-
-// ==================== Globe.gl 初始化和渲染 ====================
-
-let globeInstance = null;
-let serversData = [];
-let connectionsData = [];
-let updateInterval = null;
-
-/**
- * 检测WebGL是否可用
- * @returns {boolean} WebGL是否可用
- */
-function isWebGLAvailable() {
-  try {
-    const canvas = document.createElement('canvas');
-    return !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
-  } catch(e) {
-    return false;
-  }
-}
-
-/**
- * 从榜单数据获取服务器信息（公开API，无需管理员权限）
- * 使用 /api/leaderboard 而不是 /api/admin/vps，确保所有用户都能访问
- * @returns {Promise<Array>} 包含坐标信息的服务器数组
- */
-async function fetchServersFromLeaderboard() {
-  try {
-    console.log('[fetchServersFromLeaderboard] 开始获取榜单数据');
-    
-    const res = await fetch('/api/leaderboard', {
-      credentials: 'same-origin',
-      cache: 'no-store'
-    });
-    
-    if (!res.ok) {
-      console.error('[fetchServersFromLeaderboard] HTTP错误:', res.status);
-      return serversData; // 返回缓存数据
-    }
-    
-    const data = await res.json();
-    if (!data.success || !data.data) {
-      console.error('[fetchServersFromLeaderboard] 数据格式错误');
-      return serversData;
-    }
-    
-    console.log('[fetchServersFromLeaderboard] 榜单数据获取成功，用户数:', data.data.length);
-    
-    // 从榜单数据中提取所有服务器信息
-    const allServers = [];
-    let serverIndex = 0;
-    
-    data.data.forEach(donor => {
-      if (!donor.servers || !Array.isArray(donor.servers)) {
-        return;
-      }
-      
-      donor.servers.forEach(server => {
-        // 为每个服务器生成唯一ID（使用用户名+索引）
-        const serverId = donor.username + '_' + serverIndex;
-        serverIndex++;
-        
-        // 获取位置信息（优先使用 ipLocation，其次使用 country）
-        const location = server.ipLocation || server.country || '未知地区';
-        
-        // 地理编码：将位置字符串转换为坐标
-        let coords = geocode(location);
-        
-        // 添加微小偏移，避免同位置服务器重叠
-        if (coords) {
-          coords = addJitter(coords, serverIndex);
-        }
-        
-        // 构建服务器对象
-        allServers.push({
-          id: serverId,
-          coords: coords,
-          country: server.country || '未填写',
-          ipLocation: server.ipLocation || '未知地区',
-          status: server.status || 'active',
-          donatedByUsername: donor.username,
-          traffic: server.traffic,
-          expiryDate: server.expiryDate,
-          specs: server.specs,
-          note: server.note,
-          donatedAt: server.donatedAt
-        });
-      });
-    });
-    
-    console.log('[fetchServersFromLeaderboard] 服务器数据提取完成，总数:', allServers.length);
-    console.log('[fetchServersFromLeaderboard] 有效坐标数:', allServers.filter(s => s.coords && s.coords.lat !== 0).length);
-    
-    return allServers;
-    
-  } catch (error) {
-    console.error('[fetchServersFromLeaderboard] 异常:', error);
-    return serversData; // 返回缓存数据
-  }
-}
-
-/**
- * 保留原 fetchServers 函数作为后备（管理员使用）
- * @returns {Promise<Array>} 包含坐标信息的服务器数组
- */
-async function fetchServers() {
-  try {
-    const res = await fetch('/api/admin/vps', {
-      credentials: 'same-origin',
-      cache: 'no-store'
-    });
-    
-    if (!res.ok) {
-      console.error('[fetchServers] HTTP错误:', res.status, '- 回退到榜单API');
-      // 如果管理员API失败，回退到榜单API
-      return await fetchServersFromLeaderboard();
-    }
-    
-    const data = await res.json();
-    if (!data.success || !data.data) {
-      console.error('[fetchServers] 数据格式错误 - 回退到榜单API');
-      return await fetchServersFromLeaderboard();
-    }
-    
-    // 为每个服务器添加坐标信息
-    return data.data.map((server, index) => {
-      const location = server.ipLocation || server.country;
-      let coords = geocode(location);
-      
-      // 如果有多个服务器在同一位置，添加微小偏移避免重叠
-      if (coords) {
-        coords = addJitter(coords, index);
-      }
-      
-      return {
-        ...server,
-        coords: coords
-      };
-    });
-  } catch (error) {
-    console.error('[fetchServers] 异常:', error, '- 回退到榜单API');
-    // 发生异常时，回退到榜单API
-    return await fetchServersFromLeaderboard();
-  }
-}
-
-/**
- * 更新统计信息显示
- * @param {Array} servers - 服务器数组
- * @param {Array} connections - 连接数组
- */
-function updateStats(servers, connections) {
-  const total = servers.length;
-  const active = servers.filter(s => s.status === 'active').length;
-  
-  document.getElementById('total-servers').textContent = total;
-  document.getElementById('active-servers').textContent = active;
-  document.getElementById('total-connections').textContent = connections.length;
-}
-
-/**
- * 初始化Globe.gl实例
- * 配置地球纹理、节点、弧线和交互控制
- */
-function initGlobe() {
-  // 检查Globe.gl库是否加载
-  if (typeof Globe === 'undefined') {
-    console.error('Globe.gl库未加载');
-    const container = document.getElementById('globe-container');
-    if (container) {
-      container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 20px;"><div><div style="font-size: 48px; margin-bottom: 16px;">⚠️</div><div style="font-size: 18px; margin-bottom: 8px;">3D地球库加载失败</div><div style="font-size: 14px; opacity: 0.7;">请刷新页面重试</div></div></div>';
-    }
-    return;
-  }
-  
-  // 检查WebGL支持
-  if (!isWebGLAvailable()) {
-    const container = document.getElementById('globe-container');
-    if (container) {
-      container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 20px;"><div><div style="font-size: 48px; margin-bottom: 16px;">⚠️</div><div style="font-size: 18px; margin-bottom: 8px;">您的浏览器不支持WebGL</div><div style="font-size: 14px; opacity: 0.7;">请使用现代浏览器（Chrome、Firefox、Safari、Edge）访问</div></div></div>';
-    }
-    return;
-  }
-  
-  // 过滤掉没有有效坐标的服务器
-  const validServers = serversData.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
-  
-  // 创建Globe实例
-  try {
-    globeInstance = Globe()
-      (document.getElementById('globe-container'))
-    
-    // ===== 地球纹理配置 =====
-    .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
-    .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
-    
-    // ===== 背景颜色 =====
-    .backgroundColor('#000000')
-    
-    // ===== 服务器节点配置 =====
-    .pointsData(validServers)
-    .pointLat(d => d.coords.lat)
-    .pointLng(d => d.coords.lng)
-    .pointColor(d => {
-      // 根据服务器状态设置节点颜色
-      if (d.status === 'active') return '#4ade80';  // 绿色 - 活跃
-      if (d.status === 'failed') return '#ef4444';  // 红色 - 失败
-      return '#94a3b8';  // 灰色 - 未启用
-    })
-    .pointAltitude(0.01)  // 节点高度
-    .pointRadius(0.3)     // 节点大小
-    
-    // ===== 节点工具提示 =====
-    .pointLabel(d => {
-      const flag = getCountryFlag(d.country);
-      const statusEmoji = d.status === 'active' ? '✅' : '❌';
-      const statusText = d.status === 'active' ? '运行中' : '离线';
-      
-      return \`
-        <div style="
-          background: rgba(0,0,0,0.9);
-          padding: 12px 16px;
-          border-radius: 8px;
-          color: white;
-          font-family: system-ui, -apple-system, sans-serif;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-          backdrop-filter: blur(8px);
-          border: 1px solid rgba(255,255,255,0.1);
-        ">
-          <div style="font-size: 18px; margin-bottom: 8px; font-weight: 600;">
-            \${flag} @\${d.donatedByUsername}
-          </div>
-          <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">
-            📍 \${d.country}
-          </div>
-          <div style="font-size: 13px; opacity: 0.8; margin-bottom: 8px;">
-            \${d.ipLocation || '未知位置'}
-          </div>
-          <div style="font-size: 14px; font-weight: 500;">
-            状态: \${statusEmoji} \${statusText}
-          </div>
-        </div>
-      \`;
-    })
-    
-    // ===== HTML标签显示（已禁用，只显示连接线）=====
-    .htmlElementsData([])  // 不显示任何标签
-    
-    // ===== 连接弧线配置（金色主题）=====
-    .arcsData(connectionsData)
-    .arcStartLat(d => d.startLat)
-    .arcStartLng(d => d.startLng)
-    .arcEndLat(d => d.endLat)
-    .arcEndLng(d => d.endLng)
-    .arcColor(d => {
-      // 根据连接类型使用不同的金色
-      if (d.type === 'submarine') {
-        // 跨海光缆：最亮的金色
-        return ['rgba(255, 215, 0, 0.8)', 'rgba(255, 223, 0, 0.9)'];
-      } else if (d.type === 'medium') {
-        // 中等距离：中等金色
-        return ['rgba(255, 215, 0, 0.6)', 'rgba(255, 205, 0, 0.7)'];
-      } else if (d.type === 'nearby') {
-        // 最近邻：柔和金色
-        return ['rgba(255, 215, 0, 0.5)', 'rgba(255, 200, 0, 0.6)'];
-      } else {
-        // 默认：淡金色
-        return ['rgba(255, 215, 0, 0.4)', 'rgba(255, 190, 0, 0.5)'];
-      }
-    })
-    .arcStroke(d => {
-      if (d.type === 'submarine') return 0.7;  // 跨海光缆最粗
-      if (d.type === 'medium') return 0.5;     // 中等距离
-      return 0.4;                               // 最近邻
-    })
-    .arcAltitude(0.08)
-    .arcDashLength(0.5)
-    .arcDashGap(0.3)
-    .arcDashAnimateTime(3000)
-    .arcDashInitialGap(() => Math.random())
-    
-    // ===== 交互控制 =====
-    .enablePointerInteraction(true);  // 启用鼠标交互
-  
-  // ===== 自动旋转配置（性能优化）=====
-  // 配置OrbitControls以支持鼠标拖拽旋转、滚轮缩放和触摸手势
-  if (globeInstance && globeInstance.controls) {
-    const controls = globeInstance.controls();
-    
-    // 启用自动旋转（降低速度以减少渲染负担）
-    controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.3;  // 降低旋转速度，从0.5降到0.3
-    
-    // 启用鼠标拖拽旋转
-    controls.enableRotate = true;
-    
-    // 启用滚轮缩放
-    controls.enableZoom = true;
-    
-    // 设置缩放范围，防止过度缩放
-    controls.minDistance = 101;
-    controls.maxDistance = 500;
-    
-    // 禁用平移（保持地球居中）
-    controls.enablePan = false;
-    
-    // 性能优化：降低阻尼系数，使交互更流畅
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-  }
-  
-    // 设置容器宽度和高度自适应
-    const container = document.getElementById('globe-container');
-    if (container && globeInstance) {
-      globeInstance.width(container.clientWidth);
-      globeInstance.height(container.clientHeight);
-    }
-    
-    console.log('Globe.gl 初始化完成');
-    console.log('- 服务器节点数:', validServers.length);
-    console.log('- 连接弧线数:', connectionsData.length);
-  } catch (error) {
-    console.error('Globe初始化失败:', error);
-    const container = document.getElementById('globe-container');
-    if (container) {
-      const errorMsg = error && error.message ? error.message : '未知错误';
-      container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 20px;">' +
-        '<div>' +
-        '<div style="font-size: 48px; margin-bottom: 16px;">⚠️<' + '/div>' +
-        '<div style="font-size: 18px; margin-bottom: 8px;">3D地球初始化失败<' + '/div>' +
-        '<div style="font-size: 14px; opacity: 0.7;">错误: ' + errorMsg + '<' + '/div>' +
-        '<' + '/div>' +
-        '<' + '/div>';
-    }
-  }
-}
-
-/**
- * 更新Globe数据（性能优化版）
- */
-function updateGlobeData() {
-  if (!globeInstance) return;
-  
-  // 过滤掉没有有效坐标的服务器
-  const validServers = serversData.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
-  const activeServers = validServers.filter(s => s.status === 'active');
-  
-  // 更新节点数据
-  globeInstance.pointsData(validServers);
-  
-  // 不显示HTML标签
-  globeInstance.htmlElementsData([]);
-  
-  // 更新弧线数据
-  globeInstance.arcsData(connectionsData);
-  
-  // 更新统计信息
-  updateStats(serversData, connectionsData);
-}
-
-/**
- * 数据更新逻辑：获取最新服务器数据并更新Globe（性能优化版）
- * 优先使用榜单API，确保所有用户都能看到连接线
- */
-let lastConnectionsUpdate = 0;
-const CONNECTIONS_UPDATE_INTERVAL = 60000; // 连接关系每60秒更新一次
-
-async function updateData() {
-  console.log('[updateData] 开始更新数据');
-  
-  // 优先使用榜单API获取数据（公开，所有用户可访问）
-  // fetchServers() 内部会在管理员API失败时自动回退到榜单API
-  const newServersData = await fetchServers();
-  
-  console.log('[updateData] 获取到服务器数据:', newServersData.length, '台');
-  
-  // 检查服务器数量是否变化
-  const serverCountChanged = newServersData.length !== serversData.length;
-  const now = Date.now();
-  const shouldUpdateConnections = serverCountChanged || (now - lastConnectionsUpdate > CONNECTIONS_UPDATE_INTERVAL);
-  
-  // 更新服务器数据
-  serversData = newServersData;
-  
-  // 只在必要时重新计算连接（服务器数量变化或超过更新间隔）
-  if (shouldUpdateConnections) {
-    console.log('[updateData] 🔄 重新计算连接关系...');
-    console.log('[updateData] 服务器数量变化:', serverCountChanged ? '是' : '否');
-    console.log('[updateData] 距上次更新:', Math.floor((now - lastConnectionsUpdate) / 1000), '秒');
-    
-    connectionsData = calculateConnections(serversData);
-    lastConnectionsUpdate = now;
-    
-    console.log('[updateData] ✅ 连接关系计算完成，连接数:', connectionsData.length);
-  } else {
-    console.log('[updateData] ⏭️ 跳过连接关系计算（使用缓存）');
-  }
-  
-  // 更新Globe显示
-  if (globeInstance) {
-    console.log('[updateData] 更新Globe显示');
-    updateGlobeData();
-  } else {
-    console.warn('[updateData] Globe实例不存在，跳过更新');
-  }
-  
-  // 更新统计信息
-  updateStats(serversData, connectionsData);
-  
-  console.log('[updateData] 数据更新完成');
-}
-
-/**
- * 最小化/最大化控制
- */
-function toggleSize() {
-  const container = document.getElementById('globe-container');
-  const button = document.getElementById('toggle-size');
-  
-  if (!container || !button) return;
-  
-  if (container.classList.contains('minimized')) {
-    container.classList.remove('minimized');
-    button.textContent = '最小化';
-  } else {
-    container.classList.add('minimized');
-    button.textContent = '最大化';
-  }
-  
-  // 调整Globe尺寸
-  if (globeInstance) {
-    setTimeout(() => {
-      globeInstance.width(container.clientWidth);
-      globeInstance.height(container.clientHeight);
-    }, 300); // 等待CSS过渡完成
-  }
-}
-
-/**
- * 旋转控制
- */
-function toggleRotate() {
-  const button = document.getElementById('toggle-rotate');
-  
-  if (!globeInstance || !globeInstance.controls || !button) return;
-  
-  const controls = globeInstance.controls();
-  controls.autoRotate = !controls.autoRotate;
-  
-  button.textContent = controls.autoRotate ? '暂停旋转' : '继续旋转';
-}
-
-/**
- * 窗口resize处理
- */
-function handleResize() {
-  if (!globeInstance) return;
-  
-  const container = document.getElementById('globe-container');
-  if (container) {
-    globeInstance.width(container.clientWidth);
-    globeInstance.height(container.clientHeight);
-  }
-}
-
-/**
- * 页面隐藏时暂停，显示时恢复
- */
-function handleVisibilityChange() {
-  if (document.hidden) {
-    // 页面隐藏时停止自动旋转和轮询
-    if (globeInstance && globeInstance.controls) {
-      globeInstance.controls().autoRotate = false;
-    }
-    if (updateInterval) {
-      clearInterval(updateInterval);
-      updateInterval = null;
-    }
-  } else {
-    // 页面显示时恢复
-    if (globeInstance && globeInstance.controls) {
-      const button = document.getElementById('toggle-rotate');
-      const shouldRotate = !button || button.textContent === '暂停旋转';
-      globeInstance.controls().autoRotate = shouldRotate;
-    }
-    if (!updateInterval) {
-      updateInterval = setInterval(updateData, 30000);  // 优化：30秒间隔
-    }
-  }
-}
-
-// ===== 初始化Globe =====
-// 等待Globe.gl库加载完成
-function waitForGlobe() {
-  return new Promise((resolve) => {
-    if (typeof Globe !== 'undefined') {
-      resolve();
-    } else {
-      const checkInterval = setInterval(() => {
-        if (typeof Globe !== 'undefined') {
-          clearInterval(checkInterval);
-          resolve();
-        }
-      }, 100);
-      
-      // 10秒超时
-      setTimeout(() => {
-        clearInterval(checkInterval);
-        resolve();
-      }, 10000);
-    }
-  });
-}
-
-(async function() {
-  // 等待Globe.gl库加载
-  await waitForGlobe();
-  
-  // 初始加载数据
-  await updateData();
-  
-  // 初始化Globe
-  initGlobe();
-  
-  // 绑定控制按钮事件
-  const toggleSizeBtn = document.getElementById('toggle-size');
-  const toggleRotateBtn = document.getElementById('toggle-rotate');
-  
-  if (toggleSizeBtn) {
-    toggleSizeBtn.addEventListener('click', toggleSize);
-  }
-  
-  if (toggleRotateBtn) {
-    toggleRotateBtn.addEventListener('click', toggleRotate);
-  }
-  
-  // 绑定窗口resize事件
-  window.addEventListener('resize', handleResize);
-  
-  // 绑定页面可见性变化事件
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-  
-  // 启动数据轮询（优化：30秒间隔，减少服务器负担和渲染压力）
-  updateInterval = setInterval(updateData, 30000);
-  
-  console.log('3D地球可视化已启动');
-})();
 </script>
 </body></html>`;
   return c.html(html);
@@ -2585,7 +1134,7 @@ app.get('/donate/vps', c => {
   <header class="mb-10 animate-fade-in">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
       <div class="space-y-3">
-        <h1 class="grad-title-animated text-4xl md:text-5xl font-bold leading-tight">风萧萧公益机场 · VPS 投喂中心</h1>
+        <h1 class="grad-title text-4xl md:text-5xl font-bold leading-tight">风萧萧公益机场 · VPS 投喂中心</h1>
         <p class="text-sm muted flex items-center gap-2">
           <span class="text-lg">📍</span>
           <span>提交新 VPS / 查看我的投喂记录</span>
@@ -2980,7 +1529,7 @@ app.get('/donate/vps', c => {
 
 <div id="toast-root"></div>
 <script>
-console.log('=== 投喂页面 JavaScript 开始执行 ===');
+updateThemeBtn();
 
 async function ensureLogin(){
   try{
@@ -3005,9 +1554,6 @@ async function logout(){
   location.href='/donate';
 }
 
-/**
- * 导出投喂记录函数
- */
 async function exportDonations(){
   try{
     const r=await fetch('/api/user/donations',{credentials:'same-origin',cache:'no-store'});
@@ -3080,7 +1626,7 @@ async function submitDonate(e){
   msg.textContent=''; msg.className='text-xs mt-1 min-h-[1.5rem]';
   const fd=new FormData(form);
   const payload={
-    ip:fd.get('ip')?.toString().trim().replace(/[\r\n\t]/g, ''),
+    ip:fd.get('ip')?.toString().trim(),
     port:Number(fd.get('port')||''),
     username:fd.get('username')?.toString().trim(),
     authType:fd.get('authType')?.toString(),
@@ -3149,6 +1695,8 @@ async function submitDonate(e){
 
 async function loadDonations(){
   const box=document.getElementById('donations-list');
+  
+  // 显示骨架屏
   box.innerHTML='<div class="space-y-4">'+
     '<div class="skeleton-card"><div class="skeleton-header">'+
     '<div class="skeleton skeleton-avatar"></div>'+
@@ -3211,1416 +1759,60 @@ bindAuthType();
 document.getElementById('donate-form').addEventListener('submit', submitDonate);
 loadDonations();
 
-// 实时IP格式验证（等待DOM加载完成）
+// 实时IP格式验证（与后端完全一致）
 const ipInput = document.querySelector('input[name="ip"]');
-if (ipInput) {
-  ipInput.addEventListener('blur', function(){
-    // 自动清理输入：去除前后空格和换行符
-    this.value = this.value.trim().replace(/[\r\n\t]/g, '');
-    
-    const ip = this.value;
-    if(!ip) return;
-    
-    const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && ip.split('.').every(p => +p >= 0 && +p <= 255);
-    // 移除IPv6地址的方括号
-    const cleanIp = ip.replace(/^\[/, '').replace(/\]$/, '');
-    const ipv6 = /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|::)/i.test(cleanIp);
-    
-    if(ipv4 || ipv6){
-      this.classList.remove('error');
-      this.classList.add('success');
-      setTimeout(()=>this.classList.remove('success'), 2000);
-    } else {
-      this.classList.add('error');
-      if (typeof toast === 'function') {
-        toast('IP 格式不正确，请检查输入','error');
-      }
-    }
-  });
-}
 
-// 端口范围验证（等待DOM加载完成）
+// 获得焦点时清除错误状态
+ipInput.addEventListener('focus', function(){
+  this.classList.remove('error');
+  this.classList.remove('success');
+});
+
+// 失去焦点时验证
+ipInput.addEventListener('blur', function(){
+  const ip = this.value.trim();
+  if(!ip) return;
+
+  // IPv4 验证（与后端一致）
+  const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && ip.split('.').every(p => +p >= 0 && +p <= 255);
+
+  // IPv6 验证（与后端完全一致）
+  const ipv6 = /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})|:((:[0-9a-f]{1,4}){1,7}|:)|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/i.test(ip.replace(/^\[|\]$/g, ''));
+
+  if(ipv4 || ipv6){
+    this.classList.remove('error');
+    this.classList.add('success');
+    setTimeout(()=>this.classList.remove('success'), 2000);
+  } else {
+    this.classList.add('error');
+    toast('IP 格式不正确','error');
+  }
+});
+
+// 端口范围验证
 const portInput = document.querySelector('input[name="port"]');
-if (portInput) {
-  portInput.addEventListener('blur', function(){
-    const port = parseInt(this.value);
-    if(!port) return;
-    
-    if(port < 1 || port > 65535){
-      this.classList.add('error');
-      if (typeof toast === 'function') {
-        toast('端口范围应在 1-65535 之间','error');
-      }
-    } else {
-      this.classList.remove('error');
-      this.classList.add('success');
-      setTimeout(()=>this.classList.remove('success'), 2000);
-    }
-  });
-}
+
+// 获得焦点时清除错误状态
+portInput.addEventListener('focus', function(){
+  this.classList.remove('error');
+  this.classList.remove('success');
+});
+
+// 失去焦点时验证
+portInput.addEventListener('blur', function(){
+  const port = parseInt(this.value);
+  if(!port) return;
+
+  if(port < 1 || port > 65535){
+    this.classList.add('error');
+    toast('端口范围应在 1-65535 之间','error');
+  } else {
+    this.classList.remove('error');
+    this.classList.add('success');
+    setTimeout(()=>this.classList.remove('success'), 2000);
+  }
+});
 </script>
-</body></html>`;
-  return c.html(html);
-});
-
-/* ==================== /donate/globe 3D地球可视化 ==================== */
-// 重定向到 /donate 页面，因为3D地球已经直接嵌入在榜单页面中
-app.get('/donate/globe', c => {
-  return c.redirect('/donate');
-});
-
-/* ==================== /admin 管理后台 ==================== */
-app.get('/admin', c => {
-  const head = commonHead('VPS 管理后台');
-  const html = `<!doctype html><html lang="zh-CN"><head>${head}
-<style>
-/* 3D地球页面专用样式 */
-#globe-container {
-  width: 100vw;
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1;
-}
-
-#controls {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 100;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  min-width: 200px;
-}
-
-body[data-theme="dark"] #controls {
-  background: rgba(28, 28, 30, 0.9);
-  border-color: rgba(56, 56, 58, 0.6);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-}
-
-#controls button {
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 10px 16px;
-  font-size: 14px;
-}
-
-#controls button:last-of-type {
-  margin-bottom: 0;
-}
-
-#stats {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid rgba(210, 210, 215, 0.3);
-  font-size: 13px;
-  line-height: 1.8;
-}
-
-body[data-theme="dark"] #stats {
-  border-top-color: rgba(56, 56, 58, 0.5);
-}
-
-#stats > div {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-#stats > div:last-child {
-  margin-bottom: 0;
-}
-
-#stats span {
-  font-weight: 600;
-  color: #007AFF;
-}
-
-body[data-theme="dark"] #stats span {
-  color: #0A84FF;
-}
-
-
-
-/* 响应式布局 */
-@media (max-width: 768px) {
-  #controls {
-    top: 10px;
-    right: 10px;
-    left: 10px;
-    padding: 15px;
-    min-width: auto;
-  }
-
-  #controls button {
-    padding: 10px 14px;
-    font-size: 14px;
-  }
-
-  #stats {
-    font-size: 12px;
-    margin-top: 12px;
-    padding-top: 12px;
-  }
-
-  #stats > div {
-    margin-bottom: 5px;
-  }
-
-
-}
-
-@media (max-width: 480px) {
-  #controls {
-    top: 8px;
-    right: 8px;
-    left: 8px;
-    padding: 12px;
-    border-radius: 10px;
-  }
-
-  #controls button {
-    padding: 8px 12px;
-    font-size: 13px;
-    margin-bottom: 8px;
-  }
-
-  #stats {
-    font-size: 11px;
-    line-height: 1.6;
-    margin-top: 10px;
-    padding-top: 10px;
-  }
-
-  #stats > div {
-    margin-bottom: 4px;
-  }
-
-
-}
-
-/* 超小屏幕优化 (320px) */
-@media (max-width: 360px) {
-  #controls {
-    top: 5px;
-    right: 5px;
-    left: 5px;
-    padding: 10px;
-    border-radius: 8px;
-  }
-
-  #controls button {
-    padding: 7px 10px;
-    font-size: 12px;
-    margin-bottom: 6px;
-  }
-
-  #stats {
-    font-size: 10px;
-    line-height: 1.5;
-    margin-top: 8px;
-    padding-top: 8px;
-  }
-
-  #stats > div {
-    margin-bottom: 3px;
-    font-size: 10px;
-  }
-
-  #stats .muted {
-    font-size: 10px;
-  }
-
-
-
-  #servers-table {
-    font-size: 10px;
-  }
-
-  #servers-table th,
-  #servers-table td {
-    padding: 6px 4px;
-    font-size: 10px;
-  }
-
-  #servers-table th {
-    font-size: 11px;
-  }
-
-  /* 隐藏部分列以适应小屏幕 */
-  #servers-table th:nth-child(4),
-  #servers-table td:nth-child(4),
-  #servers-table th:nth-child(5),
-  #servers-table td:nth-child(5) {
-    display: none;
-  }
-}
-
-/* 折叠式概览卡片样式 */
-#globe-overview {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 200;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
-  padding: 32px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-  min-width: 400px;
-  max-width: 500px;
-  text-align: center;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body[data-theme="dark"] #globe-overview {
-  background: rgba(28, 28, 30, 0.95);
-  border-color: rgba(56, 56, 58, 0.8);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-}
-
-#globe-overview h2 {
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-body[data-theme="dark"] #globe-overview h2 {
-  background: linear-gradient(135deg, #8b9eff 0%, #9d7bc2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-#overview-stats {
-  display: flex;
-  justify-content: space-around;
-  margin-bottom: 24px;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 12px;
-}
-
-body[data-theme="dark"] #overview-stats {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-#overview-stats > div {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-#overview-stats .stat-label {
-  font-size: 13px;
-  color: #6e6e73;
-  font-weight: 500;
-}
-
-body[data-theme="dark"] #overview-stats .stat-label {
-  color: #98989d;
-}
-
-#overview-stats .stat-value {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1d1d1f;
-}
-
-body[data-theme="dark"] #overview-stats .stat-value {
-  color: #f5f5f7;
-}
-
-#overview-stats .stat-value.active {
-  color: #34C759;
-}
-
-#overview-stats .stat-value.offline {
-  color: #FF3B30;
-}
-
-#overview-flags {
-  margin-bottom: 24px;
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 12px;
-  min-height: 60px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-}
-
-body[data-theme="dark"] #overview-flags {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-#overview-flags span {
-  font-size: 32px;
-  transition: transform 0.2s ease;
-  cursor: default;
-}
-
-#overview-flags span:hover {
-  transform: scale(1.2);
-}
-
-#expand-globe {
-  width: 100%;
-  padding: 14px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-#expand-globe:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-}
-
-#expand-globe:active {
-  transform: translateY(0);
-}
-
-/* 响应式优化 - 概览卡片 */
-@media (max-width: 768px) {
-  #globe-overview {
-    min-width: 320px;
-    max-width: 90%;
-    padding: 24px;
-  }
-
-  #globe-overview h2 {
-    font-size: 24px;
-    margin-bottom: 20px;
-  }
-
-  #overview-stats {
-    padding: 16px;
-    margin-bottom: 20px;
-  }
-
-  #overview-stats .stat-value {
-    font-size: 28px;
-  }
-
-  #overview-stats .stat-label {
-    font-size: 12px;
-  }
-
-  #overview-flags span {
-    font-size: 28px;
-  }
-
-  #expand-globe {
-    padding: 12px 20px;
-    font-size: 15px;
-  }
-}
-
-@media (max-width: 480px) {
-  #globe-overview {
-    min-width: 280px;
-    padding: 20px;
-  }
-
-  #globe-overview h2 {
-    font-size: 20px;
-    margin-bottom: 16px;
-  }
-
-  #overview-stats {
-    padding: 12px;
-    margin-bottom: 16px;
-  }
-
-  #overview-stats .stat-value {
-    font-size: 24px;
-  }
-
-  #overview-stats .stat-label {
-    font-size: 11px;
-  }
-
-  #overview-flags {
-    padding: 12px;
-    min-height: 50px;
-  }
-
-  #overview-flags span {
-    font-size: 24px;
-  }
-
-  #expand-globe {
-    padding: 10px 18px;
-    font-size: 14px;
-  }
-}
-</style>
-</head>
-<body class="min-h-screen" data-theme="dark">
-  
-  <!-- 折叠式概览卡片 -->
-  <div id="globe-overview">
-    <h2>🌍 全球服务器分布</h2>
-    
-    <div id="overview-stats">
-      <div>
-        <span class="stat-label">总服务器</span>
-        <span id="overview-total" class="stat-value">0</span>
-      </div>
-      <div>
-        <span class="stat-label">活跃</span>
-        <span id="overview-active" class="stat-value active">0</span>
-      </div>
-      <div>
-        <span class="stat-label">离线</span>
-        <span id="overview-offline" class="stat-value offline">0</span>
-      </div>
-    </div>
-    
-    <div id="overview-flags">
-      <!-- 国旗列表将通过JavaScript动态填充 -->
-    </div>
-    
-    <button id="expand-globe">
-      <span style="font-size: 18px; margin-right: 8px;">🚀</span>
-      查看3D地球
-    </button>
-  </div>
-  
-  <!-- 3D地球容器 (默认隐藏) -->
-  <div id="globe-container" style="display:none"></div>
-  
-  <!-- 控制面板 (默认隐藏) -->
-  <div id="controls" style="display:none">
-    <button id="collapse-globe" class="btn-primary">收起地球</button>
-    <button id="toggle-rotate" class="btn-secondary">暂停旋转</button>
-    <button id="back-to-donate" class="btn-secondary" onclick="location.href='/donate'">返回榜单</button>
-    
-    <div id="stats">
-      <div>
-        <span class="muted">总服务器:</span>
-        <span id="total-servers">0</span>
-      </div>
-      <div>
-        <span class="muted">活跃:</span>
-        <span id="active-servers" style="color: #34C759;">0</span>
-      </div>
-      <div>
-        <span class="muted">连接数:</span>
-        <span id="total-connections">0</span>
-      </div>
-    </div>
-  </div>
-
-  <div id="toast-root"></div>
-
-  <!-- Globe.gl 库 -->
-  <script src="//unpkg.com/globe.gl"></script>
-  
-  <script>
-    // 主题切换功能
-    updateThemeBtn();
-
-    // 全局变量
-    let globe = null;
-    let serversData = [];
-    let connectionsData = [];
-    let updateInterval = null;
-    let isRotating = true;
-
-    /**
-     * 国旗提取函数
-     * 从国家字符串中提取国旗emoji
-     * @param {string} countryString - 国家字符串，格式如 "🇨🇳 中国大陆" 或 "United States"
-     * @returns {string} 国旗emoji，如果没有找到则返回默认的🌍
-     */
-    function getCountryFlag(countryString) {
-      try {
-        // 检查输入是否为空或无效
-        if (!countryString || typeof countryString !== 'string') {
-          return '🌍';
-        }
-
-        // 把字符串按 Unicode code point 拆开
-        const chars = Array.from(countryString);
-        
-        for (let i = 0; i < chars.length - 1; i++) {
-          const cp1 = chars[i].codePointAt(0);
-          const cp2 = chars[i + 1].codePointAt(0);
-          if (!cp1 || !cp2) continue;
-          
-          // 国旗 emoji 是两个连续的区域指示符号（U+1F1E6 - U+1F1FF）
-          if (
-            cp1 >= 0x1f1e6 && cp1 <= 0x1f1ff &&
-            cp2 >= 0x1f1e6 && cp2 <= 0x1f1ff
-          ) {
-            return chars[i] + chars[i + 1];
-          }
-        }
-
-        // 如果没有找到国旗，返回默认的地球emoji
-        return '🌍';
-      } catch (error) {
-        // 异常处理：捕获任何意外错误
-        console.warn('提取国旗时发生错误:', error, '输入:', countryString);
-        return '🌍';
-      }
-    }
-
-    /**
-     * 生成概览数据函数
-     * 统计服务器总数、活跃数、离线数
-     * 提取所有唯一的国旗emoji
-     * @param {Array} servers - 服务器数据数组
-     * @returns {Object} 概览数据对象，包含 total, active, offline, flags
-     */
-    function generateOverview(servers) {
-      try {
-        // 验证输入
-        if (!Array.isArray(servers)) {
-          console.warn('generateOverview: 输入不是数组', servers);
-          return {
-            total: 0,
-            active: 0,
-            offline: 0,
-            flags: []
-          };
-        }
-
-        // 统计服务器总数
-        const total = servers.length;
-
-        // 统计活跃服务器数量
-        const active = servers.filter(s => s.status === 'active').length;
-
-        // 统计离线服务器数量（包括 failed 和 inactive 状态）
-        const offline = servers.filter(s => s.status === 'failed' || s.status === 'inactive').length;
-
-        // 提取所有唯一的国旗emoji
-        const flagsSet = new Set();
-        servers.forEach(server => {
-          if (server.country) {
-            const flag = getCountryFlag(server.country);
-            // 只添加非默认的国旗（排除🌍）
-            if (flag && flag !== '🌍') {
-              flagsSet.add(flag);
-            }
-          }
-        });
-
-        // 将Set转换为数组
-        const flags = Array.from(flagsSet);
-
-        // 返回概览数据对象
-        const overview = {
-          total,
-          active,
-          offline,
-          flags
-        };
-
-        console.log('概览数据生成完成:', overview);
-        return overview;
-
-      } catch (error) {
-        // 异常处理
-        console.error('生成概览数据时发生错误:', error);
-        return {
-          total: 0,
-          active: 0,
-          offline: 0,
-          flags: []
-        };
-      }
-    }
-
-    /**
-     * 更新概览卡片函数
-     * 更新统计数字显示
-     * 渲染国旗列表
-     * 在数据更新时调用此函数
-     */
-    function updateOverview() {
-      try {
-        // 生成概览数据
-        const overview = generateOverview(serversData);
-
-        // 更新统计数字
-        const totalElement = document.getElementById('overview-total');
-        const activeElement = document.getElementById('overview-active');
-        const offlineElement = document.getElementById('overview-offline');
-
-        if (totalElement) {
-          totalElement.textContent = overview.total;
-        }
-
-        if (activeElement) {
-          activeElement.textContent = overview.active;
-        }
-
-        if (offlineElement) {
-          offlineElement.textContent = overview.offline;
-        }
-
-        // 渲染国旗列表
-        const flagsContainer = document.getElementById('overview-flags');
-        if (flagsContainer) {
-          if (overview.flags.length === 0) {
-            // 如果没有国旗，显示提示信息
-            flagsContainer.innerHTML = '<span style="font-size: 14px; color: #6e6e73;">暂无服务器数据</span>';
-          } else {
-            // 渲染国旗列表
-            flagsContainer.innerHTML = overview.flags
-              .map(flag => \`<span title="服务器所在地区">\${flag}</span>\`)
-              .join('');
-          }
-        }
-
-        console.log('概览卡片已更新:', overview);
-
-      } catch (error) {
-        console.error('更新概览卡片时发生错误:', error);
-      }
-    }
-
-    /**
-     * 展开3D地球函数
-     * 隐藏概览卡片，显示3D地球容器
-     * 初始化Globe实例（如果还未初始化）
-     * 添加平滑过渡动画（500ms）
-     */
-    function expandGlobe() {
-      try {
-        const overview = document.getElementById('globe-overview');
-        const container = document.getElementById('globe-container');
-        const controls = document.getElementById('controls');
-
-        if (!overview || !container || !controls) {
-          console.error('无法找到必要的DOM元素');
-          return;
-        }
-
-        console.log('展开3D地球...');
-
-        // 添加过渡动画类
-        overview.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-        container.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-        controls.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-
-        // 淡出概览卡片
-        overview.style.opacity = '0';
-        overview.style.transform = 'translate(-50%, -50%) scale(0.95)';
-
-        // 500ms后隐藏概览卡片，显示3D地球
-        setTimeout(() => {
-          overview.style.display = 'none';
-          container.style.display = 'block';
-          controls.style.display = 'block';
-
-          // 初始化Globe实例（如果还未初始化）
-          if (!globe) {
-            console.log('初始化Globe实例...');
-            initGlobe();
-            // 初始化后立即更新数据
-            updateGlobe();
-          }
-
-          // 淡入3D地球和控制面板
-          container.style.opacity = '0';
-          controls.style.opacity = '0';
-
-          requestAnimationFrame(() => {
-            container.style.opacity = '1';
-            controls.style.opacity = '1';
-          });
-
-          console.log('3D地球已展开');
-        }, 500);
-
-      } catch (error) {
-        console.error('展开3D地球时发生错误:', error);
-        showToast('展开3D地球失败，请刷新页面重试', 'error');
-      }
-    }
-
-    /**
-     * 收起3D地球函数
-     * 隐藏3D地球容器，显示概览卡片
-     * 添加平滑过渡动画（500ms）
-     */
-    function collapseGlobe() {
-      try {
-        const overview = document.getElementById('globe-overview');
-        const container = document.getElementById('globe-container');
-        const controls = document.getElementById('controls');
-
-        if (!overview || !container || !controls) {
-          console.error('无法找到必要的DOM元素');
-          return;
-        }
-
-        console.log('收起3D地球...');
-
-        // 添加过渡动画类
-        container.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-        controls.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-        overview.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-
-        // 淡出3D地球和控制面板
-        container.style.opacity = '0';
-        controls.style.opacity = '0';
-
-        // 500ms后隐藏3D地球，显示概览卡片
-        setTimeout(() => {
-          container.style.display = 'none';
-          controls.style.display = 'none';
-          overview.style.display = 'block';
-
-          // 淡入概览卡片
-          overview.style.opacity = '0';
-          overview.style.transform = 'translate(-50%, -50%) scale(0.95)';
-
-          requestAnimationFrame(() => {
-            overview.style.opacity = '1';
-            overview.style.transform = 'translate(-50%, -50%) scale(1)';
-          });
-
-          console.log('3D地球已收起');
-        }, 500);
-
-      } catch (error) {
-        console.error('收起3D地球时发生错误:', error);
-        showToast('收起3D地球失败', 'error');
-      }
-    }
-
-    /**
-     * WebGL可用性检测函数
-     * 检测浏览器是否支持WebGL
-     * @returns {boolean} 如果WebGL可用返回true，否则返回false
-     */
-    function isWebGLAvailable() {
-      try {
-        const canvas = document.createElement('canvas');
-        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        
-        if (!gl) {
-          return false;
-        }
-        
-        // 进一步检查WebGL是否真正可用
-        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-        if (debugInfo) {
-          const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-          // 检查是否是软件渲染器（性能较差）
-          if (renderer && renderer.toLowerCase().includes('swiftshader')) {
-            console.warn('检测到软件渲染器，WebGL性能可能较差');
-          }
-        }
-        
-        return true;
-      } catch (e) {
-        console.error('WebGL检测失败:', e);
-        return false;
-      }
-    }
-
-    // 初始化
-    document.addEventListener('DOMContentLoaded', () => {
-      // 检查WebGL可用性
-      if (!isWebGLAvailable()) {
-        console.error('WebGL不可用，自动切换到列表视图');
-        
-        // 显示提示信息
-        const globeContainer = document.getElementById('globe-container');
-        globeContainer.innerHTML = \`
-          <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-            <div style="background: rgba(255,255,255,0.95); padding: 40px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 500px; text-align: center;">
-              <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
-              <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 16px; color: #1d1d1f;">WebGL不可用</h2>
-              <p style="color: #6e6e73; margin-bottom: 24px; line-height: 1.6;">
-                您的浏览器不支持WebGL或WebGL已被禁用。<br>
-                3D地球可视化需要WebGL支持。<br>
-                请使用现代浏览器（Chrome、Firefox、Safari、Edge）或启用WebGL。
-              </p>
-              <button onclick="location.href='/donate'" style="background: #007AFF; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                返回榜单页面
-              </button>
-            </div>
-          </div>
-        \`;
-        
-        // WebGL不可用时，建议用户返回榜单页面查看服务器列表
-        console.warn('WebGL不可用，建议用户返回榜单页面');
-        
-        // 仍然获取数据以显示列表
-        fetchAndUpdateData();
-        startDataPolling();
-        setupEventListeners();
-        
-        return;
-      }
-      
-      // WebGL可用，正常初始化
-      initGlobe();
-      fetchAndUpdateData();
-      startDataPolling();
-      setupEventListeners();
-    });
-
-    // 设置事件监听器
-    function setupEventListeners() {
-      // 绑定"查看3D地球"按钮事件
-      const expandButton = document.getElementById('expand-globe');
-      if (expandButton) {
-        expandButton.addEventListener('click', () => {
-          console.log('点击"查看3D地球"按钮');
-          expandGlobe();
-        });
-      }
-
-      // 绑定"收起"按钮事件
-      const collapseButton = document.getElementById('collapse-globe');
-      if (collapseButton) {
-        collapseButton.addEventListener('click', () => {
-          console.log('点击"收起地球"按钮');
-          collapseGlobe();
-        });
-      }
-
-
-
-      // 切换旋转
-      document.getElementById('toggle-rotate').addEventListener('click', () => {
-        isRotating = !isRotating;
-        if (globe && globe.controls()) {
-          globe.controls().autoRotate = isRotating;
-          document.getElementById('toggle-rotate').textContent = isRotating ? '暂停旋转' : '继续旋转';
-        }
-      });
-
-      // 页面可见性变化
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-          if (globe && globe.controls()) {
-            globe.controls().autoRotate = false;
-          }
-          if (updateInterval) {
-            clearInterval(updateInterval);
-            updateInterval = null;
-          }
-        } else {
-          if (globe && globe.controls() && isRotating) {
-            globe.controls().autoRotate = true;
-          }
-          startDataPolling();
-        }
-      });
-
-      // 窗口大小变化 - 使用防抖优化性能
-      let resizeTimeout;
-      window.addEventListener('resize', () => {
-        // 清除之前的定时器
-        if (resizeTimeout) {
-          clearTimeout(resizeTimeout);
-        }
-        
-        // 设置新的定时器，500ms后执行resize操作
-        resizeTimeout = setTimeout(() => {
-          if (globe) {
-            const newWidth = window.innerWidth;
-            const newHeight = window.innerHeight;
-            
-            console.log(\`窗口大小变化: \${newWidth}x\${newHeight}\`);
-            
-            // 更新globe容器尺寸
-            globe.width(newWidth);
-            globe.height(newHeight);
-            
-            // 更新相机视角
-            if (globe.camera()) {
-              const camera = globe.camera();
-              camera.aspect = newWidth / newHeight;
-              camera.updateProjectionMatrix();
-            }
-            
-            // 如果有renderer，也更新它的尺寸
-            if (globe.renderer()) {
-              globe.renderer().setSize(newWidth, newHeight);
-            }
-            
-            console.log('Globe尺寸已更新');
-          }
-        }, 500);
-      });
-    }
-
-    // 初始化Globe
-    function initGlobe() {
-      try {
-        globe = Globe()
-          (document.getElementById('globe-container'))
-          .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
-          .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
-          .backgroundColor('#000000')
-          .width(window.innerWidth)
-          .height(window.innerHeight);
-
-        // 启用交互
-        globe.enablePointerInteraction(true);
-
-        // 设置自动旋转和交互控制
-        if (globe.controls()) {
-          const controls = globe.controls();
-          
-          // 启用自动旋转
-          controls.autoRotate = true;
-          controls.autoRotateSpeed = 0.5;
-          
-          // 启用鼠标拖拽旋转（默认已启用，显式设置以确保）
-          controls.enableRotate = true;
-          
-          // 启用滚轮缩放（默认已启用，显式设置以确保）
-          controls.enableZoom = true;
-          
-          // 设置缩放范围，防止过度缩放
-          controls.minDistance = 101;  // 最小距离（不能太近）
-          controls.maxDistance = 500;  // 最大距离（不能太远）
-          
-          // 禁用平移（保持地球居中）
-          controls.enablePan = false;
-        }
-
-        console.log('Globe initialized successfully');
-      } catch (error) {
-        console.error('Failed to initialize globe:', error);
-        showToast('无法初始化3D地球，请刷新页面重试', 'error');
-      }
-    }
-
-    /**
-     * 获取服务器数据
-     * 调用 /api/admin/vps API获取服务器数据
-     * 为每个服务器添加coords属性（调用geocode函数）
-     * 添加错误处理和超时处理
-     * @returns {Promise<Array>} 服务器数据数组
-     */
-    async function fetchServers() {
-      // 创建超时Promise（8秒超时）
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('请求超时，请检查网络连接')), 8000);
-      });
-
-      try {
-        // 创建fetch Promise
-        const fetchPromise = fetch('/api/admin/vps', {
-          credentials: 'same-origin',
-          cache: 'no-store',
-          headers: {
-            'Accept': 'application/json'
-          }
-        });
-
-        // 使用Promise.race实现超时控制
-        const response = await Promise.race([fetchPromise, timeoutPromise]);
-
-        // 检查HTTP状态
-        if (!response.ok) {
-          const errorMsg = \`HTTP错误: \${response.status} \${response.statusText}\`;
-          console.error(errorMsg);
-          throw new Error(errorMsg);
-        }
-
-        // 解析JSON响应
-        let result;
-        try {
-          result = await response.json();
-        } catch (jsonError) {
-          console.error('JSON解析失败:', jsonError);
-          throw new Error('服务器返回的数据格式错误');
-        }
-        
-        // 检查业务逻辑成功状态
-        if (!result.success) {
-          const errorMsg = result.message || '获取服务器数据失败';
-          console.error('API返回错误:', errorMsg);
-          throw new Error(errorMsg);
-        }
-
-        // 验证数据结构
-        if (!Array.isArray(result.data)) {
-          console.error('服务器数据格式错误，期望数组，收到:', typeof result.data);
-          throw new Error('服务器数据格式错误');
-        }
-
-        // 处理服务器数据，为每个服务器添加coords属性
-        const servers = result.data.map(server => {
-          try {
-            // 调用geocode函数获取坐标
-            const coords = geocode(server.ipLocation || server.country);
-            return {
-              ...server,
-              coords: coords
-            };
-          } catch (err) {
-            console.warn(\`为服务器 \${server.ip} 获取坐标失败:\`, err);
-            // 如果geocode失败，使用默认坐标
-            return {
-              ...server,
-              coords: { lat: 0, lng: 0 }
-            };
-          }
-        });
-
-        console.log(\`✅ 成功获取 \${servers.length} 台服务器数据\`);
-        return servers;
-
-      } catch (error) {
-        // 详细的错误日志记录
-        console.error('❌ 获取服务器数据失败:', {
-          message: error.message,
-          type: error.name,
-          stack: error.stack
-        });
-        
-        // 如果有缓存数据，返回缓存数据
-        if (serversData && serversData.length > 0) {
-          console.warn('⚠️ 使用缓存的服务器数据 (\${serversData.length} 台服务器)');
-          showToast(\`网络请求失败: \${error.message}，显示缓存数据\`, 'warning');
-          return serversData;
-        }
-        
-        // 没有缓存数据，返回空数组而不是抛出错误
-        console.error('⚠️ 无缓存数据可用，返回空数组');
-        showToast(\`无法获取服务器数据: \${error.message}\`, 'error');
-        return [];
-      }
-    }
-
-    /**
-     * 更新数据函数
-     * 创建updateData函数更新serversData和connectionsData
-     * 更新统计信息显示
-     */
-    async function updateData() {
-      try {
-        // 获取最新的服务器数据
-        const newServersData = await fetchServers();
-        
-        // 性能优化：当服务器数量超过100时，只显示活跃服务器
-        let filteredServersData = newServersData;
-        let isFiltered = false;
-        
-        if (newServersData.length > 100) {
-          filteredServersData = newServersData.filter(s => s.status === 'active');
-          isFiltered = true;
-          console.log(\`⚡ 性能优化: 服务器总数 \${newServersData.length} 超过100，仅显示 \${filteredServersData.length} 台活跃服务器\`);
-        }
-        
-        // 更新全局变量
-        serversData = filteredServersData;
-        
-        // 计算连接关系
-        connectionsData = calculateConnections(serversData);
-        
-        console.log(\`数据更新完成: \${serversData.length} 台服务器, \${connectionsData.length} 条连接\`);
-        
-        // 更新Globe显示
-        updateGlobe();
-        
-        // 更新统计信息（传入是否过滤的标志和原始总数）
-        updateStats(isFiltered, newServersData.length);
-        
-        // 更新概览卡片
-        updateOverview();
-        
-
-        
-      } catch (error) {
-        console.error('更新数据失败:', error);
-        showToast(\`数据更新失败: \${error.message}\`, 'error');
-      }
-    }
-
-    /**
-     * 获取并更新数据（向后兼容的包装函数）
-     */
-    async function fetchAndUpdateData() {
-      await updateData();
-    }
-
-    // 更新Globe显示
-    function updateGlobe() {
-      if (!globe) return;
-
-      try {
-        // 过滤掉没有有效坐标的服务器（性能优化：避免渲染无效节点）
-        const validServers = serversData.filter(s => 
-          s.coords && 
-          s.coords.lat !== null && 
-          s.coords.lng !== null &&
-          !(s.coords.lat === 0 && s.coords.lng === 0)
-        );
-        
-        // 更新服务器节点
-        globe
-          .pointsData(validServers)
-          .pointLat(d => d.coords.lat)
-          .pointLng(d => d.coords.lng)
-          .pointColor(d => {
-            if (d.status === 'active') return '#4ade80';
-            if (d.status === 'failed') return '#ef4444';
-            return '#94a3b8';
-          })
-          .pointAltitude(0.01)
-          .pointRadius(0.3)
-          .pointLabel(d => \`
-            <div style="background: rgba(0,0,0,0.85); padding: 10px 14px; border-radius: 8px; color: white; font-size: 13px; line-height: 1.6;">
-              <div style="font-size: 16px; margin-bottom: 6px; font-weight: 600;">\${getCountryFlag(d.country)} <strong>@\${d.donatedByUsername}</strong></div>
-              <div style="color: #d1d1d6; margin-bottom: 4px;">\${d.country || '未知'}</div>
-              <div style="color: #d1d1d6; margin-bottom: 4px;">\${d.ipLocation || '未知位置'}</div>
-              <div style="color: \${d.status === 'active' ? '#4ade80' : '#ef4444'}; font-weight: 500;">
-                \${d.status === 'active' ? '✅ 运行中' : '❌ 离线'}
-              </div>
-            </div>
-          \`);
-
-        // 添加HTML标签显示
-        globe
-          .htmlElementsData(validServers)
-          .htmlLat(d => d.coords.lat)
-          .htmlLng(d => d.coords.lng)
-          .htmlAltitude(0.02)
-          .htmlElement(d => {
-            const el = document.createElement('div');
-            el.innerHTML = \`
-              <div style="
-                background: rgba(0, 0, 0, 0.7);
-                padding: 4px 8px;
-                border-radius: 4px;
-                color: white;
-                font-size: 12px;
-                white-space: nowrap;
-                pointer-events: none;
-                backdrop-filter: blur(4px);
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-              ">
-                \${getCountryFlag(d.country)} @\${d.donatedByUsername}
-              </div>
-            \`;
-            return el;
-          });
-
-        // 更新连接弧线
-        globe
-          .arcsData(connectionsData)
-          .arcStartLat(d => d.startLat)
-          .arcStartLng(d => d.startLng)
-          .arcEndLat(d => d.endLat)
-          .arcEndLng(d => d.endLng)
-          .arcColor(() => ['rgba(74, 158, 255, 0.5)', 'rgba(96, 165, 250, 0.5)'])  // 蓝色系渐变，半透明
-          .arcStroke(0.5)
-          .arcAltitude(0.1)  // 弧线高度，避免与地球表面重叠
-          .arcDashLength(0.4)
-          .arcDashGap(0.2)
-          .arcDashAnimateTime(2000)
-          .arcDashInitialGap(() => Math.random());  // 随机初始间隙，使动画更自然
-
-        console.log(\`Updated globe with \${serversData.length} servers and \${connectionsData.length} connections\`);
-      } catch (error) {
-        console.error('Failed to update globe:', error);
-      }
-    }
-
-    // 更新统计信息
-    function updateStats(isFiltered = false, originalTotal = 0) {
-      const total = serversData.length;
-      const active = serversData.filter(s => s.status === 'active').length;
-      const connections = connectionsData.length;
-
-      document.getElementById('total-servers').textContent = total;
-      document.getElementById('active-servers').textContent = active;
-      document.getElementById('total-connections').textContent = connections;
-      
-      // 显示过滤提示
-      const statsDiv = document.getElementById('stats');
-      let filterNotice = document.getElementById('filter-notice');
-      
-      if (isFiltered && originalTotal > 100) {
-        if (!filterNotice) {
-          filterNotice = document.createElement('div');
-          filterNotice.id = 'filter-notice';
-          filterNotice.style.cssText = 'margin-top: 12px; padding: 10px; background: rgba(255, 193, 7, 0.15); border-left: 3px solid #ffc107; border-radius: 4px; font-size: 12px; line-height: 1.5;';
-          statsDiv.appendChild(filterNotice);
-        }
-        filterNotice.innerHTML = \`
-          <div style="font-weight: 600; color: #f59e0b; margin-bottom: 4px;">⚡ 性能优化模式</div>
-          <div style="color: #92400e;">服务器总数 \${originalTotal} 台<br>仅显示 \${total} 台活跃服务器</div>
-        \`;
-      } else if (filterNotice) {
-        filterNotice.remove();
-      }
-    }
-
-
-
-    /**
-     * 开始数据轮询
-     * 实现10秒轮询机制（使用setInterval）
-     */
-    function startDataPolling() {
-      // 清除现有的轮询定时器（如果存在）
-      if (updateInterval) {
-        clearInterval(updateInterval);
-        updateInterval = null;
-      }
-      
-      // 设置新的轮询定时器，每10秒更新一次数据
-      updateInterval = setInterval(() => {
-        console.log('执行定时数据更新...');
-        updateData();
-      }, 10000); // 10秒 = 10000毫秒
-      
-      console.log('数据轮询已启动，每10秒更新一次');
-    }
-
-    // Toast通知
-    function showToast(message, type = 'info') {
-      const root = document.getElementById('toast-root');
-      const toast = document.createElement('div');
-      toast.className = \`toast \${type}\`;
-      toast.textContent = message;
-      root.appendChild(toast);
-      
-      setTimeout(() => toast.classList.add('show'), 10);
-      setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => root.removeChild(toast), 300);
-      }, 3000);
-    }
-
-    // 城市坐标数据库（客户端版本）
-    const CITY_COORDS = ${JSON.stringify(CITY_COORDS, null, 2)};
-
-    /**
-     * 地理编码函数：将位置字符串转换为经纬度坐标
-     * 提供多级后备方案，确保总能返回有效坐标
-     * @param {string} location - 位置字符串
-     * @returns {{lat: number, lng: number}} 坐标对象
-     */
-    function geocode(location) {
-      try {
-        // 第一级后备：检查输入是否为空或无效
-        if (!location || typeof location !== 'string') {
-          console.warn('地理编码失败: 位置信息为空或无效类型', location);
-          return { lat: 0, lng: 0 };
-        }
-
-        // 清理输入字符串
-        const cleanLocation = location.trim();
-        if (!cleanLocation) {
-          console.warn('地理编码失败: 位置信息为空字符串');
-          return { lat: 0, lng: 0 };
-        }
-
-        // 第二级后备：直接匹配
-        if (CITY_COORDS[cleanLocation]) {
-          console.log(\`✅ 直接匹配成功: "\${cleanLocation}"\`);
-          return CITY_COORDS[cleanLocation];
-        }
-
-        // 第三级后备：解析逗号分隔的位置字符串
-        const parts = cleanLocation.split(',').map(s => s.trim()).filter(Boolean);
-
-        // 第四级后备：部分匹配（从最具体的部分开始）
-        for (let i = parts.length - 1; i >= 0; i--) {
-          const part = parts[i];
-          if (CITY_COORDS[part]) {
-            console.log(\`✅ 部分匹配成功: "\${part}" (来自 "\${cleanLocation}")\`);
-            return CITY_COORDS[part];
-          }
-        }
-
-        // 第五级后备：模糊匹配（逐部分匹配）
-        for (let i = parts.length - 1; i >= 0; i--) {
-          const part = parts[i];
-          const partLower = part.toLowerCase();
-          
-          for (const key in CITY_COORDS) {
-            const keyLower = key.toLowerCase();
-            if (keyLower.includes(partLower) || partLower.includes(keyLower)) {
-              console.log(\`✅ 模糊匹配成功: "\${key}" (匹配 "\${part}" 来自 "\${cleanLocation}")\`);
-              return CITY_COORDS[key];
-            }
-          }
-        }
-
-        // 第六级后备：尝试匹配整个字符串
-        const cleanLower = cleanLocation.toLowerCase();
-        for (const key in CITY_COORDS) {
-          const keyLower = key.toLowerCase();
-          if (cleanLower.includes(keyLower) || keyLower.includes(cleanLower)) {
-            console.log(\`✅ 全字符串模糊匹配成功: "\${key}" (来自 "\${cleanLocation}")\`);
-            return CITY_COORDS[key];
-          }
-        }
-
-        // 第七级后备：尝试提取国家名称（通常是第一部分）
-        if (parts.length > 0) {
-          const firstPart = parts[0];
-          // 尝试匹配第一部分（通常是国家）
-          for (const key in CITY_COORDS) {
-            if (key.toLowerCase().includes(firstPart.toLowerCase())) {
-              console.log(\`⚠️ 国家级后备匹配: "\${key}" (来自 "\${cleanLocation}")\`);
-              return CITY_COORDS[key];
-            }
-          }
-        }
-
-        // 最终后备：记录无法编码的位置并返回默认坐标
-        console.warn(\`⚠️ 无法为位置 "\${cleanLocation}" 找到坐标，使用默认坐标 (0, 0)\`);
-        console.warn('  可用的位置关键词示例:', Object.keys(CITY_COORDS).slice(0, 10).join(', '));
-        
-        return { lat: 0, lng: 0 };
-        
-      } catch (error) {
-        // 异常处理：捕获任何意外错误
-        console.error('地理编码过程中发生异常:', error);
-        console.error('  输入位置:', location);
-        console.error('  错误详情:', error.message, error.stack);
-        
-        // 返回默认坐标作为最终后备
-        return { lat: 0, lng: 0 };
-      }
-    }
-
-
-  </script>
 </body></html>`;
   return c.html(html);
 });
@@ -4749,7 +1941,7 @@ async function renderAdmin(root, name){
         '<div class="inline-flex items-center justify-center w-12 h-12 rounded-xl" style="background:#007AFF">'+
           '<span class="text-2xl">⚙️</span>'+
         '</div>'+
-        '<h1 class="grad-title-animated text-3xl md:text-4xl font-bold">VPS 管理后台</h1>'+
+        '<h1 class="grad-title text-3xl md:text-4xl font-bold">VPS 管理后台</h1>'+
       '</div>'+
       '<p class="text-sm muted flex items-center gap-2 ml-15">'+
         '<span class="text-base">🔒</span>'+
@@ -5200,8 +2392,7 @@ function renderVpsList(){
       '<div class="flex flex-wrap gap-2 pt-3 border-t">'+
         '<button class="btn-secondary text-xs" data-act="login" data-id="'+v.id+'">🔍 查看</button>'+
         '<button class="btn-secondary text-xs" data-act="verify" data-id="'+v.id+'">✅ 验证</button>'+
-        '<button class="btn-secondary text-xs" data-act="editConfig" data-id="'+v.id+'">🔧 编辑配置</button>'+
-        '<button class="btn-secondary text-xs" data-act="edit" data-id="'+v.id+'">✏️ 编辑信息</button>'+
+        '<button class="btn-secondary text-xs" data-act="edit" data-id="'+v.id+'">✏️ 编辑</button>'+
         '<button class="btn-danger text-xs" data-act="del" data-id="'+v.id+'">🗑️ 删除</button>'+
       '</div>';
 
@@ -5213,11 +2404,6 @@ function renderVpsList(){
 
         if(act==='login'){
           modalLoginInfo(v);
-          return;
-        }
-
-        if(act==='editConfig'){
-          openEditConfigModal(id);
           return;
         }
 
@@ -5340,264 +2526,8 @@ function renderVpsList(){
   });
 }
 
-/* ========== 编辑配置模态框函数 ========== */
-function openEditConfigModal(vpsId){
-  if(!vpsId) return;
-  
-  // 从 allVpsList 中找到对应的 VPS
-  const vps = allVpsList.find(v => v.id === vpsId);
-  if(!vps){
-    toast('VPS 不存在','error');
-    return;
-  }
-  
-  // 填充表单
-  document.getElementById('edit-vps-id').value = vps.id;
-  document.getElementById('edit-ip').value = vps.ip || '';
-  document.getElementById('edit-port').value = vps.port || '';
-  document.getElementById('edit-username').value = vps.username || '';
-  document.getElementById('edit-authType').value = vps.authType || 'password';
-  
-  // 清空密码和私钥字段（因为是编辑，不显示原值）
-  document.getElementById('edit-password').value = '';
-  document.getElementById('edit-privateKey').value = '';
-  
-  // 根据认证方式显示/隐藏字段
-  toggleAuthFields();
-  
-  // 显示模态框
-  const modal = document.getElementById('edit-config-modal');
-  modal.classList.remove('hidden');
-  
-  // 聚焦第一个输入框
-  setTimeout(() => {
-    document.getElementById('edit-ip').focus();
-  }, 100);
-}
-
-function closeEditModal(){
-  const modal = document.getElementById('edit-config-modal');
-  modal.classList.add('hidden');
-  
-  // 重置表单
-  document.getElementById('edit-config-form').reset();
-}
-
-function toggleAuthFields(){
-  const authType = document.getElementById('edit-authType').value;
-  const passwordField = document.getElementById('password-field-edit');
-  const keyField = document.getElementById('key-field-edit');
-  
-  if(authType === 'password'){
-    passwordField.classList.remove('hidden');
-    keyField.classList.add('hidden');
-  } else {
-    passwordField.classList.add('hidden');
-    keyField.classList.remove('hidden');
-  }
-}
-
-// 处理表单提交
-document.addEventListener('DOMContentLoaded', function(){
-  const form = document.getElementById('edit-config-form');
-  if(form){
-    form.addEventListener('submit', async function(e){
-      e.preventDefault();
-      
-      const vpsId = document.getElementById('edit-vps-id').value;
-      if(!vpsId){
-        toast('VPS ID 缺失','error');
-        return;
-      }
-      
-      // 收集表单数据
-      const formData = {
-        ip: document.getElementById('edit-ip').value.trim(),
-        port: parseInt(document.getElementById('edit-port').value, 10),
-        username: document.getElementById('edit-username').value.trim(),
-        authType: document.getElementById('edit-authType').value,
-        password: document.getElementById('edit-password').value,
-        privateKey: document.getElementById('edit-privateKey').value
-      };
-      
-      // 前端验证 - IP 地址
-      if(!formData.ip){
-        toast('请输入 IP 地址','warn');
-        document.getElementById('edit-ip').classList.add('error');
-        document.getElementById('edit-ip').focus();
-        return;
-      }
-      
-      // 验证 IP 格式（IPv4 或 IPv6）
-      const ipv4Pattern = /^(\\d{1,3}\\.){3}\\d{1,3}$/;
-      const ipv6Pattern = /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})|:((:[0-9a-f]{1,4}){1,7}|:)|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/i;
-      
-      const cleanIp = formData.ip.replace(/^\\[/, '').replace(/\\]$/, '');
-      const isValidIPv4 = ipv4Pattern.test(cleanIp) && cleanIp.split('.').every(p => {
-        const num = parseInt(p, 10);
-        return num >= 0 && num <= 255;
-      });
-      const isValidIPv6 = ipv6Pattern.test(cleanIp);
-      
-      if(!isValidIPv4 && !isValidIPv6){
-        toast('IP 格式不正确，请输入有效的 IPv4 或 IPv6 地址','error');
-        document.getElementById('edit-ip').classList.add('error');
-        document.getElementById('edit-ip').focus();
-        return;
-      }
-      document.getElementById('edit-ip').classList.remove('error');
-      
-      // 前端验证 - 端口
-      if(!formData.port || isNaN(formData.port) || formData.port < 1 || formData.port > 65535){
-        toast('端口范围必须在 1-65535 之间','warn');
-        document.getElementById('edit-port').classList.add('error');
-        document.getElementById('edit-port').focus();
-        return;
-      }
-      document.getElementById('edit-port').classList.remove('error');
-      
-      // 前端验证 - 用户名
-      if(!formData.username){
-        toast('请输入用户名','warn');
-        document.getElementById('edit-username').classList.add('error');
-        document.getElementById('edit-username').focus();
-        return;
-      }
-      document.getElementById('edit-username').classList.remove('error');
-      
-      // 验证认证方式与凭据的匹配
-      if(formData.authType === 'password'){
-        // 密码认证：如果没有输入新密码，则不发送 password 字段（保留原密码）
-        if(!formData.password){
-          delete formData.password;
-        }
-      } else if(formData.authType === 'key'){
-        // 密钥认证：如果没有输入新私钥，则不发送 privateKey 字段（保留原私钥）
-        if(!formData.privateKey){
-          delete formData.privateKey;
-        }
-      }
-      
-      // 显示加载状态
-      const submitBtn = form.querySelector('button[type="submit"]');
-      const originalText = submitBtn.textContent;
-      submitBtn.disabled = true;
-      submitBtn.textContent = '保存中...';
-      submitBtn.classList.add('loading');
-      
-      try{
-        const response = await fetch('/api/admin/vps/' + vpsId + '/config', {
-          method: 'PUT',
-          credentials: 'same-origin',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(formData)
-        });
-        
-        const result = await response.json();
-        
-        if(!response.ok || !result.success){
-          toast(result.message || '保存失败','error');
-        } else {
-          toast('配置已更新','success');
-          closeEditModal();
-          
-          // 刷新 VPS 列表
-          await loadVps();
-        }
-      } catch(err){
-        console.error('Save config error:', err);
-        toast('保存异常：' + err.message,'error');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
-        submitBtn.classList.remove('loading');
-      }
-    });
-  }
-  
-  // ESC 键关闭模态框
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape'){
-      const modal = document.getElementById('edit-config-modal');
-      if(modal && !modal.classList.contains('hidden')){
-        closeEditModal();
-      }
-    }
-  });
-  
-  // 点击背景关闭模态框
-  const modal = document.getElementById('edit-config-modal');
-  if(modal){
-    modal.addEventListener('click', function(e){
-      if(e.target === modal){
-        closeEditModal();
-      }
-    });
-  }
-});
-
 checkAdmin();
 </script>
-
-<!-- 编辑配置模态框 -->
-<div id="edit-config-modal" class="modal-overlay hidden">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>编辑 VPS 配置</h3>
-      <button class="modal-close" onclick="closeEditModal()" aria-label="关闭">×</button>
-    </div>
-    <form id="edit-config-form" class="modal-body">
-      <input type="hidden" id="edit-vps-id" />
-      
-      <div class="modal-form-group">
-        <label for="edit-ip">IP 地址 *</label>
-        <input type="text" id="edit-ip" name="ip" required placeholder="如：192.168.1.1 或 2001:db8::1" />
-      </div>
-      
-      <div class="modal-form-group">
-        <label for="edit-port">端口 *</label>
-        <input type="number" id="edit-port" name="port" required min="1" max="65535" placeholder="如：22" />
-      </div>
-      
-      <div class="modal-form-group">
-        <label for="edit-username">用户名 *</label>
-        <input type="text" id="edit-username" name="username" required placeholder="如：root" />
-      </div>
-      
-      <div class="modal-form-group">
-        <label for="edit-authType">认证方式 *</label>
-        <select id="edit-authType" name="authType" required onchange="toggleAuthFields()">
-          <option value="password">密码</option>
-          <option value="key">SSH 私钥</option>
-        </select>
-      </div>
-      
-      <div id="password-field-edit" class="modal-form-group">
-        <label for="edit-password">密码</label>
-        <input type="password" id="edit-password" name="password" placeholder="留空表示不修改" />
-        <small>留空表示保留原密码</small>
-      </div>
-      
-      <div id="key-field-edit" class="modal-form-group hidden">
-        <label for="edit-privateKey">SSH 私钥</label>
-        <textarea id="edit-privateKey" name="privateKey" rows="6" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;...&#10;-----END OPENSSH PRIVATE KEY-----"></textarea>
-        <small>留空表示保留原私钥</small>
-      </div>
-      
-      <div class="modal-actions">
-        <button type="button" class="btn-secondary" onclick="closeEditModal()">
-          取消
-        </button>
-        <button type="submit" class="btn-primary">
-          保存配置
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
-
 </body></html>`;
   return c.html(html);
 });
@@ -5871,13 +2801,17 @@ body[data-theme="dark"] .skeleton-card {
   transition: all 0.2s ease;
   word-break: break-word;
   overflow: hidden; /* 防止内容溢出 */
+  /* 性能优化：限制重排范围并启用GPU加速 */
+  contain: layout style paint;
+  will-change: transform;
+  transform: translateZ(0);
 }
 .card:hover {
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.12),
     0 0 0 1px rgba(255, 255, 255, 0.9),
     inset 0 1px 0 rgba(255, 255, 255, 1);
-  transform: translateY(-2px);
+  transform: translateY(-2px) translateZ(0);
 }
 
 body[data-theme="dark"] .panel,
@@ -5939,47 +2873,6 @@ body[data-theme="dark"] .muted{
 body[data-theme="dark"] .grad-title{
   color: #f5f5f7;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-/* ========== 流光渐变标题 ========== */
-.grad-title-animated {
-  background: linear-gradient(
-    90deg,
-    #8b5cf6 0%,
-    #ec4899 25%,
-    #f59e0b 50%,
-    #10b981 75%,
-    #8b5cf6 100%
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: gradientFlow 4s linear infinite;
-  font-weight: 700;
-  will-change: background-position;
-}
-
-@keyframes gradientFlow {
-  0% { background-position: 0% center; }
-  100% { background-position: 200% center; }
-}
-
-body[data-theme="dark"] .grad-title-animated {
-  background: linear-gradient(
-    90deg,
-    #a78bfa 0%,
-    #f472b6 25%,
-    #fbbf24 50%,
-    #34d399 75%,
-    #a78bfa 100%
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 0 20px rgba(167, 139, 250, 0.3);
-  animation: gradientFlow 4s linear infinite;
 }
 
 /* ========== Toast 通知 ========== */
@@ -6557,19 +3450,23 @@ body[data-theme="dark"] #server-map-chart {
 .expandable {
   max-height: 0 !important;
   overflow: hidden;
-  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.3s ease,
-              padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s ease,
+              padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+  will-change: max-height, opacity;
 }
 .server-list {
   max-height: 5000px; /* 足够大的值以容纳所有内容 */
   opacity: 1;
-  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.3s ease,
-              padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s ease,
+              padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: max-height, opacity;
+  /* 性能优化：限制重排范围 */
+  contain: layout style paint;
 }
 
 /* 展开/收起按钮样式优化 */
@@ -6611,144 +3508,6 @@ code{
 body[data-theme="dark"] code{
   background: rgba(255, 255, 255, 0.1);
   color: #f5f5f7;
-}
-
-/* ========== 模态框样式 ========== */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
-  background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  animation: fadeIn 0.2s ease-out;
-}
-
-.modal-content {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.8);
-  width: min(680px, 92vw);
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: scaleUp 0.25s ease-out;
-  padding: 24px;
-}
-
-body[data-theme="dark"] .modal-content {
-  background: rgba(28, 28, 30, 0.95);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-color: rgba(56, 56, 58, 0.6);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(56, 56, 58, 0.6);
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-between;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(210, 210, 215, 0.3);
-}
-
-body[data-theme="dark"] .modal-header {
-  border-bottom-color: rgba(56, 56, 58, 0.5);
-}
-
-.modal-header h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1d1d1f;
-  margin: 0;
-}
-
-body[data-theme="dark"] .modal-header h3 {
-  color: #f5f5f7;
-}
-
-.modal-close {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(0, 0, 0, 0.05);
-  color: #1d1d1f;
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-close:hover {
-  background: rgba(0, 0, 0, 0.1);
-  transform: scale(1.05);
-}
-
-body[data-theme="dark"] .modal-close {
-  background: rgba(255, 255, 255, 0.05);
-  color: #f5f5f7;
-}
-
-body[data-theme="dark"] .modal-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.modal-body {
-  margin-bottom: 20px;
-}
-
-.modal-form-group {
-  margin-bottom: 16px;
-}
-
-.modal-form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #1d1d1f;
-}
-
-body[data-theme="dark"] .modal-form-group label {
-  color: #f5f5f7;
-}
-
-.modal-form-group small {
-  display: block;
-  margin-top: 4px;
-  font-size: 12px;
-  color: #86868b;
-}
-
-body[data-theme="dark"] .modal-form-group small {
-  color: #98989d;
-}
-
-.modal-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(210, 210, 215, 0.3);
-}
-
-body[data-theme="dark"] .modal-actions {
-  border-top-color: rgba(56, 56, 58, 0.5);
-}
-
-.hidden {
-  display: none !important;
 }
 
 /* ========== 可访问性 ========== */
