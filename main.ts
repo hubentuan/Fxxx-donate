@@ -414,10 +414,10 @@ function calculateConnections(
 
 const isIPv4 = (ip: string) =>
   /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && ip.split('.').every(p => +p >= 0 && +p <= 255);
-const isIPv6 = (ip: string) =>
-  /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})|:((:[0-9a-f]{1,4}){1,7}|:)|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/i.test(
-    ip.replace(/^\[|\]$/g, ''),
-  );
+const isIPv6 = (ip: string) => {
+  const cleanIp = ip.replace(/^\[/, '').replace(/\]$/, '');
+  return /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})|:((:[0-9a-f]{1,4}){1,7}|:)|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/i.test(cleanIp);
+};
 const isValidIP = (ip: string) => isIPv4(ip) || isIPv6(ip);
 
 async function getAllVPS(): Promise<VPSServer[]> {
@@ -433,8 +433,9 @@ async function ipDup(ip: string, port: number) {
 
 async function portOK(ip: string, port: number) {
   try {
+    const cleanIp = ip.replace(/^\[/, '').replace(/\]$/, '');
     const conn = await Deno.connect({
-      hostname: ip.replace(/^\[|\]$/g, ''),
+      hostname: cleanIp,
       port,
       transport: 'tcp'
     });
@@ -5801,7 +5802,7 @@ document.addEventListener('DOMContentLoaded', function(){
       const ipv4Pattern = /^(\\d{1,3}\\.){3}\\d{1,3}$/;
       const ipv6Pattern = /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})|:((:[0-9a-f]{1,4}){1,7}|:)|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/i;
       
-      const cleanIp = formData.ip.replace(/^\\[|\\]$/g, '');
+      const cleanIp = formData.ip.replace(/^\\[/, '').replace(/\\]$/, '');
       const isValidIPv4 = ipv4Pattern.test(cleanIp) && cleanIp.split('.').every(p => {
         const num = parseInt(p, 10);
         return num >= 0 && num <= 255;
