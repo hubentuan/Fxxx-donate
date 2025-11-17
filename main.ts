@@ -1408,6 +1408,10 @@ let lastFPSCheck = Date.now();
 let currentFPS = 60;
 let performanceMode = 'high'; // 'high', 'medium', 'low'
 
+// 创意效果：动态颜色和脉冲
+let colorPhase = 0;
+let pulsePhase = 0;
+
 /**
  * 地理编码函数：将位置字符串转换为经纬度坐标
  * 扩展版 - 包含更多国家和城市
@@ -1469,7 +1473,22 @@ function geocode(location) {
     'India': { lat: 20.5937, lng: 78.9629 },
     '印度': { lat: 20.5937, lng: 78.9629 },
     'Mumbai': { lat: 19.0760, lng: 72.8777 },
+    'Bombay': { lat: 19.0760, lng: 72.8777 },
     'Delhi': { lat: 28.7041, lng: 77.1025 },
+    'New Delhi': { lat: 28.6139, lng: 77.2090 },
+    'Bangalore': { lat: 12.9716, lng: 77.5946 },
+    'Bengaluru': { lat: 12.9716, lng: 77.5946 },
+    'Hyderabad': { lat: 17.3850, lng: 78.4867 },
+    'Chennai': { lat: 13.0827, lng: 80.2707 },
+    'Kolkata': { lat: 22.5726, lng: 88.3639 },
+    'Pune': { lat: 18.5204, lng: 73.8567 },
+    'Ahmedabad': { lat: 23.0225, lng: 72.5714 },
+    'Pakistan': { lat: 30.3753, lng: 69.3451 },
+    '巴基斯坦': { lat: 30.3753, lng: 69.3451 },
+    'Bangladesh': { lat: 23.6850, lng: 90.3563 },
+    '孟加拉国': { lat: 23.6850, lng: 90.3563 },
+    'Sri Lanka': { lat: 7.8731, lng: 80.7718 },
+    '斯里兰卡': { lat: 7.8731, lng: 80.7718 },
     
     // 欧洲 - 西欧
     'United Kingdom': { lat: 55.3781, lng: -3.4360 },
@@ -2419,6 +2438,63 @@ function waitForGlobe() {
       }, 10000);
     }
   });
+}
+
+/**
+ * 创意效果：动态颜色渐变
+ */
+function getDynamicColor(baseColor, type) {
+  // 根据时间创建动态颜色效果
+  const time = Date.now() / 1000;
+  const phase = Math.sin(time * 0.5) * 0.5 + 0.5; // 0-1 之间波动
+  
+  if (type === 'visitor-primary') {
+    // 主连接：青色到金色，带脉冲效果
+    const intensity = 0.8 + phase * 0.2;
+    return [
+      \`rgba(6, 182, 212, \${intensity})\`,
+      \`rgba(251, 191, 36, \${intensity})\`
+    ];
+  }
+  
+  return baseColor;
+}
+
+/**
+ * 创意效果：脉冲大小
+ */
+function getPulseSize(baseSize) {
+  const time = Date.now() / 1000;
+  const pulse = Math.sin(time * 2) * 0.1 + 1; // 0.9-1.1 之间波动
+  return baseSize * pulse;
+}
+
+/**
+ * 创意效果：粒子轨迹（使用 rings 模拟）
+ */
+function addParticleTrails() {
+  if (!globeInstance || performanceMode === 'low') return;
+  
+  // 在主要连接上添加环形粒子效果
+  const particleData = connectionsData
+    .filter(c => c.type === 'visitor-primary')
+    .slice(0, 10) // 只在前10条主连接上添加
+    .map(c => ({
+      lat: c.endLat,
+      lng: c.endLng,
+      maxR: 2,
+      propagationSpeed: 2,
+      repeatPeriod: 1000
+    }));
+  
+  if (globeInstance.ringsData) {
+    globeInstance
+      .ringsData(particleData)
+      .ringColor(() => 'rgba(251, 191, 36, 0.8)')
+      .ringMaxRadius('maxR')
+      .ringPropagationSpeed('propagationSpeed')
+      .ringRepeatPeriod('repeatPeriod');
+  }
 }
 
 /**
