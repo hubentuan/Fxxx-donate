@@ -2062,7 +2062,6 @@ function geocode(location) {
   // 3. 移除emoji后再次尝试精确匹配
   const cleanNoEmoji = cleanLocation.replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '').trim();
   if (cleanNoEmoji !== cleanLocation && LOCATION_DB[cleanNoEmoji]) {
-    console.log('移除emoji后匹配到位置:', cleanNoEmoji, '→', LOCATION_DB[cleanNoEmoji]);
     return LOCATION_DB[cleanNoEmoji];
   }
 
@@ -2071,7 +2070,6 @@ function geocode(location) {
   for (const [key, coords] of Object.entries(LOCATION_DB)) {
     const keyLower = key.toLowerCase();
     if (cleanLower.includes(keyLower) || keyLower.includes(cleanLower)) {
-      console.log('模糊匹配到位置:', key, '→', coords);
       return coords;
     }
   }
@@ -2082,7 +2080,6 @@ function geocode(location) {
     for (const [key, coords] of Object.entries(LOCATION_DB)) {
       const keyLower = key.toLowerCase();
       if (keyLower.includes(partLower) || partLower.includes(keyLower)) {
-        console.log('分部分模糊匹配到位置:', key, '→', coords);
         return coords;
       }
     }
@@ -2096,20 +2093,12 @@ function geocode(location) {
       if (cleanAlphaNum === keyAlphaNum || 
           (cleanAlphaNum.length >= 3 && keyAlphaNum.includes(cleanAlphaNum)) ||
           (keyAlphaNum.length >= 3 && cleanAlphaNum.includes(keyAlphaNum))) {
-        console.log('字母数字匹配到位置:', key, '→', coords);
         return coords;
       }
     }
   }
 
-  // 7. 无法匹配，记录详细日志
-  console.warn('⚠️ 无法识别位置:', {
-    原始: cleanLocation,
-    小写: cleanLower,
-    无emoji: cleanNoEmoji,
-    字母数字: cleanAlphaNum,
-    分割: parts
-  });
+  // 7. 无法匹配
   return null;
 }
 
@@ -2314,31 +2303,9 @@ function calculateConnections(servers, visitor) {
     !(s.coords.lat === 0 && s.coords.lng === 0)
   );
   
-  // 调试：记录被过滤掉的服务器
-  const invalidServers = servers.filter(s => 
-    !s.coords || 
-    s.coords.lat === null || 
-    s.coords.lng === null || 
-    (s.coords.lat === 0 && s.coords.lng === 0)
-  );
-  
-  if (invalidServers.length > 0) {
-    console.warn('⚠️ 以下服务器没有有效坐标，将被排除:', invalidServers.map(s => ({
-      username: s.donatedByUsername,
-      country: s.country,
-      ipLocation: s.ipLocation,
-      coords: s.coords
-    })));
-  }
-  
-  if (validServers.length === 0) {
-    console.error('❌ 没有有效的服务器数据！');
-    return [];
-  }
+  if (validServers.length === 0) return [];
   
   const visitorCoords = visitor || { lat: 39.9042, lng: 116.4074 };
-  
-  console.log('🌍 开始计算连接 - 总服务器:', servers.length, '有效服务器:', validServers.length, '无效服务器:', invalidServers.length);
   
   // ========== 第一层：访问者到所有服务器的星联主线（100%覆盖）==========
   validServers.forEach((server) => {
@@ -2354,8 +2321,6 @@ function calculateConnections(servers, visitor) {
     });
   });
   
-  console.log('✅ 访问者主线:', validServers.length, '条（100%覆盖）');
-  
   // ========== 第二层：服务器之间的智能互联（确保每个都有连接）==========
   
   // 按地区分组（用于智能连接）
@@ -2367,8 +2332,6 @@ function calculateConnections(servers, visitor) {
     }
     regionGroups.get(regionKey).push(server);
   });
-  
-  console.log('📍 地区分组:', Array.from(regionGroups.keys()).length, '个地区');
   
   // 为每个服务器建立连接（确保100%覆盖）
   validServers.forEach((server, index) => {
@@ -2466,20 +2429,6 @@ function calculateConnections(servers, visitor) {
     return true;
   });
   
-  // 统计信息
-  const stats = {
-    总连接数: uniqueConnections.length,
-    访问者主线: uniqueConnections.filter(c => c.type === 'visitor-primary').length,
-    近距离: uniqueConnections.filter(c => c.type === 'mesh-nearby').length,
-    中距离: uniqueConnections.filter(c => c.type === 'mesh-medium').length,
-    长距离: uniqueConnections.filter(c => c.type === 'mesh-long').length,
-    超长距离: uniqueConnections.filter(c => c.type === 'mesh-ultra-long').length,
-    平均每服务器连接数: (uniqueConnections.length / validServers.length).toFixed(2)
-  };
-  
-  console.log('📊 连接统计:', stats);
-  console.log('✅ 所有服务器都已连接！');
-  
   return uniqueConnections;
 }
 
@@ -2520,28 +2469,14 @@ async function fetchServersFromLeaderboard() {
         const serverId = donor.username + '_' + serverIndex;
         serverIndex++;
         
-        // 优先使用 ipLocation，其次 country，最后尝试从 country 中提取
+        // 优先使用 ipLocation，其次 country
         const location = server.ipLocation || server.country || '未知地区';
         let coords = geocode(location);
         
-        // 调试日志：记录无法匹配的位置
-        if (!coords) {
-          console.warn('⚠️ 无法解析位置:', {
-            username: donor.username,
-            country: server.country,
-            ipLocation: server.ipLocation,
-            location: location
-          });
-          
-          // 尝试备用方案：如果 country 包含国家名，尝试只用国家名
-          if (server.country) {
-            // 移除 emoji 和特殊字符，只保留文字
-            const cleanCountry = server.country.replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '').trim();
-            coords = geocode(cleanCountry);
-            if (coords) {
-              console.log('✅ 使用备用方案匹配成功:', cleanCountry);
-            }
-          }
+        // 备用方案：如果无法匹配，尝试移除emoji后再匹配
+        if (!coords && server.country) {
+          const cleanCountry = server.country.replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '').trim();
+          coords = geocode(cleanCountry);
         }
         
         if (coords) {
@@ -2825,11 +2760,9 @@ async function updateData() {
   serversData = newServersData;
   
   if (shouldUpdateConnections) {
-    console.log('🔄 重新计算连接...');
     // 使用访问者位置计算连接
     connectionsData = calculateConnections(serversData, visitorLocation);
     lastConnectionsUpdate = now;
-    console.log('✅ 连接计算完成');
   }
   
   if (globeInstance) {
@@ -2928,7 +2861,6 @@ function waitForGlobe() {
   
   // 首先获取访问者位置
   visitorLocation = await getVisitorLocation();
-  console.log('访问者位置:', visitorLocation);
   
   // 然后加载数据并初始化地球
   await updateData();
@@ -4812,6 +4744,7 @@ body{
     #f0e6ff 100%   /* 淡紫色 */
   );
   background-size: 400% 400%;
+  background-attachment: fixed; /* 固定背景，避免滚动时泛白 */
   animation: gradientShift 15s ease infinite;
   color: #1d1d1f;
   min-height: 100vh;
@@ -4852,6 +4785,7 @@ body[data-theme="dark"]{
     #0a0e27 100%   /* 极深蓝 */
   );
   background-size: 400% 400%;
+  background-attachment: fixed; /* 固定背景，避免滚动时泛白 */
   animation: gradientShift 15s ease infinite;
   color: #f5f5f7;
 }
@@ -5016,9 +4950,8 @@ body[data-theme="dark"] .skeleton-card {
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   transition: all 0.2s ease;
   word-break: break-word;
-  overflow: hidden; /* 防止内容溢出 */
-  /* 性能优化：限制重排范围并启用GPU加速 */
-  contain: layout style paint;
+  /* 移除 overflow: hidden，避免展开收起时泛白 */
+  /* 性能优化：使用 transform 而不是 contain */
   will-change: transform;
   transform: translateZ(0);
 }
@@ -5704,23 +5637,21 @@ body[data-theme="dark"] #server-map-chart {
 .expandable {
   max-height: 0 !important;
   overflow: hidden;
-  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.25s ease,
-              padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease,
+              padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-  will-change: max-height, opacity;
+  /* 移除 will-change，避免泛白 */
 }
 .server-list {
   max-height: 5000px; /* 足够大的值以容纳所有内容 */
   opacity: 1;
-  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.25s ease,
-              padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: max-height, opacity;
-  /* 性能优化：限制重排范围 */
-  contain: layout style paint;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease,
+              padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  /* 移除 will-change 和 contain，避免泛白 */
 }
 
 /* 展开/收起按钮样式优化 */
