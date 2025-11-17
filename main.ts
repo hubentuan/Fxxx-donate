@@ -1666,6 +1666,42 @@ function getCountryFlag(countryString) {
 }
 
 /**
+ * Haversine距离计算函数：计算地球表面两点之间的球面距离
+ * @param {{lat: number, lng: number}} coords1 - 第一个点的坐标
+ * @param {{lat: number, lng: number}} coords2 - 第二个点的坐标
+ * @returns {number} 两点之间的距离（单位：公里）
+ */
+function haversineDistance(coords1, coords2) {
+  // 地球平均半径（单位：公里）
+  const R = 6371;
+
+  // 将角度转换为弧度
+  const toRadians = (degrees) => degrees * Math.PI / 180;
+
+  // 计算纬度和经度的差值（弧度）
+  const dLat = toRadians(coords2.lat - coords1.lat);
+  const dLng = toRadians(coords2.lng - coords1.lng);
+
+  // 将起点和终点的纬度转换为弧度
+  const lat1Rad = toRadians(coords1.lat);
+  const lat2Rad = toRadians(coords2.lat);
+
+  // Haversine公式
+  // a = sin²(Δlat/2) + cos(lat1) * cos(lat2) * sin²(Δlng/2)
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+  // c = 2 * atan2(√a, √(1-a))
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  // 距离 = 半径 * c
+  const distance = R * c;
+
+  return distance;
+}
+
+/**
  * 计算全连接网络的连接弧线数据
  * 为每个服务器创建到所有其他服务器的连接（全连接拓扑）
  * @param {Array} servers - 服务器数组，每个服务器需要包含 id 和 coords 属性
@@ -4420,80 +4456,7 @@ body[data-theme="dark"] #overview-flags {
       }
     }
 
-    /**
-     * Haversine距离计算函数
-     * @param {{lat: number, lng: number}} coords1 - 第一个点的坐标
-     * @param {{lat: number, lng: number}} coords2 - 第二个点的坐标
-     * @returns {number} 距离（公里）
-     */
-    function haversineDistance(coords1, coords2) {
-      const R = 6371; // 地球半径（公里）
-      const toRadians = (degrees) => degrees * Math.PI / 180;
 
-      const dLat = toRadians(coords2.lat - coords1.lat);
-      const dLng = toRadians(coords2.lng - coords1.lng);
-      const lat1Rad = toRadians(coords1.lat);
-      const lat2Rad = toRadians(coords2.lat);
-
-      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(lat1Rad) * Math.cos(lat2Rad) *
-                Math.sin(dLng / 2) * Math.sin(dLng / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-      return R * c;
-    }
-
-    /**
-     * 计算服务器之间的连接关系
-     * @param {Array} servers - 服务器数组
-     * @returns {Array} 连接弧线数据数组
-     */
-    function calculateConnections(servers) {
-      const connections = [];
-      const maxConnectionsPerServer = servers.length > 50 ? 3 : 5;
-
-      servers.forEach(server => {
-        if (!server.coords || server.coords.lat === 0) {
-          return;
-        }
-
-        const distances = servers
-          .filter(s => s.id !== server.id && s.coords && s.coords.lat !== 0)
-          .map(s => ({
-            server: s,
-            distance: haversineDistance(server.coords, s.coords)
-          }))
-          .sort((a, b) => a.distance - b.distance);
-
-        distances.slice(0, maxConnectionsPerServer).forEach(({ server: target }) => {
-          connections.push({
-            startLat: server.coords.lat,
-            startLng: server.coords.lng,
-            endLat: target.coords.lat,
-            endLng: target.coords.lng,
-            color: '#4a9eff'
-          });
-        });
-      });
-
-      // 去重
-      const seen = new Set();
-      return connections.filter(conn => {
-        const key = [
-          conn.startLat,
-          conn.startLng,
-          conn.endLat,
-          conn.endLng
-        ].sort().join(',');
-
-        if (seen.has(key)) {
-          return false;
-        }
-
-        seen.add(key);
-        return true;
-      });
-    }
   </script>
 </body></html>`;
   return c.html(html);
