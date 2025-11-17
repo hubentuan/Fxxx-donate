@@ -3568,41 +3568,53 @@ async function loadDonations(){
   }
 })();
 
-// 实时IP格式验证
-document.querySelector('input[name="ip"]').addEventListener('blur', function(){
-  // 自动清理输入：去除前后空格和换行符
-  this.value = this.value.trim().replace(/[\r\n\t]/g, '');
-  
-  const ip = this.value;
-  if(!ip) return;
-  
-  const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && ip.split('.').every(p => +p >= 0 && +p <= 255);
-  const ipv6 = /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|::)/i.test(ip.replace(/^\[|\]$/g, ''));
-  
-  if(ipv4 || ipv6){
-    this.classList.remove('error');
-    this.classList.add('success');
-    setTimeout(()=>this.classList.remove('success'), 2000);
-  } else {
-    this.classList.add('error');
-    toast('IP 格式不正确，请检查输入','error');
-  }
-});
+// 实时IP格式验证（等待DOM加载完成）
+const ipInput = document.querySelector('input[name="ip"]');
+if (ipInput) {
+  ipInput.addEventListener('blur', function(){
+    // 自动清理输入：去除前后空格和换行符
+    this.value = this.value.trim().replace(/[\r\n\t]/g, '');
+    
+    const ip = this.value;
+    if(!ip) return;
+    
+    const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && ip.split('.').every(p => +p >= 0 && +p <= 255);
+    // 移除IPv6地址的方括号
+    const cleanIp = ip.replace(/^\[/, '').replace(/\]$/, '');
+    const ipv6 = /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|::)/i.test(cleanIp);
+    
+    if(ipv4 || ipv6){
+      this.classList.remove('error');
+      this.classList.add('success');
+      setTimeout(()=>this.classList.remove('success'), 2000);
+    } else {
+      this.classList.add('error');
+      if (typeof toast === 'function') {
+        toast('IP 格式不正确，请检查输入','error');
+      }
+    }
+  });
+}
 
-// 端口范围验证
-document.querySelector('input[name="port"]').addEventListener('blur', function(){
-  const port = parseInt(this.value);
-  if(!port) return;
-  
-  if(port < 1 || port > 65535){
-    this.classList.add('error');
-    toast('端口范围应在 1-65535 之间','error');
-  } else {
-    this.classList.remove('error');
-    this.classList.add('success');
-    setTimeout(()=>this.classList.remove('success'), 2000);
-  }
-});
+// 端口范围验证（等待DOM加载完成）
+const portInput = document.querySelector('input[name="port"]');
+if (portInput) {
+  portInput.addEventListener('blur', function(){
+    const port = parseInt(this.value);
+    if(!port) return;
+    
+    if(port < 1 || port > 65535){
+      this.classList.add('error');
+      if (typeof toast === 'function') {
+        toast('端口范围应在 1-65535 之间','error');
+      }
+    } else {
+      this.classList.remove('error');
+      this.classList.add('success');
+      setTimeout(()=>this.classList.remove('success'), 2000);
+    }
+  });
+}
 </script>
 </body></html>`;
   return c.html(html);
