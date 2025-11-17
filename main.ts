@@ -1807,36 +1807,55 @@ function calculateConnections(servers, visitor) {
   });
   
   console.log('地区分组:', Array.from(regionGroups.keys()));
+  console.log('有效服务器总数:', validServers.length);
   
-  // 性能优化：限制处理的服务器数量
-  const maxServersForMesh = Math.min(40, validServers.length);
-  const meshServers = validServers.slice(0, maxServersForMesh);
+  // 性能优化：智能采样，确保每个地区都有代表
+  let meshServers = [];
+  
+  // 1. 首先从每个地区选择代表服务器（确保地理分布均匀）
+  regionGroups.forEach((servers, region) => {
+    // 每个地区最多选 2 个服务器
+    const regionSample = servers.slice(0, 2);
+    meshServers.push(...regionSample);
+  });
+  
+  // 2. 如果采样数量不足，补充更多服务器
+  if (meshServers.length < 40 && validServers.length > meshServers.length) {
+    const remaining = validServers.filter(s => !meshServers.includes(s));
+    const needed = Math.min(40 - meshServers.length, remaining.length);
+    meshServers.push(...remaining.slice(0, needed));
+  }
+  
+  // 3. 限制最大数量（性能考虑）
+  meshServers = meshServers.slice(0, 50);
+  
+  console.log('网状互联处理服务器数:', meshServers.length);
   
   meshServers.forEach((server, index) => {
     const serverRegion = getRegionKey(server);
     
-    // 计算到其他服务器的距离，并标记是否同区域
-    const distances = meshServers
-      .filter(s => s.id !== server.id)
-      .map(s => ({
-        server: s,
-        distance: haversineDistance(server.coords, s.coords),
-        sameRegion: getRegionKey(s) === serverRegion,
-        region: getRegionKey(s)
-      }))
-      .sort((a, b) => a.distance - b.distance);
+    // 性能优化：只计算到其他服务器的距离，不做复杂排序
+    const otherServers = meshServers.filter(s => s.id !== server.id);
     
-    if (distances.length === 0) return;
+    // 预先计算所有距离
+    const allDistances = otherServers.map(s => ({
+      server: s,
+      distance: haversineDistance(server.coords, s.coords),
+      sameRegion: getRegionKey(s) === serverRegion,
+      region: getRegionKey(s)
+    }));
+    
+    if (allDistances.length === 0) return;
+    
+    // 按距离排序（只排序一次）
+    allDistances.sort((a, b) => a.distance - b.distance);
     
     // 分离同区域和不同区域的服务器
-    const sameRegionServers = distances.filter(d => d.sameRegion);
-    const differentRegionServers = distances.filter(d => !d.sameRegion);
+    const sameRegionServers = allDistances.filter(d => d.sameRegion);
+    const differentRegionServers = allDistances.filter(d => !d.sameRegion);
     
     // 1. 近距离连接 - 优先连接不同区域的服务器
-    // 如果同区域服务器很少（≤2个），可以连接1个同区域
-    // 否则，只连接不同区域的服务器
     if (sameRegionServers.length <= 2 && sameRegionServers.length > 0) {
-      // 同区域服务器很少，连接1个最近的同区域服务器
       const target = sameRegionServers[0];
       connections.push({
         startLat: server.coords.lat,
@@ -1848,77 +1867,65 @@ function calculateConnections(servers, visitor) {
       });
     }
     
-    // 连接1-2个不同区域的近距离服务器
-    const nearbyDifferentRegion = differentRegionServers
-      .filter(d => d.distance < 3000) // 3000km 内
-      .slice(0, 2);
-    
-    nearbyDifferentRegion.forEach(({ server: target, distance }) => {
+    // 连接 1 个不同区域的近距离服务器（减少连接数）
+    const nearbyDifferent = differentRegionServers.find(d => d.distance < 3000);
+    if (nearbyDifferent) {
       connections.push({
         startLat: server.coords.lat,
         startLng: server.coords.lng,
-        endLat: target.coords.lat,
-        endLng: target.coords.lng,
+        endLat: nearbyDifferent.server.coords.lat,
+        endLng: nearbyDifferent.server.coords.lng,
         type: 'mesh-nearby',
-        distance: distance
+        distance: nearbyDifferent.distance
       });
-    });
+    }
     
-    // 2. 中距离连接（跨区域）- 每个服务器连接1个中距离的不同区域服务器
+    // 2. 中距离连接 - 每隔 1 个服务器
     if (index % 2 === 0) {
-      const mediumDistance = differentRegionServers.filter(
+      const mediumTarget = differentRegionServers.find(
         d => d.distance >= 1000 && d.distance < 5000
       );
       
-      if (mediumDistance.length > 0) {
-        // 轮流选择不同的目标，避免总是连接同一个
-        const targetIndex = index % mediumDistance.length;
-        const target = mediumDistance[targetIndex];
+      if (mediumTarget) {
         connections.push({
           startLat: server.coords.lat,
           startLng: server.coords.lng,
-          endLat: target.server.coords.lat,
-          endLng: target.server.coords.lng,
+          endLat: mediumTarget.server.coords.lat,
+          endLng: mediumTarget.server.coords.lng,
           type: 'mesh-medium',
-          distance: target.distance
+          distance: mediumTarget.distance
         });
       }
     }
     
-    // 3. 长距离连接（跨大洲）- 确保全球互联
+    // 3. 长距离连接 - 每隔 2 个服务器
     if (index % 3 === 0) {
-      const longDistance = differentRegionServers.filter(d => d.distance >= 5000);
+      const longTarget = differentRegionServers.find(d => d.distance >= 5000 && d.distance < 8000);
       
-      if (longDistance.length > 0) {
-        // 选择一个远距离的不同大洲服务器
-        // 使用索引轮换，确保连接分散
-        const targetIndex = Math.floor(index / 3) % longDistance.length;
-        const target = longDistance[targetIndex];
+      if (longTarget) {
         connections.push({
           startLat: server.coords.lat,
           startLng: server.coords.lng,
-          endLat: target.server.coords.lat,
-          endLng: target.server.coords.lng,
+          endLat: longTarget.server.coords.lat,
+          endLng: longTarget.server.coords.lng,
           type: 'mesh-long',
-          distance: target.distance
+          distance: longTarget.distance
         });
       }
     }
     
-    // 4. 超长距离连接（对角线连接）- 少量，连接地球两端
-    if (index % 5 === 0) {
-      const ultraLongDistance = differentRegionServers.filter(d => d.distance >= 8000);
+    // 4. 超长距离连接 - 每隔 4 个服务器，确保远距离地区也有连接
+    if (index % 4 === 0) {
+      const ultraLongTarget = differentRegionServers.find(d => d.distance >= 8000);
       
-      if (ultraLongDistance.length > 0) {
-        // 选择最远的服务器之一
-        const target = ultraLongDistance[ultraLongDistance.length - 1];
+      if (ultraLongTarget) {
         connections.push({
           startLat: server.coords.lat,
           startLng: server.coords.lng,
-          endLat: target.server.coords.lat,
-          endLng: target.server.coords.lng,
+          endLat: ultraLongTarget.server.coords.lat,
+          endLng: ultraLongTarget.server.coords.lng,
           type: 'mesh-ultra-long',
-          distance: target.distance
+          distance: ultraLongTarget.distance
         });
       }
     }
