@@ -1702,8 +1702,8 @@ function haversineDistance(coords1, coords2) {
 }
 
 /**
- * 优化的连接算法：智能混合模式
- * 结合最近邻和区域连接，确保所有节点都有连接且性能良好
+ * 基于真实网络拓扑的连接算法
+ * 模拟跨海光缆和国际骨干网络的连接模式
  * @param {Array} servers - 服务器数组，每个服务器需要包含 id 和 coords 属性
  * @returns {Array} 连接弧线数据数组，每个连接包含起点和终点的经纬度坐标
  */
@@ -1721,120 +1721,199 @@ function calculateConnections(servers) {
   if (validServers.length === 0) return [];
   if (validServers.length === 1) return [];
   
-  // 小规模网络：使用全连接
-  if (validServers.length <= 15) {
-    for (let i = 0; i < validServers.length; i++) {
-      for (let j = i + 1; j < validServers.length; j++) {
-        connections.push({
-          startLat: validServers[i].coords.lat,
-          startLng: validServers[i].coords.lng,
-          endLat: validServers[j].coords.lat,
-          endLng: validServers[j].coords.lng,
-          color: '#4a9eff'
-        });
+  // 定义主要的网络区域和跨海光缆路由
+  const regions = {
+    // 亚太地区
+    asia: { lat: 35, lng: 105, range: 40 },
+    japan: { lat: 36, lng: 138, range: 15 },
+    singapore: { lat: 1.35, lng: 103.8, range: 20 },
+    
+    // 北美地区
+    usWest: { lat: 37, lng: -122, range: 15 },  // 美西（旧金山/洛杉矶）
+    usEast: { lat: 40, lng: -74, range: 15 },   // 美东（纽约）
+    usCentral: { lat: 41, lng: -87, range: 15 }, // 美中（芝加哥）
+    
+    // 欧洲地区
+    europe: { lat: 51, lng: 10, range: 30 },
+    uk: { lat: 51.5, lng: -0.1, range: 10 },
+    
+    // 其他
+    australia: { lat: -33, lng: 151, range: 20 }
+  };
+  
+  // 定义跨海光缆路由（模拟真实的海底光缆）
+  const submarineCables = [
+    // 跨太平洋光缆
+    { from: 'usWest', to: 'japan', priority: 'high' },      // 美西-日本
+    { from: 'usWest', to: 'singapore', priority: 'medium' }, // 美西-新加坡
+    { from: 'usWest', to: 'asia', priority: 'medium' },      // 美西-中国
+    
+    // 跨大西洋光缆
+    { from: 'usEast', to: 'uk', priority: 'high' },          // 美东-英国
+    { from: 'usEast', to: 'europe', priority: 'high' },      // 美东-欧洲
+    
+    // 美国内陆
+    { from: 'usWest', to: 'usEast', priority: 'high' },      // 美西-美东
+    { from: 'usWest', to: 'usCentral', priority: 'medium' }, // 美西-美中
+    { from: 'usCentral', to: 'usEast', priority: 'medium' }, // 美中-美东
+    
+    // 亚太区域
+    { from: 'japan', to: 'asia', priority: 'high' },         // 日本-中国
+    { from: 'japan', to: 'singapore', priority: 'medium' },  // 日本-新加坡
+    { from: 'asia', to: 'singapore', priority: 'medium' },   // 中国-新加坡
+    
+    // 欧亚光缆
+    { from: 'europe', to: 'asia', priority: 'low' },         // 欧洲-亚洲
+    { from: 'uk', to: 'asia', priority: 'low' },             // 英国-亚洲
+    
+    // 其他
+    { from: 'singapore', to: 'australia', priority: 'medium' }, // 新加坡-澳洲
+    { from: 'usWest', to: 'australia', priority: 'low' }        // 美西-澳洲
+  ];
+  
+  // 判断服务器属于哪个区域
+  function getRegion(server) {
+    let closestRegion = null;
+    let minDistance = Infinity;
+    
+    for (const [name, region] of Object.entries(regions)) {
+      const distance = haversineDistance(server.coords, { lat: region.lat, lng: region.lng });
+      if (distance < region.range && distance < minDistance) {
+        minDistance = distance;
+        closestRegion = name;
       }
     }
-    console.log('✅ 全连接模式:', validServers.length, '节点,', connections.length, '连接');
-    return connections;
+    
+    return closestRegion;
   }
   
-  // 大规模网络：使用智能混合算法
-  // 1. 每个节点连接最近的 K 个邻居（保证局部连通性）
-  // 2. 添加跨区域长距离连接（保证全局连通性）
-  
-  const baseConnections = validServers.length > 100 ? 2 : validServers.length > 50 ? 3 : 4;
-  const connectionMap = new Map(); // 记录每个节点的连接数
-  
+  // 为每个服务器分配区域
+  const serversByRegion = new Map();
   validServers.forEach(server => {
-    connectionMap.set(server.id, 0);
+    const region = getRegion(server) || 'other';
+    if (!serversByRegion.has(region)) {
+      serversByRegion.set(region, []);
+    }
+    serversByRegion.get(region).push(server);
   });
   
-  // 阶段1：最近邻连接（保证局部密集连接）
-  validServers.forEach(server => {
-    const distances = validServers
-      .filter(s => s.id !== server.id)
-      .map(s => ({
-        server: s,
-        distance: haversineDistance(server.coords, s.coords)
-      }))
-      .sort((a, b) => a.distance - b.distance);
+  console.log('🌍 区域分布:', Array.from(serversByRegion.entries()).map(([r, s]) => `${r}:${s.length}`).join(', '));
+  
+  // 阶段1：区域内连接（局部密集连接）
+  serversByRegion.forEach((regionServers, regionName) => {
+    if (regionServers.length <= 1) return;
     
-    // 连接最近的 K 个邻居
-    distances.slice(0, baseConnections).forEach(({ server: target }) => {
-      connections.push({
-        startLat: server.coords.lat,
-        startLng: server.coords.lng,
-        endLat: target.coords.lat,
-        endLng: target.coords.lng,
-        color: '#4a9eff'
+    // 区域内全连接或最近邻
+    if (regionServers.length <= 5) {
+      // 小区域：全连接
+      for (let i = 0; i < regionServers.length; i++) {
+        for (let j = i + 1; j < regionServers.length; j++) {
+          connections.push({
+            startLat: regionServers[i].coords.lat,
+            startLng: regionServers[i].coords.lng,
+            endLat: regionServers[j].coords.lat,
+            endLng: regionServers[j].coords.lng,
+            color: 'rgba(255, 215, 0, 0.6)',  // 金色
+            type: 'regional'
+          });
+        }
+      }
+    } else {
+      // 大区域：每个节点连接最近的3个
+      regionServers.forEach(server => {
+        const distances = regionServers
+          .filter(s => s.id !== server.id)
+          .map(s => ({
+            server: s,
+            distance: haversineDistance(server.coords, s.coords)
+          }))
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 3);
+        
+        distances.forEach(({ server: target }) => {
+          connections.push({
+            startLat: server.coords.lat,
+            startLng: server.coords.lng,
+            endLat: target.coords.lat,
+            endLng: target.coords.lng,
+            color: 'rgba(255, 215, 0, 0.6)',  // 金色
+            type: 'regional'
+          });
+        });
       });
-      connectionMap.set(server.id, connectionMap.get(server.id) + 1);
-      connectionMap.set(target.id, connectionMap.get(target.id) + 1);
+    }
+  });
+  
+  // 阶段2：跨区域连接（模拟海底光缆）
+  submarineCables.forEach(cable => {
+    const fromServers = serversByRegion.get(cable.from) || [];
+    const toServers = serversByRegion.get(cable.to) || [];
+    
+    if (fromServers.length === 0 || toServers.length === 0) return;
+    
+    // 根据优先级决定连接数量
+    let connectionCount = 1;
+    if (cable.priority === 'high') connectionCount = Math.min(3, fromServers.length, toServers.length);
+    else if (cable.priority === 'medium') connectionCount = Math.min(2, fromServers.length, toServers.length);
+    
+    // 选择每个区域中最"中心"的节点进行连接
+    const fromCandidates = fromServers.slice(0, connectionCount);
+    const toCandidates = toServers.slice(0, connectionCount);
+    
+    fromCandidates.forEach(fromServer => {
+      toCandidates.forEach(toServer => {
+        connections.push({
+          startLat: fromServer.coords.lat,
+          startLng: fromServer.coords.lng,
+          endLat: toServer.coords.lat,
+          endLng: toServer.coords.lng,
+          color: 'rgba(255, 215, 0, 0.7)',  // 金色，稍微亮一点
+          type: 'submarine'
+        });
+      });
     });
   });
   
-  // 阶段2：补充孤立节点连接（确保每个节点至少有 minConnections 个连接）
-  const minConnections = Math.min(3, validServers.length - 1);
+  // 阶段3：确保所有节点都有连接（补充孤立节点）
+  const connectedNodes = new Set();
+  connections.forEach(conn => {
+    // 通过坐标找到对应的服务器
+    validServers.forEach(s => {
+      if (Math.abs(s.coords.lat - conn.startLat) < 0.01 && Math.abs(s.coords.lng - conn.startLng) < 0.01) {
+        connectedNodes.add(s.id);
+      }
+      if (Math.abs(s.coords.lat - conn.endLat) < 0.01 && Math.abs(s.coords.lng - conn.endLng) < 0.01) {
+        connectedNodes.add(s.id);
+      }
+    });
+  });
+  
+  // 为孤立节点添加连接
   validServers.forEach(server => {
-    const currentConnections = connectionMap.get(server.id);
-    if (currentConnections < minConnections) {
-      const needed = minConnections - currentConnections;
+    if (!connectedNodes.has(server.id)) {
+      // 连接到最近的3个节点
       const distances = validServers
         .filter(s => s.id !== server.id)
         .map(s => ({
           server: s,
           distance: haversineDistance(server.coords, s.coords)
         }))
-        .sort((a, b) => a.distance - b.distance);
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, 3);
       
-      distances.slice(0, needed).forEach(({ server: target }) => {
+      distances.forEach(({ server: target }) => {
         connections.push({
           startLat: server.coords.lat,
           startLng: server.coords.lng,
           endLat: target.coords.lat,
           endLng: target.coords.lng,
-          color: '#4a9eff'
+          color: 'rgba(255, 215, 0, 0.5)',  // 金色
+          type: 'backup'
         });
-        connectionMap.set(server.id, connectionMap.get(server.id) + 1);
-        connectionMap.set(target.id, connectionMap.get(target.id) + 1);
+        connectedNodes.add(server.id);
       });
     }
   });
-  
-  // 阶段3：添加跨区域长距离连接（增强全局连通性，减少卡顿）
-  // 选择几个"枢纽"节点，让它们连接到远距离节点
-  const hubCount = Math.min(5, Math.floor(validServers.length / 10));
-  if (hubCount > 0 && validServers.length > 30) {
-    // 选择连接数最多的节点作为枢纽
-    const hubs = [...connectionMap.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, hubCount)
-      .map(([id]) => validServers.find(s => s.id === id))
-      .filter(Boolean);
-    
-    hubs.forEach(hub => {
-      // 找到距离最远的几个节点
-      const distances = validServers
-        .filter(s => s.id !== hub.id)
-        .map(s => ({
-          server: s,
-          distance: haversineDistance(hub.coords, s.coords)
-        }))
-        .sort((a, b) => b.distance - a.distance); // 注意：按距离降序排列
-      
-      // 连接到1-2个最远的节点
-      const longRangeCount = Math.min(2, distances.length);
-      distances.slice(0, longRangeCount).forEach(({ server: target }) => {
-        connections.push({
-          startLat: hub.coords.lat,
-          startLng: hub.coords.lng,
-          endLat: target.coords.lat,
-          endLng: target.coords.lng,
-          color: '#4a9eff'
-        });
-      });
-    });
-  }
   
   // 去重
   const seen = new Set();
@@ -1851,8 +1930,10 @@ function calculateConnections(servers) {
     return true;
   });
   
-  console.log('✅ 智能混合模式:', validServers.length, '节点,', uniqueConnections.length, '连接');
-  console.log('   平均每节点连接数:', (uniqueConnections.length * 2 / validServers.length).toFixed(1));
+  console.log('✅ 网络拓扑模式:', validServers.length, '节点,', uniqueConnections.length, '连接');
+  console.log('   区域内连接:', uniqueConnections.filter(c => c.type === 'regional').length);
+  console.log('   跨海光缆:', uniqueConnections.filter(c => c.type === 'submarine').length);
+  console.log('   备用连接:', uniqueConnections.filter(c => c.type === 'backup').length);
   
   return uniqueConnections;
 }
@@ -2236,19 +2317,31 @@ function initGlobe() {
       return el;
     })
     
-    // ===== 连接弧线配置（性能优化版）=====
+    // ===== 连接弧线配置（金色主题）=====
     .arcsData(connectionsData)
     .arcStartLat(d => d.startLat)
     .arcStartLng(d => d.startLng)
     .arcEndLat(d => d.endLat)
     .arcEndLng(d => d.endLng)
-    .arcColor(() => ['rgba(74, 158, 255, 0.4)', 'rgba(96, 165, 250, 0.4)'])  // 降低透明度，减少渲染负担
-    .arcStroke(0.4)  // 减小弧线粗细，提升性能
-    .arcAltitude(0.08)  // 降低弧线高度，减少渲染复杂度
-    .arcDashLength(0.5)  // 优化虚线长度
-    .arcDashGap(0.3)     // 优化虚线间隙
-    .arcDashAnimateTime(3000)  // 延长动画时间，降低帧率要求
-    .arcDashInitialGap(() => Math.random())  // 随机初始间隙
+    .arcColor(d => {
+      // 根据连接类型使用不同的金色
+      if (d.type === 'submarine') {
+        // 跨海光缆：亮金色
+        return ['rgba(255, 215, 0, 0.7)', 'rgba(255, 223, 0, 0.8)'];
+      } else if (d.type === 'regional') {
+        // 区域内连接：柔和金色
+        return ['rgba(255, 215, 0, 0.5)', 'rgba(255, 200, 0, 0.6)'];
+      } else {
+        // 备用连接：淡金色
+        return ['rgba(255, 215, 0, 0.4)', 'rgba(255, 190, 0, 0.5)'];
+      }
+    })
+    .arcStroke(d => d.type === 'submarine' ? 0.6 : 0.4)  // 跨海光缆更粗
+    .arcAltitude(0.08)
+    .arcDashLength(0.5)
+    .arcDashGap(0.3)
+    .arcDashAnimateTime(3000)
+    .arcDashInitialGap(() => Math.random())
     
     // ===== 交互控制 =====
     .enablePointerInteraction(true);  // 启用鼠标交互
