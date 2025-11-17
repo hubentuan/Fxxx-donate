@@ -3052,6 +3052,7 @@ async function submitDonate(e){
 
 async function loadDonations(){
   const box=document.getElementById('donations-list');
+  if (!box) return;
   
   // 显示骨架屏
   box.innerHTML='<div class="space-y-4">'+
@@ -3073,17 +3074,37 @@ async function loadDonations(){
     '</div>';
   
   try{
-    const r=await fetch('/api/user/donations',{credentials:'same-origin',cache:'no-store'});
-    const j=await r.json();
-    if(!r.ok||!j.success){
-      box.innerHTML='<div class="text-red-400 text-sm">加载失败</div>';
+    // 添加超时控制
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
+    
+    const r=await fetch('/api/user/donations',{
+      credentials:'same-origin',
+      cache:'no-store',
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if(!r.ok){
+      console.error('Load donations failed: HTTP', r.status);
+      box.innerHTML='<div class="text-red-400 text-sm py-8 text-center">加载失败 (HTTP '+r.status+')<br/><button onclick="loadDonations()" class="btn-secondary mt-4">重试</button></div>';
       return;
     }
+    
+    const j=await r.json();
+    if(!j.success){
+      console.error('Load donations failed:', j.message);
+      box.innerHTML='<div class="text-red-400 text-sm py-8 text-center">加载失败<br/><button onclick="loadDonations()" class="btn-secondary mt-4">重试</button></div>';
+      return;
+    }
+    
     const data=j.data||[];
     if(!data.length){
       box.innerHTML='<div class="muted text-sm py-8 text-center">还没有投喂记录，先在左侧提交一台吧～</div>';
       return;
     }
+    
     box.innerHTML='';
     data.forEach(v=>{
       const div=document.createElement('div');
@@ -3105,9 +3126,15 @@ async function loadDonations(){
         (t?'<div class="text-xs muted mt-3 flex items-center gap-2"><span class="opacity-60">🕐</span><span>'+t+'</span></div>':'');
       box.appendChild(div);
     });
+    
+    console.log('✅ 投喂记录加载成功:', data.length, '条');
   }catch(err){
     console.error('Load donations error:', err);
-    box.innerHTML='<div class="text-red-400 text-sm">加载异常</div>';
+    if (err.name === 'AbortError') {
+      box.innerHTML='<div class="text-red-400 text-sm py-8 text-center">加载超时，请检查网络连接<br/><button onclick="loadDonations()" class="btn-secondary mt-4">重试</button></div>';
+    } else {
+      box.innerHTML='<div class="text-red-400 text-sm py-8 text-center">加载异常: '+err.message+'<br/><button onclick="loadDonations()" class="btn-secondary mt-4">重试</button></div>';
+    }
   }
 }
 
