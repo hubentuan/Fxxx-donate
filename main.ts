@@ -1702,8 +1702,8 @@ function haversineDistance(coords1, coords2) {
 }
 
 /**
- * 计算全连接网络的连接弧线数据
- * 为每个服务器创建到所有其他服务器的连接（全连接拓扑）
+ * 优化的连接算法：智能混合模式
+ * 结合最近邻和区域连接，确保所有节点都有连接且性能良好
  * @param {Array} servers - 服务器数组，每个服务器需要包含 id 和 coords 属性
  * @returns {Array} 连接弧线数据数组，每个连接包含起点和终点的经纬度坐标
  */
@@ -1711,65 +1711,83 @@ function calculateConnections(servers) {
   const connections = [];
   
   // 过滤掉没有有效坐标的服务器
-  const validServers = servers.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
+  const validServers = servers.filter(s => 
+    s.coords && 
+    s.coords.lat !== null && 
+    s.coords.lng !== null && 
+    !(s.coords.lat === 0 && s.coords.lng === 0)
+  );
   
-  // 连接密度控制：当服务器数量超过20个时，使用最近邻算法而非全连接
-  // 这样可以显著减少连接数量，提升性能
-  const useFullMesh = validServers.length <= 20;
+  if (validServers.length === 0) return [];
+  if (validServers.length === 1) return [];
   
-  if (useFullMesh) {
-    // 全连接模式：为每个服务器创建到所有其他服务器的连接
+  // 小规模网络：使用全连接
+  if (validServers.length <= 15) {
     for (let i = 0; i < validServers.length; i++) {
-      const server = validServers[i];
-      
-      // 跳过坐标为(0,0)的服务器
-      if (!server.coords || (server.coords.lat === 0 && server.coords.lng === 0)) {
-        continue;
-      }
-      
-      // 连接到所有其他服务器
       for (let j = i + 1; j < validServers.length; j++) {
-        const target = validServers[j];
-        
-        // 跳过坐标为(0,0)的服务器
-        if (!target.coords || (target.coords.lat === 0 && target.coords.lng === 0)) {
-          continue;
-        }
-        
-        // 实现连接去重逻辑（i >= j，避免双向重复）
-        // 由于我们使用 j = i + 1，所以自然避免了重复
         connections.push({
-          startLat: server.coords.lat,
-          startLng: server.coords.lng,
-          endLat: target.coords.lat,
-          endLng: target.coords.lng,
+          startLat: validServers[i].coords.lat,
+          startLng: validServers[i].coords.lng,
+          endLat: validServers[j].coords.lat,
+          endLng: validServers[j].coords.lng,
           color: '#4a9eff'
         });
       }
     }
+    console.log('✅ 全连接模式:', validServers.length, '节点,', connections.length, '连接');
+    return connections;
+  }
+  
+  // 大规模网络：使用智能混合算法
+  // 1. 每个节点连接最近的 K 个邻居（保证局部连通性）
+  // 2. 添加跨区域长距离连接（保证全局连通性）
+  
+  const baseConnections = validServers.length > 100 ? 2 : validServers.length > 50 ? 3 : 4;
+  const connectionMap = new Map(); // 记录每个节点的连接数
+  
+  validServers.forEach(server => {
+    connectionMap.set(server.id, 0);
+  });
+  
+  // 阶段1：最近邻连接（保证局部密集连接）
+  validServers.forEach(server => {
+    const distances = validServers
+      .filter(s => s.id !== server.id)
+      .map(s => ({
+        server: s,
+        distance: haversineDistance(server.coords, s.coords)
+      }))
+      .sort((a, b) => a.distance - b.distance);
     
-    console.log('Full mesh mode:', validServers.length, 'servers,', connections.length, 'connections');
-  } else {
-    // 最近邻模式：每个服务器只连接最近的几个服务器
-    const maxConnectionsPerServer = validServers.length > 50 ? 3 : 5;
-    
-    validServers.forEach(server => {
-      // 跳过坐标为(0,0)的服务器
-      if (!server.coords || (server.coords.lat === 0 && server.coords.lng === 0)) {
-        return;
-      }
-      
-      // 计算到其他所有服务器的距离
+    // 连接最近的 K 个邻居
+    distances.slice(0, baseConnections).forEach(({ server: target }) => {
+      connections.push({
+        startLat: server.coords.lat,
+        startLng: server.coords.lng,
+        endLat: target.coords.lat,
+        endLng: target.coords.lng,
+        color: '#4a9eff'
+      });
+      connectionMap.set(server.id, connectionMap.get(server.id) + 1);
+      connectionMap.set(target.id, connectionMap.get(target.id) + 1);
+    });
+  });
+  
+  // 阶段2：补充孤立节点连接（确保每个节点至少有 minConnections 个连接）
+  const minConnections = Math.min(3, validServers.length - 1);
+  validServers.forEach(server => {
+    const currentConnections = connectionMap.get(server.id);
+    if (currentConnections < minConnections) {
+      const needed = minConnections - currentConnections;
       const distances = validServers
-        .filter(s => s.id !== server.id && s.coords && !(s.coords.lat === 0 && s.coords.lng === 0))
+        .filter(s => s.id !== server.id)
         .map(s => ({
           server: s,
           distance: haversineDistance(server.coords, s.coords)
         }))
         .sort((a, b) => a.distance - b.distance);
       
-      // 只连接最近的N个服务器
-      distances.slice(0, maxConnectionsPerServer).forEach(({ server: target }) => {
+      distances.slice(0, needed).forEach(({ server: target }) => {
         connections.push({
           startLat: server.coords.lat,
           startLng: server.coords.lng,
@@ -1777,33 +1795,66 @@ function calculateConnections(servers) {
           endLng: target.coords.lng,
           color: '#4a9eff'
         });
+        connectionMap.set(server.id, connectionMap.get(server.id) + 1);
+        connectionMap.set(target.id, connectionMap.get(target.id) + 1);
+      });
+    }
+  });
+  
+  // 阶段3：添加跨区域长距离连接（增强全局连通性，减少卡顿）
+  // 选择几个"枢纽"节点，让它们连接到远距离节点
+  const hubCount = Math.min(5, Math.floor(validServers.length / 10));
+  if (hubCount > 0 && validServers.length > 30) {
+    // 选择连接数最多的节点作为枢纽
+    const hubs = [...connectionMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, hubCount)
+      .map(([id]) => validServers.find(s => s.id === id))
+      .filter(Boolean);
+    
+    hubs.forEach(hub => {
+      // 找到距离最远的几个节点
+      const distances = validServers
+        .filter(s => s.id !== hub.id)
+        .map(s => ({
+          server: s,
+          distance: haversineDistance(hub.coords, s.coords)
+        }))
+        .sort((a, b) => b.distance - a.distance); // 注意：按距离降序排列
+      
+      // 连接到1-2个最远的节点
+      const longRangeCount = Math.min(2, distances.length);
+      distances.slice(0, longRangeCount).forEach(({ server: target }) => {
+        connections.push({
+          startLat: hub.coords.lat,
+          startLng: hub.coords.lng,
+          endLat: target.coords.lat,
+          endLng: target.coords.lng,
+          color: '#4a9eff'
+        });
       });
     });
-    
-    // 去重逻辑：避免双向重复连接
-    const seen = new Set();
-    const uniqueConnections = connections.filter(conn => {
-      const key = [
-        conn.startLat,
-        conn.startLng,
-        conn.endLat,
-        conn.endLng
-      ].sort().join(',');
-      
-      if (seen.has(key)) {
-        return false;
-      }
-      
-      seen.add(key);
-      return true;
-    });
-    
-    console.log('Nearest neighbor mode:', validServers.length, 'servers, max', maxConnectionsPerServer, 'connections per server,', uniqueConnections.length, 'total connections');
-    
-    return uniqueConnections;
   }
   
-  return connections;
+  // 去重
+  const seen = new Set();
+  const uniqueConnections = connections.filter(conn => {
+    const key = [
+      conn.startLat.toFixed(4),
+      conn.startLng.toFixed(4),
+      conn.endLat.toFixed(4),
+      conn.endLng.toFixed(4)
+    ].sort().join(',');
+    
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  
+  console.log('✅ 智能混合模式:', validServers.length, '节点,', uniqueConnections.length, '连接');
+  console.log('   平均每节点连接数:', (uniqueConnections.length * 2 / validServers.length).toFixed(1));
+  
+  return uniqueConnections;
 }
 
 async function gotoDonatePage(){
@@ -2157,8 +2208,8 @@ function initGlobe() {
       \`;
     })
     
-    // ===== HTML标签显示（节点上方的标签）=====
-    .htmlElementsData(validServers)
+    // ===== HTML标签显示（性能优化：仅显示活跃节点）=====
+    .htmlElementsData(validServers.filter(s => s.status === 'active'))  // 只显示活跃节点的标签，减少DOM元素
     .htmlLat(d => d.coords.lat)
     .htmlLng(d => d.coords.lng)
     .htmlAltitude(0.02)
@@ -2185,44 +2236,48 @@ function initGlobe() {
       return el;
     })
     
-    // ===== 连接弧线配置 =====
+    // ===== 连接弧线配置（性能优化版）=====
     .arcsData(connectionsData)
     .arcStartLat(d => d.startLat)
     .arcStartLng(d => d.startLng)
     .arcEndLat(d => d.endLat)
     .arcEndLng(d => d.endLng)
-    .arcColor(() => ['rgba(74, 158, 255, 0.5)', 'rgba(96, 165, 250, 0.5)'])  // 蓝色系渐变，半透明
-    .arcStroke(0.5)  // 弧线粗细
-    .arcAltitude(0.1)  // 弧线高度，避免与地球表面重叠
-    .arcDashLength(0.4)  // 流动动画：虚线长度
-    .arcDashGap(0.2)     // 流动动画：虚线间隙
-    .arcDashAnimateTime(2000)  // 流动动画：动画时间（毫秒）
-    .arcDashInitialGap(() => Math.random())  // 随机初始间隙，使动画更自然
+    .arcColor(() => ['rgba(74, 158, 255, 0.4)', 'rgba(96, 165, 250, 0.4)'])  // 降低透明度，减少渲染负担
+    .arcStroke(0.4)  // 减小弧线粗细，提升性能
+    .arcAltitude(0.08)  // 降低弧线高度，减少渲染复杂度
+    .arcDashLength(0.5)  // 优化虚线长度
+    .arcDashGap(0.3)     // 优化虚线间隙
+    .arcDashAnimateTime(3000)  // 延长动画时间，降低帧率要求
+    .arcDashInitialGap(() => Math.random())  // 随机初始间隙
     
     // ===== 交互控制 =====
     .enablePointerInteraction(true);  // 启用鼠标交互
   
-  // ===== 自动旋转配置 =====
+  // ===== 自动旋转配置（性能优化）=====
   // 配置OrbitControls以支持鼠标拖拽旋转、滚轮缩放和触摸手势
   if (globeInstance && globeInstance.controls) {
     const controls = globeInstance.controls();
     
-    // 启用自动旋转
+    // 启用自动旋转（降低速度以减少渲染负担）
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.5;
+    controls.autoRotateSpeed = 0.3;  // 降低旋转速度，从0.5降到0.3
     
-    // 启用鼠标拖拽旋转（默认已启用，显式设置以确保）
+    // 启用鼠标拖拽旋转
     controls.enableRotate = true;
     
-    // 启用滚轮缩放（默认已启用，显式设置以确保）
+    // 启用滚轮缩放
     controls.enableZoom = true;
     
     // 设置缩放范围，防止过度缩放
-    controls.minDistance = 101;  // 最小距离（不能太近）
-    controls.maxDistance = 500;  // 最大距离（不能太远）
+    controls.minDistance = 101;
+    controls.maxDistance = 500;
     
     // 禁用平移（保持地球居中）
     controls.enablePan = false;
+    
+    // 性能优化：降低阻尼系数，使交互更流畅
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
   }
   
     // 设置容器宽度和高度自适应
@@ -2245,18 +2300,20 @@ function initGlobe() {
 }
 
 /**
- * 更新Globe数据
+ * 更新Globe数据（性能优化版）
  */
 function updateGlobeData() {
   if (!globeInstance) return;
   
   // 过滤掉没有有效坐标的服务器
   const validServers = serversData.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
+  const activeServers = validServers.filter(s => s.status === 'active');
   
   // 更新节点数据
-  globeInstance
-    .pointsData(validServers)
-    .htmlElementsData(validServers);
+  globeInstance.pointsData(validServers);
+  
+  // 只更新活跃节点的HTML标签，减少DOM操作
+  globeInstance.htmlElementsData(activeServers);
   
   // 更新弧线数据
   globeInstance.arcsData(connectionsData);
@@ -2266,11 +2323,27 @@ function updateGlobeData() {
 }
 
 /**
- * 数据更新逻辑：获取最新服务器数据并更新Globe
+ * 数据更新逻辑：获取最新服务器数据并更新Globe（性能优化版）
  */
+let lastConnectionsUpdate = 0;
+const CONNECTIONS_UPDATE_INTERVAL = 60000; // 连接关系每60秒更新一次
+
 async function updateData() {
-  serversData = await fetchServers();
-  connectionsData = calculateConnections(serversData);
+  const newServersData = await fetchServers();
+  
+  // 检查服务器数量是否变化
+  const serverCountChanged = newServersData.length !== serversData.length;
+  const now = Date.now();
+  const shouldUpdateConnections = serverCountChanged || (now - lastConnectionsUpdate > CONNECTIONS_UPDATE_INTERVAL);
+  
+  serversData = newServersData;
+  
+  // 只在必要时重新计算连接（服务器数量变化或超过更新间隔）
+  if (shouldUpdateConnections) {
+    console.log('🔄 重新计算连接关系...');
+    connectionsData = calculateConnections(serversData);
+    lastConnectionsUpdate = now;
+  }
   
   if (globeInstance) {
     updateGlobeData();
