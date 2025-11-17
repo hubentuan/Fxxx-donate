@@ -2183,9 +2183,11 @@ function getRegionKey(server) {
 }
 
 /**
- * 计算连接线 - 优化算法：避免同区域自连接
- * 1. 从访问者位置向所有服务器发射主连接（流光效果）
- * 2. 服务器之间形成全球化网状互联（避免同区域扎堆）
+ * 计算连接线 - 优化算法V2：确保每个服务器都有连接
+ * 策略：
+ * 1. 访问者到所有服务器的星联主线（100%覆盖）
+ * 2. 每个服务器至少连接2-3个其他服务器（智能选择）
+ * 3. 性能优化：使用高效算法，避免卡顿
  */
 function calculateConnections(servers, visitor) {
   const connections = [];
@@ -2199,28 +2201,29 @@ function calculateConnections(servers, visitor) {
   
   if (validServers.length === 0) return [];
   
-  // 如果没有访问者位置，使用默认位置
   const visitorCoords = visitor || { lat: 39.9042, lng: 116.4074 };
   
-  // ========== 第一层：访问者到所有服务器的星联连接（主连接，流光效果）==========
-  validServers.forEach((server, index) => {
-    // 限制主连接数量，避免过多
-    if (index < 30) { // 最多30条主连接
-      const distance = haversineDistance(visitorCoords, server.coords);
-      connections.push({
-        startLat: visitorCoords.lat,
-        startLng: visitorCoords.lng,
-        endLat: server.coords.lat,
-        endLng: server.coords.lng,
-        type: 'visitor-primary',
-        distance: distance,
-        serverStatus: server.status
-      });
-    }
+  console.log('🌍 开始计算连接 - 服务器总数:', validServers.length);
+  
+  // ========== 第一层：访问者到所有服务器的星联主线（100%覆盖）==========
+  validServers.forEach((server) => {
+    const distance = haversineDistance(visitorCoords, server.coords);
+    connections.push({
+      startLat: visitorCoords.lat,
+      startLng: visitorCoords.lng,
+      endLat: server.coords.lat,
+      endLng: server.coords.lng,
+      type: 'visitor-primary',
+      distance: distance,
+      serverStatus: server.status
+    });
   });
   
-  // ========== 第二层：服务器之间的全球化网状互联 ==========
-  // 按地区分组
+  console.log('✅ 访问者主线:', validServers.length, '条（100%覆盖）');
+  
+  // ========== 第二层：服务器之间的智能互联（确保每个都有连接）==========
+  
+  // 按地区分组（用于智能连接）
   const regionGroups = new Map();
   validServers.forEach(server => {
     const regionKey = getRegionKey(server);
@@ -2230,132 +2233,90 @@ function calculateConnections(servers, visitor) {
     regionGroups.get(regionKey).push(server);
   });
   
-  console.log('地区分组:', Array.from(regionGroups.keys()));
-  console.log('有效服务器总数:', validServers.length);
+  console.log('📍 地区分组:', Array.from(regionGroups.keys()).length, '个地区');
   
-  // 性能优化：智能采样，确保每个地区都有代表
-  let meshServers = [];
-  
-  // 1. 首先从每个地区选择代表服务器（确保地理分布均匀）
-  regionGroups.forEach((servers, region) => {
-    // 每个地区最多选 2 个服务器
-    const regionSample = servers.slice(0, 2);
-    meshServers.push(...regionSample);
-  });
-  
-  // 2. 如果采样数量不足，补充更多服务器
-  if (meshServers.length < 40 && validServers.length > meshServers.length) {
-    const remaining = validServers.filter(s => !meshServers.includes(s));
-    const needed = Math.min(40 - meshServers.length, remaining.length);
-    meshServers.push(...remaining.slice(0, needed));
-  }
-  
-  // 3. 限制最大数量（性能考虑）
-  meshServers = meshServers.slice(0, 50);
-  
-  console.log('网状互联处理服务器数:', meshServers.length);
-  
-  meshServers.forEach((server, index) => {
+  // 为每个服务器建立连接（确保100%覆盖）
+  validServers.forEach((server, index) => {
     const serverRegion = getRegionKey(server);
     
-    // 性能优化：只计算到其他服务器的距离，不做复杂排序
-    const otherServers = meshServers.filter(s => s.id !== server.id);
+    // 计算到所有其他服务器的距离（一次性计算，缓存结果）
+    const distances = validServers
+      .filter(s => s.id !== server.id)
+      .map(s => ({
+        server: s,
+        distance: haversineDistance(server.coords, s.coords),
+        sameRegion: getRegionKey(s) === serverRegion
+      }))
+      .sort((a, b) => a.distance - b.distance); // 按距离排序
     
-    // 预先计算所有距离
-    const allDistances = otherServers.map(s => ({
-      server: s,
-      distance: haversineDistance(server.coords, s.coords),
-      sameRegion: getRegionKey(s) === serverRegion,
-      region: getRegionKey(s)
-    }));
+    if (distances.length === 0) return;
     
-    if (allDistances.length === 0) return;
+    // 策略：每个服务器连接2-3个其他服务器（性能优化）
+    const connectionsToMake = [];
     
-    // 按距离排序（只排序一次）
-    allDistances.sort((a, b) => a.distance - b.distance);
+    // 1. 连接最近的不同地区服务器（优先跨区域）
+    const nearestDifferentRegion = distances.find(d => !d.sameRegion);
+    if (nearestDifferentRegion) {
+      connectionsToMake.push({
+        target: nearestDifferentRegion,
+        type: nearestDifferentRegion.distance < 3000 ? 'mesh-nearby' : 
+              nearestDifferentRegion.distance < 5000 ? 'mesh-medium' :
+              nearestDifferentRegion.distance < 8000 ? 'mesh-long' : 'mesh-ultra-long'
+      });
+    }
     
-    // 分离同区域和不同区域的服务器
-    const sameRegionServers = allDistances.filter(d => d.sameRegion);
-    const differentRegionServers = allDistances.filter(d => !d.sameRegion);
+    // 2. 如果同地区有服务器，连接最近的一个（避免孤立）
+    const nearestSameRegion = distances.find(d => d.sameRegion);
+    if (nearestSameRegion && distances.filter(d => d.sameRegion).length <= 3) {
+      connectionsToMake.push({
+        target: nearestSameRegion,
+        type: 'mesh-nearby'
+      });
+    }
     
-    // 1. 近距离连接 - 优先连接不同区域的服务器
-    if (sameRegionServers.length <= 2 && sameRegionServers.length > 0) {
-      const target = sameRegionServers[0];
+    // 3. 连接一个中远距离服务器（增加网络密度）
+    const mediumDistance = distances.find(d => 
+      !d.sameRegion && 
+      d.distance >= 3000 && 
+      d.distance < 8000 &&
+      !connectionsToMake.some(c => c.target.server.id === d.server.id)
+    );
+    if (mediumDistance) {
+      connectionsToMake.push({
+        target: mediumDistance,
+        type: mediumDistance.distance < 5000 ? 'mesh-medium' : 'mesh-long'
+      });
+    }
+    
+    // 4. 对于孤立地区，额外连接一个超远距离服务器
+    const serversInRegion = regionGroups.get(serverRegion)?.length || 0;
+    if (serversInRegion <= 2) {
+      const ultraLong = distances.find(d => 
+        d.distance >= 8000 &&
+        !connectionsToMake.some(c => c.target.server.id === d.server.id)
+      );
+      if (ultraLong) {
+        connectionsToMake.push({
+          target: ultraLong,
+          type: 'mesh-ultra-long'
+        });
+      }
+    }
+    
+    // 添加连接
+    connectionsToMake.forEach(({ target, type }) => {
       connections.push({
         startLat: server.coords.lat,
         startLng: server.coords.lng,
         endLat: target.server.coords.lat,
         endLng: target.server.coords.lng,
-        type: 'mesh-nearby',
+        type: type,
         distance: target.distance
       });
-    }
-    
-    // 连接 1 个不同区域的近距离服务器（减少连接数）
-    const nearbyDifferent = differentRegionServers.find(d => d.distance < 3000);
-    if (nearbyDifferent) {
-      connections.push({
-        startLat: server.coords.lat,
-        startLng: server.coords.lng,
-        endLat: nearbyDifferent.server.coords.lat,
-        endLng: nearbyDifferent.server.coords.lng,
-        type: 'mesh-nearby',
-        distance: nearbyDifferent.distance
-      });
-    }
-    
-    // 2. 中距离连接 - 每隔 1 个服务器
-    if (index % 2 === 0) {
-      const mediumTarget = differentRegionServers.find(
-        d => d.distance >= 1000 && d.distance < 5000
-      );
-      
-      if (mediumTarget) {
-        connections.push({
-          startLat: server.coords.lat,
-          startLng: server.coords.lng,
-          endLat: mediumTarget.server.coords.lat,
-          endLng: mediumTarget.server.coords.lng,
-          type: 'mesh-medium',
-          distance: mediumTarget.distance
-        });
-      }
-    }
-    
-    // 3. 长距离连接 - 每隔 2 个服务器
-    if (index % 3 === 0) {
-      const longTarget = differentRegionServers.find(d => d.distance >= 5000 && d.distance < 8000);
-      
-      if (longTarget) {
-        connections.push({
-          startLat: server.coords.lat,
-          startLng: server.coords.lng,
-          endLat: longTarget.server.coords.lat,
-          endLng: longTarget.server.coords.lng,
-          type: 'mesh-long',
-          distance: longTarget.distance
-        });
-      }
-    }
-    
-    // 4. 超长距离连接 - 每隔 4 个服务器，确保远距离地区也有连接
-    if (index % 4 === 0) {
-      const ultraLongTarget = differentRegionServers.find(d => d.distance >= 8000);
-      
-      if (ultraLongTarget) {
-        connections.push({
-          startLat: server.coords.lat,
-          startLng: server.coords.lng,
-          endLat: ultraLongTarget.server.coords.lat,
-          endLng: ultraLongTarget.server.coords.lng,
-          type: 'mesh-ultra-long',
-          distance: ultraLongTarget.distance
-        });
-      }
-    }
+    });
   });
   
-  // 去重
+  // 去重（双向连接只保留一条）
   const seen = new Set();
   const uniqueConnections = connections.filter(conn => {
     const key = [
@@ -2370,14 +2331,19 @@ function calculateConnections(servers, visitor) {
     return true;
   });
   
-  console.log('连接统计:', {
+  // 统计信息
+  const stats = {
     总连接数: uniqueConnections.length,
     访问者主线: uniqueConnections.filter(c => c.type === 'visitor-primary').length,
     近距离: uniqueConnections.filter(c => c.type === 'mesh-nearby').length,
     中距离: uniqueConnections.filter(c => c.type === 'mesh-medium').length,
     长距离: uniqueConnections.filter(c => c.type === 'mesh-long').length,
-    超长距离: uniqueConnections.filter(c => c.type === 'mesh-ultra-long').length
-  });
+    超长距离: uniqueConnections.filter(c => c.type === 'mesh-ultra-long').length,
+    平均每服务器连接数: (uniqueConnections.length / validServers.length).toFixed(2)
+  };
+  
+  console.log('📊 连接统计:', stats);
+  console.log('✅ 所有服务器都已连接！');
   
   return uniqueConnections;
 }
@@ -2611,29 +2577,29 @@ function initGlobe() {
     })
     .arcDashLength(d => {
       // 访问者主连接 - 更长的虚线段（流光效果更明显）
-      if (d.type === 'visitor-primary') return 0.9;
+      if (d.type === 'visitor-primary') return 0.85;
       // 超长距离 - 长虚线
-      if (d.type === 'mesh-ultra-long') return 0.75;
+      if (d.type === 'mesh-ultra-long') return 0.7;
       // 长距离
       if (d.type === 'mesh-long') return 0.65;
       return 0.6;
     })
     .arcDashGap(d => {
       // 访问者主连接 - 更小的间隙（更连续的流光）
-      if (d.type === 'visitor-primary') return 0.15;
+      if (d.type === 'visitor-primary') return 0.2;
       // 超长距离 - 较小间隙
-      if (d.type === 'mesh-ultra-long') return 0.25;
-      return 0.35;
+      if (d.type === 'mesh-ultra-long') return 0.3;
+      return 0.4;
     })
     .arcDashAnimateTime(d => {
       // 访问者主连接 - 更快的动画（流光飞速）
-      if (d.type === 'visitor-primary') return 1800;
+      if (d.type === 'visitor-primary') return 2000;
       // 超长距离 - 最慢（强调距离感）
-      if (d.type === 'mesh-ultra-long') return 6500;
+      if (d.type === 'mesh-ultra-long') return 6000;
       // 长距离 - 较慢
-      if (d.type === 'mesh-long') return 5500;
+      if (d.type === 'mesh-long') return 5000;
       // 中距离 - 中等
-      if (d.type === 'mesh-medium') return 4500;
+      if (d.type === 'mesh-medium') return 4000;
       // 近距离 - 较快
       return 3500;
     })
@@ -2644,14 +2610,20 @@ function initGlobe() {
   if (globeInstance && globeInstance.controls) {
     const controls = globeInstance.controls();
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.2;
+    controls.autoRotateSpeed = 0.3; // 稍微加快旋转速度，更流畅
     controls.enableRotate = true;
     controls.enableZoom = true;
     controls.minDistance = 101;
     controls.maxDistance = 500;
     controls.enablePan = false;
     controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
+    controls.dampingFactor = 0.1; // 优化阻尼，更流畅
+  }
+  
+  // 性能优化：设置渲染器参数
+  if (globeInstance && globeInstance.renderer) {
+    const renderer = globeInstance.renderer();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 限制像素比，提升性能
   }
   
     const container = document.getElementById('globe-container');
@@ -2681,7 +2653,7 @@ function updateGlobeData() {
 }
 
 let lastConnectionsUpdate = 0;
-const CONNECTIONS_UPDATE_INTERVAL = 120000; // 增加到2分钟
+const CONNECTIONS_UPDATE_INTERVAL = 180000; // 增加到3分钟，减少重新计算频率
 
 async function updateData() {
   const newServersData = await fetchServersFromLeaderboard();
@@ -2693,9 +2665,11 @@ async function updateData() {
   serversData = newServersData;
   
   if (shouldUpdateConnections) {
+    console.log('🔄 重新计算连接...');
     // 使用访问者位置计算连接
     connectionsData = calculateConnections(serversData, visitorLocation);
     lastConnectionsUpdate = now;
+    console.log('✅ 连接计算完成');
   }
   
   if (globeInstance) {
@@ -2876,8 +2850,8 @@ function waitForGlobe() {
   
   document.addEventListener('visibilitychange', handleVisibilityChange);
   
-  // 增加更新间隔到60秒，减少性能消耗
-  updateInterval = setInterval(updateData, 60000);
+  // 优化更新间隔到90秒，减少性能消耗
+  updateInterval = setInterval(updateData, 90000);
 })();
 </script>
 </body></html>`;
