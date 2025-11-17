@@ -2858,7 +2858,23 @@ app.get('/donate/vps', c => {
 <script>
 updateThemeBtn();
 
+// 防止无限重定向的标记
+let loginCheckAttempts = 0;
+const MAX_LOGIN_ATTEMPTS = 3;
+
 async function ensureLogin(){
+  // 防止无限重定向
+  if (loginCheckAttempts >= MAX_LOGIN_ATTEMPTS) {
+    console.error('登录检查失败次数过多，停止重试');
+    const box = document.getElementById('donations-list');
+    if (box) {
+      box.innerHTML = '<div class="text-red-400 text-sm py-8 text-center">登录验证失败<br/><a href="/donate" class="btn-primary mt-4">返回首页</a></div>';
+    }
+    return;
+  }
+  
+  loginCheckAttempts++;
+  
   try{
     // 添加超时控制，防止请求卡住
     const controller = new AbortController();
@@ -2874,16 +2890,25 @@ async function ensureLogin(){
     
     if(!res.ok){ 
       console.error('Login check failed: HTTP', res.status);
-      location.href='/donate'; 
+      // 防止重定向循环
+      if (loginCheckAttempts < MAX_LOGIN_ATTEMPTS) {
+        setTimeout(() => location.href='/donate', 1000);
+      }
       return; 
     }
     
     const j=await res.json();
     if(!j.success){ 
       console.error('Login check failed:', j.message);
-      location.href='/donate'; 
+      // 防止重定向循环
+      if (loginCheckAttempts < MAX_LOGIN_ATTEMPTS) {
+        setTimeout(() => location.href='/donate', 1000);
+      }
       return; 
     }
+    
+    // 登录成功，重置计数器
+    loginCheckAttempts = 0;
     
     const u=j.data;
     const p='https://linux.do/u/'+encodeURIComponent(u.username);
@@ -2895,20 +2920,32 @@ async function ensureLogin(){
     console.error('Login check error:', err);
     // 只在非 abort 错误时重定向
     if (err.name !== 'AbortError') {
-      location.href='/donate';
+      if (loginCheckAttempts < MAX_LOGIN_ATTEMPTS) {
+        setTimeout(() => location.href='/donate', 1000);
+      }
     } else {
       console.error('Login check timeout');
       const box = document.getElementById('donations-list');
       if (box) {
-        box.innerHTML = '<div class="text-red-400 text-sm py-8 text-center">登录检查超时，请刷新页面重试</div>';
+        box.innerHTML = '<div class="text-red-400 text-sm py-8 text-center">登录检查超时<br/><a href="/donate" class="btn-primary mt-4">返回首页</a></div>';
       }
     }
   }
 }
 
 async function logout(){
-  try{ await fetch('/api/logout',{credentials:'same-origin'});}catch{}
-  location.href='/donate';
+  try{ 
+    await fetch('/api/logout',{credentials:'same-origin'});
+    console.log('✅ 退出登录成功');
+  }catch(err){
+    console.error('退出登录失败:', err);
+  }
+  // 清除登录检查计数器
+  loginCheckAttempts = 0;
+  // 延迟重定向，确保请求完成
+  setTimeout(() => {
+    location.href='/donate';
+  }, 500);
 }
 
 async function exportDonations(){
