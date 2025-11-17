@@ -949,6 +949,55 @@ app.get('/donate', c => {
     flex-wrap: wrap;
   }
   
+  /* 访问者位置标记动画 */
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.1);
+    }
+  }
+  
+  /* 连接线图例 */
+  .connection-legend {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .legend-line {
+    width: 20px;
+    height: 2px;
+    border-radius: 1px;
+  }
+  
+  .legend-visitor {
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.9), rgba(251, 191, 36, 1.0));
+  }
+  
+  .legend-nearby {
+    background: linear-gradient(90deg, rgba(34, 197, 94, 0.4), rgba(74, 222, 128, 0.5));
+  }
+  
+  .legend-medium {
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.5), rgba(96, 165, 250, 0.6));
+  }
+  
+  .legend-long {
+    background: linear-gradient(90deg, rgba(168, 85, 247, 0.6), rgba(192, 132, 252, 0.7));
+  }
+  
   /* 移动端响应式样式 */
   @media (max-width: 768px) {
     #globe-container {
@@ -1055,16 +1104,40 @@ app.get('/donate', c => {
       <!-- 统计信息 -->
       <div id="globe-stats" class="mt-4 flex gap-6 text-sm flex-wrap">
         <div class="flex items-center gap-2">
-          <span class="muted">总服务器:</span>
+          <span class="muted">📍 您的位置:</span>
+          <span id="visitor-location" class="font-bold text-cyan-400">检测中...</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="muted">🖥️ 总服务器:</span>
           <span id="total-servers" class="font-bold">0</span>
         </div>
         <div class="flex items-center gap-2">
-          <span class="muted">活跃:</span>
+          <span class="muted">✅ 活跃:</span>
           <span id="active-servers" class="font-bold text-green-500">0</span>
         </div>
         <div class="flex items-center gap-2">
-          <span class="muted">连接数:</span>
+          <span class="muted">🔗 连接数:</span>
           <span id="total-connections" class="font-bold text-blue-500">0</span>
+        </div>
+      </div>
+      
+      <!-- 连接线图例 -->
+      <div class="connection-legend mt-3">
+        <div class="legend-item">
+          <div class="legend-line legend-visitor"></div>
+          <span class="muted">星联主线（您→服务器）</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line legend-nearby"></div>
+          <span class="muted">近距离互联</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line legend-medium"></div>
+          <span class="muted">跨区域互联</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line legend-long"></div>
+          <span class="muted">跨大洲互联</span>
         </div>
       </div>
     </div>
@@ -1319,6 +1392,7 @@ let globeInstance = null;
 let serversData = [];
 let connectionsData = [];
 let updateInterval = null;
+let visitorLocation = null; // 访问者位置
 
 /**
  * 地理编码函数：将位置字符串转换为经纬度坐标
@@ -1529,7 +1603,44 @@ function haversineDistance(coords1, coords2) {
   return R * c;
 }
 
-function calculateConnections(servers) {
+/**
+ * 获取访问者的地理位置
+ */
+async function getVisitorLocation() {
+  try {
+    const res = await fetch('https://ipapi.co/json/', { 
+      signal: AbortSignal.timeout(3000) 
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.latitude && data.longitude) {
+        return {
+          lat: data.latitude,
+          lng: data.longitude,
+          city: data.city || '未知',
+          country: data.country_name || '未知'
+        };
+      }
+    }
+  } catch (e) {
+    console.log('无法获取访问者位置，使用默认位置');
+  }
+  
+  // 默认位置：中国北京
+  return {
+    lat: 39.9042,
+    lng: 116.4074,
+    city: 'Beijing',
+    country: 'China'
+  };
+}
+
+/**
+ * 计算连接线 - 新算法：星联网络
+ * 1. 从访问者位置向所有服务器发射主连接（流光效果）
+ * 2. 服务器之间形成网状互联（渐变效果）
+ */
+function calculateConnections(servers, visitor) {
   const connections = [];
   
   const validServers = servers.filter(s => 
@@ -1540,22 +1651,35 @@ function calculateConnections(servers) {
   );
   
   if (validServers.length === 0) return [];
-  if (validServers.length === 1) return [];
   
-  // 性能优化：限制连接数量，避免过多连接导致卡顿
-  const maxServersForConnections = 50;
-  const serversToConnect = validServers.length > maxServersForConnections 
-    ? validServers.slice(0, maxServersForConnections) 
-    : validServers;
+  // 如果没有访问者位置，使用默认位置
+  const visitorCoords = visitor || { lat: 39.9042, lng: 116.4074 };
   
-  // 性能优化：只为部分服务器生成连接
-  const connectionStep = Math.max(1, Math.floor(serversToConnect.length / 20));
+  // ========== 第一层：访问者到所有服务器的星联连接（主连接，流光效果）==========
+  validServers.forEach((server, index) => {
+    // 限制主连接数量，避免过多
+    if (index < 30) { // 最多30条主连接
+      const distance = haversineDistance(visitorCoords, server.coords);
+      connections.push({
+        startLat: visitorCoords.lat,
+        startLng: visitorCoords.lng,
+        endLat: server.coords.lat,
+        endLng: server.coords.lng,
+        type: 'visitor-primary',
+        distance: distance,
+        serverStatus: server.status
+      });
+    }
+  });
   
-  serversToConnect.forEach((server, index) => {
-    // 跳过一些服务器以减少连接数
-    if (index % connectionStep !== 0) return;
-    
-    const distances = validServers
+  // ========== 第二层：服务器之间的网状互联 ==========
+  // 性能优化：限制处理的服务器数量
+  const maxServersForMesh = Math.min(40, validServers.length);
+  const meshServers = validServers.slice(0, maxServersForMesh);
+  
+  meshServers.forEach((server, index) => {
+    // 计算到其他服务器的距离
+    const distances = meshServers
       .filter(s => s.id !== server.id)
       .map(s => ({
         server: s,
@@ -1565,54 +1689,53 @@ function calculateConnections(servers) {
     
     if (distances.length === 0) return;
     
-    // 减少每个节点的连接数
-    const nearbyConnections = Math.min(1, distances.length);
-    distances.slice(0, nearbyConnections).forEach(({ server: target }) => {
+    // 1. 近距离连接（同区域）- 每个节点连接1-2个最近的
+    const nearbyCount = Math.min(2, distances.length);
+    distances.slice(0, nearbyCount).forEach(({ server: target, distance }) => {
       connections.push({
         startLat: server.coords.lat,
         startLng: server.coords.lng,
         endLat: target.coords.lat,
         endLng: target.coords.lng,
-        color: 'rgba(255, 215, 0, 0.5)',
-        type: 'nearby'
+        type: 'mesh-nearby',
+        distance: distance
       });
     });
     
-    // 减少中距离连接
-    const mediumDistance = distances.filter(d => d.distance > 1000 && d.distance < 5000);
-    if (mediumDistance.length > 0 && index % (connectionStep * 2) === 0) {
-      const mediumCount = Math.min(1, mediumDistance.length);
-      mediumDistance.slice(0, mediumCount).forEach(({ server: target }) => {
+    // 2. 中距离连接（跨区域）- 部分节点连接
+    if (index % 2 === 0 && distances.length > 5) {
+      const mediumDistance = distances.filter(d => d.distance > 1000 && d.distance < 5000);
+      if (mediumDistance.length > 0) {
+        const target = mediumDistance[0];
         connections.push({
           startLat: server.coords.lat,
           startLng: server.coords.lng,
-          endLat: target.coords.lat,
-          endLng: target.coords.lng,
-          color: 'rgba(255, 215, 0, 0.6)',
-          type: 'medium'
+          endLat: target.server.coords.lat,
+          endLng: target.server.coords.lng,
+          type: 'mesh-medium',
+          distance: target.distance
         });
-      });
+      }
     }
     
-    // 减少长距离连接
-    if (distances.length > 10 && index % (connectionStep * 3) === 0) {
-      const longRangeCount = Math.min(1, Math.floor(distances.length / 3));
-      if (longRangeCount > 0) {
-        distances.slice(-longRangeCount).forEach(({ server: target, distance }) => {
-          connections.push({
-            startLat: server.coords.lat,
-            startLng: server.coords.lng,
-            endLat: target.coords.lat,
-            endLng: target.coords.lng,
-            color: 'rgba(255, 215, 0, 0.8)',
-            type: 'submarine',
-            distance: distance
-          });
+    // 3. 长距离连接（跨大洲）- 少量节点连接
+    if (index % 4 === 0 && distances.length > 10) {
+      const longDistance = distances.filter(d => d.distance > 5000);
+      if (longDistance.length > 0) {
+        const target = longDistance[Math.floor(longDistance.length / 2)];
+        connections.push({
+          startLat: server.coords.lat,
+          startLng: server.coords.lng,
+          endLat: target.server.coords.lat,
+          endLng: target.server.coords.lng,
+          type: 'mesh-long',
+          distance: target.distance
         });
       }
     }
   });
   
+  // 去重
   const seen = new Set();
   const uniqueConnections = connections.filter(conn => {
     const key = [
@@ -1627,9 +1750,7 @@ function calculateConnections(servers) {
     return true;
   });
   
-  // 限制最大连接数
-  const maxConnections = 100;
-  return uniqueConnections.slice(0, maxConnections);
+  return uniqueConnections;
 }
 
 function isWebGLAvailable() {
@@ -1703,9 +1824,19 @@ function updateStats(servers, connections) {
   const total = servers.length;
   const active = servers.filter(s => s.status === 'active').length;
   
-  document.getElementById('total-servers').textContent = total;
-  document.getElementById('active-servers').textContent = active;
-  document.getElementById('total-connections').textContent = connections.length;
+  const totalEl = document.getElementById('total-servers');
+  const activeEl = document.getElementById('active-servers');
+  const connectionsEl = document.getElementById('total-connections');
+  const visitorEl = document.getElementById('visitor-location');
+  
+  if (totalEl) totalEl.textContent = total;
+  if (activeEl) activeEl.textContent = active;
+  if (connectionsEl) connectionsEl.textContent = connections.length;
+  
+  // 更新访问者位置显示
+  if (visitorEl && visitorLocation) {
+    visitorEl.textContent = \`\${visitorLocation.city}, \${visitorLocation.country}\`;
+  }
 }
 
 function initGlobe() {
@@ -1739,12 +1870,13 @@ function initGlobe() {
     .pointLat(d => d.coords.lat)
     .pointLng(d => d.coords.lng)
     .pointColor(d => {
-      if (d.status === 'active') return '#4ade80';
+      if (d.status === 'active') return '#10b981'; // 更鲜艳的绿色
       if (d.status === 'failed') return '#ef4444';
       return '#94a3b8';
     })
-    .pointAltitude(0.01)
-    .pointRadius(0.3)
+    .pointAltitude(0.015) // 稍微提高一点
+    .pointRadius(0.35) // 稍微大一点，更明显
+    .pointResolution(12) // 增加点的分辨率，更圆滑
     
     .pointLabel(d => {
       const flag = getCountryFlag(d.country);
@@ -1786,25 +1918,73 @@ function initGlobe() {
     .arcEndLat(d => d.endLat)
     .arcEndLng(d => d.endLng)
     .arcColor(d => {
-      if (d.type === 'submarine') {
-        return ['rgba(255, 215, 0, 0.8)', 'rgba(255, 223, 0, 0.9)'];
-      } else if (d.type === 'medium') {
-        return ['rgba(255, 215, 0, 0.6)', 'rgba(255, 205, 0, 0.7)'];
-      } else if (d.type === 'nearby') {
-        return ['rgba(255, 215, 0, 0.5)', 'rgba(255, 200, 0, 0.6)'];
-      } else {
-        return ['rgba(255, 215, 0, 0.4)', 'rgba(255, 190, 0, 0.5)'];
+      // 访问者主连接 - 流光渐变（青色到金色）
+      if (d.type === 'visitor-primary') {
+        if (d.serverStatus === 'active') {
+          return ['rgba(6, 182, 212, 0.9)', 'rgba(251, 191, 36, 1.0)']; // 青色到金色
+        } else {
+          return ['rgba(100, 116, 139, 0.5)', 'rgba(148, 163, 184, 0.6)']; // 灰色
+        }
       }
+      // 网状互联 - 近距离（绿色渐变）
+      else if (d.type === 'mesh-nearby') {
+        return ['rgba(34, 197, 94, 0.4)', 'rgba(74, 222, 128, 0.5)'];
+      }
+      // 网状互联 - 中距离（蓝色渐变）
+      else if (d.type === 'mesh-medium') {
+        return ['rgba(59, 130, 246, 0.5)', 'rgba(96, 165, 250, 0.6)'];
+      }
+      // 网状互联 - 长距离（紫色渐变）
+      else if (d.type === 'mesh-long') {
+        return ['rgba(168, 85, 247, 0.6)', 'rgba(192, 132, 252, 0.7)'];
+      }
+      // 默认
+      return ['rgba(255, 215, 0, 0.4)', 'rgba(255, 190, 0, 0.5)'];
     })
     .arcStroke(d => {
-      if (d.type === 'submarine') return 0.5;
-      if (d.type === 'medium') return 0.4;
+      // 访问者主连接 - 更粗，更明显
+      if (d.type === 'visitor-primary') return 0.8;
+      // 网状互联 - 较细
+      if (d.type === 'mesh-long') return 0.5;
+      if (d.type === 'mesh-medium') return 0.4;
+      if (d.type === 'mesh-nearby') return 0.3;
       return 0.3;
     })
-    .arcAltitude(0.06)
-    .arcDashLength(0.6)
-    .arcDashGap(0.4)
-    .arcDashAnimateTime(4000)
+    .arcAltitude(d => {
+      // 访问者主连接 - 更高的弧线
+      if (d.type === 'visitor-primary') {
+        // 根据距离调整高度，远距离更高
+        const baseAlt = 0.15;
+        const distanceFactor = Math.min(d.distance / 10000, 1);
+        return baseAlt + distanceFactor * 0.15;
+      }
+      // 长距离连接 - 中等高度
+      if (d.type === 'mesh-long') return 0.12;
+      // 中距离连接 - 较低
+      if (d.type === 'mesh-medium') return 0.08;
+      // 近距离连接 - 最低
+      return 0.05;
+    })
+    .arcDashLength(d => {
+      // 访问者主连接 - 更长的虚线段（流光效果）
+      if (d.type === 'visitor-primary') return 0.8;
+      return 0.6;
+    })
+    .arcDashGap(d => {
+      // 访问者主连接 - 更小的间隙（更连续）
+      if (d.type === 'visitor-primary') return 0.2;
+      return 0.4;
+    })
+    .arcDashAnimateTime(d => {
+      // 访问者主连接 - 更快的动画（流光效果）
+      if (d.type === 'visitor-primary') return 2000;
+      // 长距离 - 较慢
+      if (d.type === 'mesh-long') return 5000;
+      // 中距离 - 中等
+      if (d.type === 'mesh-medium') return 4000;
+      // 近距离 - 较快
+      return 3000;
+    })
     .arcDashInitialGap(() => Math.random())
     
     .enablePointerInteraction(true);
@@ -1861,7 +2041,8 @@ async function updateData() {
   serversData = newServersData;
   
   if (shouldUpdateConnections) {
-    connectionsData = calculateConnections(serversData);
+    // 使用访问者位置计算连接
+    connectionsData = calculateConnections(serversData, visitorLocation);
     lastConnectionsUpdate = now;
   }
   
@@ -1958,8 +2139,39 @@ function waitForGlobe() {
 
 (async function() {
   await waitForGlobe();
+  
+  // 首先获取访问者位置
+  visitorLocation = await getVisitorLocation();
+  console.log('访问者位置:', visitorLocation);
+  
+  // 然后加载数据并初始化地球
   await updateData();
   initGlobe();
+  
+  // 如果有访问者位置，添加一个特殊的标记点
+  if (visitorLocation && globeInstance) {
+    const visitorPoint = [{
+      lat: visitorLocation.lat,
+      lng: visitorLocation.lng,
+      label: '您的位置',
+      city: visitorLocation.city,
+      country: visitorLocation.country
+    }];
+    
+    // 添加访问者位置的标记（使用 htmlElements）
+    globeInstance.htmlElementsData(visitorPoint)
+      .htmlLat(d => d.lat)
+      .htmlLng(d => d.lng)
+      .htmlAltitude(0.02)
+      .htmlElement(d => {
+        const el = document.createElement('div');
+        el.innerHTML = '📍';
+        el.style.fontSize = '24px';
+        el.style.cursor = 'pointer';
+        el.title = \`您的位置：\${d.city}, \${d.country}\`;
+        return el;
+      });
+  }
   
   const toggleSizeBtn = document.getElementById('toggle-size');
   const toggleRotateBtn = document.getElementById('toggle-rotate');
