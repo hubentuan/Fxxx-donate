@@ -2323,7 +2323,14 @@ function initGlobe() {
     console.error('Globe初始化失败:', error);
     const container = document.getElementById('globe-container');
     if (container) {
-      container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 20px;"><div><div style="font-size: 48px; margin-bottom: 16px;">⚠️</div><div style="font-size: 18px; margin-bottom: 8px;">3D地球初始化失败</div><div style="font-size: 14px; opacity: 0.7;">错误: ' + error.message + '</div></div></div>';
+      const errorMsg = error && error.message ? error.message : '未知错误';
+      container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 20px;">' +
+        '<div>' +
+        '<div style="font-size: 48px; margin-bottom: 16px;">⚠️<' + '/div>' +
+        '<div style="font-size: 18px; margin-bottom: 8px;">3D地球初始化失败<' + '/div>' +
+        '<div style="font-size: 14px; opacity: 0.7;">错误: ' + errorMsg + '<' + '/div>' +
+        '<' + '/div>' +
+        '<' + '/div>';
     }
   }
 }
@@ -3094,6 +3101,10 @@ async function ensureLogin(){
   }
 }
 
+/**
+ * 退出登录函数
+ * 必须在页面初始化之前定义，因为HTML中的按钮会调用它
+ */
 async function logout(){
   try{ 
     await fetch('/api/logout',{credentials:'same-origin'});
@@ -3109,6 +3120,9 @@ async function logout(){
   }, 500);
 }
 
+/**
+ * 导出投喂记录函数
+ */
 async function exportDonations(){
   try{
     const r=await fetch('/api/user/donations',{credentials:'same-origin',cache:'no-store'});
