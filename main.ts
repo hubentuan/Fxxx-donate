@@ -2530,16 +2530,262 @@ body[data-theme="dark"] #servers-table td {
     display: none;
   }
 }
+
+/* 折叠式概览卡片样式 */
+#globe-overview {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 200;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  padding: 32px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  min-width: 400px;
+  max-width: 500px;
+  text-align: center;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-theme="dark"] #globe-overview {
+  background: rgba(28, 28, 30, 0.95);
+  border-color: rgba(56, 56, 58, 0.8);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+}
+
+#globe-overview h2 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+body[data-theme="dark"] #globe-overview h2 {
+  background: linear-gradient(135deg, #8b9eff 0%, #9d7bc2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+#overview-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+}
+
+body[data-theme="dark"] #overview-stats {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+#overview-stats > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+#overview-stats .stat-label {
+  font-size: 13px;
+  color: #6e6e73;
+  font-weight: 500;
+}
+
+body[data-theme="dark"] #overview-stats .stat-label {
+  color: #98989d;
+}
+
+#overview-stats .stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1d1d1f;
+}
+
+body[data-theme="dark"] #overview-stats .stat-value {
+  color: #f5f5f7;
+}
+
+#overview-stats .stat-value.active {
+  color: #34C759;
+}
+
+#overview-stats .stat-value.offline {
+  color: #FF3B30;
+}
+
+#overview-flags {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+  min-height: 60px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+body[data-theme="dark"] #overview-flags {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+#overview-flags span {
+  font-size: 32px;
+  transition: transform 0.2s ease;
+  cursor: default;
+}
+
+#overview-flags span:hover {
+  transform: scale(1.2);
+}
+
+#expand-globe {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+#expand-globe:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+#expand-globe:active {
+  transform: translateY(0);
+}
+
+/* 响应式优化 - 概览卡片 */
+@media (max-width: 768px) {
+  #globe-overview {
+    min-width: 320px;
+    max-width: 90%;
+    padding: 24px;
+  }
+
+  #globe-overview h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  #overview-stats {
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  #overview-stats .stat-value {
+    font-size: 28px;
+  }
+
+  #overview-stats .stat-label {
+    font-size: 12px;
+  }
+
+  #overview-flags span {
+    font-size: 28px;
+  }
+
+  #expand-globe {
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  #globe-overview {
+    min-width: 280px;
+    padding: 20px;
+  }
+
+  #globe-overview h2 {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  #overview-stats {
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+
+  #overview-stats .stat-value {
+    font-size: 24px;
+  }
+
+  #overview-stats .stat-label {
+    font-size: 11px;
+  }
+
+  #overview-flags {
+    padding: 12px;
+    min-height: 50px;
+  }
+
+  #overview-flags span {
+    font-size: 24px;
+  }
+
+  #expand-globe {
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+}
 </style>
 </head>
 <body class="min-h-screen" data-theme="dark">
   
-  <!-- 3D地球容器 -->
-  <div id="globe-container"></div>
+  <!-- 折叠式概览卡片 -->
+  <div id="globe-overview">
+    <h2>🌍 全球服务器分布</h2>
+    
+    <div id="overview-stats">
+      <div>
+        <span class="stat-label">总服务器</span>
+        <span id="overview-total" class="stat-value">0</span>
+      </div>
+      <div>
+        <span class="stat-label">活跃</span>
+        <span id="overview-active" class="stat-value active">0</span>
+      </div>
+      <div>
+        <span class="stat-label">离线</span>
+        <span id="overview-offline" class="stat-value offline">0</span>
+      </div>
+    </div>
+    
+    <div id="overview-flags">
+      <!-- 国旗列表将通过JavaScript动态填充 -->
+    </div>
+    
+    <button id="expand-globe">
+      <span style="font-size: 18px; margin-right: 8px;">🚀</span>
+      查看3D地球
+    </button>
+  </div>
   
-  <!-- 控制面板 -->
-  <div id="controls">
-    <button id="toggle-view" class="btn-primary">切换列表视图</button>
+  <!-- 3D地球容器 (默认隐藏) -->
+  <div id="globe-container" style="display:none"></div>
+  
+  <!-- 控制面板 (默认隐藏) -->
+  <div id="controls" style="display:none">
+    <button id="collapse-globe" class="btn-primary">收起地球</button>
+    <button id="toggle-view" class="btn-secondary">切换列表视图</button>
     <button id="toggle-rotate" class="btn-secondary">暂停旋转</button>
     <button id="back-to-donate" class="btn-secondary" onclick="location.href='/donate'">返回榜单</button>
     
@@ -2606,6 +2852,266 @@ body[data-theme="dark"] #servers-table td {
     let connectionsData = [];
     let updateInterval = null;
     let isRotating = true;
+
+    /**
+     * 国旗提取函数
+     * 从国家字符串中提取国旗emoji
+     * @param {string} countryString - 国家字符串，格式如 "🇨🇳 中国大陆" 或 "United States"
+     * @returns {string} 国旗emoji，如果没有找到则返回默认的🌍
+     */
+    function getCountryFlag(countryString) {
+      try {
+        // 检查输入是否为空或无效
+        if (!countryString || typeof countryString !== 'string') {
+          return '🌍';
+        }
+
+        // 使用正则表达式匹配Unicode国旗字符
+        // 国旗emoji的Unicode范围是 U+1F1E6 到 U+1F1FF（区域指示符号字母）
+        // 国旗由两个连续的区域指示符号字母组成
+        const flagRegex = /[\u{1F1E6}-\u{1F1FF}]{2}/u;
+        const match = countryString.match(flagRegex);
+
+        // 如果找到国旗emoji，返回它
+        if (match && match[0]) {
+          return match[0];
+        }
+
+        // 如果没有找到国旗，返回默认的地球emoji
+        return '🌍';
+      } catch (error) {
+        // 异常处理：捕获任何意外错误
+        console.warn('提取国旗时发生错误:', error, '输入:', countryString);
+        return '🌍';
+      }
+    }
+
+    /**
+     * 生成概览数据函数
+     * 统计服务器总数、活跃数、离线数
+     * 提取所有唯一的国旗emoji
+     * @param {Array} servers - 服务器数据数组
+     * @returns {Object} 概览数据对象，包含 total, active, offline, flags
+     */
+    function generateOverview(servers) {
+      try {
+        // 验证输入
+        if (!Array.isArray(servers)) {
+          console.warn('generateOverview: 输入不是数组', servers);
+          return {
+            total: 0,
+            active: 0,
+            offline: 0,
+            flags: []
+          };
+        }
+
+        // 统计服务器总数
+        const total = servers.length;
+
+        // 统计活跃服务器数量
+        const active = servers.filter(s => s.status === 'active').length;
+
+        // 统计离线服务器数量（包括 failed 和 inactive 状态）
+        const offline = servers.filter(s => s.status === 'failed' || s.status === 'inactive').length;
+
+        // 提取所有唯一的国旗emoji
+        const flagsSet = new Set();
+        servers.forEach(server => {
+          if (server.country) {
+            const flag = getCountryFlag(server.country);
+            // 只添加非默认的国旗（排除🌍）
+            if (flag && flag !== '🌍') {
+              flagsSet.add(flag);
+            }
+          }
+        });
+
+        // 将Set转换为数组
+        const flags = Array.from(flagsSet);
+
+        // 返回概览数据对象
+        const overview = {
+          total,
+          active,
+          offline,
+          flags
+        };
+
+        console.log('概览数据生成完成:', overview);
+        return overview;
+
+      } catch (error) {
+        // 异常处理
+        console.error('生成概览数据时发生错误:', error);
+        return {
+          total: 0,
+          active: 0,
+          offline: 0,
+          flags: []
+        };
+      }
+    }
+
+    /**
+     * 更新概览卡片函数
+     * 更新统计数字显示
+     * 渲染国旗列表
+     * 在数据更新时调用此函数
+     */
+    function updateOverview() {
+      try {
+        // 生成概览数据
+        const overview = generateOverview(serversData);
+
+        // 更新统计数字
+        const totalElement = document.getElementById('overview-total');
+        const activeElement = document.getElementById('overview-active');
+        const offlineElement = document.getElementById('overview-offline');
+
+        if (totalElement) {
+          totalElement.textContent = overview.total;
+        }
+
+        if (activeElement) {
+          activeElement.textContent = overview.active;
+        }
+
+        if (offlineElement) {
+          offlineElement.textContent = overview.offline;
+        }
+
+        // 渲染国旗列表
+        const flagsContainer = document.getElementById('overview-flags');
+        if (flagsContainer) {
+          if (overview.flags.length === 0) {
+            // 如果没有国旗，显示提示信息
+            flagsContainer.innerHTML = '<span style="font-size: 14px; color: #6e6e73;">暂无服务器数据</span>';
+          } else {
+            // 渲染国旗列表
+            flagsContainer.innerHTML = overview.flags
+              .map(flag => \`<span title="服务器所在地区">\${flag}</span>\`)
+              .join('');
+          }
+        }
+
+        console.log('概览卡片已更新:', overview);
+
+      } catch (error) {
+        console.error('更新概览卡片时发生错误:', error);
+      }
+    }
+
+    /**
+     * 展开3D地球函数
+     * 隐藏概览卡片，显示3D地球容器
+     * 初始化Globe实例（如果还未初始化）
+     * 添加平滑过渡动画（500ms）
+     */
+    function expandGlobe() {
+      try {
+        const overview = document.getElementById('globe-overview');
+        const container = document.getElementById('globe-container');
+        const controls = document.getElementById('controls');
+
+        if (!overview || !container || !controls) {
+          console.error('无法找到必要的DOM元素');
+          return;
+        }
+
+        console.log('展开3D地球...');
+
+        // 添加过渡动画类
+        overview.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+        container.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+        controls.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+
+        // 淡出概览卡片
+        overview.style.opacity = '0';
+        overview.style.transform = 'translate(-50%, -50%) scale(0.95)';
+
+        // 500ms后隐藏概览卡片，显示3D地球
+        setTimeout(() => {
+          overview.style.display = 'none';
+          container.style.display = 'block';
+          controls.style.display = 'block';
+
+          // 初始化Globe实例（如果还未初始化）
+          if (!globe) {
+            console.log('初始化Globe实例...');
+            initGlobe();
+            // 初始化后立即更新数据
+            updateGlobe();
+          }
+
+          // 淡入3D地球和控制面板
+          container.style.opacity = '0';
+          controls.style.opacity = '0';
+
+          requestAnimationFrame(() => {
+            container.style.opacity = '1';
+            controls.style.opacity = '1';
+          });
+
+          console.log('3D地球已展开');
+        }, 500);
+
+      } catch (error) {
+        console.error('展开3D地球时发生错误:', error);
+        showToast('展开3D地球失败，请刷新页面重试', 'error');
+      }
+    }
+
+    /**
+     * 收起3D地球函数
+     * 隐藏3D地球容器，显示概览卡片
+     * 添加平滑过渡动画（500ms）
+     */
+    function collapseGlobe() {
+      try {
+        const overview = document.getElementById('globe-overview');
+        const container = document.getElementById('globe-container');
+        const controls = document.getElementById('controls');
+
+        if (!overview || !container || !controls) {
+          console.error('无法找到必要的DOM元素');
+          return;
+        }
+
+        console.log('收起3D地球...');
+
+        // 添加过渡动画类
+        container.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+        controls.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+        overview.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+
+        // 淡出3D地球和控制面板
+        container.style.opacity = '0';
+        controls.style.opacity = '0';
+
+        // 500ms后隐藏3D地球，显示概览卡片
+        setTimeout(() => {
+          container.style.display = 'none';
+          controls.style.display = 'none';
+          overview.style.display = 'block';
+
+          // 淡入概览卡片
+          overview.style.opacity = '0';
+          overview.style.transform = 'translate(-50%, -50%) scale(0.95)';
+
+          requestAnimationFrame(() => {
+            overview.style.opacity = '1';
+            overview.style.transform = 'translate(-50%, -50%) scale(1)';
+          });
+
+          console.log('3D地球已收起');
+        }, 500);
+
+      } catch (error) {
+        console.error('收起3D地球时发生错误:', error);
+        showToast('收起3D地球失败', 'error');
+      }
+    }
 
     /**
      * WebGL可用性检测函数
@@ -2685,6 +3191,24 @@ body[data-theme="dark"] #servers-table td {
 
     // 设置事件监听器
     function setupEventListeners() {
+      // 绑定"查看3D地球"按钮事件
+      const expandButton = document.getElementById('expand-globe');
+      if (expandButton) {
+        expandButton.addEventListener('click', () => {
+          console.log('点击"查看3D地球"按钮');
+          expandGlobe();
+        });
+      }
+
+      // 绑定"收起"按钮事件
+      const collapseButton = document.getElementById('collapse-globe');
+      if (collapseButton) {
+        collapseButton.addEventListener('click', () => {
+          console.log('点击"收起地球"按钮');
+          collapseGlobe();
+        });
+      }
+
       // 切换视图
       document.getElementById('toggle-view').addEventListener('click', () => {
         document.getElementById('globe-container').style.display = 'none';
@@ -2923,6 +3447,9 @@ body[data-theme="dark"] #servers-table td {
         // 更新统计信息（传入是否过滤的标志和原始总数）
         updateStats(isFiltered, newServersData.length);
         
+        // 更新概览卡片
+        updateOverview();
+        
         // 更新列表视图
         renderListView();
         
@@ -2958,14 +3485,40 @@ body[data-theme="dark"] #servers-table td {
           .pointRadius(0.3)
           .pointLabel(d => \`
             <div style="background: rgba(0,0,0,0.85); padding: 10px 14px; border-radius: 8px; color: white; font-size: 13px; line-height: 1.6;">
-              <div style="font-weight: 600; margin-bottom: 6px; font-size: 14px;">\${d.country || '未知'}</div>
+              <div style="font-size: 16px; margin-bottom: 6px; font-weight: 600;">\${getCountryFlag(d.country)} <strong>@\${d.donatedByUsername}</strong></div>
+              <div style="color: #d1d1d6; margin-bottom: 4px;">\${d.country || '未知'}</div>
               <div style="color: #d1d1d6; margin-bottom: 4px;">\${d.ipLocation || '未知位置'}</div>
-              <div style="color: #d1d1d6; margin-bottom: 4px;">IP: \${d.ip}</div>
               <div style="color: \${d.status === 'active' ? '#4ade80' : '#ef4444'}; font-weight: 500;">
-                状态: \${d.status === 'active' ? '运行中' : '离线'}
+                \${d.status === 'active' ? '✅ 运行中' : '❌ 离线'}
               </div>
             </div>
           \`);
+
+        // 添加HTML标签显示
+        globe
+          .htmlElementsData(serversData)
+          .htmlLat(d => d.coords.lat)
+          .htmlLng(d => d.coords.lng)
+          .htmlAltitude(0.02)
+          .htmlElement(d => {
+            const el = document.createElement('div');
+            el.innerHTML = \`
+              <div style="
+                background: rgba(0, 0, 0, 0.7);
+                padding: 4px 8px;
+                border-radius: 4px;
+                color: white;
+                font-size: 12px;
+                white-space: nowrap;
+                pointer-events: none;
+                backdrop-filter: blur(4px);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+              ">
+                \${getCountryFlag(d.country)} @\${d.donatedByUsername}
+              </div>
+            \`;
+            return el;
+          });
 
         // 更新连接弧线
         globe
