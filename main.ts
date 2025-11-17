@@ -2860,10 +2860,31 @@ updateThemeBtn();
 
 async function ensureLogin(){
   try{
-    const res = await fetch('/api/user/info',{credentials:'same-origin',cache:'no-store'});
-    if(!res.ok){ location.href='/donate'; return; }
+    // 添加超时控制，防止请求卡住
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+    
+    const res = await fetch('/api/user/info',{
+      credentials:'same-origin',
+      cache:'no-store',
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if(!res.ok){ 
+      console.error('Login check failed: HTTP', res.status);
+      location.href='/donate'; 
+      return; 
+    }
+    
     const j=await res.json();
-    if(!j.success){ location.href='/donate'; return; }
+    if(!j.success){ 
+      console.error('Login check failed:', j.message);
+      location.href='/donate'; 
+      return; 
+    }
+    
     const u=j.data;
     const p='https://linux.do/u/'+encodeURIComponent(u.username);
     const infoEl = document.getElementById('user-info');
@@ -2872,7 +2893,16 @@ async function ensureLogin(){
     }
   }catch(err){
     console.error('Login check error:', err);
-    location.href='/donate';
+    // 只在非 abort 错误时重定向
+    if (err.name !== 'AbortError') {
+      location.href='/donate';
+    } else {
+      console.error('Login check timeout');
+      const box = document.getElementById('donations-list');
+      if (box) {
+        box.innerHTML = '<div class="text-red-400 text-sm py-8 text-center">登录检查超时，请刷新页面重试</div>';
+      }
+    }
   }
 }
 
