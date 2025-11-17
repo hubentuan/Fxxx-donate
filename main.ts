@@ -2967,8 +2967,6 @@ app.get('/donate/vps', c => {
 
 <div id="toast-root"></div>
 <script>
-updateThemeBtn();
-
 /* ==================== 错误HTML生成辅助函数 ==================== */
 
 /**
