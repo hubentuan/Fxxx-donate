@@ -72,12 +72,21 @@ async function getIPLocation(ip: string): Promise<string> {
   return '未知地区';
 }
 
-const isIPv4 = (ip: string) =>
-  /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && ip.split('.').every(p => +p >= 0 && +p <= 255);
-const isIPv6 = (ip: string) =>
-  /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})|:((:[0-9a-f]{1,4}){1,7}|:)|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/i.test(
-    ip.replace(/^\[|\]$/g, ''),
-  );
+const isIPv4 = (ip: string) => {
+  const trimmed = ip.trim();
+  if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(trimmed)) return false;
+  return trimmed.split('.').every(p => {
+    const num = parseInt(p, 10);
+    return num >= 0 && num <= 255;
+  });
+};
+
+const isIPv6 = (ip: string) => {
+  const trimmed = ip.trim().replace(/^\[|\]$/g, '');
+  // 简化的IPv6验证，支持完整格式和压缩格式
+  const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]+|::(ffff(:0{1,4})?:)?((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))$/;
+  return ipv6Regex.test(trimmed);
+};
 const isValidIP = (ip: string) => isIPv4(ip) || isIPv6(ip);
 
 async function getAllVPS(): Promise<VPSServer[]> {
@@ -1976,7 +1985,7 @@ app.get('/donate/vps', c => {
   <header class="mb-10 animate-fade-in">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
       <div class="space-y-3">
-        <h1 class="grad-title text-4xl md:text-5xl font-bold leading-tight">风萧萧公益机场 · VPS 投喂中心</h1>
+        <h1 class="grad-title-animated text-4xl md:text-5xl font-bold leading-tight">风萧萧公益机场 · VPS 投喂中心</h1>
         <p class="text-sm muted flex items-center gap-2">
           <span class="text-lg">📍</span>
           <span>提交新 VPS / 查看我的投喂记录</span>
@@ -2644,18 +2653,28 @@ ipInput.addEventListener('blur', function(){
   if(!ip) return;
 
   // IPv4 验证（与后端一致）
-  const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && ip.split('.').every(p => +p >= 0 && +p <= 255);
+  const isIPv4 = (ip) => {
+    if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) return false;
+    return ip.split('.').every(p => {
+      const num = parseInt(p, 10);
+      return num >= 0 && num <= 255;
+    });
+  };
 
-  // IPv6 验证（与后端完全一致）
-  const ipv6 = /^(([0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,7}:|([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}|([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}|([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}|([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}|([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}|[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})|:((:[0-9a-f]{1,4}){1,7}|:)|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/i.test(ip.replace(/^\[|\]$/g, ''));
+  // IPv6 验证（与后端一致）
+  const isIPv6 = (ip) => {
+    const trimmed = ip.replace(/^\[|\]$/g, '');
+    const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]+|::(ffff(:0{1,4})?:)?((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))$/;
+    return ipv6Regex.test(trimmed);
+  };
 
-  if(ipv4 || ipv6){
+  if(isIPv4(ip) || isIPv6(ip)){
     this.classList.remove('error');
     this.classList.add('success');
     setTimeout(()=>this.classList.remove('success'), 2000);
   } else {
     this.classList.add('error');
-    toast('IP 格式不正确','error');
+    toast('IP 格式不正确，请检查输入','error');
   }
 });
 
