@@ -1229,7 +1229,78 @@ app.post('/api/admin/verify-all', requireAdmin, async c => {
 /* ==================== /donate 榜单页 ==================== */
 app.get('/donate', c => {
   const head = commonHead('风萧萧公益机场 · VPS 投喂榜');
-  const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
+  const html = `<!doctype html><html lang="zh-CN"><head>${head}
+<script src="//unpkg.com/globe.gl"></script>
+<style>
+  /* 3D地球容器样式 */
+  #globe-container {
+    width: 100%;
+    height: 500px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+    transition: height 0.3s ease;
+  }
+  
+  /* 最小化状态 */
+  #globe-container.minimized {
+    height: 200px;
+  }
+  
+  /* 地球控制按钮样式 */
+  #globe-controls {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  /* 统计信息样式 */
+  #globe-stats {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.875rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  
+  /* 移动端响应式样式 */
+  @media (max-width: 768px) {
+    #globe-container {
+      height: 300px;
+    }
+    
+    #globe-container.minimized {
+      height: 150px;
+    }
+    
+    #globe-stats {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    #globe-controls {
+      width: 100%;
+      justify-content: stretch;
+    }
+    
+    #globe-controls button {
+      flex: 1;
+    }
+  }
+  
+  /* 小屏幕优化 */
+  @media (max-width: 480px) {
+    #globe-container {
+      height: 250px;
+      border-radius: 4px;
+    }
+    
+    #globe-container.minimized {
+      height: 120px;
+    }
+  }
+</style>
+</head>
 <body class="min-h-screen" data-theme="dark">
 <div class="max-w-6xl mx-auto px-6 py-8 md:py-12">
 
@@ -1269,14 +1340,49 @@ app.get('/donate', c => {
           <button onclick="gotoDonatePage()" class="btn-primary">
             <span class="text-lg">🧡</span> 我要投喂 VPS
           </button>
-          <button onclick="location.href='/donate/globe'" class="btn-primary">
-            <span class="text-lg">🌍</span> 查看3D地球
-          </button>
           <button id="theme-toggle" onclick="toggleTheme()">浅色模式</button>
         </div>
       </div>
     </div>
   </header>
+
+  <!-- 3D地球可视化区域 -->
+  <section id="globe-section" class="mb-8 animate-in">
+    <div class="panel border p-6">
+      <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">🌍</span>
+          <div>
+            <h2 class="text-2xl font-bold leading-tight">全球服务器分布</h2>
+            <p class="text-sm muted mt-1">实时展示全球VPS节点位置与连接</p>
+          </div>
+        </div>
+        <div id="globe-controls" class="flex gap-2 flex-wrap">
+          <button id="toggle-size" class="btn-secondary text-sm">最小化</button>
+          <button id="toggle-rotate" class="btn-secondary text-sm">暂停旋转</button>
+        </div>
+      </div>
+      
+      <!-- 地球容器 -->
+      <div id="globe-container" style="width: 100%; height: 500px; border-radius: 8px; overflow: hidden; background: #000;"></div>
+      
+      <!-- 统计信息 -->
+      <div id="globe-stats" class="mt-4 flex gap-6 text-sm flex-wrap">
+        <div class="flex items-center gap-2">
+          <span class="muted">总服务器:</span>
+          <span id="total-servers" class="font-bold">0</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="muted">活跃:</span>
+          <span id="active-servers" class="font-bold text-green-500">0</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="muted">连接数:</span>
+          <span id="total-connections" class="font-bold text-blue-500">0</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section class="mb-8">
     <div class="flex items-center gap-3 mb-6">
@@ -1313,6 +1419,356 @@ app.get('/donate', c => {
 updateThemeBtn();
 
 let allLeaderboardData = [];
+
+/**
+ * 地理编码函数：将位置字符串转换为经纬度坐标
+ * 实现多级匹配策略：直接匹配 -> 从后往前匹配（优先城市）-> 模糊匹配
+ * @param {string} location - 位置字符串，格式："国家, 地区, 城市" 或单个地名
+ * @returns {{lat: number, lng: number}|null} 坐标对象或null（无法匹配时）
+ */
+function geocode(location) {
+  // 城市坐标数据库（与服务端CITY_COORDS保持一致）
+  const CITY_COORDS = {
+    // 主要国家（按大洲分组）
+    // 亚洲
+    'China': { lat: 35.8617, lng: 104.1954 },
+    'Japan': { lat: 36.2048, lng: 138.2529 },
+    'South Korea': { lat: 35.9078, lng: 127.7669 },
+    'India': { lat: 20.5937, lng: 78.9629 },
+    'Singapore': { lat: 1.3521, lng: 103.8198 },
+    'Thailand': { lat: 15.8700, lng: 100.9925 },
+    'Vietnam': { lat: 14.0583, lng: 108.2772 },
+    'Malaysia': { lat: 4.2105, lng: 101.9758 },
+    'Indonesia': { lat: -0.7893, lng: 113.9213 },
+    'Philippines': { lat: 12.8797, lng: 121.7740 },
+    'Taiwan': { lat: 23.6978, lng: 120.9605 },
+    'Hong Kong': { lat: 22.3193, lng: 114.1694 },
+    'Macau': { lat: 22.1987, lng: 113.5439 },
+    
+    // 北美洲
+    'United States': { lat: 37.0902, lng: -95.7129 },
+    'Canada': { lat: 56.1304, lng: -106.3468 },
+    'Mexico': { lat: 23.6345, lng: -102.5528 },
+    
+    // 欧洲
+    'United Kingdom': { lat: 55.3781, lng: -3.4360 },
+    'Germany': { lat: 51.1657, lng: 10.4515 },
+    'France': { lat: 46.2276, lng: 2.2137 },
+    'Netherlands': { lat: 52.1326, lng: 5.2913 },
+    'Russia': { lat: 61.5240, lng: 105.3188 },
+    'Italy': { lat: 41.8719, lng: 12.5674 },
+    'Spain': { lat: 40.4637, lng: -3.7492 },
+    'Poland': { lat: 51.9194, lng: 19.1451 },
+    'Sweden': { lat: 60.1282, lng: 18.6435 },
+    'Norway': { lat: 60.4720, lng: 8.4689 },
+    'Finland': { lat: 61.9241, lng: 25.7482 },
+    'Switzerland': { lat: 46.8182, lng: 8.2275 },
+    'Austria': { lat: 47.5162, lng: 14.5501 },
+    'Belgium': { lat: 50.5039, lng: 4.4699 },
+    'Denmark': { lat: 56.2639, lng: 9.5018 },
+    'Ireland': { lat: 53.4129, lng: -8.2439 },
+    'Portugal': { lat: 39.3999, lng: -8.2245 },
+    'Czech Republic': { lat: 49.8175, lng: 15.4730 },
+    'Greece': { lat: 39.0742, lng: 21.8243 },
+    'Romania': { lat: 45.9432, lng: 24.9668 },
+    'Ukraine': { lat: 48.3794, lng: 31.1656 },
+    
+    // 大洋洲
+    'Australia': { lat: -25.2744, lng: 133.7751 },
+    'New Zealand': { lat: -40.9006, lng: 174.8860 },
+    
+    // 南美洲
+    'Brazil': { lat: -14.2350, lng: -51.9253 },
+    'Argentina': { lat: -38.4161, lng: -63.6167 },
+    'Chile': { lat: -35.6751, lng: -71.5430 },
+    
+    // 非洲
+    'South Africa': { lat: -30.5595, lng: 22.9375 },
+    'Egypt': { lat: 26.8206, lng: 30.8025 },
+    
+    // 中东
+    'Turkey': { lat: 38.9637, lng: 35.2433 },
+    'Israel': { lat: 31.0461, lng: 34.8516 },
+    'United Arab Emirates': { lat: 23.4241, lng: 53.8478 },
+    'Saudi Arabia': { lat: 23.8859, lng: 45.0792 },
+    
+    // 主要城市
+    // 中国城市
+    'Beijing': { lat: 39.9042, lng: 116.4074 },
+    'Shanghai': { lat: 31.2304, lng: 121.4737 },
+    'Guangzhou': { lat: 23.1291, lng: 113.2644 },
+    'Shenzhen': { lat: 22.5431, lng: 114.0579 },
+    'Chengdu': { lat: 30.5728, lng: 104.0668 },
+    'Hangzhou': { lat: 30.2741, lng: 120.1551 },
+    'Chongqing': { lat: 29.4316, lng: 106.9123 },
+    'Wuhan': { lat: 30.5928, lng: 114.3055 },
+    'Xi\\'an': { lat: 34.3416, lng: 108.9398 },
+    'Nanjing': { lat: 32.0603, lng: 118.7969 },
+    
+    // 美国城市
+    'New York': { lat: 40.7128, lng: -74.0060 },
+    'Los Angeles': { lat: 34.0522, lng: -118.2437 },
+    'Chicago': { lat: 41.8781, lng: -87.6298 },
+    'San Francisco': { lat: 37.7749, lng: -122.4194 },
+    'Seattle': { lat: 47.6062, lng: -122.3321 },
+    'Miami': { lat: 25.7617, lng: -80.1918 },
+    'Dallas': { lat: 32.7767, lng: -96.7970 },
+    'Boston': { lat: 42.3601, lng: -71.0589 },
+    'Washington': { lat: 38.9072, lng: -77.0369 },
+    'Atlanta': { lat: 33.7490, lng: -84.3880 },
+    
+    // 欧洲城市
+    'London': { lat: 51.5074, lng: -0.1278 },
+    'Paris': { lat: 48.8566, lng: 2.3522 },
+    'Berlin': { lat: 52.5200, lng: 13.4050 },
+    'Amsterdam': { lat: 52.3676, lng: 4.9041 },
+    'Frankfurt': { lat: 50.1109, lng: 8.6821 },
+    'Madrid': { lat: 40.4168, lng: -3.7038 },
+    'Rome': { lat: 41.9028, lng: 12.4964 },
+    'Milan': { lat: 45.4642, lng: 9.1900 },
+    'Munich': { lat: 48.1351, lng: 11.5820 },
+    'Stockholm': { lat: 59.3293, lng: 18.0686 },
+    'Copenhagen': { lat: 55.6761, lng: 12.5683 },
+    'Vienna': { lat: 48.2082, lng: 16.3738 },
+    'Zurich': { lat: 47.3769, lng: 8.5417 },
+    'Brussels': { lat: 50.8503, lng: 4.3517 },
+    'Dublin': { lat: 53.3498, lng: -6.2603 },
+    'Moscow': { lat: 55.7558, lng: 37.6173 },
+    'Warsaw': { lat: 52.2297, lng: 21.0122 },
+    
+    // 亚洲其他主要城市
+    'Tokyo': { lat: 35.6762, lng: 139.6503 },
+    'Osaka': { lat: 34.6937, lng: 135.5023 },
+    'Seoul': { lat: 37.5665, lng: 126.9780 },
+    'Mumbai': { lat: 19.0760, lng: 72.8777 },
+    'Delhi': { lat: 28.7041, lng: 77.1025 },
+    'Bangkok': { lat: 13.7563, lng: 100.5018 },
+    'Kuala Lumpur': { lat: 3.1390, lng: 101.6869 },
+    'Jakarta': { lat: -6.2088, lng: 106.8456 },
+    'Manila': { lat: 14.5995, lng: 120.9842 },
+    'Taipei': { lat: 25.0330, lng: 121.5654 },
+    'Dubai': { lat: 25.2048, lng: 55.2708 },
+    'Tel Aviv': { lat: 32.0853, lng: 34.7818 },
+    'Istanbul': { lat: 41.0082, lng: 28.9784 },
+    
+    // 加拿大城市
+    'Toronto': { lat: 43.6532, lng: -79.3832 },
+    'Vancouver': { lat: 49.2827, lng: -123.1207 },
+    'Montreal': { lat: 45.5017, lng: -73.5673 },
+    
+    // 澳洲城市
+    'Sydney': { lat: -33.8688, lng: 151.2093 },
+    'Melbourne': { lat: -37.8136, lng: 144.9631 },
+    'Brisbane': { lat: -27.4698, lng: 153.0251 },
+    'Perth': { lat: -31.9505, lng: 115.8605 },
+    'Auckland': { lat: -36.8485, lng: 174.7633 }
+  };
+
+  // 第一级：检查输入是否为空或无效
+  if (!location || typeof location !== 'string') {
+    console.warn('地理编码失败: 位置信息为空或无效类型', location);
+    return null;
+  }
+
+  // 清理输入：去除首尾空格
+  const cleanLocation = location.trim();
+  if (!cleanLocation) {
+    console.warn('地理编码失败: 位置信息为空字符串');
+    return null;
+  }
+
+  // 第二级：直接匹配完整字符串
+  if (CITY_COORDS[cleanLocation]) {
+    console.log('直接匹配成功:', cleanLocation);
+    return CITY_COORDS[cleanLocation];
+  }
+
+  // 第三级：解析逗号分隔的位置字符串（格式："国家, 地区, 城市"）
+  const parts = cleanLocation.split(',').map(s => s.trim()).filter(Boolean);
+
+  // 第四级：从后往前匹配（优先城市 -> 地区 -> 国家）
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i];
+    if (CITY_COORDS[part]) {
+      console.log('部分匹配成功 (优先城市):', part, '来自', cleanLocation);
+      return CITY_COORDS[part];
+    }
+  }
+
+  // 第五级：模糊匹配（逐部分匹配，从后往前）
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i];
+    const partLower = part.toLowerCase();
+    
+    for (const key in CITY_COORDS) {
+      const keyLower = key.toLowerCase();
+      if (keyLower.includes(partLower) || partLower.includes(keyLower)) {
+        console.log('模糊匹配成功:', key, '匹配部分', part, '来自', cleanLocation);
+        return CITY_COORDS[key];
+      }
+    }
+  }
+
+  // 第六级：尝试匹配整个字符串（模糊匹配）
+  const cleanLower = cleanLocation.toLowerCase();
+  for (const key in CITY_COORDS) {
+    const keyLower = key.toLowerCase();
+    if (cleanLower.includes(keyLower) || keyLower.includes(cleanLower)) {
+      console.log('整体模糊匹配成功:', key, '来自', cleanLocation);
+      return CITY_COORDS[key];
+    }
+  }
+
+  // 无法匹配时返回null并记录警告
+  console.warn('无法为位置找到坐标:', cleanLocation);
+  return null;
+}
+
+/**
+ * 为同城市的多个服务器添加微小偏移，避免节点重叠
+ * @param {{lat: number, lng: number}|null} coords - 原始坐标
+ * @param {number} index - 服务器索引（用于生成不同的偏移）
+ * @returns {{lat: number, lng: number}|null} 添加偏移后的坐标或null
+ */
+function addJitter(coords, index) {
+  if (!coords) return null;
+  
+  // 偏移量：约0.5度（大约55公里）
+  const jitterAmount = 0.5;
+  
+  // 使用索引生成伪随机偏移，确保相同索引产生相同偏移
+  const seed = index || 0;
+  const pseudoRandom1 = (Math.sin(seed * 12.9898) * 43758.5453) % 1;
+  const pseudoRandom2 = (Math.cos(seed * 78.233) * 43758.5453) % 1;
+  
+  return {
+    lat: coords.lat + (pseudoRandom1 - 0.5) * jitterAmount,
+    lng: coords.lng + (pseudoRandom2 - 0.5) * jitterAmount
+  };
+}
+
+/**
+ * 从国家字符串中提取国旗emoji
+ * @param {string} countryString - 国家字符串，格式如 "🇨🇳 中国大陆"
+ * @returns {string} 国旗emoji，如果没有则返回默认的🌍
+ */
+function getCountryFlag(countryString) {
+  if (!countryString || typeof countryString !== 'string') {
+    return '🌍';
+  }
+  
+  // 使用正则表达式匹配Unicode国旗字符（区域指示符号范围：U+1F1E6 到 U+1F1FF）
+  // 国旗由两个连续的区域指示符号字符组成
+  const flagMatch = countryString.match(/[\u{1F1E6}-\u{1F1FF}]{2}/u);
+  
+  // 如果找到国旗emoji，返回它；否则返回默认的地球emoji
+  return flagMatch ? flagMatch[0] : '🌍';
+}
+
+/**
+ * 计算全连接网络的连接弧线数据
+ * 为每个服务器创建到所有其他服务器的连接（全连接拓扑）
+ * @param {Array} servers - 服务器数组，每个服务器需要包含 id 和 coords 属性
+ * @returns {Array} 连接弧线数据数组，每个连接包含起点和终点的经纬度坐标
+ */
+function calculateConnections(servers) {
+  const connections = [];
+  
+  // 过滤掉没有有效坐标的服务器
+  const validServers = servers.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
+  
+  // 连接密度控制：当服务器数量超过20个时，使用最近邻算法而非全连接
+  // 这样可以显著减少连接数量，提升性能
+  const useFullMesh = validServers.length <= 20;
+  
+  if (useFullMesh) {
+    // 全连接模式：为每个服务器创建到所有其他服务器的连接
+    for (let i = 0; i < validServers.length; i++) {
+      const server = validServers[i];
+      
+      // 跳过坐标为(0,0)的服务器
+      if (!server.coords || (server.coords.lat === 0 && server.coords.lng === 0)) {
+        continue;
+      }
+      
+      // 连接到所有其他服务器
+      for (let j = i + 1; j < validServers.length; j++) {
+        const target = validServers[j];
+        
+        // 跳过坐标为(0,0)的服务器
+        if (!target.coords || (target.coords.lat === 0 && target.coords.lng === 0)) {
+          continue;
+        }
+        
+        // 实现连接去重逻辑（i >= j，避免双向重复）
+        // 由于我们使用 j = i + 1，所以自然避免了重复
+        connections.push({
+          startLat: server.coords.lat,
+          startLng: server.coords.lng,
+          endLat: target.coords.lat,
+          endLng: target.coords.lng,
+          color: '#4a9eff'
+        });
+      }
+    }
+    
+    console.log('Full mesh mode:', validServers.length, 'servers,', connections.length, 'connections');
+  } else {
+    // 最近邻模式：每个服务器只连接最近的几个服务器
+    const maxConnectionsPerServer = validServers.length > 50 ? 3 : 5;
+    
+    validServers.forEach(server => {
+      // 跳过坐标为(0,0)的服务器
+      if (!server.coords || (server.coords.lat === 0 && server.coords.lng === 0)) {
+        return;
+      }
+      
+      // 计算到其他所有服务器的距离
+      const distances = validServers
+        .filter(s => s.id !== server.id && s.coords && !(s.coords.lat === 0 && s.coords.lng === 0))
+        .map(s => ({
+          server: s,
+          distance: haversineDistance(server.coords, s.coords)
+        }))
+        .sort((a, b) => a.distance - b.distance);
+      
+      // 只连接最近的N个服务器
+      distances.slice(0, maxConnectionsPerServer).forEach(({ server: target }) => {
+        connections.push({
+          startLat: server.coords.lat,
+          startLng: server.coords.lng,
+          endLat: target.coords.lat,
+          endLng: target.coords.lng,
+          color: '#4a9eff'
+        });
+      });
+    });
+    
+    // 去重逻辑：避免双向重复连接
+    const seen = new Set();
+    const uniqueConnections = connections.filter(conn => {
+      const key = [
+        conn.startLat,
+        conn.startLng,
+        conn.endLat,
+        conn.endLng
+      ].sort().join(',');
+      
+      if (seen.has(key)) {
+        return false;
+      }
+      
+      seen.add(key);
+      return true;
+    });
+    
+    console.log('Nearest neighbor mode:', validServers.length, 'servers, max', maxConnectionsPerServer, 'connections per server,', uniqueConnections.length, 'total connections');
+    
+    return uniqueConnections;
+  }
+  
+  return connections;
+}
 
 async function gotoDonatePage(){
   try{
@@ -1502,6 +1958,381 @@ async function loadLeaderboard(){
 }
 
 loadLeaderboard();
+
+// ==================== Globe.gl 初始化和渲染 ====================
+
+let globeInstance = null;
+let serversData = [];
+let connectionsData = [];
+let updateInterval = null;
+
+/**
+ * 检测WebGL是否可用
+ * @returns {boolean} WebGL是否可用
+ */
+function isWebGLAvailable() {
+  try {
+    const canvas = document.createElement('canvas');
+    return !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+  } catch(e) {
+    return false;
+  }
+}
+
+/**
+ * 获取服务器数据并添加坐标信息
+ * @returns {Promise<Array>} 包含坐标信息的服务器数组
+ */
+async function fetchServers() {
+  try {
+    const res = await fetch('/api/admin/vps', {
+      credentials: 'same-origin',
+      cache: 'no-store'
+    });
+    
+    if (!res.ok) {
+      console.error('获取服务器数据失败: HTTP', res.status);
+      return serversData; // 返回缓存数据
+    }
+    
+    const data = await res.json();
+    if (!data.success || !data.data) {
+      console.error('服务器数据格式错误');
+      return serversData;
+    }
+    
+    // 为每个服务器添加坐标信息
+    return data.data.map((server, index) => {
+      const location = server.ipLocation || server.country;
+      let coords = geocode(location);
+      
+      // 如果有多个服务器在同一位置，添加微小偏移避免重叠
+      if (coords) {
+        coords = addJitter(coords, index);
+      }
+      
+      return {
+        ...server,
+        coords: coords
+      };
+    });
+  } catch (error) {
+    console.error('获取服务器数据时发生错误:', error);
+    return serversData; // 返回缓存数据
+  }
+}
+
+/**
+ * 更新统计信息显示
+ * @param {Array} servers - 服务器数组
+ * @param {Array} connections - 连接数组
+ */
+function updateStats(servers, connections) {
+  const total = servers.length;
+  const active = servers.filter(s => s.status === 'active').length;
+  
+  document.getElementById('total-servers').textContent = total;
+  document.getElementById('active-servers').textContent = active;
+  document.getElementById('total-connections').textContent = connections.length;
+}
+
+/**
+ * 初始化Globe.gl实例
+ * 配置地球纹理、节点、弧线和交互控制
+ */
+function initGlobe() {
+  // 检查WebGL支持
+  if (!isWebGLAvailable()) {
+    const container = document.getElementById('globe-container');
+    container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #fff; text-align: center; padding: 20px;"><div><div style="font-size: 48px; margin-bottom: 16px;">⚠️</div><div style="font-size: 18px; margin-bottom: 8px;">您的浏览器不支持WebGL</div><div style="font-size: 14px; opacity: 0.7;">请使用现代浏览器（Chrome、Firefox、Safari、Edge）访问</div></div></div>';
+    return;
+  }
+  
+  // 过滤掉没有有效坐标的服务器
+  const validServers = serversData.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
+  
+  // 创建Globe实例
+  globeInstance = Globe()
+    (document.getElementById('globe-container'))
+    
+    // ===== 地球纹理配置 =====
+    .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+    .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+    
+    // ===== 背景颜色 =====
+    .backgroundColor('#000000')
+    
+    // ===== 服务器节点配置 =====
+    .pointsData(validServers)
+    .pointLat(d => d.coords.lat)
+    .pointLng(d => d.coords.lng)
+    .pointColor(d => {
+      // 根据服务器状态设置节点颜色
+      if (d.status === 'active') return '#4ade80';  // 绿色 - 活跃
+      if (d.status === 'failed') return '#ef4444';  // 红色 - 失败
+      return '#94a3b8';  // 灰色 - 未启用
+    })
+    .pointAltitude(0.01)  // 节点高度
+    .pointRadius(0.3)     // 节点大小
+    
+    // ===== 节点工具提示 =====
+    .pointLabel(d => {
+      const flag = getCountryFlag(d.country);
+      const statusEmoji = d.status === 'active' ? '✅' : '❌';
+      const statusText = d.status === 'active' ? '运行中' : '离线';
+      
+      return \`
+        <div style="
+          background: rgba(0,0,0,0.9);
+          padding: 12px 16px;
+          border-radius: 8px;
+          color: white;
+          font-family: system-ui, -apple-system, sans-serif;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(255,255,255,0.1);
+        ">
+          <div style="font-size: 18px; margin-bottom: 8px; font-weight: 600;">
+            \${flag} @\${d.donatedByUsername}
+          </div>
+          <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">
+            📍 \${d.country}
+          </div>
+          <div style="font-size: 13px; opacity: 0.8; margin-bottom: 8px;">
+            \${d.ipLocation || '未知位置'}
+          </div>
+          <div style="font-size: 14px; font-weight: 500;">
+            状态: \${statusEmoji} \${statusText}
+          </div>
+        </div>
+      \`;
+    })
+    
+    // ===== HTML标签显示（节点上方的标签）=====
+    .htmlElementsData(validServers)
+    .htmlLat(d => d.coords.lat)
+    .htmlLng(d => d.coords.lng)
+    .htmlAltitude(0.02)
+    .htmlElement(d => {
+      const el = document.createElement('div');
+      const flag = getCountryFlag(d.country);
+      el.innerHTML = \`
+        <div style="
+          background: rgba(0,0,0,0.7);
+          padding: 4px 10px;
+          border-radius: 6px;
+          color: white;
+          font-size: 12px;
+          white-space: nowrap;
+          pointer-events: none;
+          backdrop-filter: blur(4px);
+          border: 1px solid rgba(255,255,255,0.1);
+          font-family: system-ui, -apple-system, sans-serif;
+          font-weight: 500;
+        ">
+          \${flag} @\${d.donatedByUsername}
+        </div>
+      \`;
+      return el;
+    })
+    
+    // ===== 连接弧线配置 =====
+    .arcsData(connectionsData)
+    .arcStartLat(d => d.startLat)
+    .arcStartLng(d => d.startLng)
+    .arcEndLat(d => d.endLat)
+    .arcEndLng(d => d.endLng)
+    .arcColor(() => ['rgba(74, 158, 255, 0.5)', 'rgba(96, 165, 250, 0.5)'])  // 蓝色系渐变，半透明
+    .arcStroke(0.5)  // 弧线粗细
+    .arcAltitude(0.1)  // 弧线高度，避免与地球表面重叠
+    .arcDashLength(0.4)  // 流动动画：虚线长度
+    .arcDashGap(0.2)     // 流动动画：虚线间隙
+    .arcDashAnimateTime(2000)  // 流动动画：动画时间（毫秒）
+    .arcDashInitialGap(() => Math.random())  // 随机初始间隙，使动画更自然
+    
+    // ===== 交互控制 =====
+    .enablePointerInteraction(true);  // 启用鼠标交互
+  
+  // ===== 自动旋转配置 =====
+  // 配置OrbitControls以支持鼠标拖拽旋转、滚轮缩放和触摸手势
+  if (globeInstance && globeInstance.controls) {
+    const controls = globeInstance.controls();
+    
+    // 启用自动旋转
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.5;
+    
+    // 启用鼠标拖拽旋转（默认已启用，显式设置以确保）
+    controls.enableRotate = true;
+    
+    // 启用滚轮缩放（默认已启用，显式设置以确保）
+    controls.enableZoom = true;
+    
+    // 设置缩放范围，防止过度缩放
+    controls.minDistance = 101;  // 最小距离（不能太近）
+    controls.maxDistance = 500;  // 最大距离（不能太远）
+    
+    // 禁用平移（保持地球居中）
+    controls.enablePan = false;
+  }
+  
+  // 设置容器宽度和高度自适应
+  const container = document.getElementById('globe-container');
+  if (container && globeInstance) {
+    globeInstance.width(container.clientWidth);
+    globeInstance.height(container.clientHeight);
+  }
+  
+  console.log('Globe.gl 初始化完成');
+  console.log('- 服务器节点数:', validServers.length);
+  console.log('- 连接弧线数:', connectionsData.length);
+}
+
+/**
+ * 更新Globe数据
+ */
+function updateGlobeData() {
+  if (!globeInstance) return;
+  
+  // 过滤掉没有有效坐标的服务器
+  const validServers = serversData.filter(s => s.coords && s.coords.lat !== null && s.coords.lng !== null);
+  
+  // 更新节点数据
+  globeInstance
+    .pointsData(validServers)
+    .htmlElementsData(validServers);
+  
+  // 更新弧线数据
+  globeInstance.arcsData(connectionsData);
+  
+  // 更新统计信息
+  updateStats(serversData, connectionsData);
+}
+
+/**
+ * 数据更新逻辑：获取最新服务器数据并更新Globe
+ */
+async function updateData() {
+  serversData = await fetchServers();
+  connectionsData = calculateConnections(serversData);
+  
+  if (globeInstance) {
+    updateGlobeData();
+  }
+  
+  updateStats(serversData, connectionsData);
+}
+
+/**
+ * 最小化/最大化控制
+ */
+function toggleSize() {
+  const container = document.getElementById('globe-container');
+  const button = document.getElementById('toggle-size');
+  
+  if (!container || !button) return;
+  
+  if (container.classList.contains('minimized')) {
+    container.classList.remove('minimized');
+    button.textContent = '最小化';
+  } else {
+    container.classList.add('minimized');
+    button.textContent = '最大化';
+  }
+  
+  // 调整Globe尺寸
+  if (globeInstance) {
+    setTimeout(() => {
+      globeInstance.width(container.clientWidth);
+      globeInstance.height(container.clientHeight);
+    }, 300); // 等待CSS过渡完成
+  }
+}
+
+/**
+ * 旋转控制
+ */
+function toggleRotate() {
+  const button = document.getElementById('toggle-rotate');
+  
+  if (!globeInstance || !globeInstance.controls || !button) return;
+  
+  const controls = globeInstance.controls();
+  controls.autoRotate = !controls.autoRotate;
+  
+  button.textContent = controls.autoRotate ? '暂停旋转' : '继续旋转';
+}
+
+/**
+ * 窗口resize处理
+ */
+function handleResize() {
+  if (!globeInstance) return;
+  
+  const container = document.getElementById('globe-container');
+  if (container) {
+    globeInstance.width(container.clientWidth);
+    globeInstance.height(container.clientHeight);
+  }
+}
+
+/**
+ * 页面隐藏时暂停，显示时恢复
+ */
+function handleVisibilityChange() {
+  if (document.hidden) {
+    // 页面隐藏时停止自动旋转和轮询
+    if (globeInstance && globeInstance.controls) {
+      globeInstance.controls().autoRotate = false;
+    }
+    if (updateInterval) {
+      clearInterval(updateInterval);
+      updateInterval = null;
+    }
+  } else {
+    // 页面显示时恢复
+    if (globeInstance && globeInstance.controls) {
+      const button = document.getElementById('toggle-rotate');
+      const shouldRotate = !button || button.textContent === '暂停旋转';
+      globeInstance.controls().autoRotate = shouldRotate;
+    }
+    if (!updateInterval) {
+      updateInterval = setInterval(updateData, 10000);
+    }
+  }
+}
+
+// ===== 初始化Globe =====
+(async function() {
+  // 初始加载数据
+  await updateData();
+  
+  // 初始化Globe
+  initGlobe();
+  
+  // 绑定控制按钮事件
+  const toggleSizeBtn = document.getElementById('toggle-size');
+  const toggleRotateBtn = document.getElementById('toggle-rotate');
+  
+  if (toggleSizeBtn) {
+    toggleSizeBtn.addEventListener('click', toggleSize);
+  }
+  
+  if (toggleRotateBtn) {
+    toggleRotateBtn.addEventListener('click', toggleRotate);
+  }
+  
+  // 绑定窗口resize事件
+  window.addEventListener('resize', handleResize);
+  
+  // 绑定页面可见性变化事件
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  
+  // 启动数据轮询（10秒间隔）
+  updateInterval = setInterval(updateData, 10000);
+  
+  console.log('3D地球可视化已启动');
+})();
 </script>
 </body></html>`;
   return c.html(html);
@@ -2195,8 +3026,10 @@ document.querySelector('input[name="port"]').addEventListener('blur', function()
 });
 
 /* ==================== /donate/globe 3D地球可视化 ==================== */
+// 重定向到 /donate 页面，因为3D地球已经直接嵌入在榜单页面中
 app.get('/donate/globe', c => {
-  const head = commonHead('风萧萧公益机场 · 全球服务器分布');
+  return c.redirect('/donate');
+});
   const html = `<!doctype html><html lang="zh-CN"><head>${head}
 <style>
 /* 3D地球页面专用样式 */
@@ -2273,111 +3106,7 @@ body[data-theme="dark"] #stats span {
   color: #0A84FF;
 }
 
-#list-view {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg,
-    #f0e6ff 0%,
-    #e9d5ff 20%,
-    #ddd6fe 40%,
-    #c4b5fd 60%,
-    #e9d5ff 80%,
-    #f0e6ff 100%
-  );
-  background-size: 400% 400%;
-  animation: gradientShift 15s ease infinite;
-  overflow-y: auto;
-  padding: 20px;
-  z-index: 99;
-}
 
-body[data-theme="dark"] #list-view {
-  background: linear-gradient(135deg,
-    #1a0a2e 0%,
-    #16213e 25%,
-    #0f3460 50%,
-    #1a1a2e 75%,
-    #0a0e27 100%
-  );
-  background-size: 400% 400%;
-  animation: gradientShift 15s ease infinite;
-}
-
-#list-view .max-w-6xl {
-  max-width: 72rem;
-  margin: 0 auto;
-}
-
-#servers-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-#servers-table thead {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 12px 12px 0 0;
-}
-
-body[data-theme="dark"] #servers-table thead {
-  background: rgba(28, 28, 30, 0.8);
-  border-color: rgba(56, 56, 58, 0.6);
-}
-
-#servers-table th {
-  padding: 16px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 14px;
-  color: #1d1d1f;
-}
-
-body[data-theme="dark"] #servers-table th {
-  color: #f5f5f7;
-}
-
-#servers-table tbody tr {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-top: none;
-  transition: all 0.2s ease;
-}
-
-body[data-theme="dark"] #servers-table tbody tr {
-  background: rgba(28, 28, 30, 0.8);
-  border-color: rgba(56, 56, 58, 0.6);
-}
-
-#servers-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.95);
-  transform: translateX(4px);
-}
-
-body[data-theme="dark"] #servers-table tbody tr:hover {
-  background: rgba(44, 44, 46, 0.9);
-}
-
-#servers-table tbody tr:last-child {
-  border-radius: 0 0 12px 12px;
-}
-
-#servers-table td {
-  padding: 14px 16px;
-  font-size: 13px;
-  color: #1d1d1f;
-}
-
-body[data-theme="dark"] #servers-table td {
-  color: #f5f5f7;
-}
 
 /* 响应式布局 */
 @media (max-width: 768px) {
@@ -2404,18 +3133,7 @@ body[data-theme="dark"] #servers-table td {
     margin-bottom: 5px;
   }
 
-  #list-view {
-    padding: 15px;
-  }
 
-  #servers-table {
-    font-size: 12px;
-  }
-
-  #servers-table th,
-  #servers-table td {
-    padding: 10px 8px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -2444,23 +3162,7 @@ body[data-theme="dark"] #servers-table td {
     margin-bottom: 4px;
   }
 
-  #list-view {
-    padding: 10px;
-  }
 
-  #servers-table {
-    font-size: 11px;
-  }
-
-  #servers-table th,
-  #servers-table td {
-    padding: 8px 6px;
-    font-size: 11px;
-  }
-
-  #servers-table th {
-    font-size: 12px;
-  }
 }
 
 /* 超小屏幕优化 (320px) */
@@ -2495,18 +3197,7 @@ body[data-theme="dark"] #servers-table td {
     font-size: 10px;
   }
 
-  #list-view {
-    padding: 8px;
-  }
 
-  #list-view .max-w-6xl {
-    padding: 0;
-  }
-
-  #list-view h2 {
-    font-size: 18px;
-    margin-bottom: 12px;
-  }
 
   #servers-table {
     font-size: 10px;
@@ -2785,7 +3476,6 @@ body[data-theme="dark"] #overview-flags {
   <!-- 控制面板 (默认隐藏) -->
   <div id="controls" style="display:none">
     <button id="collapse-globe" class="btn-primary">收起地球</button>
-    <button id="toggle-view" class="btn-secondary">切换列表视图</button>
     <button id="toggle-rotate" class="btn-secondary">暂停旋转</button>
     <button id="back-to-donate" class="btn-secondary" onclick="location.href='/donate'">返回榜单</button>
     
@@ -2801,38 +3491,6 @@ body[data-theme="dark"] #overview-flags {
       <div>
         <span class="muted">连接数:</span>
         <span id="total-connections">0</span>
-      </div>
-    </div>
-  </div>
-  
-  <!-- 列表视图 -->
-  <div id="list-view" style="display:none">
-    <div class="max-w-6xl">
-      <div class="mb-6 flex items-center justify-between">
-        <h2 class="text-2xl font-bold grad-title-animated">服务器列表</h2>
-        <button id="back-to-globe" class="btn-primary">返回3D地球</button>
-      </div>
-      
-      <div class="panel border rounded-xl overflow-hidden">
-        <table id="servers-table">
-          <thead>
-            <tr>
-              <th>IP地址</th>
-              <th>位置</th>
-              <th>国家</th>
-              <th>流量</th>
-              <th>配置</th>
-              <th>到期时间</th>
-              <th>状态</th>
-              <th>投喂者</th>
-            </tr>
-          </thead>
-          <tbody id="servers-table-body">
-            <tr>
-              <td colspan="8" class="text-center muted py-8">加载中...</td>
-            </tr>
-          </tbody>
-        </table>
       </div>
     </div>
   </div>
@@ -3162,17 +3820,15 @@ body[data-theme="dark"] #overview-flags {
                 3D地球可视化需要WebGL支持。<br>
                 请使用现代浏览器（Chrome、Firefox、Safari、Edge）或启用WebGL。
               </p>
-              <button onclick="document.getElementById('toggle-view').click()" style="background: #007AFF; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                查看列表视图
+              <button onclick="location.href='/donate'" style="background: #007AFF; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                返回榜单页面
               </button>
             </div>
           </div>
         \`;
         
-        // 自动切换到列表视图
-        setTimeout(() => {
-          document.getElementById('toggle-view').click();
-        }, 3000);
+        // WebGL不可用时，建议用户返回榜单页面查看服务器列表
+        console.warn('WebGL不可用，建议用户返回榜单页面');
         
         // 仍然获取数据以显示列表
         fetchAndUpdateData();
@@ -3209,18 +3865,7 @@ body[data-theme="dark"] #overview-flags {
         });
       }
 
-      // 切换视图
-      document.getElementById('toggle-view').addEventListener('click', () => {
-        document.getElementById('globe-container').style.display = 'none';
-        document.getElementById('controls').style.display = 'none';
-        document.getElementById('list-view').style.display = 'block';
-      });
 
-      document.getElementById('back-to-globe').addEventListener('click', () => {
-        document.getElementById('list-view').style.display = 'none';
-        document.getElementById('globe-container').style.display = 'block';
-        document.getElementById('controls').style.display = 'block';
-      });
 
       // 切换旋转
       document.getElementById('toggle-rotate').addEventListener('click', () => {
@@ -3301,10 +3946,26 @@ body[data-theme="dark"] #overview-flags {
         // 启用交互
         globe.enablePointerInteraction(true);
 
-        // 设置自动旋转
+        // 设置自动旋转和交互控制
         if (globe.controls()) {
-          globe.controls().autoRotate = true;
-          globe.controls().autoRotateSpeed = 0.5;
+          const controls = globe.controls();
+          
+          // 启用自动旋转
+          controls.autoRotate = true;
+          controls.autoRotateSpeed = 0.5;
+          
+          // 启用鼠标拖拽旋转（默认已启用，显式设置以确保）
+          controls.enableRotate = true;
+          
+          // 启用滚轮缩放（默认已启用，显式设置以确保）
+          controls.enableZoom = true;
+          
+          // 设置缩放范围，防止过度缩放
+          controls.minDistance = 101;  // 最小距离（不能太近）
+          controls.maxDistance = 500;  // 最大距离（不能太远）
+          
+          // 禁用平移（保持地球居中）
+          controls.enablePan = false;
         }
 
         console.log('Globe initialized successfully');
@@ -3450,8 +4111,7 @@ body[data-theme="dark"] #overview-flags {
         // 更新概览卡片
         updateOverview();
         
-        // 更新列表视图
-        renderListView();
+
         
       } catch (error) {
         console.error('更新数据失败:', error);
@@ -3471,9 +4131,17 @@ body[data-theme="dark"] #overview-flags {
       if (!globe) return;
 
       try {
+        // 过滤掉没有有效坐标的服务器（性能优化：避免渲染无效节点）
+        const validServers = serversData.filter(s => 
+          s.coords && 
+          s.coords.lat !== null && 
+          s.coords.lng !== null &&
+          !(s.coords.lat === 0 && s.coords.lng === 0)
+        );
+        
         // 更新服务器节点
         globe
-          .pointsData(serversData)
+          .pointsData(validServers)
           .pointLat(d => d.coords.lat)
           .pointLng(d => d.coords.lng)
           .pointColor(d => {
@@ -3496,7 +4164,7 @@ body[data-theme="dark"] #overview-flags {
 
         // 添加HTML标签显示
         globe
-          .htmlElementsData(serversData)
+          .htmlElementsData(validServers)
           .htmlLat(d => d.coords.lat)
           .htmlLng(d => d.coords.lng)
           .htmlAltitude(0.02)
@@ -3527,11 +4195,13 @@ body[data-theme="dark"] #overview-flags {
           .arcStartLng(d => d.startLng)
           .arcEndLat(d => d.endLat)
           .arcEndLng(d => d.endLng)
-          .arcColor(() => ['#4a9eff', '#60a5fa'])
+          .arcColor(() => ['rgba(74, 158, 255, 0.5)', 'rgba(96, 165, 250, 0.5)'])  // 蓝色系渐变，半透明
           .arcStroke(0.5)
+          .arcAltitude(0.1)  // 弧线高度，避免与地球表面重叠
           .arcDashLength(0.4)
           .arcDashGap(0.2)
-          .arcDashAnimateTime(2000);
+          .arcDashAnimateTime(2000)
+          .arcDashInitialGap(() => Math.random());  // 随机初始间隙，使动画更自然
 
         console.log(\`Updated globe with \${serversData.length} servers and \${connectionsData.length} connections\`);
       } catch (error) {
@@ -3569,55 +4239,7 @@ body[data-theme="dark"] #overview-flags {
       }
     }
 
-    /**
-     * 渲染列表视图
-     * 创建renderListView函数
-     * 根据serversData生成表格行
-     * 根据状态显示不同的徽章样式
-     */
-    function renderListView() {
-      const tbody = document.getElementById('servers-table-body');
-      
-      if (serversData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center muted py-8">暂无服务器数据</td></tr>';
-        return;
-      }
 
-      // 根据状态生成徽章样式
-      const getStatusBadge = (status) => {
-        if (status === 'active') {
-          return '<span class="badge-ok">运行中</span>';
-        } else if (status === 'failed') {
-          return '<span class="badge-fail">失败</span>';
-        } else {
-          return '<span class="badge-idle">未启用</span>';
-        }
-      };
-
-      // 格式化日期显示
-      const formatDate = (dateStr) => {
-        if (!dateStr || dateStr === '未填写') return '未填写';
-        return dateStr;
-      };
-
-      // 生成表格行
-      tbody.innerHTML = serversData.map(server => \`
-        <tr>
-          <td>
-            <code style="font-size: 12px; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;">
-              \${server.ip}:\${server.port || 22}
-            </code>
-          </td>
-          <td>\${server.ipLocation || '未知位置'}</td>
-          <td>\${server.country || '未知'}</td>
-          <td>\${server.traffic || '未填写'}</td>
-          <td>\${server.specs || '未填写'}</td>
-          <td>\${formatDate(server.expiryDate)}</td>
-          <td>\${getStatusBadge(server.status)}</td>
-          <td>\${server.donatedByUsername || '匿名'}</td>
-        </tr>
-      \`).join('');
-    }
 
     /**
      * 开始数据轮询
