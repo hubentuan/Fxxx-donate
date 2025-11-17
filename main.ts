@@ -1402,6 +1402,12 @@ let connectionsData = [];
 let updateInterval = null;
 let visitorLocation = null; // 访问者位置
 
+// 性能监控
+let frameCount = 0;
+let lastFPSCheck = Date.now();
+let currentFPS = 60;
+let performanceMode = 'high'; // 'high', 'medium', 'low'
+
 /**
  * 地理编码函数：将位置字符串转换为经纬度坐标
  * 扩展版 - 包含更多国家和城市
@@ -2342,18 +2348,31 @@ function toggleRotate() {
   button.textContent = controls.autoRotate ? '暂停旋转' : '继续旋转';
 }
 
+// 性能优化：使用 RAF 优化窗口调整
+let resizeRAF = null;
+
 function handleResize() {
   if (!globeInstance) return;
   
-  const container = document.getElementById('globe-container');
-  if (container) {
-    globeInstance.width(container.clientWidth);
-    globeInstance.height(container.clientHeight);
+  // 取消之前的 RAF
+  if (resizeRAF) {
+    cancelAnimationFrame(resizeRAF);
   }
+  
+  // 使用 RAF 确保在下一帧执行
+  resizeRAF = requestAnimationFrame(() => {
+    const container = document.getElementById('globe-container');
+    if (container && globeInstance) {
+      globeInstance.width(container.clientWidth);
+      globeInstance.height(container.clientHeight);
+    }
+    resizeRAF = null;
+  });
 }
 
 function handleVisibilityChange() {
   if (document.hidden) {
+    // 页面隐藏时，停止所有动画和更新
     if (globeInstance && globeInstance.controls) {
       globeInstance.controls().autoRotate = false;
     }
@@ -2361,14 +2380,23 @@ function handleVisibilityChange() {
       clearInterval(updateInterval);
       updateInterval = null;
     }
+    // 性能优化：暂停渲染循环
+    if (globeInstance && globeInstance.pauseAnimation) {
+      globeInstance.pauseAnimation();
+    }
   } else {
+    // 页面可见时，恢复动画和更新
     if (globeInstance && globeInstance.controls) {
       const button = document.getElementById('toggle-rotate');
       const shouldRotate = !button || button.textContent === '暂停旋转';
       globeInstance.controls().autoRotate = shouldRotate;
     }
     if (!updateInterval) {
-      updateInterval = setInterval(updateData, 30000);
+      updateInterval = setInterval(updateData, 60000); // 增加到60秒
+    }
+    // 性能优化：恢复渲染循环
+    if (globeInstance && globeInstance.resumeAnimation) {
+      globeInstance.resumeAnimation();
     }
   }
 }
@@ -2391,6 +2419,72 @@ function waitForGlobe() {
       }, 10000);
     }
   });
+}
+
+/**
+ * 性能监控：检测 FPS 并自适应调整
+ */
+function monitorPerformance() {
+  frameCount++;
+  const now = Date.now();
+  const elapsed = now - lastFPSCheck;
+  
+  // 每秒检查一次 FPS
+  if (elapsed >= 1000) {
+    currentFPS = Math.round((frameCount * 1000) / elapsed);
+    frameCount = 0;
+    lastFPSCheck = now;
+    
+    // 根据 FPS 自适应调整性能模式
+    if (currentFPS < 30 && performanceMode !== 'low') {
+      console.warn('⚠️ FPS 过低 (' + currentFPS + ')，切换到低性能模式');
+      performanceMode = 'low';
+      applyPerformanceMode();
+    } else if (currentFPS >= 30 && currentFPS < 50 && performanceMode === 'high') {
+      console.log('ℹ️ FPS 中等 (' + currentFPS + ')，切换到中性能模式');
+      performanceMode = 'medium';
+      applyPerformanceMode();
+    } else if (currentFPS >= 55 && performanceMode !== 'high') {
+      console.log('✅ FPS 良好 (' + currentFPS + ')，切换到高性能模式');
+      performanceMode = 'high';
+      applyPerformanceMode();
+    }
+  }
+  
+  // 继续监控
+  requestAnimationFrame(monitorPerformance);
+}
+
+/**
+ * 应用性能模式
+ */
+function applyPerformanceMode() {
+  if (!globeInstance || !globeInstance.controls) return;
+  
+  const controls = globeInstance.controls();
+  
+  if (performanceMode === 'low') {
+    // 低性能模式：降低所有动画和细节
+    controls.autoRotateSpeed = 0.1;
+    controls.dampingFactor = 0.15;
+    if (globeInstance.renderer) {
+      globeInstance.renderer().setPixelRatio(1); // 降低像素比
+    }
+  } else if (performanceMode === 'medium') {
+    // 中性能模式：平衡性能和效果
+    controls.autoRotateSpeed = 0.15;
+    controls.dampingFactor = 0.1;
+    if (globeInstance.renderer) {
+      globeInstance.renderer().setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    }
+  } else {
+    // 高性能模式：最佳效果
+    controls.autoRotateSpeed = 0.2;
+    controls.dampingFactor = 0.08;
+    if (globeInstance.renderer) {
+      globeInstance.renderer().setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+  }
 }
 
 (async function() {
@@ -2451,6 +2545,11 @@ function waitForGlobe() {
   
   // 增加更新间隔到60秒，减少性能消耗
   updateInterval = setInterval(updateData, 60000);
+  
+  // 启动性能监控
+  requestAnimationFrame(monitorPerformance);
+  
+  console.log('🚀 3D 地球已初始化，性能监控已启动');
 })();
 </script>
 </body></html>`;
