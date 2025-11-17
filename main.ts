@@ -3402,10 +3402,16 @@ async function submitDonate(e){
  * 添加详细的错误分类和处理
  */
 async function loadDonations(){
+  console.log('[loadDonations] 函数被调用');
+  
   const box=document.getElementById('donations-list');
-  if (!box) return;
+  if (!box) {
+    console.error('[loadDonations] 错误：找不到 donations-list 元素');
+    return;
+  }
   
   // 显示简单的加载状态指示器（替代骨架屏）
+  console.log('[loadDonations] 显示加载状态');
   box.innerHTML='<div class="text-center py-12">'+
     '<div class="flex flex-col items-center gap-3">'+
     '<div class="loading-spinner"></div>'+
@@ -3416,9 +3422,12 @@ async function loadDonations(){
   try{
     // 添加超时控制
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
+    const timeoutId = setTimeout(() => {
+      console.warn('[loadDonations] 请求超时，中止请求');
+      controller.abort();
+    }, 15000); // 15秒超时
     
-    console.log('[loadDonations] 开始加载投喂记录');
+    console.log('[loadDonations] 开始发送 fetch 请求到 /api/user/donations');
     
     const r=await fetch('/api/user/donations',{
       credentials:'same-origin',
@@ -3497,39 +3506,66 @@ async function loadDonations(){
 (async function initPage() {
   console.log('[initPage] 页面初始化开始');
   
-  // 0. 立即显示加载状态，避免用户看到空白区域
-  const box = document.getElementById('donations-list');
-  if (box) {
+  try {
+    // 0. 立即显示加载状态，避免用户看到空白区域
+    const box = document.getElementById('donations-list');
+    if (!box) {
+      console.error('[initPage] 错误：找不到 donations-list 元素');
+      return;
+    }
+    
+    console.log('[initPage] 显示初始加载状态');
     box.innerHTML = '<div class="text-center py-12">' +
       '<div class="flex flex-col items-center gap-3">' +
       '<div class="loading-spinner"></div>' +
       '<div class="muted text-sm">正在验证登录状态...</div>' +
       '</div>' +
       '</div>';
-  }
-  
-  // 1. 验证登录状态
-  const loginResult = await ensureLogin();
-  
-  // 2. 根据登录结果处理
-  if (!loginResult.success) {
-    console.error('[initPage] 登录验证失败:', loginResult.error);
     
-    // 使用辅助函数生成错误HTML
-    if (box) {
+    // 1. 验证登录状态
+    console.log('[initPage] 开始调用 ensureLogin()');
+    const loginResult = await ensureLogin();
+    console.log('[initPage] ensureLogin() 返回结果:', loginResult);
+    
+    // 2. 根据登录结果处理
+    if (!loginResult.success) {
+      console.error('[initPage] 登录验证失败:', loginResult.error);
+      
+      // 使用辅助函数生成错误HTML
       box.innerHTML = generateErrorHTML(loginResult);
+      
+      // 登录失败时不继续加载数据
+      console.log('[initPage] 由于登录验证失败，停止初始化');
+      return;
     }
     
-    // 登录失败时不继续加载数据
-    console.log('[initPage] 由于登录验证失败，停止初始化');
-    return;
+    // 3. 登录成功，继续初始化
+    console.log('[initPage] 登录验证成功，开始加载数据');
+    bindAuthType();
+    
+    const form = document.getElementById('donate-form');
+    if (form) {
+      form.addEventListener('submit', submitDonate);
+      console.log('[initPage] 表单事件监听器已绑定');
+    } else {
+      console.error('[initPage] 警告：找不到 donate-form 元素');
+    }
+    
+    console.log('[initPage] 开始调用 loadDonations()');
+    loadDonations();
+    
+  } catch (error) {
+    console.error('[initPage] 初始化过程中发生异常:', error);
+    const box = document.getElementById('donations-list');
+    if (box) {
+      box.innerHTML = '<div class="text-center py-12">' +
+        '<div class="text-6xl mb-4">⚠️</div>' +
+        '<div class="text-xl font-bold mb-3">初始化失败</div>' +
+        '<div class="text-sm muted mb-4">页面初始化时发生错误: ' + (error.message || error) + '</div>' +
+        '<button onclick="location.reload()" class="btn-primary">重新加载</button>' +
+        '</div>';
+    }
   }
-  
-  // 3. 登录成功，继续初始化
-  console.log('[initPage] 登录验证成功，开始加载数据');
-  bindAuthType();
-  document.getElementById('donate-form').addEventListener('submit', submitDonate);
-  loadDonations();
 })();
 
 // 实时IP格式验证
