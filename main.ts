@@ -1584,29 +1584,117 @@ function geocode(location) {
     'Vientiane': { lat: 17.9757, lng: 102.6331 },
     '万象': { lat: 17.9757, lng: 102.6331 },
     
-    // 亚洲 - 南亚（扩展印度城市）
+    // 亚洲 - 南亚（印度重点优化 - 添加更多别名）
     'India': { lat: 20.5937, lng: 78.9629 },
     '印度': { lat: 20.5937, lng: 78.9629 },
+    'IN': { lat: 20.5937, lng: 78.9629 },
+    'IND': { lat: 20.5937, lng: 78.9629 },
     'Mumbai': { lat: 19.0760, lng: 72.8777 },
     '孟买': { lat: 19.0760, lng: 72.8777 },
+    'Bombay': { lat: 19.0760, lng: 72.8777 },
     'Delhi': { lat: 28.7041, lng: 77.1025 },
     '德里': { lat: 28.7041, lng: 77.1025 },
     'New Delhi': { lat: 28.6139, lng: 77.2090 },
     '新德里': { lat: 28.6139, lng: 77.2090 },
     'Bangalore': { lat: 12.9716, lng: 77.5946 },
     '班加罗尔': { lat: 12.9716, lng: 77.5946 },
+    'Bengaluru': { lat: 12.9716, lng: 77.5946 },
     'Hyderabad': { lat: 17.3850, lng: 78.4867 },
     '海得拉巴': { lat: 17.3850, lng: 78.4867 },
     'Chennai': { lat: 13.0827, lng: 80.2707 },
     '金奈': { lat: 13.0827, lng: 80.2707 },
+    'Madras': { lat: 13.0827, lng: 80.2707 },
     'Kolkata': { lat: 22.5726, lng: 88.3639 },
     '加尔各答': { lat: 22.5726, lng: 88.3639 },
+    'Calcutta': { lat: 22.5726, lng: 88.3639 },
     'Pune': { lat: 18.5204, lng: 73.8567 },
     '浦那': { lat: 18.5204, lng: 73.8567 },
     'Ahmedabad': { lat: 23.0225, lng: 72.5714 },
     '艾哈迈达巴德': { lat: 23.0225, lng: 72.5714 },
     'Jaipur': { lat: 26.9124, lng: 75.7873 },
     '斋浦尔': { lat: 26.9124, lng: 75.7873 },
+    'Surat': { lat: 21.1702, lng: 72.8311 },
+    'Lucknow': { lat: 26.8467, lng: 80.9462 },
+    'Kanpur': { lat: 26.4499, lng: 80.3319 },
+    'Nagpur': { lat: 21.1458, lng: 79.0882 },
+    'Indore': { lat: 22.7196, lng: 75.8577 },
+    'Thane': { lat: 19.2183, lng: 72.9781 },
+    'Bhopal': { lat: 23.2599, lng: 77.4126 },
+    'Visakhapatnam': { lat: 17.6868, lng: 83.2185 },
+    'Patna': { lat: 25.5941, lng: 85.1376 },
+    'Vadodara': { lat: 22.3072, lng: 73.1812 },
+    'Ghaziabad': { lat: 28.6692, lng: 77.4538 },
+    'Ludhiana': { lat: 30.9010, lng: 75.8573 },
+    'Agra': { lat: 27.1767, lng: 78.0081 },
+    'Nashik': { lat: 19.9975, lng: 73.7898 },
+    'Faridabad': { lat: 28.4089, lng: 77.3178 },
+    'Meerut': { lat: 28.9845, lng: 77.7064 },
+    'Rajkot': { lat: 22.3039, lng: 70.8022 },
+    'Varanasi': { lat: 25.3176, lng: 82.9739 },
+    'Srinagar': { lat: 34.0837, lng: 74.7973 },
+    'Aurangabad': { lat: 19.8762, lng: 75.3433 },
+    'Dhanbad': { lat: 23.7957, lng: 86.4304 },
+    'Amritsar': { lat: 31.6340, lng: 74.8723 },
+    'Navi Mumbai': { lat: 19.0330, lng: 73.0297 },
+    'Allahabad': { lat: 25.4358, lng: 81.8463 },
+    'Prayagraj': { lat: 25.4358, lng: 81.8463 },
+    'Ranchi': { lat: 23.3441, lng: 85.3096 },
+    'Howrah': { lat: 22.5958, lng: 88.2636 },
+    'Coimbatore': { lat: 11.0168, lng: 76.9558 },
+    'Jabalpur': { lat: 23.1815, lng: 79.9864 },
+    'Gwalior': { lat: 26.2183, lng: 78.1828 },
+    'Vijayawada': { lat: 16.5062, lng: 80.6480 },
+    'Jodhpur': { lat: 26.2389, lng: 73.0243 },
+    'Madurai': { lat: 9.9252, lng: 78.1198 },
+    'Raipur': { lat: 21.2514, lng: 81.6296 },
+    'Kota': { lat: 25.2138, lng: 75.8648 },
+    'Chandigarh': { lat: 30.7333, lng: 76.7794 },
+    'Guwahati': { lat: 26.1445, lng: 91.7362 },
+    'Solapur': { lat: 17.6599, lng: 75.9064 },
+    'Mysore': { lat: 12.2958, lng: 76.6394 },
+    'Mysuru': { lat: 12.2958, lng: 76.6394 },
+    'Bareilly': { lat: 28.3670, lng: 79.4304 },
+    'Aligarh': { lat: 27.8974, lng: 78.0880 },
+    'Tiruppur': { lat: 11.1085, lng: 77.3411 },
+    'Moradabad': { lat: 28.8389, lng: 78.7378 },
+    'Jalandhar': { lat: 31.3260, lng: 75.5762 },
+    'Bhubaneswar': { lat: 20.2961, lng: 85.8245 },
+    'Salem': { lat: 11.6643, lng: 78.1460 },
+    'Warangal': { lat: 17.9689, lng: 79.5941 },
+    'Guntur': { lat: 16.3067, lng: 80.4365 },
+    'Bhiwandi': { lat: 19.3009, lng: 73.0643 },
+    'Saharanpur': { lat: 29.9680, lng: 77.5460 },
+    'Gorakhpur': { lat: 26.7606, lng: 83.3732 },
+    'Bikaner': { lat: 28.0229, lng: 73.3119 },
+    'Amravati': { lat: 20.9374, lng: 77.7796 },
+    'Noida': { lat: 28.5355, lng: 77.3910 },
+    'Jamshedpur': { lat: 22.8046, lng: 86.2029 },
+    'Bhilai': { lat: 21.2095, lng: 81.3784 },
+    'Cuttack': { lat: 20.4625, lng: 85.8830 },
+    'Kochi': { lat: 9.9312, lng: 76.2673 },
+    'Cochin': { lat: 9.9312, lng: 76.2673 },
+    'Bhavnagar': { lat: 21.7645, lng: 72.1519 },
+    'Dehradun': { lat: 30.3165, lng: 78.0322 },
+    'Durgapur': { lat: 23.5204, lng: 87.3119 },
+    'Asansol': { lat: 23.6739, lng: 86.9524 },
+    'Nanded': { lat: 19.1383, lng: 77.3210 },
+    'Kolhapur': { lat: 16.7050, lng: 74.2433 },
+    'Ajmer': { lat: 26.4499, lng: 74.6399 },
+    'Akola': { lat: 20.7002, lng: 77.0082 },
+    'Gulbarga': { lat: 17.3297, lng: 76.8343 },
+    'Jamnagar': { lat: 22.4707, lng: 70.0577 },
+    'Ujjain': { lat: 23.1765, lng: 75.7885 },
+    'Siliguri': { lat: 26.7271, lng: 88.3953 },
+    'Jhansi': { lat: 25.4484, lng: 78.5685 },
+    'Jammu': { lat: 32.7266, lng: 74.8570 },
+    'Mangalore': { lat: 12.9141, lng: 74.8560 },
+    'Erode': { lat: 11.3410, lng: 77.7172 },
+    'Belgaum': { lat: 15.8497, lng: 74.4977 },
+    'Tirunelveli': { lat: 8.7139, lng: 77.7567 },
+    'Malegaon': { lat: 20.5579, lng: 74.5287 },
+    'Gaya': { lat: 24.7955, lng: 85.0002 },
+    'Jalgaon': { lat: 21.0077, lng: 75.5626 },
+    'Udaipur': { lat: 24.5854, lng: 73.7125 },
     'Pakistan': { lat: 30.3753, lng: 69.3451 },
     '巴基斯坦': { lat: 30.3753, lng: 69.3451 },
     'Karachi': { lat: 24.8607, lng: 67.0011 },
@@ -2516,92 +2604,96 @@ function initGlobe() {
     .arcEndLat(d => d.endLat)
     .arcEndLng(d => d.endLng)
     .arcColor(d => {
-      // 访问者主连接 - 超炫流光渐变（青色→金色→粉色）
+      // 访问者主连接 - 优雅的流光渐变（青色→金色）
       if (d.type === 'visitor-primary') {
         if (d.serverStatus === 'active') {
-          // 活跃服务器：青色到金色的流光效果
-          return ['rgba(6, 182, 212, 1.0)', 'rgba(251, 191, 36, 1.0)']; // 更鲜艳的青金渐变
+          // 活跃服务器：青色到金色的流光效果（更柔和）
+          return ['rgba(6, 182, 212, 0.85)', 'rgba(251, 191, 36, 0.95)'];
         } else {
           // 离线服务器：灰色
-          return ['rgba(100, 116, 139, 0.5)', 'rgba(148, 163, 184, 0.6)'];
+          return ['rgba(100, 116, 139, 0.4)', 'rgba(148, 163, 184, 0.5)'];
         }
       }
-      // 网状互联 - 近距离（翠绿色渐变，更鲜艳）
+      // 网状互联 - 近距离（翠绿色渐变）
       else if (d.type === 'mesh-nearby') {
-        return ['rgba(34, 197, 94, 0.5)', 'rgba(74, 222, 128, 0.6)'];
+        return ['rgba(34, 197, 94, 0.4)', 'rgba(74, 222, 128, 0.5)'];
       }
-      // 网状互联 - 中距离（天蓝色渐变，更明亮）
+      // 网状互联 - 中距离（天蓝色渐变）
       else if (d.type === 'mesh-medium') {
-        return ['rgba(59, 130, 246, 0.6)', 'rgba(96, 165, 250, 0.7)'];
+        return ['rgba(59, 130, 246, 0.5)', 'rgba(96, 165, 250, 0.6)'];
       }
-      // 网状互联 - 长距离（紫罗兰渐变，更梦幻）
+      // 网状互联 - 长距离（紫罗兰渐变）
       else if (d.type === 'mesh-long') {
-        return ['rgba(168, 85, 247, 0.7)', 'rgba(192, 132, 252, 0.8)'];
+        return ['rgba(168, 85, 247, 0.6)', 'rgba(192, 132, 252, 0.7)'];
       }
-      // 网状互联 - 超长距离（玫瑰粉渐变，最炫目）
+      // 网状互联 - 超长距离（玫瑰粉渐变）
       else if (d.type === 'mesh-ultra-long') {
-        return ['rgba(236, 72, 153, 0.8)', 'rgba(244, 114, 182, 0.9)'];
+        return ['rgba(236, 72, 153, 0.7)', 'rgba(244, 114, 182, 0.8)'];
       }
       // 默认（金色）
-      return ['rgba(255, 215, 0, 0.5)', 'rgba(255, 190, 0, 0.6)'];
+      return ['rgba(255, 215, 0, 0.4)', 'rgba(255, 190, 0, 0.5)'];
     })
     .arcStroke(d => {
-      // 访问者主连接 - 最粗，最醒目（星联主线）
-      if (d.type === 'visitor-primary') return 1.0;
-      // 超长距离 - 较粗，突出全球连接
-      if (d.type === 'mesh-ultra-long') return 0.7;
+      // 访问者主连接 - 细腻优雅（不要太粗）
+      if (d.type === 'visitor-primary') return 0.6;
+      // 超长距离 - 中等粗细
+      if (d.type === 'mesh-ultra-long') return 0.5;
+      // 长距离
+      if (d.type === 'mesh-long') return 0.45;
+      // 中距离
+      if (d.type === 'mesh-medium') return 0.4;
+      // 近距离
+      if (d.type === 'mesh-nearby') return 0.35;
+      return 0.35;
+    })
+    .arcAltitude(d => {
+      // 访问者主连接 - 优雅的弧线高度
+      if (d.type === 'visitor-primary') {
+        // 根据距离调整高度，形成优美的弧线
+        const baseAlt = 0.15;
+        const distanceFactor = Math.min(d.distance / 10000, 1);
+        return baseAlt + distanceFactor * 0.15; // 最高可达0.30
+      }
+      // 超长距离连接 - 高弧线
+      if (d.type === 'mesh-ultra-long') return 0.25;
+      // 长距离连接 - 中高弧线
+      if (d.type === 'mesh-long') return 0.16;
+      // 中距离连接 - 中等弧线
+      if (d.type === 'mesh-medium') return 0.09;
+      // 近距离连接 - 低弧线
+      return 0.05;
+    })
+    .arcDashLength(d => {
+      // 访问者主连接 - 流畅的虚线段
+      if (d.type === 'visitor-primary') return 0.75;
+      // 超长距离 - 长虚线
+      if (d.type === 'mesh-ultra-long') return 0.65;
       // 长距离
       if (d.type === 'mesh-long') return 0.6;
       // 中距离
-      if (d.type === 'mesh-medium') return 0.5;
-      // 近距离
-      if (d.type === 'mesh-nearby') return 0.4;
-      return 0.4;
-    })
-    .arcAltitude(d => {
-      // 访问者主连接 - 动态高度（根据距离自适应）
-      if (d.type === 'visitor-primary') {
-        // 根据距离调整高度，远距离更高，形成优美的弧线
-        const baseAlt = 0.18;
-        const distanceFactor = Math.min(d.distance / 10000, 1);
-        return baseAlt + distanceFactor * 0.18; // 最高可达0.36
-      }
-      // 超长距离连接 - 最高的弧线（跨越半个地球）
-      if (d.type === 'mesh-ultra-long') return 0.28;
-      // 长距离连接 - 较高（跨大洲）
-      if (d.type === 'mesh-long') return 0.18;
-      // 中距离连接 - 中等（跨区域）
-      if (d.type === 'mesh-medium') return 0.10;
-      // 近距离连接 - 最低（同区域）
-      return 0.06;
-    })
-    .arcDashLength(d => {
-      // 访问者主连接 - 更长的虚线段（流光效果更明显）
-      if (d.type === 'visitor-primary') return 0.85;
-      // 超长距离 - 长虚线
-      if (d.type === 'mesh-ultra-long') return 0.7;
-      // 长距离
-      if (d.type === 'mesh-long') return 0.65;
-      return 0.6;
+      if (d.type === 'mesh-medium') return 0.55;
+      return 0.5;
     })
     .arcDashGap(d => {
-      // 访问者主连接 - 更小的间隙（更连续的流光）
-      if (d.type === 'visitor-primary') return 0.2;
+      // 访问者主连接 - 适中的间隙（流光效果）
+      if (d.type === 'visitor-primary') return 0.25;
       // 超长距离 - 较小间隙
-      if (d.type === 'mesh-ultra-long') return 0.3;
-      return 0.4;
+      if (d.type === 'mesh-ultra-long') return 0.35;
+      // 长距离
+      if (d.type === 'mesh-long') return 0.4;
+      return 0.45;
     })
     .arcDashAnimateTime(d => {
-      // 访问者主连接 - 更快的动画（流光飞速）
-      if (d.type === 'visitor-primary') return 2000;
-      // 超长距离 - 最慢（强调距离感）
-      if (d.type === 'mesh-ultra-long') return 6000;
+      // 访问者主连接 - 流畅的动画速度
+      if (d.type === 'visitor-primary') return 2200;
+      // 超长距离 - 慢速（强调距离感）
+      if (d.type === 'mesh-ultra-long') return 5500;
       // 长距离 - 较慢
-      if (d.type === 'mesh-long') return 5000;
+      if (d.type === 'mesh-long') return 4800;
       // 中距离 - 中等
       if (d.type === 'mesh-medium') return 4000;
       // 近距离 - 较快
-      return 3500;
+      return 3200;
     })
     .arcDashInitialGap(() => Math.random())
     
