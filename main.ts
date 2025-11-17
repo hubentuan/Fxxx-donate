@@ -2020,7 +2020,87 @@ function isWebGLAvailable() {
 }
 
 /**
- * 获取服务器数据并添加坐标信息
+ * 从榜单数据获取服务器信息（公开API，无需管理员权限）
+ * 使用 /api/leaderboard 而不是 /api/admin/vps，确保所有用户都能访问
+ * @returns {Promise<Array>} 包含坐标信息的服务器数组
+ */
+async function fetchServersFromLeaderboard() {
+  try {
+    console.log('[fetchServersFromLeaderboard] 开始获取榜单数据');
+    
+    const res = await fetch('/api/leaderboard', {
+      credentials: 'same-origin',
+      cache: 'no-store'
+    });
+    
+    if (!res.ok) {
+      console.error('[fetchServersFromLeaderboard] HTTP错误:', res.status);
+      return serversData; // 返回缓存数据
+    }
+    
+    const data = await res.json();
+    if (!data.success || !data.data) {
+      console.error('[fetchServersFromLeaderboard] 数据格式错误');
+      return serversData;
+    }
+    
+    console.log('[fetchServersFromLeaderboard] 榜单数据获取成功，用户数:', data.data.length);
+    
+    // 从榜单数据中提取所有服务器信息
+    const allServers = [];
+    let serverIndex = 0;
+    
+    data.data.forEach(donor => {
+      if (!donor.servers || !Array.isArray(donor.servers)) {
+        return;
+      }
+      
+      donor.servers.forEach(server => {
+        // 为每个服务器生成唯一ID（使用用户名+索引）
+        const serverId = donor.username + '_' + serverIndex;
+        serverIndex++;
+        
+        // 获取位置信息（优先使用 ipLocation，其次使用 country）
+        const location = server.ipLocation || server.country || '未知地区';
+        
+        // 地理编码：将位置字符串转换为坐标
+        let coords = geocode(location);
+        
+        // 添加微小偏移，避免同位置服务器重叠
+        if (coords) {
+          coords = addJitter(coords, serverIndex);
+        }
+        
+        // 构建服务器对象
+        allServers.push({
+          id: serverId,
+          coords: coords,
+          country: server.country || '未填写',
+          ipLocation: server.ipLocation || '未知地区',
+          status: server.status || 'active',
+          donatedByUsername: donor.username,
+          traffic: server.traffic,
+          expiryDate: server.expiryDate,
+          specs: server.specs,
+          note: server.note,
+          donatedAt: server.donatedAt
+        });
+      });
+    });
+    
+    console.log('[fetchServersFromLeaderboard] 服务器数据提取完成，总数:', allServers.length);
+    console.log('[fetchServersFromLeaderboard] 有效坐标数:', allServers.filter(s => s.coords && s.coords.lat !== 0).length);
+    
+    return allServers;
+    
+  } catch (error) {
+    console.error('[fetchServersFromLeaderboard] 异常:', error);
+    return serversData; // 返回缓存数据
+  }
+}
+
+/**
+ * 保留原 fetchServers 函数作为后备（管理员使用）
  * @returns {Promise<Array>} 包含坐标信息的服务器数组
  */
 async function fetchServers() {
@@ -2031,14 +2111,15 @@ async function fetchServers() {
     });
     
     if (!res.ok) {
-      console.error('获取服务器数据失败: HTTP', res.status);
-      return serversData; // 返回缓存数据
+      console.error('[fetchServers] HTTP错误:', res.status, '- 回退到榜单API');
+      // 如果管理员API失败，回退到榜单API
+      return await fetchServersFromLeaderboard();
     }
     
     const data = await res.json();
     if (!data.success || !data.data) {
-      console.error('服务器数据格式错误');
-      return serversData;
+      console.error('[fetchServers] 数据格式错误 - 回退到榜单API');
+      return await fetchServersFromLeaderboard();
     }
     
     // 为每个服务器添加坐标信息
@@ -2057,8 +2138,9 @@ async function fetchServers() {
       };
     });
   } catch (error) {
-    console.error('获取服务器数据时发生错误:', error);
-    return serversData; // 返回缓存数据
+    console.error('[fetchServers] 异常:', error, '- 回退到榜单API');
+    // 发生异常时，回退到榜单API
+    return await fetchServersFromLeaderboard();
   }
 }
 
@@ -2271,32 +2353,54 @@ function updateGlobeData() {
 
 /**
  * 数据更新逻辑：获取最新服务器数据并更新Globe（性能优化版）
+ * 优先使用榜单API，确保所有用户都能看到连接线
  */
 let lastConnectionsUpdate = 0;
 const CONNECTIONS_UPDATE_INTERVAL = 60000; // 连接关系每60秒更新一次
 
 async function updateData() {
+  console.log('[updateData] 开始更新数据');
+  
+  // 优先使用榜单API获取数据（公开，所有用户可访问）
+  // fetchServers() 内部会在管理员API失败时自动回退到榜单API
   const newServersData = await fetchServers();
+  
+  console.log('[updateData] 获取到服务器数据:', newServersData.length, '台');
   
   // 检查服务器数量是否变化
   const serverCountChanged = newServersData.length !== serversData.length;
   const now = Date.now();
   const shouldUpdateConnections = serverCountChanged || (now - lastConnectionsUpdate > CONNECTIONS_UPDATE_INTERVAL);
   
+  // 更新服务器数据
   serversData = newServersData;
   
   // 只在必要时重新计算连接（服务器数量变化或超过更新间隔）
   if (shouldUpdateConnections) {
-    console.log('🔄 重新计算连接关系...');
+    console.log('[updateData] 🔄 重新计算连接关系...');
+    console.log('[updateData] 服务器数量变化:', serverCountChanged ? '是' : '否');
+    console.log('[updateData] 距上次更新:', Math.floor((now - lastConnectionsUpdate) / 1000), '秒');
+    
     connectionsData = calculateConnections(serversData);
     lastConnectionsUpdate = now;
+    
+    console.log('[updateData] ✅ 连接关系计算完成，连接数:', connectionsData.length);
+  } else {
+    console.log('[updateData] ⏭️ 跳过连接关系计算（使用缓存）');
   }
   
+  // 更新Globe显示
   if (globeInstance) {
+    console.log('[updateData] 更新Globe显示');
     updateGlobeData();
+  } else {
+    console.warn('[updateData] Globe实例不存在，跳过更新');
   }
   
+  // 更新统计信息
   updateStats(serversData, connectionsData);
+  
+  console.log('[updateData] 数据更新完成');
 }
 
 /**
@@ -2468,7 +2572,7 @@ app.get('/donate/vps', c => {
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
-        <!-- <div id="user-info" class="text-sm panel px-5 py-2.5 border"></div> -->
+        <div id="user-info" class="text-sm panel px-5 py-2.5 border"></div>
         <a href="/donate" class="btn-secondary flex items-center gap-2">
           <span>🏠</span>
           <span>首页</span>
@@ -2862,15 +2966,20 @@ updateThemeBtn();
 let loginCheckAttempts = 0;
 const MAX_LOGIN_ATTEMPTS = 3;
 
+/**
+ * 改进的会话验证函数
+ * 不再自动重定向，而是返回验证结果供调用方处理
+ * @returns {Promise<{success: boolean, user?: object, error?: string}>}
+ */
 async function ensureLogin(){
-  // 防止无限重定向
+  // 防止无限重试
   if (loginCheckAttempts >= MAX_LOGIN_ATTEMPTS) {
     console.error('登录检查失败次数过多，停止重试');
-    const box = document.getElementById('donations-list');
-    if (box) {
-      box.innerHTML = '<div class="text-red-400 text-sm py-8 text-center">登录验证失败<br/><a href="/donate" class="btn-primary mt-4">返回首页</a></div>';
-    }
-    return;
+    return {
+      success: false,
+      error: 'MAX_ATTEMPTS',
+      message: '登录验证失败次数过多，请返回首页重试'
+    };
   }
   
   loginCheckAttempts++;
@@ -2880,6 +2989,8 @@ async function ensureLogin(){
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
     
+    console.log('[ensureLogin] 尝试验证会话 (第 ' + loginCheckAttempts + ' 次)');
+    
     const res = await fetch('/api/user/info',{
       credentials:'same-origin',
       cache:'no-store',
@@ -2888,48 +2999,98 @@ async function ensureLogin(){
     
     clearTimeout(timeoutId);
     
+    // 处理HTTP错误状态
     if(!res.ok){ 
-      console.error('Login check failed: HTTP', res.status);
-      // 防止重定向循环
-      if (loginCheckAttempts < MAX_LOGIN_ATTEMPTS) {
-        setTimeout(() => location.href='/donate', 1000);
+      console.error('[ensureLogin] HTTP错误:', res.status);
+      
+      if (res.status === 401) {
+        // 未登录或会话过期
+        return {
+          success: false,
+          error: 'UNAUTHORIZED',
+          message: '您还未登录或登录已过期，请重新登录',
+          statusCode: 401
+        };
+      } else if (res.status === 403) {
+        // 权限不足
+        return {
+          success: false,
+          error: 'FORBIDDEN',
+          message: '权限不足，无法访问',
+          statusCode: 403
+        };
+      } else {
+        // 其他HTTP错误
+        return {
+          success: false,
+          error: 'HTTP_ERROR',
+          message: '服务器错误 (HTTP ' + res.status + ')',
+          statusCode: res.status
+        };
       }
-      return; 
     }
     
-    const j=await res.json();
+    // 解析响应
+    const j = await res.json();
+    
     if(!j.success){ 
-      console.error('Login check failed:', j.message);
-      // 防止重定向循环
-      if (loginCheckAttempts < MAX_LOGIN_ATTEMPTS) {
-        setTimeout(() => location.href='/donate', 1000);
-      }
-      return; 
+      console.error('[ensureLogin] API返回失败:', j.message);
+      return {
+        success: false,
+        error: 'API_ERROR',
+        message: j.message || '登录验证失败'
+      };
     }
     
     // 登录成功，重置计数器
     loginCheckAttempts = 0;
+    console.log('[ensureLogin] 验证成功:', j.data.username);
     
-    const u=j.data;
-    const p='https://linux.do/u/'+encodeURIComponent(u.username);
+    // 更新用户信息显示
+    const u = j.data;
+    const p = 'https://linux.do/u/' + encodeURIComponent(u.username);
     const infoEl = document.getElementById('user-info');
     if(infoEl) {
-      infoEl.innerHTML='投喂者：<a href="'+p+'" target="_blank" class="underline text-sky-300">@'+u.username+'</a> · 已投喂 '+(u.donationCount||0)+' 台';
+      infoEl.innerHTML = '投喂者：<a href="'+p+'" target="_blank" class="underline text-sky-300">@'+u.username+'</a> · 已投喂 '+(u.donationCount||0)+' 台';
     }
+    
+    return {
+      success: true,
+      user: {
+        username: u.username,
+        donationCount: u.donationCount || 0,
+        avatarUrl: u.avatarUrl,
+        isAdmin: u.isAdmin
+      }
+    };
+    
   }catch(err){
-    console.error('Login check error:', err);
-    // 只在非 abort 错误时重定向
-    if (err.name !== 'AbortError') {
-      if (loginCheckAttempts < MAX_LOGIN_ATTEMPTS) {
-        setTimeout(() => location.href='/donate', 1000);
-      }
-    } else {
-      console.error('Login check timeout');
-      const box = document.getElementById('donations-list');
-      if (box) {
-        box.innerHTML = '<div class="text-red-400 text-sm py-8 text-center">登录检查超时<br/><a href="/donate" class="btn-primary mt-4">返回首页</a></div>';
-      }
+    console.error('[ensureLogin] 异常:', err);
+    
+    // 处理超时错误
+    if (err.name === 'AbortError') {
+      return {
+        success: false,
+        error: 'TIMEOUT',
+        message: '登录验证超时，请检查网络连接'
+      };
     }
+    
+    // 处理网络错误
+    if (err instanceof TypeError) {
+      return {
+        success: false,
+        error: 'NETWORK_ERROR',
+        message: '网络连接失败，请检查网络'
+      };
+    }
+    
+    // 其他未知错误
+    return {
+      success: false,
+      error: 'UNKNOWN_ERROR',
+      message: '发生未知错误: ' + (err.message || err)
+    };
   }
 }
 
@@ -3087,6 +3248,10 @@ async function submitDonate(e){
   }
 }
 
+/**
+ * 改进的投喂记录加载函数
+ * 添加详细的错误分类和处理
+ */
 async function loadDonations(){
   const box=document.getElementById('donations-list');
   if (!box) return;
@@ -3115,6 +3280,8 @@ async function loadDonations(){
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
     
+    console.log('[loadDonations] 开始加载投喂记录');
+    
     const r=await fetch('/api/user/donations',{
       credentials:'same-origin',
       cache:'no-store',
@@ -3123,25 +3290,77 @@ async function loadDonations(){
     
     clearTimeout(timeoutId);
     
+    // 详细的HTTP错误处理
     if(!r.ok){
-      console.error('Load donations failed: HTTP', r.status);
-      box.innerHTML='<div class="text-red-400 text-sm py-8 text-center">加载失败 (HTTP '+r.status+')<br/><button onclick="loadDonations()" class="btn-secondary mt-4">重试</button></div>';
+      console.error('[loadDonations] HTTP错误:', r.status);
+      
+      let errorHTML = '<div class="text-center py-12">';
+      errorHTML += '<div class="text-6xl mb-4">⚠️</div>';
+      
+      if (r.status === 401) {
+        // 未登录或会话过期
+        console.error('[loadDonations] 未授权访问 (401)');
+        errorHTML += '<div class="text-xl font-bold mb-3">登录已过期</div>';
+        errorHTML += '<div class="text-sm muted mb-4">您的登录状态已失效，请重新登录</div>';
+        errorHTML += '<a href="/oauth/login?redirect=' + encodeURIComponent('/donate/vps') + '" class="btn-primary">重新登录</a>';
+      } else if (r.status === 403) {
+        // 权限不足
+        console.error('[loadDonations] 权限不足 (403)');
+        errorHTML += '<div class="text-xl font-bold mb-3">权限不足</div>';
+        errorHTML += '<div class="text-sm muted mb-4">您没有权限访问此资源</div>';
+        errorHTML += '<a href="/donate" class="btn-primary">返回首页</a>';
+      } else if (r.status >= 500) {
+        // 服务器错误
+        console.error('[loadDonations] 服务器错误 (' + r.status + ')');
+        errorHTML += '<div class="text-xl font-bold mb-3">服务器错误</div>';
+        errorHTML += '<div class="text-sm muted mb-4">服务器遇到问题 (错误码: ' + r.status + ')</div>';
+        errorHTML += '<button onclick="loadDonations()" class="btn-primary">重试</button>';
+      } else {
+        // 其他HTTP错误
+        console.error('[loadDonations] 未知HTTP错误 (' + r.status + ')');
+        errorHTML += '<div class="text-xl font-bold mb-3">加载失败</div>';
+        errorHTML += '<div class="text-sm muted mb-4">HTTP错误: ' + r.status + '</div>';
+        errorHTML += '<div class="flex gap-3 justify-center">';
+        errorHTML += '<a href="/donate" class="btn-secondary">返回首页</a>';
+        errorHTML += '<button onclick="loadDonations()" class="btn-primary">重试</button>';
+        errorHTML += '</div>';
+      }
+      
+      errorHTML += '</div>';
+      box.innerHTML = errorHTML;
       return;
     }
     
+    // 解析响应
     const j=await r.json();
+    
     if(!j.success){
-      console.error('Load donations failed:', j.message);
-      box.innerHTML='<div class="text-red-400 text-sm py-8 text-center">加载失败<br/><button onclick="loadDonations()" class="btn-secondary mt-4">重试</button></div>';
+      console.error('[loadDonations] API返回失败:', j.message);
+      
+      let errorHTML = '<div class="text-center py-12">';
+      errorHTML += '<div class="text-6xl mb-4">⚠️</div>';
+      errorHTML += '<div class="text-xl font-bold mb-3">加载失败</div>';
+      errorHTML += '<div class="text-sm muted mb-4">' + (j.message || '未知错误') + '</div>';
+      errorHTML += '<button onclick="loadDonations()" class="btn-primary">重试</button>';
+      errorHTML += '</div>';
+      
+      box.innerHTML = errorHTML;
       return;
     }
     
+    // 成功获取数据
     const data=j.data||[];
+    
     if(!data.length){
-      box.innerHTML='<div class="muted text-sm py-8 text-center">还没有投喂记录，先在左侧提交一台吧～</div>';
+      box.innerHTML='<div class="text-center py-12">'+
+        '<div class="text-6xl mb-4">📦</div>'+
+        '<div class="text-xl font-bold mb-3">还没有投喂记录</div>'+
+        '<div class="text-sm muted">先在左侧提交一台VPS吧～</div>'+
+        '</div>';
       return;
     }
     
+    // 渲染投喂记录
     box.innerHTML='';
     data.forEach(v=>{
       const div=document.createElement('div');
@@ -3164,21 +3383,90 @@ async function loadDonations(){
       box.appendChild(div);
     });
     
-    console.log('✅ 投喂记录加载成功:', data.length, '条');
+    console.log('[loadDonations] ✅ 投喂记录加载成功:', data.length, '条');
+    
   }catch(err){
-    console.error('Load donations error:', err);
+    console.error('[loadDonations] 异常:', err);
+    
+    let errorHTML = '<div class="text-center py-12">';
+    errorHTML += '<div class="text-6xl mb-4">⚠️</div>';
+    
     if (err.name === 'AbortError') {
-      box.innerHTML='<div class="text-red-400 text-sm py-8 text-center">加载超时，请检查网络连接<br/><button onclick="loadDonations()" class="btn-secondary mt-4">重试</button></div>';
+      // 超时错误
+      console.error('[loadDonations] 请求超时');
+      errorHTML += '<div class="text-xl font-bold mb-3">加载超时</div>';
+      errorHTML += '<div class="text-sm muted mb-4">请求超过15秒未响应，请检查网络连接</div>';
+      errorHTML += '<button onclick="loadDonations()" class="btn-primary">重试</button>';
+    } else if (err instanceof TypeError) {
+      // 网络错误
+      console.error('[loadDonations] 网络错误:', err.message);
+      errorHTML += '<div class="text-xl font-bold mb-3">网络连接失败</div>';
+      errorHTML += '<div class="text-sm muted mb-4">无法连接到服务器，请检查网络</div>';
+      errorHTML += '<button onclick="loadDonations()" class="btn-primary">重试</button>';
     } else {
-      box.innerHTML='<div class="text-red-400 text-sm py-8 text-center">加载异常: '+err.message+'<br/><button onclick="loadDonations()" class="btn-secondary mt-4">重试</button></div>';
+      // 其他未知错误
+      console.error('[loadDonations] 未知错误:', err.message);
+      errorHTML += '<div class="text-xl font-bold mb-3">加载异常</div>';
+      errorHTML += '<div class="text-sm muted mb-4">' + (err.message || '未知错误') + '</div>';
+      errorHTML += '<div class="flex gap-3 justify-center">';
+      errorHTML += '<a href="/donate" class="btn-secondary">返回首页</a>';
+      errorHTML += '<button onclick="loadDonations()" class="btn-primary">重试</button>';
+      errorHTML += '</div>';
     }
+    
+    errorHTML += '</div>';
+    box.innerHTML = errorHTML;
   }
 }
 
-ensureLogin();
-bindAuthType();
-document.getElementById('donate-form').addEventListener('submit', submitDonate);
-loadDonations();
+// 初始化页面
+(async function initPage() {
+  // 1. 验证登录状态
+  const loginResult = await ensureLogin();
+  
+  // 2. 根据登录结果处理
+  if (!loginResult.success) {
+    console.error('[initPage] 登录验证失败:', loginResult.error);
+    
+    // 显示错误信息
+    const box = document.getElementById('donations-list');
+    if (box) {
+      let errorHTML = '<div class="text-center py-12">';
+      errorHTML += '<div class="text-6xl mb-4">⚠️</div>';
+      errorHTML += '<div class="text-xl font-bold mb-3">' + loginResult.message + '</div>';
+      
+      // 根据错误类型提供不同的操作按钮
+      if (loginResult.error === 'UNAUTHORIZED') {
+        // 未登录或会话过期 - 提供登录链接
+        errorHTML += '<a href="/oauth/login?redirect=' + encodeURIComponent('/donate/vps') + '" class="btn-primary mt-4">去登录</a>';
+      } else if (loginResult.error === 'TIMEOUT' || loginResult.error === 'NETWORK_ERROR') {
+        // 超时或网络错误 - 提供重试按钮
+        errorHTML += '<button onclick="location.reload()" class="btn-primary mt-4">重试</button>';
+      } else if (loginResult.error === 'MAX_ATTEMPTS') {
+        // 达到最大重试次数 - 提供返回首页按钮
+        errorHTML += '<a href="/donate" class="btn-primary mt-4">返回首页</a>';
+      } else {
+        // 其他错误 - 提供返回首页和重试按钮
+        errorHTML += '<div class="flex gap-3 justify-center mt-4">';
+        errorHTML += '<a href="/donate" class="btn-secondary">返回首页</a>';
+        errorHTML += '<button onclick="location.reload()" class="btn-primary">重试</button>';
+        errorHTML += '</div>';
+      }
+      
+      errorHTML += '</div>';
+      box.innerHTML = errorHTML;
+    }
+    
+    // 登录失败时不继续加载数据
+    return;
+  }
+  
+  // 3. 登录成功，继续初始化
+  console.log('[initPage] 登录验证成功，开始加载数据');
+  bindAuthType();
+  document.getElementById('donate-form').addEventListener('submit', submitDonate);
+  loadDonations();
+})();
 
 // 实时IP格式验证
 document.querySelector('input[name="ip"]').addEventListener('blur', function(){
@@ -5555,30 +5843,14 @@ checkAdmin();
 
 /* ==================== 公共 head（主题 + 全局样式 + 工具） ==================== */
 function commonHead(title: string): string {
-  // 获取服务器环境变量并注入到前端
-  const nodeEnv = Deno.env.get('NODE_ENV') || '';
-  const disableLogs = Deno.env.get('DISABLE_LOGS') || '';
   return `
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>${title}</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🧡</text></svg>" />
-<script>
-// 服务器环境变量注入
-window.SERVER_ENV = {
-  NODE_ENV: '${nodeEnv}',
-  DISABLE_LOGS: '${disableLogs}'
-};
-</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <script>
-const serverEnv = window.SERVER_ENV || {};
-const disableLogs = serverEnv.NODE_ENV === 'production' ||
-  serverEnv.DISABLE_LOGS === '1';
-if (disableLogs) {
-  console.log = () => {};
-}
 tailwind.config = {
   theme: {
     extend: {
