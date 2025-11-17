@@ -2252,7 +2252,6 @@ async function getVisitorLocation() {
   }
   
   // 所有API都失败，使用默认位置（中国北京）
-  console.log('⚠️ 所有地理位置API都失败，使用默认位置');
   return {
     lat: 39.9042,
     lng: 116.4074,
