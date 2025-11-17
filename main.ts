@@ -2967,6 +2967,8 @@ app.get('/donate/vps', c => {
 
 <div id="toast-root"></div>
 <script>
+console.log('=== 投喂页面 JavaScript 开始执行 ===');
+
 /* ==================== 错误HTML生成辅助函数 ==================== */
 
 /**
