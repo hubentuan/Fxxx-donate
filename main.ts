@@ -4898,8 +4898,8 @@ body[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
   to { transform: rotate(360deg); }
 }
 @keyframes pulse {
-  0 %, 100 % { opacity: 1; }
-  50 % { opacity: 0.5; }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 @keyframes slideInFromBottom {
   from {
@@ -4922,339 +4922,292 @@ body[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
   }
 }
 
-.animate -in {
-  animation: slideUpAndFade 0.3s ease- out;
+.animate-in {
+  animation: slideUpAndFade 0.3s ease-out;
 }
-.animate - fade -in {
-  animation: fadeIn 0.3s ease- out;
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
 }
-.animate - slide -in {
-  animation: slideInFromBottom 0.4s ease- out forwards;
+.animate-slide-in {
+  animation: slideInFromBottom 0.4s ease-out forwards;
 }
 
 /* ========== 加载指示器 ========== */
-.loading - spinner {
+.loading-spinner {
   width: 20px;
   height: 20px;
   border: 2px solid transparent;
-  border - top - color: #007AFF;
-  border - radius: 50 %;
+  border-top-color: #007AFF;
+  border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
-body[data - theme= "dark"] .loading - spinner {
-  border - top - color: #0A84FF;
+body[data-theme="dark"] .loading-spinner {
+  border-top-color: #0A84FF;
 }
 
 /* ========== 骨架屏 ========== */
 .skeleton {
-  background: linear - gradient(
+  background: linear-gradient(
     90deg,
-    rgba(220, 220, 225, 0.6) 0 %,
-    rgba(235, 235, 240, 0.8) 50 %,
-    rgba(220, 220, 225, 0.6) 100 %
+    rgba(220, 220, 225, 0.6) 0%,
+    rgba(235, 235, 240, 0.8) 50%,
+    rgba(220, 220, 225, 0.6) 100%
   );
-  background - size: 200 % 100 %;
-  animation: skeletonLoading 1.5s ease -in -out infinite;
-  border - radius: 8px;
+  background-size: 200% 100%;
+  animation: skeletonLoading 1.5s ease-in-out infinite;
+  border-radius: 8px;
 }
 @keyframes skeletonLoading {
-  0 % { background- position: 200 % 0;
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
-100 % { background- position: -200 % 0; }
-}
-body[data - theme= "dark"] .skeleton {
-  background: linear - gradient(
+body[data-theme="dark"] .skeleton {
+  background: linear-gradient(
     90deg,
-    rgba(44, 44, 46, 0.6) 0 %,
-    rgba(56, 56, 58, 0.8) 50 %,
-    rgba(44, 44, 46, 0.6) 100 %
+    rgba(44, 44, 46, 0.6) 0%,
+    rgba(56, 56, 58, 0.8) 50%,
+    rgba(44, 44, 46, 0.6) 100%
   );
-  background - size: 200 % 100 %;
-  animation: skeletonLoading 1.5s ease -in -out infinite;
+  background-size: 200% 100%;
+  animation: skeletonLoading 1.5s ease-in-out infinite;
 }
 
 /* 骨架屏卡片 */
-.skeleton - card {
+.skeleton-card {
   padding: 20px;
-  border - radius: 12px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.85);
-  backdrop - filter: blur(20px);
-  -webkit - backdrop - filter: blur(20px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.6);
 }
-body[data - theme= "dark"] .skeleton - card {
+body[data-theme="dark"] .skeleton-card {
   background: rgba(28, 28, 30, 0.8);
-  border - color: rgba(56, 56, 58, 0.6);
+  border-color: rgba(56, 56, 58, 0.6);
 }
 
-.skeleton - header {
+.skeleton-header {
   display: flex;
-  align - items: center;
+  align-items: center;
   gap: 12px;
-  margin - bottom: 16px;
+  margin-bottom: 16px;
 }
-.skeleton - avatar {
+.skeleton-avatar {
   width: 48px;
   height: 48px;
-  border - radius: 50 %;
+  border-radius: 50%;
 }
-.skeleton - title {
+.skeleton-title {
   height: 20px;
-  width: 40 %;
-  border - radius: 4px;
+  width: 40%;
+  border-radius: 4px;
 }
-.skeleton - text {
+.skeleton-text {
   height: 16px;
-  width: 100 %;
-  border - radius: 4px;
-  margin - bottom: 8px;
+  width: 100%;
+  border-radius: 4px;
+  margin-bottom: 8px;
 }
-.skeleton - text.short {
-  width: 60 %;
+.skeleton-text.short {
+  width: 60%;
 }
-.skeleton - text.medium {
-  width: 80 %;
-}
-
-/* ========== 卡片与面板 ========== */
-.panel,.card{
-  background: rgba(255, 255, 255, 0.85);
-  backdrop - filter: blur(20px) saturate(180 %);
-  -webkit - backdrop - filter: blur(20px) saturate(180 %);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border - radius: 12px;
-  box - shadow:
-  0 2px 16px rgba(0, 0, 0, 0.06),
-    0 0 0 1px rgba(255, 255, 255, 0.8),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  transition: all 0.2s ease;
-  word -break: break-word;
-  /* 移除 overflow: hidden，避免展开收起时泛白 */
-  /* 性能优化：使用 transform 而不是 contain */
-  will - change: transform;
-  transform: translateZ(0);
-}
-.card:hover {
-  box - shadow:
-  0 8px 32px rgba(0, 0, 0, 0.12),
-    0 0 0 1px rgba(255, 255, 255, 0.9),
-      inset 0 1px 0 rgba(255, 255, 255, 1);
-  transform: translateY(-2px) translateZ(0);
-}
-
-body[data - theme= "dark"] .panel,
-  body[data - theme= "dark"] .card{
-  background: rgba(28, 28, 30, 0.8);
-  backdrop - filter: blur(20px) saturate(180 %);
-  -webkit - backdrop - filter: blur(20px) saturate(180 %);
-  border - color: rgba(56, 56, 58, 0.6);
-  box - shadow:
-  0 2px 16px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(56, 56, 58, 0.5),
-      inset 0 1px 0 rgba(255, 255, 255, 0.03);
-}
-body[data - theme= "dark"] .card:hover{
-  box - shadow:
-  0 8px 32px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(56, 56, 58, 0.8),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+.skeleton-text.medium {
+  width: 80%;
 }
 
 /* ========== 弹窗内文本块 ========== */
-.modal - text - block{
-  word -break: break-all;
-  overflow - wrap: anywhere;
-  white - space: pre - wrap;
-  max - height: 260px;
-  overflow - y: auto;
+.modal-text-block {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  max-height: 260px;
+  overflow-y: auto;
   padding: 8px 12px;
-  border - radius: 8px;
+  border-radius: 8px;
   background: rgba(245, 245, 247, 0.9);
-  backdrop - filter: blur(10px);
-  -webkit - backdrop - filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(210, 210, 215, 0.8);
-  font - family: ui - monospace, SFMono - Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font - size: 13px;
-  line - height: 1.5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.5;
 }
-body[data - theme= "dark"] .modal - text - block{
+body[data-theme="dark"] .modal-text-block {
   background: rgba(44, 44, 46, 0.9);
-  backdrop - filter: blur(10px);
-  -webkit - backdrop - filter: blur(10px);
-  border - color: rgba(56, 56, 58, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-color: rgba(56, 56, 58, 0.8);
   color: #f5f5f7;
 }
 
 /* ========== 文字样式 ========== */
-.muted{
+.muted {
   color: #6b6b6f;
 }
-body[data - theme= "dark"] .muted{
+body[data-theme="dark"] .muted {
   color: #a8a8ad;
 }
 
-.grad - title{
+.grad-title {
   color: #1d1d1f;
-  font - weight: 700;
-  text - shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
 }
-body[data - theme= "dark"] .grad - title{
+body[data-theme="dark"] .grad-title {
   color: #f5f5f7;
-  text - shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* ========== 流光渐变标题 ========== */
-.grad - title - animated {
-  background: linear - gradient(
+.grad-title-animated {
+  background: linear-gradient(
     90deg,
-    #8b5cf6 0 %,
-    #a855f7 25 %,
-    #d946ef 50 %,
-    #a855f7 75 %,
-    #8b5cf6 100 %
+    #8b5cf6 0%,
+    #a855f7 25%,
+    #d946ef 50%,
+    #a855f7 75%,
+    #8b5cf6 100%
   );
-  background - size: 200 % auto;
-  -webkit - background - clip: text;
-  -webkit - text - fill - color: transparent;
-  background - clip: text;
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   animation: gradientFlow 3s linear infinite;
-  font - weight: 700;
+  font-weight: 700;
 }
 
 @keyframes gradientFlow {
-  0 % { background- position: 0 % center;
-}
-100 % { background- position: 200 % center; }
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
 }
 
-body[data - theme= "dark"] .grad - title - animated {
-  background: linear - gradient(
+body[data-theme="dark"] .grad-title-animated {
+  background: linear-gradient(
     90deg,
-    #a78bfa 0 %,
-    #c084fc 25 %,
-    #e879f9 50 %,
-    #c084fc 75 %,
-    #a78bfa 100 %
+    #a78bfa 0%,
+    #c084fc 25%,
+    #e879f9 50%,
+    #c084fc 75%,
+    #a78bfa 100%
   );
-  background - size: 200 % auto;
-  -webkit - background - clip: text;
-  -webkit - text - fill - color: transparent;
-  background - clip: text;
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* ========== Toast 通知 ========== */
-#toast - root{
+#toast-root {
   position: fixed;
   top: 20px;
-  left: 50 %;
-  transform: translateX(-50 %);
-  z - index: 9999;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
   display: flex;
-  flex - direction: column;
-  align - items: center;
+  flex-direction: column;
+  align-items: center;
   gap: 12px;
-  pointer - events: none;
+  pointer-events: none;
 }
-.toast{
+.toast {
   padding: 12px 20px;
-  border - radius: 10px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.95);
-  backdrop - filter: blur(20px) saturate(180 %);
-  -webkit - backdrop - filter: blur(20px) saturate(180 %);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   color: #1d1d1f;
   border: 1px solid rgba(255, 255, 255, 0.8);
-  box - shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.8);
   transform: translateY(-20px);
   opacity: 0;
-  transition: all 0.25s cubic - bezier(0.4, 0, 0.2, 1);
-  pointer - events: auto;
-  min - width: 280px;
-  max - width: 420px;
-  font - size: 14px;
-  font - weight: 500;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: auto;
+  min-width: 280px;
+  max-width: 420px;
+  font-size: 14px;
+  font-weight: 500;
 }
-.toast.show{
+.toast.show {
   transform: translateY(0);
   opacity: 1;
-  animation: slideDown 0.25s ease - out;
+  animation: slideDown 0.25s ease-out;
 }
-.toast.success{
-  border - left: 3px solid #34C759;
+.toast.success {
+  border-left: 3px solid #34C759;
 }
-.toast.error{
-  border - left: 3px solid #FF3B30;
+.toast.error {
+  border-left: 3px solid #FF3B30;
 }
-.toast.warn{
-  border - left: 3px solid #FF9500;
+.toast.warn {
+  border-left: 3px solid #FF9500;
 }
-body[data - theme= "dark"] .toast{
+body[data-theme="dark"] .toast {
   background: rgba(44, 44, 46, 0.9);
-  backdrop - filter: blur(20px) saturate(180 %);
-  -webkit - backdrop - filter: blur(20px) saturate(180 %);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   color: #f5f5f7;
-  border - color: rgba(56, 56, 58, 0.8);
-  box - shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(56, 56, 58, 0.6);
+  border-color: rgba(56, 56, 58, 0.8);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(56, 56, 58, 0.6);
 }
-body[data - theme= "dark"] .toast.success{ border - left - color: #32D74B; }
-body[data - theme= "dark"] .toast.error{ border - left - color: #FF453A; }
-body[data - theme= "dark"] .toast.warn{ border - left - color: #FF9F0A; }
+body[data-theme="dark"] .toast.success { border-left-color: #32D74B; }
+body[data-theme="dark"] .toast.error { border-left-color: #FF453A; }
+body[data-theme="dark"] .toast.warn { border-left-color: #FF9F0A; }
 
 /* ========== 辅助文字 ========== */
-.help{
-  font - size: 12px;
+.help {
+  font-size: 12px;
   color: #86868b;
 }
-body[data - theme= "dark"] .help{
+body[data-theme="dark"] .help {
   color: #98989d;
 }
 
 /* ========== 警告框 ========== */
-.alert - warning{
-  background: linear - gradient(135deg, rgba(255, 149, 0, 0.08), rgba(255, 204, 0, 0.05));
+.alert-warning {
+  background: linear-gradient(135deg, rgba(255, 149, 0, 0.08), rgba(255, 204, 0, 0.05));
   border: 1px solid rgba(255, 149, 0, 0.25);
-  backdrop - filter: blur(10px);
-  -webkit - backdrop - filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
-body[data - theme= "dark"] .alert - warning{
-  background: linear - gradient(135deg, rgba(255, 159, 10, 0.12), rgba(255, 214, 10, 0.08));
-  border - color: rgba(255, 159, 10, 0.3);
+body[data-theme="dark"] .alert-warning {
+  background: linear-gradient(135deg, rgba(255, 159, 10, 0.12), rgba(255, 214, 10, 0.08));
+  border-color: rgba(255, 159, 10, 0.3);
 }
 
 /* ========== 状态徽章 ========== */
-.badge - ok{
+.badge-ok {
   color: #34C759;
-  font - weight: 600;
+  font-weight: 600;
   position: relative;
 }
-.badge - ok::before{
+.badge-ok::before {
   content: '';
   position: absolute;
   left: -12px;
-  top: 50 %;
-  transform: translateY(-50 %);
+  top: 50%;
+  transform: translateY(-50%);
   width: 6px;
   height: 6px;
   background: #34C759;
-  border - radius: 50 %;
-  animation: pulse - green 2s ease -in -out infinite;
+  border-radius: 50%;
+  animation: pulse-green 2s ease-in-out infinite;
 }
-@keyframes pulse - green {
-  0 %, 100 % { opacity: 1; box- shadow: 0 0 0 0 rgba(52, 199, 89, 0.7);
+@keyframes pulse-green {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.7); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(52, 199, 89, 0); }
 }
-50 % { opacity: 0.8; box- shadow: 0 0 0 4px rgba(52, 199, 89, 0); }
-}
-.badge - fail{
+.badge-fail {
   color: #FF3B30;
-  font - weight: 600;
+  font-weight: 600;
 }
-.badge - idle{
+.badge-idle {
   color: #86868b;
-  font - weight: 600;
+  font-weight: 600;
 }
-body[data - theme= "dark"] .badge - ok{ color: #32D74B; }
-body[data - theme= "dark"] .badge - ok::before{ background: #32D74B; }
-body[data - theme= "dark"] .badge - fail{ color: #FF453A; }
-body[data - theme= "dark"] .badge - idle{ color: #98989d; }
+body[data-theme="dark"] .badge-ok { color: #32D74B; }
+body[data-theme="dark"] .badge-ok::before { background: #32D74B; }
+body[data-theme="dark"] .badge-fail { color: #FF453A; }
+body[data-theme="dark"] .badge-idle { color: #98989d; }
 
 /* ========== 主题切换按钮 ========== */
 #theme - toggle{
