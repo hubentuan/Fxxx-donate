@@ -1043,82 +1043,128 @@ app.get('/donate', c => {
 <body class="min-h-screen" data-theme="dark">
 <div class="max-w-6xl mx-auto px-6 py-8 md:py-12">
 
-  <header class="mb-16 animate-entry relative z-10">
-    <div class="text-center space-y-6 max-w-4xl mx-auto">
-      <h1 class="text-display text-6xl md:text-8xl tracking-tight text-primary drop-shadow-2xl">
-        <span class="text-gradient">VPS 投喂榜</span>
-      </h1>
-      <p class="text-xl md:text-2xl text-secondary font-medium max-w-2xl mx-auto leading-relaxed">
-        汇聚全球热佬力量，共建公益节点网络。<br>
-        <span class="text-base opacity-75 mt-2 block">目前由我独自维护，感谢 @shklrt, @sar60677, @Carry Delahaye, @kkkyyx 的日常协助。</span>
-      </p>
-      
-      <div class="flex flex-wrap justify-center gap-4 pt-4">
-        <button onclick="gotoDonatePage()" class="btn-primary btn-primary-glow text-lg px-8 py-4 rounded-full flex items-center gap-3 transition-transform hover:scale-105 active:scale-95">
-          <span class="text-2xl">🧡</span> 我要投喂
-        </button>
-        <button id="theme-toggle" onclick="toggleTheme()" class="btn-secondary rounded-full px-6 py-4 text-lg backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/20">
-          🌓 切换模式
-        </button>
+  <header class="mb-10 animate-in">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+      <div class="flex-1 space-y-5">
+        <h1 class="grad-title text-4xl md:text-5xl font-bold leading-tight">
+          风萧萧公益机场 · VPS 投喂榜
+        </h1>
+
+        <div class="panel border p-6 space-y-4">
+          <p class="text-sm leading-relaxed">
+            <span class="muted">这是一个完全非盈利的公益项目，目前没有运营团队，由我独自维护。</span><br>
+            同时也非常感谢以下几位佬的日常协助：
+            <a href="https://linux.do/u/shklrt" target="_blank"
+               class="font-semibold transition-colors hover:opacity-80">@shklrt</a>、
+            <a href="https://linux.do/u/sar60677" target="_blank"
+               class="font-semibold transition-colors hover:opacity-80">@sar60677</a>、
+            <a href="https://linux.do/u/carrydelahaye" target="_blank"
+               class="font-semibold transition-colors hover:opacity-80">@Carry&nbsp;Delahaye</a>
+            <a href="https://linux.do/u/kkkyyx" target="_blank"
+               class="font-semibold transition-colors hover:opacity-80">@kkkyyx</a>。
+          </p>
+
+          <div class="alert-warning text-sm leading-relaxed rounded-xl px-4 py-3">
+            <span class="font-semibold">💝 榜单按投喂 VPS 数量排序，</span>
+            但无论名次高低，您的每一次支持，对我和这个项目来说都弥足珍贵，衷心感谢！
+          </div>
+
+          <p class="text-sm leading-relaxed flex items-start gap-2">
+            <span class="text-lg mt-0.5">🤝</span>
+            <span>感谢大家的投喂，这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，而是大家的共同成果！共荣！🚀</span>
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <button onclick="gotoDonatePage()" class="btn-primary">
+            <span class="text-lg">🧡</span> 我要投喂 VPS
+          </button>
+          <button id="theme-toggle" onclick="toggleTheme()">浅色模式</button>
+        </div>
       </div>
     </div>
   </header>
 
   <!-- 3D地球可视化区域 -->
-  <section id="globe-section" class="mb-16 animate-entry delay-1 relative z-10">
-    <div class="glass-panel p-1 md:p-2 overflow-hidden relative group">
-      <div class="absolute inset-0 bg-blue-500/5 blur-3xl group-hover:bg-blue-500/10 transition-colors duration-500"></div>
-      
-      <div class="relative z-10 flex justify-between items-center p-6 pb-2">
-        <div>
-          <h2 class="text-3xl font-bold tracking-tight">全球节点分布</h2>
-          <p class="text-secondary font-medium">Real-time Global Network</p>
+  <section id="globe-section" class="mb-8 animate-in">
+    <div class="panel border p-6">
+      <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">🌍</span>
+          <div>
+            <h2 class="text-2xl font-bold leading-tight">全球服务器分布</h2>
+            <p class="text-sm muted mt-1">实时展示全球VPS节点位置与连接</p>
+          </div>
         </div>
-        <div id="globe-controls" class="flex gap-2">
-          <button id="toggle-size" class="btn-secondary text-xs rounded-full px-3 py-1 bg-white/20 backdrop-blur-md border-0 hover:bg-white/30">最小化</button>
-          <button id="toggle-rotate" class="btn-secondary text-xs rounded-full px-3 py-1 bg-white/20 backdrop-blur-md border-0 hover:bg-white/30">暂停</button>
+        <div id="globe-controls" class="flex gap-2 flex-wrap">
+          <button id="toggle-size" class="btn-secondary text-sm">最小化</button>
+          <button id="toggle-rotate" class="btn-secondary text-sm">暂停旋转</button>
         </div>
       </div>
       
       <!-- 地球容器 -->
-      <div id="globe-container" style="width: 100%; height: 600px; border-radius: 20px; overflow: hidden; background: transparent;"></div>
+      <div id="globe-container" style="width: 100%; height: 500px; border-radius: 8px; overflow: hidden; background: #000;"></div>
       
-      <!-- Bento Grid 统计信息 -->
-      <div id="globe-stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 mt-[-80px] relative z-20 mx-4 mb-4">
-        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
-          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">您的位置</span>
-          <span id="visitor-location" class="font-bold text-blue-500 text-lg truncate w-full">检测中...</span>
+      <!-- 统计信息 -->
+      <div id="globe-stats" class="mt-4 flex gap-6 text-sm flex-wrap">
+        <div class="flex items-center gap-2">
+          <span class="muted">📍 您的位置:</span>
+          <span id="visitor-location" class="font-bold text-cyan-400">检测中...</span>
         </div>
-        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
-          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">总服务器</span>
-          <span id="total-servers" class="font-bold text-primary text-2xl count-up">0</span>
+        <div class="flex items-center gap-2">
+          <span class="muted">🖥️ 总服务器:</span>
+          <span id="total-servers" class="font-bold">0</span>
         </div>
-        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
-          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">活跃节点</span>
-          <span id="active-servers" class="font-bold text-green-500 text-2xl count-up">0</span>
+        <div class="flex items-center gap-2">
+          <span class="muted">✅ 活跃:</span>
+          <span id="active-servers" class="font-bold text-green-500">0</span>
         </div>
-        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
-          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">实时连接</span>
-          <span id="total-connections" class="font-bold text-blue-400 text-2xl count-up">0</span>
+        <div class="flex items-center gap-2">
+          <span class="muted">🔗 连接数:</span>
+          <span id="total-connections" class="font-bold text-blue-500">0</span>
+        </div>
+      </div>
+      
+      <!-- 连接线图例 -->
+      <div class="connection-legend mt-3">
+        <div class="legend-item">
+          <div class="legend-line legend-visitor"></div>
+          <span class="muted">星联主线（您→服务器）</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line legend-nearby"></div>
+          <span class="muted">近距离互联（&lt;3000km）</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line legend-medium"></div>
+          <span class="muted">跨区域互联（1000-5000km）</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line legend-long"></div>
+          <span class="muted">跨大洲互联（5000-8000km）</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line legend-ultra-long"></div>
+          <span class="muted">全球对角线（&gt;8000km）</span>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="mb-16 animate-entry delay-2 relative z-10">
-    <div class="flex items-end justify-between mb-8 px-2">
+  <section class="mb-8">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="text-3xl">🏆</span>
       <div>
-        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">捐赠榜单</h2>
-        <p id="leaderboard-count" class="text-lg text-secondary mt-2 font-medium"></p>
+        <h2 class="text-3xl font-bold leading-tight">捐赠榜单</h2>
+        <p id="leaderboard-count" class="text-sm muted mt-1"></p>
       </div>
-      <div class="text-4xl">🏆</div>
     </div>
     
-    <div id="leaderboard" class="space-y-6">
-      <div class="flex items-center justify-center py-20">
-        <div class="flex flex-col items-center gap-4">
-          <div class="loading-spinner w-10 h-10 border-4 border-blue-500 border-t-transparent"></div>
-          <div class="text-secondary font-medium">正在加载数据...</div>
+    <div id="leaderboard" class="space-y-5">
+      <div class="flex items-center justify-center py-12">
+        <div class="flex flex-col items-center gap-3">
+          <div class="loading-spinner"></div>
+          <div class="muted text-sm">正在加载榜单...</div>
         </div>
       </div>
     </div>
@@ -1200,62 +1246,63 @@ function renderLeaderboard(){
     // 性能优化：构建服务器列表HTML
     let serversHTML = '';
     (it.servers||[]).forEach(srv=>{
-      serversHTML += '<div class="bg-white/50 dark:bg-white/5 border border-white/20 rounded-2xl p-4 transition-all hover:bg-white/80 dark:hover:bg-white/10">'+
+      serversHTML += '<div class="panel border rounded-xl p-4 transition-all hover:shadow-sm">'+
         '<div class="flex items-start justify-between gap-3 mb-3">'+
-          '<div class="flex items-center gap-3 flex-1 min-w-0">'+
-            '<span class="text-2xl flex-shrink-0 filter drop-shadow-sm">🌍</span>'+
-            '<div class="flex flex-col gap-0.5 min-w-0">'+
-              '<span class="font-bold text-sm truncate tracking-tight">'+(srv.country||'未填写')+(srv.region?' · '+srv.region:'')+'</span>'+
-              (srv.ipLocation?'<span class="text-xs text-secondary truncate font-medium">'+srv.ipLocation+'</span>':'')+
+          '<div class="flex items-center gap-2.5 flex-1 min-w-0">'+
+            '<span class="text-xl flex-shrink-0">🌍</span>'+
+            '<div class="flex flex-col gap-1 min-w-0">'+
+              '<span class="font-semibold text-sm truncate">'+(srv.country||'未填写')+(srv.region?' · '+srv.region:'')+'</span>'+
+              (srv.ipLocation?'<span class="text-xs muted truncate">'+srv.ipLocation+'</span>':'')+
             '</div>'+
           '</div>'+
-          '<span class="'+statusCls(srv.status)+' text-xs px-3 py-1 rounded-full font-bold flex-shrink-0 shadow-sm">'+statusText(srv.status)+'</span>'+
+          '<span class="'+statusCls(srv.status)+' text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0">'+statusText(srv.status)+'</span>'+
         '</div>'+
         '<div class="grid grid-cols-2 gap-3 text-sm">'+
-          '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-xl px-3 py-2">'+
+          '<div class="flex items-center gap-2 panel border rounded-lg px-3 py-2">'+
             '<span class="opacity-60">📊</span>'+
-            '<span class="truncate font-semibold text-xs">'+(srv.traffic||'未填写')+'</span>'+
+            '<span class="truncate font-medium">'+(srv.traffic||'未填写')+'</span>'+
           '</div>'+
-          '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-xl px-3 py-2">'+
+          '<div class="flex items-center gap-2 panel border rounded-lg px-3 py-2">'+
             '<span class="opacity-60">📅</span>'+
-            '<span class="truncate font-semibold text-xs">'+(srv.expiryDate||'未填写')+'</span>'+
+            '<span class="truncate font-medium">'+(srv.expiryDate||'未填写')+'</span>'+
           '</div>'+
         '</div>'+
-        (srv.specs?'<div class="text-xs mt-3 bg-black/5 dark:bg-white/5 rounded-xl px-3 py-2.5 flex items-start gap-2 font-medium"><span class="opacity-60 text-sm">⚙️</span><span class="flex-1 leading-relaxed">'+srv.specs+'</span></div>':'')+
-        (srv.note?'<div class="text-xs mt-3 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl px-3 py-2.5 flex items-start gap-2 font-medium"><span class="opacity-60 text-sm">💬</span><span class="flex-1 leading-relaxed">'+srv.note+'</span></div>':'');
+        (srv.specs?'<div class="text-sm mt-3 panel border rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">⚙️</span><span class="flex-1">'+srv.specs+'</span></div>':'')+
+        (srv.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">💬</span><span class="flex-1">'+srv.note+'</span></div>':'');
       serversHTML += '</div>';
     });
 
     // 性能优化：一次性构建完整的卡片HTML
     const wrap=document.createElement('div');
-    wrap.className='glass-panel mb-6 transition-all duration-500' + (idx < animationLimit ? ' animate-entry' : '');
-    if(idx < animationLimit) wrap.style.animationDelay = (idx * 0.1) + 's';
+    wrap.className='card border transition-all' + (idx < animationLimit ? ' animate-slide-in' : '');
+    if(idx < animationLimit) wrap.style.animationDelay = (idx * 0.05) + 's';
     wrap.dataset.cardId = cardId;
 
     wrap.innerHTML =
-      '<div class="flex items-center justify-between p-6 md:p-8 gap-6 relative overflow-hidden group">'+
-        '<div class="absolute inset-0 bg-gradient-to-r '+gradientClass+' opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>'+
-        '<div class="relative z-10 flex items-center gap-6 flex-1 min-w-0">'+
-          '<div class="flex-shrink-0 w-16 h-16 flex items-center justify-center text-5xl filter drop-shadow-xl transform group-hover:scale-110 transition-transform duration-300">'+medalByRank(idx)+'</div>'+
-          '<div class="flex flex-col gap-2 min-w-0">'+
-            '<a class="font-bold text-2xl md:text-3xl tracking-tight hover:text-blue-500 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a>'+
-            '<div class="flex items-center gap-3 flex-wrap">'+
+      '<div class="flex items-center justify-between p-5 pb-4 border-b gap-4 bg-gradient-to-r '+gradientClass+'">'+
+        '<div class="flex items-center gap-4 flex-1 min-w-0">'+
+          '<div class="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl">'+medalByRank(idx)+'</div>'+
+          '<div class="flex flex-col gap-1.5 min-w-0">'+
+            '<a class="font-bold text-xl hover:opacity-80 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a>'+
+            '<div class="flex items-center gap-2 flex-wrap">'+
               renderBadge(badge)+
-              '<span class="text-xs font-bold text-secondary bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-lg">共投喂 '+it.count+' 台</span>'+
+              '<span class="text-xs muted">共投喂 '+it.count+' 台服务器</span>'+
             '</div>'+
           '</div>'+
         '</div>'+
-        '<div class="relative z-10 flex items-center gap-6">'+
-          '<div class="hidden md:flex flex-col items-end">'+
-            '<div class="font-bold text-4xl leading-none mb-1 text-primary tracking-tighter">'+it.count+'</div>'+
-            '<div class="text-[10px] font-bold text-secondary uppercase tracking-widest">VPS Nodes</div>'+
+        '<div class="flex items-center gap-3">'+
+          '<div class="flex-shrink-0 flex items-center justify-center w-16 h-16 panel border rounded-2xl">'+
+            '<div class="text-center">'+
+              '<div class="font-bold text-2xl leading-none mb-1">'+it.count+'</div>'+
+              '<div class="text-xs muted leading-none">VPS</div>'+
+            '</div>'+
           '</div>'+
-          '<button class="toggle-expand flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 hover:bg-blue-500 hover:text-white transition-all cursor-pointer shadow-sm hover:shadow-blue-500/30" data-card="'+cardId+'" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
-            '<span class="text-xl transition-transform duration-300 '+(isExpanded ? 'rotate-0' : '-rotate-90')+'">'+'▼'+'</span>'+
+          '<button class="toggle-expand flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg panel border hover:bg-sky-500/10 transition-all cursor-pointer" data-card="'+cardId+'" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
+            '<span class="text-lg transition-transform duration-300 '+(isExpanded ? 'rotate-0' : '-rotate-90')+'">'+'▼'+'</span>'+
           '</button>'+
         '</div>'+
       '</div>'+
-      '<div class="server-list px-6 md:px-8 pb-8 pt-2 space-y-4 '+(isExpanded ? '' : ' expandable')+'">'+
+      '<div class="server-list px-5 pb-5 pt-4 space-y-3'+(isExpanded ? '' : ' expandable')+'">'+
         serversHTML+
       '</div>';
 
@@ -2914,202 +2961,290 @@ app.get('/donate/vps', c => {
   const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
 <body class="min-h-screen" data-theme="dark">
 <div class="max-w-7xl mx-auto px-6 py-8 md:py-12">
-  <header class="mb-12 animate-fade-in">
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-      <div class="space-y-4">
-        <h1 class="grad-title-animated text-5xl md:text-6xl font-bold leading-tight tracking-tight">风萧萧公益机场 · VPS 投喂中心</h1>
-        <p class="text-base text-secondary flex items-center gap-2 font-medium">
-          <span class="text-xl">📍</span>
+  <header class="mb-10 animate-fade-in">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+      <div class="space-y-3">
+        <h1 class="grad-title-animated text-4xl md:text-5xl font-bold leading-tight">风萧萧公益机场 · VPS 投喂中心</h1>
+        <p class="text-sm muted flex items-center gap-2">
+          <span class="text-lg">📍</span>
           <span>提交新 VPS / 查看我的投喂记录</span>
         </p>
       </div>
-      <div class="flex flex-wrap items-center gap-4">
-        <div id="user-info" class="text-sm glass px-5 py-2.5 rounded-full font-medium text-secondary"></div>
-        <a href="/donate" class="btn-secondary flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-gray-700">
+      <div class="flex flex-wrap items-center gap-3">
+        <div id="user-info" class="text-sm panel px-5 py-2.5 border"></div>
+        <a href="/donate" class="btn-secondary flex items-center gap-2">
           <span>🏠</span>
           <span>首页</span>
         </a>
-        <button onclick="logout()" class="btn-secondary hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors">
+        <button onclick="logout()" class="btn-secondary">
           退出登录
         </button>
-        <button id="theme-toggle" onclick="toggleTheme()" class="btn-secondary">浅色模式</button>
+        <button id="theme-toggle" onclick="toggleTheme()">浅色模式</button>
       </div>
     </div>
   </header>
 
-  <header class="mb-12 animate-entry relative z-10">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-      <div>
-        <h1 class="text-display text-4xl md:text-5xl font-bold tracking-tight mb-2">
-          <span class="text-gradient">投喂 VPS</span>
-        </h1>
-        <p class="text-secondary text-lg font-medium">您的支持是公益节点网络持续运行的动力</p>
+  <main class="grid lg:grid-cols-2 gap-8 items-start">
+    <section class="panel border p-8">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="text-3xl">🧡</span>
+        <h2 class="text-2xl font-bold">提交新的 VPS 投喂</h2>
       </div>
-      <div class="flex items-center gap-3">
-        <a href="/donate" class="btn-secondary rounded-full px-5 py-2.5 flex items-center gap-2 bg-white/50 dark:bg-white/10 backdrop-blur-md hover:bg-white/80">
-          <span>⬅️</span> 返回榜单
-        </a>
-        <button id="theme-toggle" onclick="toggleTheme()" class="btn-secondary rounded-full w-10 h-10 flex items-center justify-center bg-white/50 dark:bg-white/10 backdrop-blur-md hover:bg-white/80">
-          🌓
-        </button>
-        <button onclick="logout()" class="btn-secondary rounded-full px-5 py-2.5 flex items-center gap-2 bg-white/50 dark:bg-white/10 backdrop-blur-md hover:bg-white/80 text-red-500 hover:text-red-600 border-red-200 dark:border-red-900/30">
-          <span>🚪</span> 退出
-        </button>
+      <div class="alert-warning text-sm mb-6 leading-relaxed rounded-xl px-4 py-3">
+        ⚠️ 请确保服务器是你有控制权的机器，并允许用于公益节点。禁止长时间占满带宽、刷流量、倒卖账号等行为。
       </div>
-    </div>
-  </header>
 
-  <main class="grid lg:grid-cols-12 gap-8 items-start relative z-10">
-    <!-- 左侧：投喂表单 -->
-    <section class="col-span-12 lg:col-span-7 animate-entry delay-1">
-      <div class="glass-panel p-8 md:p-10 relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-        
-        <div class="flex items-center gap-4 mb-8">
-          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-2xl shadow-lg shadow-blue-500/20 text-white">
-            🎁
+      <form id="donate-form" class="space-y-5">
+        <div class="grid md:grid-cols-2 gap-5">
+          <div>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>🌐</span> 服务器 IP <span class="text-red-400">*</span>
+            </label>
+            <input name="ip" required placeholder="示例：203.0.113.8 或 [2001:db8::1]"
+                   class="w-full" />
+            <div class="help mt-1.5 flex items-center gap-1"><span class="opacity-60">💡</span>支持 IPv4 / IPv6</div>
           </div>
           <div>
-            <h2 class="text-2xl font-bold tracking-tight">提交节点信息</h2>
-            <p class="text-secondary text-sm">请确保您拥有服务器的控制权</p>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>🔌</span> 端口 <span class="text-red-400">*</span>
+            </label>
+            <input name="port" required type="number" min="1" max="65535" placeholder="示例：22 / 443 / 8080"
+                   class="w-full" />
           </div>
         </div>
 
-        <div class="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm mb-8 leading-relaxed rounded-2xl px-6 py-4 font-medium flex gap-3">
-          <span class="text-lg">⚠️</span>
-          <span>请确保服务器是你有控制权的机器，并允许用于公益节点。禁止长时间占满带宽、刷流量、倒卖账号等行为。</span>
-        </div>
-
-        <form id="donate-form" class="space-y-6">
-          <div class="grid md:grid-cols-2 gap-6">
-            <div class="space-y-2">
-              <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">服务器 IP <span class="text-red-500">*</span></label>
-              <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🌐</span>
-                <input name="ip" required placeholder="203.0.113.8" class="input-apple pl-12" />
-              </div>
-            </div>
-            <div class="space-y-2">
-              <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">端口 <span class="text-red-500">*</span></label>
-              <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🔌</span>
-                <input name="port" required type="number" min="1" max="65535" placeholder="22" class="input-apple pl-12" />
-              </div>
-            </div>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>👤</span> 系统用户名 <span class="text-red-400">*</span>
+            </label>
+            <input name="username" required placeholder="示例：root / ubuntu"
+                   class="w-full" />
           </div>
-
-          <div class="grid md:grid-cols-2 gap-6">
-            <div class="space-y-2">
-              <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">用户名 <span class="text-red-500">*</span></label>
-              <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">👤</span>
-                <input name="username" required placeholder="root" class="input-apple pl-12" />
-              </div>
-            </div>
-            <div class="space-y-2">
-              <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">认证方式</label>
-              <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🔐</span>
-                <select name="authType" class="input-apple pl-12 appearance-none">
-                  <option value="password">密码认证</option>
-                  <option value="key">SSH 私钥认证</option>
-                </select>
-                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs opacity-50 pointer-events-none">▼</span>
-              </div>
-            </div>
-          </div>
-
-          <div id="password-field" class="space-y-2">
-            <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">密码</label>
-            <div class="relative">
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🔑</span>
-              <input name="password" type="password" placeholder="••••••••" class="input-apple pl-12" />
-            </div>
-          </div>
-
-          <div id="key-field" class="hidden space-y-2">
-            <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">SSH 私钥</label>
-            <div class="relative">
-              <span class="absolute left-4 top-4 text-lg opacity-50">🗝️</span>
-              <textarea name="privateKey" rows="5" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" class="input-apple pl-12 font-mono text-sm leading-relaxed"></textarea>
-            </div>
-          </div>
-
-          <div class="grid md:grid-cols-2 gap-6">
-            <div class="space-y-2">
-              <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">国家 / 区域 <span class="text-red-500">*</span></label>
-              <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🌍</span>
-                <select name="country" required class="input-apple pl-12 appearance-none">
-                  <option value="">选择位置...</option>
-                  <!-- 🌏 亚洲 -->
-                  <optgroup label="🌏 亚洲">
-                    <option value="🇨🇳 中国大陆">🇨🇳 中国大陆</option>
-                    <option value="🇭🇰 中国香港">🇭🇰 中国香港</option>
-                    <option value="🇹🇼 中国台湾">🇹🇼 中国台湾</option>
-                    <option value="🇯🇵 日本">🇯🇵 日本</option>
-                    <option value="🇰🇷 韩国">🇰🇷 韩国</option>
-                    <option value="🇸🇬 新加坡">🇸🇬 新加坡</option>
-                  </optgroup>
-                  <!-- 🌎 北美 -->
-                  <optgroup label="🌎 北美">
-                    <option value="🇺🇸 美国">🇺🇸 美国</option>
-                    <option value="🇨🇦 加拿大">🇨🇦 加拿大</option>
-                  </optgroup>
-                  <!-- 🌍 欧洲 -->
-                  <optgroup label="🌍 欧洲">
-                    <option value="🇬🇧 英国">🇬🇧 英国</option>
-                    <option value="🇩🇪 德国">🇩🇪 德国</option>
-                    <option value="🇫🇷 法国">🇫🇷 法国</option>
-                    <option value="🇳🇱 荷兰">🇳🇱 荷兰</option>
-                  </optgroup>
-                  <option value="other">其他地区...</option>
-                </select>
-                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs opacity-50 pointer-events-none">▼</span>
-              </div>
-            </div>
-            <div class="space-y-2">
-              <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">备注信息</label>
-              <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">💬</span>
-                <input name="note" placeholder="例如：电信优化线路" class="input-apple pl-12" />
-              </div>
-            </div>
-          </div>
-
-          <div class="pt-4">
-            <button type="submit" id="submit-btn" class="btn-primary btn-primary-glow w-full py-4 text-lg rounded-2xl font-bold tracking-wide flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]">
-              <span>🚀</span> 确认投喂
-            </button>
-          </div>
-        </form>
-      </div>
-    </section>
-
-    <!-- 右侧：历史记录 -->
-    <section class="col-span-12 lg:col-span-5 animate-entry delay-2">
-      <div class="glass-panel p-6 md:p-8 sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/10 flex items-center justify-center text-xl">
-              📜
-            </div>
-            <h2 class="text-xl font-bold tracking-tight">我的投喂记录</h2>
-          </div>
-          <button onclick="exportDonations()" class="text-xs font-bold bg-gray-100 dark:bg-white/10 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg transition-colors">
-            导出 JSON
-          </button>
-        </div>
-        
-        <div id="my-donations" class="space-y-4 min-h-[200px]">
-          <div class="flex flex-col items-center justify-center py-12 text-secondary space-y-3">
-            <div class="loading-spinner w-8 h-8 border-2 border-current border-t-transparent opacity-50"></div>
-            <span class="text-sm font-medium">加载记录中...</span>
+          <div>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>🔐</span> 认证方式
+            </label>
+            <select name="authType" class="w-full">
+              <option value="password">🔑 密码</option>
+              <option value="key">🗝️ SSH 私钥</option>
+            </select>
           </div>
         </div>
-      </div>
-    </section>
-  </main>
+
+        <div id="password-field">
+          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+            <span>🔑</span> 密码（密码登录必填）
+          </label>
+          <input name="password" type="password" placeholder="示例：MyStrongP@ssw0rd"
+                 class="w-full" />
+        </div>
+
+        <div id="key-field" class="hidden">
+          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+            <span>🗝️</span> SSH 私钥（密钥登录必填）
+          </label>
+          <textarea name="privateKey" rows="4" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
+                    class="w-full font-mono"></textarea>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-5">
+          <div>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>🌍</span> 国家 / 区域 <span class="text-red-400">*</span>
+            </label>
+            <select name="country" required class="w-full">
+<option value="">请选择国家/区域</option>
+
+<!-- 🌏 亚洲（东亚 / 东南亚 / 南亚 / 中亚） -->
+<optgroup label="🌏 亚洲">
+  <!-- 东亚 / 东北亚 -->
+  <option value="🇨🇳 中国大陆">🇨🇳 中国大陆</option>
+  <option value="🇭🇰 中国香港">🇭🇰 中国香港</option>
+  <option value="🇲🇴 中国澳门">🇲🇴 中国澳门</option>
+  <option value="🇹🇼 中国台湾">🇹🇼 中国台湾</option>
+  <option value="🇯🇵 日本">🇯🇵 日本</option>
+  <option value="🇰🇷 韩国">🇰🇷 韩国</option>
+  <option value="🇰🇵 朝鲜">🇰🇵 朝鲜</option>
+  <option value="🇲🇳 蒙古">🇲🇳 蒙古</option>
+
+  <!-- 东南亚 -->
+  <option value="🇻🇳 越南">🇻🇳 越南</option>
+  <option value="🇹🇭 泰国">🇹🇭 泰国</option>
+  <option value="🇲🇾 马来西亚">🇲🇾 马来西亚</option>
+  <option value="🇸🇬 新加坡">🇸🇬 新加坡</option>
+  <option value="🇵🇭 菲律宾">🇵🇭 菲律宾</option>
+  <option value="🇮🇩 印度尼西亚">🇮🇩 印度尼西亚</option>
+  <option value="🇲🇲 缅甸">🇲🇲 缅甸</option>
+  <option value="🇰🇭 柬埔寨">🇰🇭 柬埔寨</option>
+  <option value="🇱🇦 老挝">🇱🇦 老挝</option>
+  <option value="🇧🇳 文莱">🇧🇳 文莱</option>
+  <option value="🇹🇱 东帝汶">🇹🇱 东帝汶</option>
+
+  <!-- 南亚 -->
+  <option value="🇮🇳 印度">🇮🇳 印度</option>
+  <option value="🇵🇰 巴基斯坦">🇵🇰 巴基斯坦</option>
+  <option value="🇧🇩 孟加拉国">🇧🇩 孟加拉国</option>
+  <option value="🇳🇵 尼泊尔">🇳🇵 尼泊尔</option>
+  <option value="🇱🇰 斯里兰卡">🇱🇰 斯里兰卡</option>
+  <option value="🇲🇻 马尔代夫">🇲🇻 马尔代夫</option>
+  <option value="🇧🇹 不丹">🇧🇹 不丹</option>
+  <option value="🇦🇫 阿富汗">🇦🇫 阿富汗</option>
+
+  <!-- 中亚 -->
+  <option value="🇰🇿 哈萨克斯坦">🇰🇿 哈萨克斯坦</option>
+  <option value="🇺🇿 乌兹别克斯坦">🇺🇿 乌兹别克斯坦</option>
+  <option value="🇹🇲 土库曼斯坦">🇹🇲 土库曼斯坦</option>
+  <option value="🇹🇯 塔吉克斯坦">🇹🇯 塔吉克斯坦</option>
+  <option value="🇰🇬 吉尔吉斯斯坦">🇰🇬 吉尔吉斯斯坦</option>
+</optgroup>
+
+<!-- 🌏 中东 / 西亚 -->
+<optgroup label="🌏 中东">
+  <option value="🇸🇦 沙特阿拉伯">🇸🇦 沙特阿拉伯</option>
+  <option value="🇦🇪 阿联酋">🇦🇪 阿联酋</option>
+  <option value="🇹🇷 土耳其">🇹🇷 土耳其</option>
+  <option value="🇮🇱 以色列">🇮🇱 以色列</option>
+  <option value="🇮🇷 伊朗">🇮🇷 伊朗</option>
+  <option value="🇮🇶 伊拉克">🇮🇶 伊拉克</option>
+  <option value="🇯🇴 约旦">🇯🇴 约旦</option>
+  <option value="🇰🇼 科威特">🇰🇼 科威特</option>
+  <option value="🇶🇦 卡塔尔">🇶🇦 卡塔尔</option>
+  <option value="🇴🇲 阿曼">🇴🇲 阿曼</option>
+  <option value="🇧🇭 巴林">🇧🇭 巴林</option>
+  <option value="🇱🇧 黎巴嫩">🇱🇧 黎巴嫩</option>
+  <option value="🇾🇪 也门">🇾🇪 也门</option>
+  <option value="🇸🇾 叙利亚">🇸🇾 叙利亚</option>
+  <option value="🇵🇸 巴勒斯坦">🇵🇸 巴勒斯坦</option>
+</optgroup>
+
+<!-- 🌍 欧洲 -->
+<optgroup label="🌍 欧洲">
+  <!-- 西欧 / 北欧 -->
+  <option value="🇬🇧 英国">🇬🇧 英国</option>
+  <option value="🇫🇷 法国">🇫🇷 法国</option>
+  <option value="🇩🇪 德国">🇩🇪 德国</option>
+  <option value="🇳🇱 荷兰">🇳🇱 荷兰</option>
+  <option value="🇧🇪 比利时">🇧🇪 比利时</option>
+  <option value="🇱🇺 卢森堡">🇱🇺 卢森堡</option>
+  <option value="🇨🇭 瑞士">🇨🇭 瑞士</option>
+  <option value="🇦🇹 奥地利">🇦🇹 奥地利</option>
+  <option value="🇮🇪 爱尔兰">🇮🇪 爱尔兰</option>
+  <option value="🇮🇸 冰岛">🇮🇸 冰岛</option>
+  <option value="🇩🇰 丹麦">🇩🇰 丹麦</option>
+  <option value="🇸🇪 瑞典">🇸🇪 瑞典</option>
+  <option value="🇳🇴 挪威">🇳🇴 挪威</option>
+  <option value="🇫🇮 芬兰">🇫🇮 芬兰</option>
+
+  <!-- 南欧 -->
+  <option value="🇪🇸 西班牙">🇪🇸 西班牙</option>
+  <option value="🇵🇹 葡萄牙">🇵🇹 葡萄牙</option>
+  <option value="🇮🇹 意大利">🇮🇹 意大利</option>
+  <option value="🇬🇷 希腊">🇬🇷 希腊</option>
+  <option value="🇲🇹 马耳他">🇲🇹 马耳他</option>
+  <option value="🇨🇾 塞浦路斯">🇨🇾 塞浦路斯</option>
+
+  <!-- 中东欧 / 巴尔干 -->
+  <option value="🇵🇱 波兰">🇵🇱 波兰</option>
+  <option value="🇨🇿 捷克">🇨🇿 捷克</option>
+  <option value="🇸🇰 斯洛伐克">🇸🇰 斯洛伐克</option>
+  <option value="🇭🇺 匈牙利">🇭🇺 匈牙利</option>
+  <option value="🇷🇴 罗马尼亚">🇷🇴 罗马尼亚</option>
+  <option value="🇧🇬 保加利亚">🇧🇬 保加利亚</option>
+  <option value="🇸🇮 斯洛文尼亚">🇸🇮 斯洛文尼亚</option>
+  <option value="🇭🇷 克罗地亚">🇭🇷 克罗地亚</option>
+  <option value="🇷🇸 塞尔维亚">🇷🇸 塞尔维亚</option>
+  <option value="🇧🇦 波黑">🇧🇦 波黑</option>
+  <option value="🇲🇪 黑山">🇲🇪 黑山</option>
+  <option value="🇲🇰 北马其顿">🇲🇰 北马其顿</option>
+  <option value="🇦🇱 阿尔巴尼亚">🇦🇱 阿尔巴尼亚</option>
+  <option value="🇽🇰 科索沃">🇽🇰 科索沃</option>
+  <option value="🇲🇩 摩尔多瓦">🇲🇩 摩尔多瓦</option>
+
+  <!-- 东欧 / 波罗的海 -->
+  <option value="🇺🇦 乌克兰">🇺🇦 乌克兰</option>
+  <option value="🇧🇾 白俄罗斯">🇧🇾 白俄罗斯</option>
+  <option value="🇷🇺 俄罗斯">🇷🇺 俄罗斯</option>
+  <option value="🇪🇪 爱沙尼亚">🇪🇪 爱沙尼亚</option>
+  <option value="🇱🇻 拉脱维亚">🇱🇻 拉脱维亚</option>
+  <option value="🇱🇹 立陶宛">🇱🇹 立陶宛</option>
+</optgroup>
+
+<!-- 🌎 北美 -->
+<optgroup label="🌎 北美">
+  <option value="🇺🇸 美国">🇺🇸 美国</option>
+  <option value="🇨🇦 加拿大">🇨🇦 加拿大</option>
+  <option value="🇲🇽 墨西哥">🇲🇽 墨西哥</option>
+  <option value="🇬🇱 格陵兰">🇬🇱 格陵兰</option>
+</optgroup>
+
+<!-- 🌎 中美洲 / 加勒比 -->
+<optgroup label="🌎 中美洲 / 加勒比">
+  <option value="🇨🇺 古巴">🇨🇺 古巴</option>
+  <option value="🇩🇴 多米尼加">🇩🇴 多米尼加</option>
+  <option value="🇭🇹 海地">🇭🇹 海地</option>
+  <option value="🇯🇲 牙买加">🇯🇲 牙买加</option>
+  <option value="🇵🇷 波多黎各">🇵🇷 波多黎各</option>
+  <option value="🇵🇦 巴拿马">🇵🇦 巴拿马</option>
+  <option value="🇨🇷 哥斯达黎加">🇨🇷 哥斯达黎加</option>
+  <option value="🇬🇹 危地马拉">🇬🇹 危地马拉</option>
+  <option value="🇭🇳 洪都拉斯">🇭🇳 洪都拉斯</option>
+  <option value="🇳🇮 尼加拉瓜">🇳🇮 尼加拉瓜</option>
+  <option value="🇸🇻 萨尔瓦多">🇸🇻 萨尔瓦多</option>
+  <option value="🇧🇿 伯利兹">🇧🇿 伯利兹</option>
+  <option value="🇹🇹 特立尼达和多巴哥">🇹🇹 特立尼达和多巴哥</option>
+  <option value="🇧🇧 巴巴多斯">🇧🇧 巴巴多斯</option>
+  <option value="🇧🇸 巴哈马">🇧🇸 巴哈马</option>
+  <option value="🇬🇩 格林纳达">🇬🇩 格林纳达</option>
+  <option value="🇱🇨 圣卢西亚">🇱🇨 圣卢西亚</option>
+  <option value="🇰🇳 圣基茨和尼维斯">🇰🇳 圣基茨和尼维斯</option>
+  <option value="🇻🇨 圣文森特和格林纳丁斯">🇻🇨 圣文森特和格林纳丁斯</option>
+  <option value="🇦🇬 安提瓜和巴布达">🇦🇬 安提瓜和巴布达</option>
+  <option value="🇩🇲 多米尼克">🇩🇲 多米尼克</option>
+</optgroup>
+
+<!-- 🌎 南美 -->
+<optgroup label="🌎 南美">
+  <option value="🇧🇷 巴西">🇧🇷 巴西</option>
+  <option value="🇦🇷 阿根廷">🇦🇷 阿根廷</option>
+  <option value="🇨🇱 智利">🇨🇱 智利</option>
+  <option value="🇨🇴 哥伦比亚">🇨🇴 哥伦比亚</option>
+  <option value="🇵🇪 秘鲁">🇵🇪 秘鲁</option>
+  <option value="🇺🇾 乌拉圭">🇺🇾 乌拉圭</option>
+  <option value="🇵🇾 巴拉圭">🇵🇾 巴拉圭</option>
+  <option value="🇧🇴 玻利维亚">🇧🇴 玻利维亚</option>
+  <option value="🇪🇨 厄瓜多尔">🇪🇨 厄瓜多尔</option>
+  <option value="🇻🇪 委内瑞拉">🇻🇪 委内瑞拉</option>
+  <option value="🇬🇾 圭亚那">🇬🇾 圭亚那</option>
+  <option value="🇸🇷 苏里南">🇸🇷 苏里南</option>
+  <option value="🇬🇫 法属圭亚那">🇬🇫 法属圭亚那</option>
+</optgroup>
+
+<!-- 🌏 大洋洲 -->
+<optgroup label="🌏 大洋洲">
+  <option value="🇦🇺 澳大利亚">🇦🇺 澳大利亚</option>
+  <option value="🇳🇿 新西兰">🇳🇿 新西兰</option>
+  <option value="🇫🇯 斐济">🇫🇯 斐济</option>
+  <option value="🇵🇬 巴布亚新几内亚">🇵🇬 巴布亚新几内亚</option>
+  <option value="🇼🇸 萨摩亚">🇼🇸 萨摩亚</option>
+  <option value="🇹🇴 汤加">🇹🇴 汤加</option>
+  <option value="🇻🇺 瓦努阿图">🇻🇺 瓦努阿图</option>
+  <option value="🇸🇧 所罗门群岛">🇸🇧 所罗门群岛</option>
+  <option value="🇵🇼 帕劳">🇵🇼 帕劳</option>
+  <option value="🇫🇲 密克罗尼西亚">🇫🇲 密克罗尼西亚</option>
+  <option value="🇲🇭 马绍尔群岛">🇲🇭 马绍尔群岛</option>
+  <option value="🇰🇮 基里巴斯">🇰🇮 基里巴斯</option>
+  <option value="🇳🇷 瑙鲁">🇳🇷 瑙鲁</option>
+  <option value="🇹🇻 图瓦卢">🇹🇻 图瓦卢</option>
+</optgroup>
+
+<!-- 🌍 非洲 -->
+<optgroup label="🌍 非洲">
+  <option value="🇿🇦 南非">🇿🇦 南非</option>
+  <option value="🇪🇬 埃及">🇪🇬 埃及</option>
+  <option value="🇳🇬 尼日利亚">🇳🇬 尼日利亚</option>
+  <option value="🇰🇪 肯尼亚">🇰🇪 肯尼亚</option>
+  <option value="🇪🇹 埃塞俄比亚">🇪🇹 埃塞俄比亚</option>
   <option value="🇬🇭 加纳">🇬🇭 加纳</option>
   <option value="🇲🇦 摩洛哥">🇲🇦 摩洛哥</option>
   <option value="🇩🇿 阿尔及利亚">🇩🇿 阿尔及利亚</option>
@@ -3447,39 +3582,28 @@ async function loadDonations(){
     }
     const data=j.data||[];
     if(!data.length){
-      box.innerHTML='<div class="flex flex-col items-center justify-center py-12 text-secondary space-y-3"><div class="text-4xl opacity-50">📭</div><span class="text-sm font-medium">暂无投喂记录</span></div>';
+      box.innerHTML='<div class="muted text-sm py-8 text-center">还没有投喂记录，先在左侧提交一台吧～</div>';
       return;
     }
     box.innerHTML='';
-    data.forEach((v, idx)=>{
+    data.forEach(v=>{
       const div=document.createElement('div');
-      div.className='glass-panel p-5 mb-4 transition-all hover:scale-[1.02] border border-white/10 relative overflow-hidden group animate-entry';
-      div.style.animationDelay = (idx * 0.1) + 's';
-      
+      div.className='card border px-5 py-4 transition-all';
       const dt=v.donatedAt?new Date(v.donatedAt):null, t=dt?dt.toLocaleString():'';
       const uname=v.donatedByUsername||'';
       const p='https://linux.do/u/'+encodeURIComponent(uname);
-      const statusColor = v.status === 'active' ? 'text-green-500 bg-green-500/10 border-green-500/20' : 
-                         (v.status === 'failed' ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-secondary bg-gray-500/10 border-gray-500/20');
-
-      div.innerHTML='<div class="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>'+
-        '<div class="relative z-10 flex items-start justify-between gap-4 mb-4">'+
-          '<div class="flex items-center gap-3">'+
-            '<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 flex items-center justify-center text-xl shadow-sm">🎁</div>'+
-            '<div>'+
-              '<div class="font-bold text-primary tracking-tight text-lg font-mono">'+v.ip+':'+v.port+'</div>'+
-              '<div class="text-xs text-secondary font-medium mt-0.5">'+t+'</div>'+
-            '</div>'+
-          '</div>'+
-          '<div class="'+statusColor+' text-xs px-2.5 py-1 rounded-lg font-bold border">'+stxt(v.status)+'</div>'+
+      div.innerHTML='<div class="flex items-center justify-between gap-2 mb-3 pb-3 border-b">'+
+        '<div class="text-sm font-medium flex items-center gap-2"><span>🖥️</span><span class="break-words">'+v.ip+':'+v.port+'</span></div>'+
+        '<div class="'+scls(v.status)+' text-xs px-2.5 py-1 rounded-full font-semibold">'+stxt(v.status)+'</div></div>'+
+        '<div class="text-sm mb-3">投喂者：<a href="'+p+'" target="_blank" class="underline hover:text-cyan-300 transition-colors">@'+uname+'</a></div>'+
+        '<div class="grid grid-cols-2 gap-3 text-sm mt-3">'+
+          '<div class="flex items-center gap-2"><span class="opacity-60">🌍</span><span class="truncate">'+(v.country||'未填写')+(v.region?' · '+v.region:'')+(v.ipLocation?' · '+v.ipLocation:'')+'</span></div>'+
+          '<div class="flex items-center gap-2"><span class="opacity-60">📊</span><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-2"><span class="opacity-60">📅</span><span class="truncate">'+(v.expiryDate||'未填写')+'</span></div>'+
         '</div>'+
-        '<div class="relative z-10 grid grid-cols-2 gap-3 text-sm mb-4">'+
-          '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2 rounded-lg"><span class="opacity-60">🌍</span><span class="truncate font-medium text-xs">'+(v.country||'未填写')+'</span></div>'+
-          '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2 rounded-lg"><span class="opacity-60">📊</span><span class="truncate font-medium text-xs">'+(v.traffic||'未填写')+'</span></div>'+
-          '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2 rounded-lg"><span class="opacity-60">📅</span><span class="truncate font-medium text-xs">'+(v.expiryDate||'未填写')+'</span></div>'+
-          '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2 rounded-lg"><span class="opacity-60">⚙️</span><span class="truncate font-medium text-xs">'+(v.specs||'未填写')+'</span></div>'+
-        '</div>'+
-        (v.note?'<div class="relative z-10 text-xs bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 rounded-lg px-3 py-2.5 break-words flex items-start gap-2 font-medium"><span class="opacity-60 mt-0.5">💬</span><span>'+v.note+'</span></div>':'');
+        '<div class="text-sm muted mt-3 panel border rounded-lg px-3 py-2 break-words flex items-start gap-2"><span class="opacity-60">⚙️</span><span>'+(v.specs||'未填写')+'</span></div>'+
+        (v.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2 break-words flex items-start gap-2"><span class="opacity-60">💬</span><span>'+v.note+'</span></div>':'')+
+        (t?'<div class="text-xs muted mt-3 flex items-center gap-2"><span class="opacity-60">🕐</span><span>'+t+'</span></div>':'');
       box.appendChild(div);
     });
   }catch(err){
@@ -3661,29 +3785,26 @@ async function checkAdmin(){
 
 function renderLogin(root){
   root.innerHTML='';
-  root.innerHTML='';
   const wrap=document.createElement('div');
-  wrap.className='glass-panel max-w-md mx-auto p-10 animate-entry relative overflow-hidden';
-  wrap.innerHTML='<div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>'+
-    '<div class="text-center mb-10">'+
-      '<div class="inline-flex items-center justify-center w-24 h-24 rounded-3xl mb-6 bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/30 transform hover:scale-105 transition-transform duration-300">'+
-        '<span class="text-5xl filter drop-shadow-md">🔐</span>'+
-      '</div>'+
-      '<h1 class="text-4xl font-bold mb-3 text-primary tracking-tight">管理员登录</h1>'+
-      '<p class="text-base text-secondary font-medium">请输入访问密钥以进入控制台</p>'+
+  wrap.className='panel max-w-md mx-auto border p-8 animate-in';
+  wrap.innerHTML='<div class="text-center mb-6">'+
+    '<div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background:#007AFF">'+
+      '<span class="text-3xl">🔐</span>'+
     '</div>'+
-    '<form id="admin-login-form" class="space-y-6">'+
-      '<div class="space-y-2">'+
-        '<label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">管理员密码</label>'+
-        '<div class="relative">'+
-          '<span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🔑</span>'+
-          '<input type="password" name="password" placeholder="••••••••" '+
-                 'class="input-apple pl-12 text-lg tracking-widest"/>'+
-        '</div>'+
+    '<h1 class="text-2xl font-bold mb-2">管理员登录</h1>'+
+    '<p class="text-sm muted">请输入管理员密码以继续</p>'+
+  '</div>'+
+    '<form id="admin-login-form" class="space-y-4">'+
+      '<div>'+
+        '<label class="block mb-2 text-sm font-medium flex items-center gap-2">'+
+          '<span>🔑</span> 密码'+
+        '</label>'+
+        '<input type="password" name="password" placeholder="请输入管理员密码" '+
+               'class="w-full rounded-lg border px-4 py-3 text-sm focus:ring-2 focus:ring-cyan-500"/>'+
       '</div>'+
-      '<div id="admin-login-msg" class="text-sm min-h-[1.5rem] font-medium text-center text-red-500"></div>'+
-      '<button type="submit" class="w-full btn-primary btn-primary-glow py-4 rounded-2xl text-lg font-bold tracking-wide flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]">'+
-        '<span>🚀</span> 立即登录'+
+      '<div id="admin-login-msg" class="text-sm min-h-[1.5rem] font-medium"></div>'+
+      '<button type="submit" class="w-full btn-primary">'+
+        '<span class="text-lg">🚀</span> 登录'+
       '</button>'+
     '</form>';
   root.appendChild(wrap);
@@ -3716,23 +3837,28 @@ function renderLogin(root){
 async function renderAdmin(root, name){
   root.innerHTML='';
   const header=document.createElement('header');
-  header.className='mb-12 animate-entry relative z-10';
+  header.className='mb-8 animate-in';
   header.innerHTML='<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">'+
-    '<div class="space-y-2">'+
-      '<h1 class="text-display text-4xl md:text-5xl font-bold tracking-tight mb-2"><span class="text-gradient">VPS 管理后台</span></h1>'+
-      '<p class="text-secondary text-lg font-medium flex items-center gap-2">'+
+    '<div class="space-y-3">'+
+      '<div class="flex items-center gap-3">'+
+        '<div class="inline-flex items-center justify-center w-12 h-12 rounded-xl" style="background:#007AFF">'+
+          '<span class="text-2xl">⚙️</span>'+
+        '</div>'+
+        '<h1 class="grad-title-animated text-3xl md:text-4xl font-bold">VPS 管理后台</h1>'+
+      '</div>'+
+      '<p class="text-sm muted flex items-center gap-2 ml-15">'+
         '<span class="text-base">🔒</span>'+
         '<span>仅管理员可见，可查看全部投喂 VPS 与认证信息</span>'+
       '</p>'+
     '</div>'+
     '<div class="flex flex-wrap items-center gap-3">'+
-      '<div class="glass-panel px-5 py-2.5 rounded-full flex items-center gap-3 border border-white/10">'+
-        '<div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">'+name.charAt(0).toUpperCase()+'</div>'+
-        '<span class="text-sm font-bold text-primary">'+name+'</span>'+
+      '<div class="panel px-5 py-2.5 border">'+
+        '<span class="text-sm">👤</span>'+
+        '<span class="text-sm font-medium">'+name+'</span>'+
       '</div>'+
-      '<button id="theme-toggle" class="btn-secondary rounded-full w-10 h-10 flex items-center justify-center bg-white/50 dark:bg-white/10 backdrop-blur-md hover:bg-white/80">🌓</button>'+
-      '<button id="btn-admin-logout" class="btn-secondary rounded-full px-5 py-2.5 flex items-center gap-2 bg-white/50 dark:bg-white/10 backdrop-blur-md hover:bg-white/80 text-red-500 hover:text-red-600 border-red-200 dark:border-red-900/30">'+
-        '<span>🚪</span> 退出登录'+
+      '<button id="theme-toggle" class="btn-secondary">浅色模式</button>'+
+      '<button id="btn-admin-logout" class="btn-danger">'+
+        '退出登录'+
       '</button>'+
     '</div>'+
   '</div>';
@@ -3754,72 +3880,72 @@ async function renderAdmin(root, name){
 
   const cfg=document.createElement('section');
   cfg.id='admin-config';
-  cfg.className='mt-8 space-y-6';
+  cfg.className='mt-6 space-y-4';
   cfg.innerHTML=
-  '<div class="glass rounded-2xl p-6 border border-gray-100 dark:border-gray-800">'+
+  '<div class="panel border p-6">'+
     '<div class="flex items-center justify-between mb-4">'+
       '<div class="flex items-center gap-3">'+
-        '<span class="text-2xl">🔗</span>'+
-        '<h2 class="text-xl font-bold text-primary">OAuth 配置</h2>'+
+        '<span class="text-xl">🔗</span>'+
+        '<h2 class="text-lg font-bold">OAuth 配置</h2>'+
       '</div>'+
       '<button id="btn-toggle-oauth" class="btn-secondary text-xs">展开</button>'+
     '</div>'+
-    '<div id="oauth-body" class="hidden pt-4 border-t border-gray-100 dark:border-gray-800">'+
-      '<form id="oauth-form" class="grid md:grid-cols-3 gap-5">'+
+    '<div id="oauth-body" class="hidden">'+
+      '<form id="oauth-form" class="grid md:grid-cols-3 gap-4">'+
         '<div>'+
-          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5 text-secondary">'+
+          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5">'+
             '<span>🆔</span> Client ID'+
           '</label>'+
-          '<input name="clientId" placeholder="输入 Client ID" class="w-full"/>'+
+          '<input name="clientId" placeholder="输入 Client ID" class="w-full rounded-lg border px-3 py-2 text-sm"/>'+
         '</div>'+
         '<div>'+
-          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5 text-secondary">'+
+          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5">'+
             '<span>🔐</span> Client Secret'+
           '</label>'+
-          '<input name="clientSecret" placeholder="输入 Client Secret" class="w-full"/>'+
+          '<input name="clientSecret" placeholder="输入 Client Secret" class="w-full rounded-lg border px-3 py-2 text-sm"/>'+
         '</div>'+
         '<div>'+
-          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5 text-secondary">'+
+          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5">'+
             '<span>🔗</span> Redirect URI'+
           '</label>'+
-          '<input name="redirectUri" placeholder="输入 Redirect URI" class="w-full"/>'+
+          '<input name="redirectUri" placeholder="输入 Redirect URI" class="w-full rounded-lg border px-3 py-2 text-sm"/>'+
         '</div>'+
       '</form>'+
-      '<div class="mt-5 flex gap-2">'+
+      '<div class="mt-4 flex gap-2">'+
         '<button id="btn-save-oauth" class="btn-primary">'+
           '<span>💾</span> 保存 OAuth 配置'+
         '</button>'+
       '</div>'+
     '</div>'+
   '</div>'+
-  '<div class="glass rounded-2xl p-6 border border-gray-100 dark:border-gray-800">'+
+  '<div class="panel border p-6">'+
     '<div class="flex items-center justify-between mb-4">'+
       '<div class="flex items-center gap-3">'+
-        '<span class="text-2xl">🔑</span>'+
-        '<h2 class="text-xl font-bold text-primary">管理员密码</h2>'+
+        '<span class="text-xl">🔑</span>'+
+        '<h2 class="text-lg font-bold">管理员密码</h2>'+
       '</div>'+
       '<button id="btn-toggle-password" class="btn-secondary text-xs">展开</button>'+
     '</div>'+
-    '<div id="password-body" class="hidden pt-4 border-t border-gray-100 dark:border-gray-800">'+
-      '<div class="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm mb-5 rounded-xl px-4 py-3">'+
+    '<div id="password-body" class="hidden">'+
+      '<div class="alert-warning text-sm mb-4 rounded-xl px-3 py-2">'+
         '⚠️ 仅用于 <code>/admin</code> 后台登录，至少 6 位，建议与 Linux.do 账号密码不同'+
       '</div>'+
-      '<div class="grid md:grid-cols-2 gap-5 mb-5">'+
+      '<div class="grid md:grid-cols-2 gap-4 mb-4">'+
         '<div>'+
-          '<label class="block mb-2 text-sm font-medium text-secondary">新密码</label>'+
+          '<label class="block mb-2 text-sm font-medium">新密码</label>'+
           '<input id="admin-pass-input" type="password" placeholder="输入新的管理员密码" '+
-                 'class="w-full"/>'+
+                 'class="w-full rounded-lg border px-3 py-2.5 text-sm"/>'+
         '</div>'+
         '<div>'+
-          '<label class="block mb-2 text-sm font-medium text-secondary">确认密码</label>'+
+          '<label class="block mb-2 text-sm font-medium">确认密码</label>'+
           '<input id="admin-pass-input2" type="password" placeholder="再次输入以确认" '+
-                 'class="w-full"/>'+
+                 'class="w-full rounded-lg border px-3 py-2.5 text-sm"/>'+
         '</div>'+
       '</div>'+
       '<button id="btn-save-admin-pass" class="btn-primary">'+
         '<span>🔒</span> 保存密码'+
       '</button>'+
-      '<p class="text-xs text-secondary mt-3">💡 修改成功后立即生效，下次登录需要使用新密码</p>'+
+      '<p class="text-xs muted mt-3">💡 修改成功后立即生效，下次登录需要使用新密码</p>'+
     '</div>'+
   '</div>';
   root.appendChild(cfg);
@@ -3853,19 +3979,19 @@ async function renderAdmin(root, name){
 
   const listWrap=document.createElement('section');
   listWrap.className='mt-8';
-  listWrap.innerHTML='<div class="glass rounded-2xl p-6 mb-6 border border-gray-100 dark:border-gray-800">'+
+  listWrap.innerHTML='<div class="panel border p-6 mb-6">'+
     '<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">'+
       '<div class="flex items-center gap-3">'+
         '<span class="text-2xl">📋</span>'+
-        '<h2 class="text-xl font-bold text-primary">VPS 列表</h2>'+
+        '<h2 class="text-2xl font-bold">VPS 列表</h2>'+
       '</div>'+
-      '<button id="btn-verify-all" class="btn-primary shadow-lg shadow-blue-500/20">'+
+      '<button id="btn-verify-all" class="btn-primary">'+
         '<span>🔄</span> 一键验证全部'+
       '</button>'+
     '</div>'+
-    '<div class="flex flex-col md:flex-row gap-4">'+
+    '<div class="flex flex-col md:flex-row gap-3">'+
       '<div class="flex flex-wrap items-center gap-2">'+
-        '<span class="text-sm font-medium text-secondary">筛选：</span>'+
+        '<span class="text-sm font-medium">筛选：</span>'+
         '<button data-status="all" class="btn-secondary text-xs">全部</button>'+
         '<button data-status="active" class="btn-secondary text-xs">✅ 运行中</button>'+
         '<button data-status="failed" class="btn-secondary text-xs">❌ 失败</button>'+
@@ -3877,7 +4003,7 @@ async function renderAdmin(root, name){
       '</div>'+
     '</div>'+
   '</div>'+
-  '<div id="vps-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>';
+  '<div id="vps-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>';
   root.appendChild(listWrap);
 
   listWrap.querySelectorAll('button[data-status]').forEach(btn=> btn.addEventListener('click',()=>{
@@ -3926,25 +4052,24 @@ async function loadStats(){
     }
 
     const d=j.data||{};
-    function card(label,value,key,icon,colorClass){
+    function card(label,value,key,icon){
       const percent = d.totalVPS > 0 ? Math.round((value / d.totalVPS) * 100) : 0;
-      return '<button data-gok="'+key+'" class="stat-card relative overflow-hidden group glass-panel p-6 rounded-3xl text-left transition-all hover:scale-[1.02] hover:shadow-lg border border-white/10">'+
-        '<div class="absolute inset-0 bg-gradient-to-br '+colorClass+' opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>'+
-        '<div class="relative z-10">'+
-          '<div class="flex items-center justify-between mb-4">'+
-            '<div class="w-12 h-12 rounded-2xl bg-gradient-to-br '+colorClass+' flex items-center justify-center text-2xl text-white shadow-lg">'+icon+'</div>'+
-            '<div class="text-xs font-bold px-2.5 py-1 rounded-lg bg-black/5 dark:bg-white/10 backdrop-blur-sm">'+percent+'%</div>'+
-          '</div>'+
-          '<div class="stat-value text-4xl font-bold tracking-tight mb-1">'+value+'</div>'+
-          '<div class="text-sm font-bold text-secondary uppercase tracking-wider">'+label+'</div>'+
+      return '<button data-gok="'+key+'" class="stat-card stat-'+key+' border px-4 py-3 text-left">'+
+        '<div class="flex items-center justify-between mb-2">'+
+          '<div class="stat-label text-xs muted">'+icon+' '+label+'</div>'+
+          '<div class="text-xs muted">'+percent+'%</div>'+
+        '</div>'+
+        '<div class="stat-value mb-2">'+value+'</div>'+
+        '<div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">'+
+          '<div class="h-full rounded-full transition-all duration-500" style="width:'+percent+'%;background:currentColor"></div>'+
         '</div>'+
         '</button>';
     }
-    wrap.innerHTML='<div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10 animate-entry delay-1">'+
-      card('总投喂数',d.totalVPS||0,'all','📊','from-blue-500 to-cyan-400')+
-      card('运行中',d.activeVPS||0,'active','✅','from-green-500 to-emerald-400')+
-      card('失败',d.failedVPS||0,'failed','❌','from-red-500 to-pink-500')+
-      card('今日新增',d.todayNewVPS||0,'today','🆕','from-orange-500 to-yellow-400')+'</div>';
+    wrap.innerHTML='<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">'+
+      card('总投喂数',d.totalVPS||0,'all','📊')+
+      card('运行中',d.activeVPS||0,'active','✅')+
+      card('失败',d.failedVPS||0,'failed','❌')+
+      card('今日新增',d.todayNewVPS||0,'today','🆕')+'</div>';
     
     // 添加数字计数动画
     setTimeout(()=>{
@@ -4125,45 +4250,54 @@ function renderVpsList(){
   }
 
   list.innerHTML='';
-  arr.forEach((v, idx)=>{
+  arr.forEach(v=>{
     const card=document.createElement('div');
-    card.className='glass-panel p-6 rounded-3xl relative overflow-hidden group animate-entry hover:scale-[1.01] transition-all duration-300';
-    card.style.animationDelay = (idx * 0.05) + 's';
-    
+    card.className='card rounded-2xl border p-4 flex flex-col gap-3 text-sm shadow-lg hover:shadow-xl transition-all';
     const dt=v.donatedAt?new Date(v.donatedAt):null;
     const t=dt?dt.toLocaleString():'';
     const uname=v.donatedByUsername||'';
     const p='https://linux.do/u/'+encodeURIComponent(uname);
-    const statusColor = v.status === 'active' ? 'text-green-500 bg-green-500/10 border-green-500/20' : 
-                       (v.status === 'failed' ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-secondary bg-gray-500/10 border-gray-500/20');
 
-    card.innerHTML='<div class="flex items-start justify-between gap-4 mb-6">'+
-        '<div class="flex items-center gap-4">'+
-          '<div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 flex items-center justify-center text-2xl">🖥️</div>'+
-          '<div>'+
-            '<div class="font-bold text-xl tracking-tight font-mono">'+v.ip+':'+v.port+'</div>'+
-            '<div class="flex items-center gap-2 text-xs font-medium mt-1">'+
-              '<span class="text-secondary">投喂者:</span>'+
-              '<a href="'+p+'" target="_blank" class="text-blue-500 hover:text-blue-400 transition-colors">@'+uname+'</a>'+
-            '</div>'+
-          '</div>'+
+    card.innerHTML='<div class="flex items-center justify-between gap-2 pb-3 border-b">'+
+        '<div class="flex items-center gap-2 text-sm font-medium">'+
+          '<span>🖥️</span>'+
+          '<span class="break-words">'+v.ip+':'+v.port+'</span>'+
         '</div>'+
-        '<span class="'+statusColor+' text-xs px-3 py-1.5 rounded-lg font-bold border uppercase tracking-wider">'+stxt(v.status)+'</span>'+
+        '<span class="'+scls(v.status)+' text-xs px-2 py-1 rounded-full">'+stxt(v.status)+'</span>'+
       '</div>'+
-      '<div class="grid grid-cols-2 gap-3 mb-6">'+
-        '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2.5 rounded-xl"><span class="opacity-60 text-lg">🌍</span><span class="truncate font-medium text-sm">'+(v.country||'未填写')+'</span></div>'+
-        '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2.5 rounded-xl"><span class="opacity-60 text-lg">📊</span><span class="truncate font-medium text-sm">'+(v.traffic||'未填写')+'</span></div>'+
-        '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2.5 rounded-xl"><span class="opacity-60 text-lg">📅</span><span class="truncate font-medium text-sm">'+(v.expiryDate||'未填写')+'</span></div>'+
-        '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2.5 rounded-xl"><span class="opacity-60 text-lg">⚙️</span><span class="truncate font-medium text-sm">'+(v.specs||'未填写')+'</span></div>'+
+      '<div class="space-y-2 text-xs">'+
+        '<div class="flex items-center gap-2">'+
+          '<span class="opacity-60">👤</span>'+
+          '<span>投喂者：<a href="'+p+'" target="_blank" class="text-sky-500 hover:text-cyan-400 underline transition-colors">@'+uname+'</a></span>'+
+        '</div>'+
+        '<div class="flex items-center gap-2">'+
+          '<span class="opacity-60">🌍</span>'+
+          '<span>'+(v.country||'未填写')+(v.region?' · '+v.region:'')+(v.ipLocation?' · '+v.ipLocation:'')+'</span>'+
+        '</div>'+
+        '<div class="grid grid-cols-2 gap-2">'+
+          '<div class="flex items-center gap-1.5 panel border rounded-lg px-2 py-1.5"><span class="opacity-60">📊</span><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-1.5 panel border rounded-lg px-2 py-1.5"><span class="opacity-60">📅</span><span class="truncate">'+(v.expiryDate||'未填写')+'</span></div>'+
+        '</div>'+
+        '<div class="panel border rounded-lg px-2 py-1.5 flex items-start gap-1.5">'+
+          '<span class="opacity-60">⚙️</span>'+
+          '<span class="break-words">'+(v.specs||'未填写')+'</span>'+
+        '</div>'+
+        (v.note?'<div class="bg-amber-500/5 border border-amber-500/20 rounded-lg px-2 py-1.5 text-amber-600 dark:text-amber-300 flex items-start gap-1.5">'+
+          '<span class="opacity-60">💬</span>'+
+          '<span class="break-words">'+v.note+'</span>'+
+        '</div>':'')+
+        (v.adminNote?'<div class="bg-cyan-500/5 border border-cyan-500/20 rounded-lg px-2 py-1.5 text-cyan-600 dark:text-cyan-300 flex items-start gap-1.5">'+
+          '<span class="opacity-60">📝</span>'+
+          '<span class="break-words">'+v.adminNote+'</span>'+
+        '</div>':'')+
+        (t?'<div class="flex items-center gap-1.5 text-xs muted"><span class="opacity-60">🕐</span><span>'+t+'</span></div>':'')+
       '</div>'+
-      (v.note?'<div class="mb-4 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-amber-700 dark:text-amber-400 text-xs font-medium flex gap-2"><span class="text-base">💬</span><span class="leading-relaxed">'+v.note+'</span></div>':'')+
-      (v.adminNote?'<div class="mb-4 bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3 text-cyan-700 dark:text-cyan-400 text-xs font-medium flex gap-2"><span class="text-base">📝</span><span class="leading-relaxed">'+v.adminNote+'</span></div>':'')+
-      '<div class="flex flex-wrap gap-2 pt-4 border-t border-gray-100 dark:border-white/5">'+
-        '<button class="btn-secondary text-xs py-2 px-4 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-blue-500 hover:text-white transition-all" data-act="login" data-id="'+v.id+'">🔍 查看</button>'+
-        '<button class="btn-secondary text-xs py-2 px-4 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-green-500 hover:text-white transition-all" data-act="verify" data-id="'+v.id+'">✅ 验证</button>'+
-        '<button class="btn-secondary text-xs py-2 px-4 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-purple-500 hover:text-white transition-all" data-act="editConfig" data-id="'+v.id+'">⚙️ 配置</button>'+
-        '<button class="btn-secondary text-xs py-2 px-4 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-orange-500 hover:text-white transition-all" data-act="edit" data-id="'+v.id+'">✏️ 编辑</button>'+
-        '<button class="btn-secondary text-xs py-2 px-4 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-red-500 hover:text-white transition-all" data-act="del" data-id="'+v.id+'">🗑️ 删除</button>'+
+      '<div class="flex flex-wrap gap-2 pt-3 border-t">'+
+        '<button class="btn-secondary text-xs" data-act="login" data-id="'+v.id+'">🔍 查看</button>'+
+        '<button class="btn-secondary text-xs" data-act="verify" data-id="'+v.id+'">✅ 验证</button>'+
+        '<button class="btn-secondary text-xs" data-act="editConfig" data-id="'+v.id+'">⚙️ 编辑配置</button>'+
+        '<button class="btn-secondary text-xs" data-act="edit" data-id="'+v.id+'">✏️ 编辑信息</button>'+
+        '<button class="btn-danger text-xs" data-act="del" data-id="'+v.id+'">🗑️ 删除</button>'+
       '</div>';
 
     card.querySelectorAll('button[data-act]').forEach(btn=>{
@@ -4315,54 +4449,54 @@ function openEditModal(vpsId) {
   const modal = document.createElement('div');
   modal.id = 'edit-config-modal';
   modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
-  modal.style.background = 'rgba(0, 0, 0, 0.4)';
-  modal.style.backdropFilter = 'blur(8px)';
+  modal.style.background = 'rgba(0, 0, 0, 0.5)';
+  modal.style.backdropFilter = 'blur(4px)';
   
   modal.innerHTML = \`
-    <div class="glass max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800">
-      <div class="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
+    <div class="panel border max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in">
+      <div class="sticky top-0 bg-inherit border-b px-6 py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <span class="text-2xl">⚙️</span>
-          <h3 class="text-xl font-bold text-primary">编辑 VPS 配置</h3>
+          <h3 class="text-xl font-bold">编辑 VPS 配置</h3>
         </div>
-        <button onclick="closeEditModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-secondary">✕</button>
+        <button onclick="closeEditModal()" class="text-2xl hover:opacity-70 transition-opacity">✕</button>
       </div>
       
-      <form id="edit-config-form" class="p-6 space-y-6">
-        <div class="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm leading-relaxed rounded-xl px-5 py-4 font-medium">
+      <form id="edit-config-form" class="p-6 space-y-5">
+        <div class="alert-warning text-sm leading-relaxed rounded-xl px-4 py-3">
           ⚠️ 修改配置后将自动进行连通性测试。即使测试失败，配置也会被保存。
         </div>
         
-        <div class="grid md:grid-cols-2 gap-6">
+        <div class="grid md:grid-cols-2 gap-5">
           <div>
-            <label class="block mb-2 text-sm font-medium flex items-center gap-1.5 text-secondary">
-              <span>🌐</span> 服务器 IP <span class="text-red-500">*</span>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>🌐</span> 服务器 IP <span class="text-red-400">*</span>
             </label>
             <input name="ip" required value="\${vps.ip}" placeholder="示例：203.0.113.8"
-                   class="w-full" />
+                   class="w-full rounded-lg border px-3 py-2 text-sm" />
           </div>
           <div>
-            <label class="block mb-2 text-sm font-medium flex items-center gap-1.5 text-secondary">
-              <span>🔌</span> 端口 <span class="text-red-500">*</span>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>🔌</span> 端口 <span class="text-red-400">*</span>
             </label>
             <input name="port" required type="number" min="1" max="65535" value="\${vps.port}"
-                   class="w-full" />
+                   class="w-full rounded-lg border px-3 py-2 text-sm" />
           </div>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-6">
+        <div class="grid md:grid-cols-2 gap-5">
           <div>
-            <label class="block mb-2 text-sm font-medium flex items-center gap-1.5 text-secondary">
-              <span>👤</span> 系统用户名 <span class="text-red-500">*</span>
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+              <span>👤</span> 系统用户名 <span class="text-red-400">*</span>
             </label>
             <input name="username" required value="\${vps.username}" placeholder="示例：root"
-                   class="w-full" />
+                   class="w-full rounded-lg border px-3 py-2 text-sm" />
           </div>
           <div>
-            <label class="block mb-2 text-sm font-medium flex items-center gap-1.5 text-secondary">
+            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
               <span>🔐</span> 认证方式
             </label>
-            <select name="authType" class="w-full">
+            <select name="authType" class="w-full rounded-lg border px-3 py-2 text-sm">
               <option value="password" \${vps.authType === 'password' ? 'selected' : ''}>🔑 密码</option>
               <option value="key" \${vps.authType === 'key' ? 'selected' : ''}>🗝️ SSH 私钥</option>
             </select>
@@ -4578,524 +4712,1033 @@ tailwind.config = {
 }
 </script>
 <style>
-:root {
-  --font-sans: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  
-  /* Light Mode - Crisp & Airy */
-  --bg-body: #F2F2F7;
-  --bg-blob: #E5E5EA;
-  --glass-border: rgba(255, 255, 255, 0.4);
-  --glass-surface: rgba(255, 255, 255, 0.65);
-  --glass-highlight: rgba(255, 255, 255, 0.5);
-  --text-primary: #000000;
-  --text-secondary: #6e6e73;
-  --accent-glow: rgba(0, 122, 255, 0.15);
-  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
-  
+:root{
+  --radius: 0.5rem;
   color-scheme: light;
 }
-
-body[data-theme="dark"] {
-  /* Dark Mode - Deep & Rich */
-  --bg-body: #000000;
-  --bg-blob: #1c1c1e;
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-surface: rgba(28, 28, 30, 0.6);
-  --glass-highlight: rgba(255, 255, 255, 0.05);
-  --text-primary: #FFFFFF;
-  --text-secondary: #86868b;
-  --accent-glow: rgba(10, 132, 255, 0.2);
-  --card-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-  
-  color-scheme: dark;
+html{
+  scroll-behavior: smooth;
 }
-
-body {
-  font-family: var(--font-sans);
-  background-color: var(--bg-body);
-  color: var(--text-primary);
-  margin: 0;
-  min-height: 100vh;
-  overflow-x: hidden;
+html,body{
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
-  background-image: 
-    radial-gradient(circle at 0% 0%, var(--bg-blob) 0%, transparent 50%),
-    radial-gradient(circle at 100% 0%, var(--bg-blob) 0%, transparent 50%),
-    radial-gradient(circle at 100% 100%, var(--bg-blob) 0%, transparent 50%),
-    radial-gradient(circle at 0% 100%, var(--bg-blob) 0%, transparent 50%);
-  background-attachment: fixed;
-  transition: background-color 0.5s ease;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+body{
+  background: linear-gradient(135deg,
+    #f0e6ff 0%,    /* 淡紫色 */
+    #e9d5ff 20%,   /* 浅紫色 */
+    #ddd6fe 40%,   /* 紫罗兰 */
+    #c4b5fd 60%,   /* 中紫色 */
+    #e9d5ff 80%,   /* 浅紫色 */
+    #f0e6ff 100%   /* 淡紫色 */
+  );
+  background-size: 400% 400%;
+  background-attachment: fixed; /* 固定背景，避免滚动时泛白 */
+  animation: gradientShift 15s ease infinite;
+  color: #1d1d1f;
+  min-height: 100vh;
+  transition: color 0.3s ease;
+  position: relative;
+}
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+body::before{
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(139, 92, 246, 0.05) 0%,
+    rgba(168, 85, 247, 0.04) 25%,
+    rgba(147, 51, 234, 0.03) 50%,
+    rgba(126, 34, 206, 0.04) 75%,
+    rgba(139, 92, 246, 0.05) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+body > *{
+  position: relative;
+  z-index: 1;
 }
 
-/* ========== Bento Grid & Glass ========== */
-.glass-panel {
-  background: var(--glass-surface);
-  backdrop-filter: blur(25px) saturate(180%);
-  -webkit-backdrop-filter: blur(25px) saturate(180%);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--card-shadow);
-  border-radius: 24px; /* Super rounded */
-  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+body[data-theme="dark"]{
+  color-scheme: dark;
+  background: linear-gradient(135deg,
+    #1a0a2e 0%,    /* 深紫蓝 */
+    #16213e 25%,   /* 深蓝灰 */
+    #0f3460 50%,   /* 深蓝 */
+    #1a1a2e 75%,   /* 深灰蓝 */
+    #0a0e27 100%   /* 极深蓝 */
+  );
+  background-size: 400% 400%;
+  background-attachment: fixed; /* 固定背景，避免滚动时泛白 */
+  animation: gradientShift 15s ease infinite;
+  color: #f5f5f7;
+}
+body[data-theme="dark"]::before{
+  background: linear-gradient(135deg,
+    rgba(138, 43, 226, 0.1) 0%,
+    rgba(72, 52, 212, 0.08) 25%,
+    rgba(59, 130, 246, 0.06) 50%,
+    rgba(16, 185, 129, 0.05) 75%,
+    rgba(14, 165, 233, 0.08) 100%
+  );
 }
 
-.glass-panel:hover {
-  transform: translateY(-2px) scale(1.005);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-  border-color: var(--glass-highlight);
+/* ========== 动画 ========== */
+@keyframes slideUpAndFade {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50px) scale(0.9);
+  }
 }
 
-.bento-grid {
-  display: grid;
-  gap: 24px;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+.animate-in {
+  animation: slideUpAndFade 0.3s ease-out;
+}
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+.animate-slide-in {
+  animation: slideInFromBottom 0.4s ease-out forwards;
 }
 
-/* ========== Typography (Massive) ========== */
-.text-display {
-  font-family: "SF Pro Display", var(--font-sans);
+/* ========== 加载指示器 ========== */
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top-color: #007AFF;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+body[data-theme="dark"] .loading-spinner {
+  border-top-color: #0A84FF;
+}
+
+/* ========== 骨架屏 ========== */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(220, 220, 225, 0.6) 0%,
+    rgba(235, 235, 240, 0.8) 50%,
+    rgba(220, 220, 225, 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonLoading 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+@keyframes skeletonLoading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+body[data-theme="dark"] .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(44, 44, 46, 0.6) 0%,
+    rgba(56, 56, 58, 0.8) 50%,
+    rgba(44, 44, 46, 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonLoading 1.5s ease-in-out infinite;
+}
+
+/* 骨架屏卡片 */
+.skeleton-card {
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+body[data-theme="dark"] .skeleton-card {
+  background: rgba(28, 28, 30, 0.8);
+  border-color: rgba(56, 56, 58, 0.6);
+}
+
+.skeleton-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.skeleton-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+.skeleton-title {
+  height: 20px;
+  width: 40%;
+  border-radius: 4px;
+}
+.skeleton-text {
+  height: 16px;
+  width: 100%;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+.skeleton-text.short {
+  width: 60%;
+}
+.skeleton-text.medium {
+  width: 80%;
+}
+
+/* ========== 卡片与面板 ========== */
+.panel,.card{
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  box-shadow:
+    0 2px 16px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: all 0.2s ease;
+  word-break: break-word;
+  /* 移除 overflow: hidden，避免展开收起时泛白 */
+  /* 性能优化：使用 transform 而不是 contain */
+  will-change: transform;
+  transform: translateZ(0);
+}
+.card:hover {
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  transform: translateY(-2px) translateZ(0);
+}
+
+body[data-theme="dark"] .panel,
+body[data-theme="dark"] .card{
+  background: rgba(28, 28, 30, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-color: rgba(56, 56, 58, 0.6);
+  box-shadow: 
+    0 2px 16px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(56, 56, 58, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+body[data-theme="dark"] .card:hover{
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(56, 56, 58, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ========== 弹窗内文本块 ========== */
+.modal-text-block{
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(245, 245, 247, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(210, 210, 215, 0.8);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+body[data-theme="dark"] .modal-text-block{
+  background: rgba(44, 44, 46, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-color: rgba(56, 56, 58, 0.8);
+  color: #f5f5f7;
+}
+
+/* ========== 文字样式 ========== */
+.muted{
+  color: #6b6b6f;
+}
+body[data-theme="dark"] .muted{
+  color: #a8a8ad;
+}
+
+.grad-title{
+  color: #1d1d1f;
   font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+body[data-theme="dark"] .grad-title{
+  color: #f5f5f7;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.text-gradient {
-  background: linear-gradient(135deg, #007AFF, #5856D6, #AF52DE);
+/* ========== 流光渐变标题 ========== */
+.grad-title-animated {
+  background: linear-gradient(
+    90deg,
+    #8b5cf6 0%,
+    #a855f7 25%,
+    #d946ef 50%,
+    #a855f7 75%,
+    #8b5cf6 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientFlow 3s linear infinite;
+  font-weight: 700;
+}
+
+@keyframes gradientFlow {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+body[data-theme="dark"] .grad-title-animated {
+  background: linear-gradient(
+    90deg,
+    #a78bfa 0%,
+    #c084fc 25%,
+    #e879f9 50%,
+    #c084fc 75%,
+    #a78bfa 100%
+  );
+  background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* ========== Controls ========== */
-.btn-pill {
-  border-radius: 9999px;
-  padding: 12px 28px;
+/* ========== Toast 通知 ========== */
+#toast-root{
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+.toast{
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  color: #1d1d1f;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.8);
+  transform: translateY(-20px);
+  opacity: 0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: auto;
+  min-width: 280px;
+  max-width: 420px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.toast.show{ 
+  transform: translateY(0); 
+  opacity: 1;
+  animation: slideDown 0.25s ease-out;
+}
+.toast.success{ 
+  border-left: 3px solid #34C759;
+}
+.toast.error{ 
+  border-left: 3px solid #FF3B30;
+}
+.toast.warn{ 
+  border-left: 3px solid #FF9500;
+}
+body[data-theme="dark"] .toast{
+  background: rgba(44, 44, 46, 0.9);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  color: #f5f5f7;
+  border-color: rgba(56, 56, 58, 0.8);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(56,56,58,0.6);
+}
+body[data-theme="dark"] .toast.success{ border-left-color: #32D74B; }
+body[data-theme="dark"] .toast.error{ border-left-color: #FF453A; }
+body[data-theme="dark"] .toast.warn{ border-left-color: #FF9F0A; }
+
+/* ========== 辅助文字 ========== */
+.help{ 
+  font-size: 12px;
+  color: #86868b;
+}
+body[data-theme="dark"] .help{
+  color: #98989d;
+}
+
+/* ========== 警告框 ========== */
+.alert-warning{
+  background: linear-gradient(135deg, rgba(255, 149, 0, 0.08), rgba(255, 204, 0, 0.05));
+  border: 1px solid rgba(255, 149, 0, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+body[data-theme="dark"] .alert-warning{
+  background: linear-gradient(135deg, rgba(255, 159, 10, 0.12), rgba(255, 214, 10, 0.08));
+  border-color: rgba(255, 159, 10, 0.3);
+}
+
+/* ========== 状态徽章 ========== */
+.badge-ok{
+  color: #34C759;
   font-weight: 600;
-  letter-spacing: -0.01em;
-  transition: all 0.2s ease;
-  border: none;
+  position: relative;
+}
+.badge-ok::before{
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: #34C759;
+  border-radius: 50%;
+  animation: pulse-green 2s ease-in-out infinite;
+}
+@keyframes pulse-green {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52,199,89,0.7); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(52,199,89,0); }
+}
+.badge-fail{
+  color: #FF3B30;
+  font-weight: 600;
+}
+.badge-idle{
+  color: #86868b;
+  font-weight: 600;
+}
+body[data-theme="dark"] .badge-ok{ color: #32D74B; }
+body[data-theme="dark"] .badge-ok::before{ background: #32D74B; }
+body[data-theme="dark"] .badge-fail{ color: #FF453A; }
+body[data-theme="dark"] .badge-idle{ color: #98989d; }
+
+/* ========== 主题切换按钮 ========== */
+#theme-toggle{
+  border-radius: 10px;
+  padding: 8px 16px;
+  border: 1px solid rgba(210, 210, 215, 0.8);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #1d1d1f;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s ease;
   cursor: pointer;
 }
+#theme-toggle:hover{
+  background: rgba(245, 245, 247, 0.95);
+  transform: scale(0.98);
+}
+#theme-toggle:active{
+  transform: scale(0.96);
+  opacity: 0.8;
+}
+body[data-theme="dark"] #theme-toggle{
+  background: rgba(44, 44, 46, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #f5f5f7;
+  border-color: rgba(56, 56, 58, 0.8);
+}
+body[data-theme="dark"] #theme-toggle:hover{
+  background: rgba(56, 56, 58, 0.9);
+}
 
-.btn-primary-glow {
+/* ========== 统计卡片 ========== */
+.stat-card{
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(255,255,255,0.8);
+}
+.stat-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.9);
+}
+.stat-card:active{
+  transform: translateY(-1px) scale(0.98);
+}
+.stat-card .stat-label{
+  font-size: 12px;
+  font-weight: 500;
+  color: #86868b;
+}
+.stat-card .stat-value{
+  font-size: 28px;
+  font-weight: 700;
+  color: #007AFF;
+}
+.stat-card.stat-all .stat-value{ color: #007AFF; }
+.stat-card.stat-active .stat-value{ color: #34C759; }
+.stat-card.stat-failed .stat-value{ color: #FF3B30; }
+.stat-card.stat-inactive .stat-value{ color: #FF9500; }
+.stat-card.stat-pending .stat-value{ color: #FF9500; }
+.stat-card.stat-today .stat-value{ color: #007AFF; }
+
+body[data-theme="dark"] .stat-card{
+  background: rgba(28, 28, 30, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-color: rgba(56, 56, 58, 0.6);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4), 0 0 0 1px rgba(56,56,58,0.5);
+}
+body[data-theme="dark"] .stat-card:hover{
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(56,56,58,0.8);
+}
+body[data-theme="dark"] .stat-card .stat-label{
+  color: #98989d;
+}
+body[data-theme="dark"] .stat-card .stat-value{
+  color: #0A84FF;
+}
+body[data-theme="dark"] .stat-card.stat-all .stat-value{ color: #0A84FF; }
+body[data-theme="dark"] .stat-card.stat-active .stat-value{ color: #32D74B; }
+body[data-theme="dark"] .stat-card.stat-failed .stat-value{ color: #FF453A; }
+body[data-theme="dark"] .stat-card.stat-inactive .stat-value{ color: #FF9F0A; }
+body[data-theme="dark"] .stat-card.stat-pending .stat-value{ color: #FF9F0A; }
+body[data-theme="dark"] .stat-card.stat-today .stat-value{ color: #0A84FF; }
+
+/* ========== 文字大小 ========== */
+.text-xs{ font-size: 13px; line-height: 1.4; }
+.text-sm{ font-size: 14px; line-height: 1.45; }
+
+/* ========== 表单元素 ========== */
+input, textarea, select{
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #1d1d1f;
+  border: 1px solid rgba(210, 210, 215, 0.8);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 15px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+}
+select{
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%231d1d1f' stroke='%231d1d1f' stroke-width='0.5' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 40px;
+  cursor: pointer;
+}
+optgroup{
+  font-weight: 600;
+  color: #6b6b6f;
+  font-size: 14px;
+  padding: 10px 14px;
+  background: #f5f5f7;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+}
+option{
+  padding: 10px 14px;
+  color: #1d1d1f;
+  background: #ffffff;
+  font-size: 14.5px;
+  font-weight: 400;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  letter-spacing: 0.01em;
+}
+option:hover,
+option:focus{
+  background: #f5f5f7;
+  color: #000000;
+}
+input:hover, textarea:hover, select:hover{
+  border-color: #86868b;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+input:focus, textarea:focus, select:focus{
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12), 0 2px 8px rgba(139, 92, 246, 0.15);
+  outline: none;
+  transform: translateY(-2px);
+}
+input::placeholder,
+textarea::placeholder{
+  color: #86868b;
+  transition: opacity 0.2s ease;
+}
+input:focus::placeholder,
+textarea:focus::placeholder{
+  opacity: 0.5;
+}
+input:disabled, textarea:disabled, select:disabled{
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f5f7;
+}
+
+/* 输入框错误状态 */
+input.error, textarea.error, select.error{
+  border-color: #FF3B30;
+  animation: shake 0.3s ease;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* 输入框成功状态 */
+input.success, textarea.success, select.success{
+  border-color: #34C759;
+}
+
+body[data-theme="dark"] input,
+body[data-theme="dark"] textarea,
+body[data-theme="dark"] select{
+  background: rgba(44, 44, 46, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #f5f5f7;
+  border-color: rgba(56, 56, 58, 0.8);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+}
+body[data-theme="dark"] select{
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23f5f5f7' stroke='%23f5f5f7' stroke-width='0.5' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+}
+body[data-theme="dark"] optgroup{
+  color: #d1d1d6;
+  background: #1c1c1e;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  border: none;
+}
+body[data-theme="dark"] option{
+  color: #f5f5f7;
+  background: #2c2c2e;
+  font-size: 14.5px;
+  font-weight: 400;
+  padding: 10px 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  letter-spacing: 0.01em;
+}
+body[data-theme="dark"] option:hover,
+body[data-theme="dark"] option:focus{
+  background: #3a3a3c;
+  color: #ffffff;
+}
+body[data-theme="dark"] input:hover,
+body[data-theme="dark"] textarea:hover,
+body[data-theme="dark"] select:hover{
+  border-color: #98989d;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+body[data-theme="dark"] input:focus,
+body[data-theme="dark"] textarea:focus,
+body[data-theme="dark"] select:focus{
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.18), 0 2px 8px rgba(139, 92, 246, 0.2);
+  transform: translateY(-2px);
+}
+body[data-theme="dark"] input.error,
+body[data-theme="dark"] textarea.error,
+body[data-theme="dark"] select.error{
+  border-color: #FF453A;
+}
+body[data-theme="dark"] input.success,
+body[data-theme="dark"] textarea.success,
+body[data-theme="dark"] select.success{
+  border-color: #32D74B;
+}
+body[data-theme="dark"] input::placeholder,
+body[data-theme="dark"] textarea::placeholder{
+  color: #98989d;
+}
+body[data-theme="dark"] input:disabled,
+body[data-theme="dark"] textarea:disabled,
+body[data-theme="dark"] select:disabled{
+  background: #1c1c1e;
+}
+
+/* ========== 按钮 ========== */
+button{
+  transition: all 0.15s ease;
+  cursor: pointer;
+  font-weight: 500;
+  border-radius: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+button:hover{
+  opacity: 0.85;
+  transform: scale(0.98);
+}
+button:active{
+  opacity: 0.7;
+  transform: scale(0.96);
+}
+button:disabled{
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* 主按钮（渐变蓝色背景）*/
+.btn-primary{
   background: #007AFF;
-  color: white;
-  box-shadow: 0 4px 20px var(--accent-glow);
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  font-size: 15px;
+  box-shadow: 0 2px 8px rgba(0,122,255,0.2);
+  position: relative;
+  overflow: hidden;
 }
-.btn-primary-glow:hover {
-  transform: scale(1.03);
-  box-shadow: 0 8px 25px var(--accent-glow);
+.btn-primary:hover{
+  background: #0077ED;
+  box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+}
+.btn-primary.loading{
+  pointer-events: none;
+  opacity: 0.8;
+}
+.btn-primary.loading::after{
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-left: 8px;
+}
+.btn-primary.success{
+  background: #34C759;
+  animation: successPulse 0.5s ease;
+}
+.btn-primary.error{
+  background: #FF3B30;
+  animation: errorShake 0.4s ease;
+}
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(52,199,89,0.5); }
+  100% { transform: scale(1); }
+}
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+body[data-theme="dark"] .btn-primary{
+  background: #0A84FF;
+  box-shadow: 0 2px 8px rgba(10,132,255,0.3);
+}
+body[data-theme="dark"] .btn-primary:hover{
+  background: #0077ED;
+}
+body[data-theme="dark"] .btn-primary.success{
+  background: #32D74B;
+}
+body[data-theme="dark"] .btn-primary.error{
+  background: #FF453A;
 }
 
-.input-apple {
-  background: rgba(120, 120, 128, 0.1);
-  border: 1px solid transparent;
-  border-radius: 16px;
-  padding: 16px;
-  font-size: 16px;
-  transition: all 0.2s;
-  width: 100%;
-  color: var(--text-primary);
-}
-.input-apple:focus {
-function commonHead(title: string): string {
-  return `
-    < meta charset = "utf-8" />
-      <meta name="viewport" content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <title>${ title } </title>
-          < link rel = "icon" href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🪐</text></svg>" />
-            <script src="https://cdn.tailwindcss.com" > </script>
-              < script src = "https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js" > </script>
-                <script>
-  tailwind.config = {
-    darkMode: ['class', '[data-theme="dark"]'],
-    theme: {
-      extend: {
-        fontFamily: {
-          sans: ['SF Pro Display', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
-          mono: ['SF Mono', 'Menlo', 'Monaco', 'Courier New', 'monospace'],
-        },
-        colors: {
-          titanium: {
-            50: '#f5f5f7',
-            100: '#e5e5ea',
-            200: '#d1d1d6',
-            300: '#c7c7cc',
-            400: '#aeaeb2',
-            500: '#8e8e93',
-            600: '#636366',
-            700: '#48484a',
-            800: '#3a3a3c',
-            900: '#2c2c2e',
-            950: '#1c1c1e',
-          },
-          electric: {
-            blue: '#007AFF',
-            cyan: '#32ADE6',
-            purple: '#AF52DE',
-          }
-        },
-        animation: {
-          'float': 'float 6s ease-in-out infinite',
-          'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        },
-        keyframes: {
-          float: {
-            '0%, 100%': { transform: 'translateY(0)' },
-            '50%': { transform: 'translateY(-10px)' },
-          }
-        }
-      }
-    }
-  }
-    </script>
-    <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-:root {
-    --glass - surface: rgba(255, 255, 255, 0.65);
-    --glass - border: rgba(255, 255, 255, 0.4);
-    --glass - blur: 20px;
-    --text - primary: #1d1d1f;
-    --text - secondary: #86868b;
-    --bg - body: #f5f5f7;
-    --accent - color: #007AFF;
-    --card - shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-    --titanium - gradient: linear - gradient(135deg, #e5e5ea 0 %, #ffffff 100 %);
-  }
-
-  [data - theme="dark"] {
-    --glass - surface: rgba(28, 28, 30, 0.65);
-    --glass - border: rgba(255, 255, 255, 0.1);
-    --text - primary: #f5f5f7;
-    --text - secondary: #98989d;
-    --bg - body: #000000;
-    --accent - color: #0A84FF;
-    --card - shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    --titanium - gradient: linear - gradient(135deg, #2c2c2e 0 %, #1c1c1e 100 %);
-  }
-
-body {
-    font - family: 'SF Pro Display', 'Inter', sans - serif;
-    background - color: var(--bg - body);
-    color: var(--text - primary);
-    -webkit - font - smoothing: antialiased;
-    -moz - osx - font - smoothing: grayscale;
-    transition: background - color 0.5s cubic - bezier(0.2, 0.8, 0.2, 1);
-    overflow - x: hidden;
-  }
-
-/* Ethereal Background */
-.bg - ethereal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z - index: -1;
-    overflow: hidden;
-    pointer - events: none;
-  }
-.bg - blob {
-    position: absolute;
-    border - radius: 50 %;
-    filter: blur(80px);
-    opacity: 0.4;
-    animation: float 10s infinite ease -in -out;
-  }
-.blob - 1 { top: -10 %; left: -10 %; width: 50vw; height: 50vw; background: radial - gradient(circle, var(--accent - color), transparent); animation - delay: 0s; }
-.blob - 2 { bottom: -10 %; right: -10 %; width: 60vw; height: 60vw; background: radial - gradient(circle, #AF52DE, transparent); animation - delay: -5s; }
-
-/* Glass Pro Engine */
-.glass - pro {
-    background: var(--glass - surface);
-    backdrop - filter: blur(var(--glass - blur)) saturate(180 %);
-    -webkit - backdrop - filter: blur(var(--glass - blur)) saturate(180 %);
-    border: 1px solid var(--glass - border);
-    box - shadow: var(--card - shadow);
-  }
-
-  /* Typography */
-  h1, h2, h3, h4, h5, h6 {
-    letter - spacing: -0.02em;
-  }
-.text - display {
-    font - weight: 700;
-    letter - spacing: -0.03em;
-    background: linear - gradient(135deg, var(--text - primary) 30 %, var(--text - secondary));
-    -webkit - background - clip: text;
-    -webkit - text - fill - color: transparent;
-  }
-
-/* Premium Inputs */
-.input - pro {
-    background: transparent;
-    border: none;
-    border - bottom: 1px solid var(--glass - border);
-    border - radius: 0;
-    padding: 12px 0;
-    font - size: 16px;
-    color: var(--text - primary);
-    transition: all 0.3s ease;
-    width: 100 %;
-  }
-.input - pro:focus {
-    outline: none;
-    border - bottom - color: var(--accent - color);
-    box - shadow: 0 1px 0 0 var(--accent - color);
-  }
-.input - pro::placeholder {
-    color: var(--text - secondary);
-    opacity: 0.5;
-  }
-
-/* Buttons */
-.btn - titanium {
-    background: var(--text - primary);
-    color: var(--bg - body);
-    border - radius: 9999px;
-    padding: 12px 28px;
-    font - weight: 600;
-    transition: all 0.3s cubic - bezier(0.2, 0.8, 0.2, 1);
-    box - shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-.btn - titanium:hover {
-    transform: scale(1.02);
-    box - shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    opacity: 0.9;
-  }
-
-  /* Animations */
-  @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-  }
-.animate - entry {
-    animation: slideUp 0.8s cubic - bezier(0.16, 1, 0.3, 1) forwards;
-    opacity: 0;
-  }
-.delay - 1 { animation - delay: 0.1s; }
-.delay - 2 { animation - delay: 0.2s; }
-.delay - 3 { animation - delay: 0.3s; }
-
-/* Scrollbar */
-:: -webkit - scrollbar { width: 6px; }
-:: -webkit - scrollbar - track { background: transparent; }
-:: -webkit - scrollbar - thumb { background: rgba(128, 128, 128, 0.2); border - radius: 3px; }
-:: -webkit - scrollbar - thumb:hover { background: rgba(128, 128, 128, 0.4); }
-  </style>`
+/* 次要按钮（边框按钮）*/
+.btn-secondary{
   background: transparent;
   color: #1d1d1f;
   border: 1px solid #d2d2d7;
   padding: 8px 16px;
-  font - size: 13px;
+  font-size: 13px;
 }
-.btn - secondary:hover{
+.btn-secondary:hover{
   background: #f5f5f7;
   opacity: 1;
 }
-body[data - theme= "dark"] .btn - secondary{
+body[data-theme="dark"] .btn-secondary{
   color: #f5f5f7;
-  border - color: #38383a;
+  border-color: #38383a;
 }
-body[data - theme= "dark"] .btn - secondary:hover{
+body[data-theme="dark"] .btn-secondary:hover{
   background: #2c2c2e;
 }
 
 /* 危险按钮（删除等）*/
-.btn - danger{
+.btn-danger{
   background: transparent;
   color: #FF3B30;
   border: 1px solid #FF3B30;
   padding: 8px 16px;
-  font - size: 13px;
+  font-size: 13px;
 }
-.btn - danger:hover{
+.btn-danger:hover{
   background: #FF3B30;
   color: #ffffff;
   opacity: 1;
 }
-body[data - theme= "dark"] .btn - danger{
+body[data-theme="dark"] .btn-danger{
   color: #FF453A;
-  border - color: #FF453A;
+  border-color: #FF453A;
 }
-body[data - theme= "dark"] .btn - danger:hover{
+body[data-theme="dark"] .btn-danger:hover{
   background: #FF453A;
 }
 
 /* ========== 响应式设计 ========== */
-@media(max - width: 640px) {
-  html, body{
-    font - size: 14px;
+@media (max-width: 640px){
+  html,body{
+    font-size: 14px;
   }
-  .grad - title{
-    font - size: 24px;
-    line - height: 1.3;
+  .grad-title{
+    font-size: 24px;
+    line-height: 1.3;
   }
   .panel,.card{
-    border - radius: 12px;
+    border-radius: 12px;
   }
   button{
-    min - height: 44px;
-    min - width: 44px;
+    min-height: 44px;
+    min-width: 44px;
   }
   .toast{
-    min - width: 260px;
-    max - width: calc(100vw - 40px);
+    min-width: 260px;
+    max-width: calc(100vw - 40px);
   }
   /* 移动端卡片可左右滑动 */
   .swipeable{
-    touch - action: pan - y;
-    user - select: none;
+    touch-action: pan-y;
+    user-select: none;
   }
 }
 
 /* ========== 数字计数动画 ========== */
-.count - up {
-  display: inline - block;
-  animation: countUp 0.8s cubic - bezier(0.4, 0, 0.2, 1);
+.count-up {
+  display: inline-block;
+  animation: countUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 @keyframes countUp {
-  0 % {
+  0% { 
     opacity: 0;
     transform: translateY(20px) scale(0.8);
   }
-  100 % {
+  100% { 
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
 /* ========== 进度条动画 ========== */
-.progress - bar {
-  transition: width 0.6s cubic - bezier(0.4, 0, 0.2, 1);
+.progress-bar {
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ========== ECharts 地图容器 ========== */
-#server - map - chart {
-  border - radius: 12px;
+#server-map-chart {
+  border-radius: 12px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.5);
-  backdrop - filter: blur(10px);
-  -webkit - backdrop - filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
-body[data - theme= "dark"]#server - map - chart {
+body[data-theme="dark"] #server-map-chart {
   background: rgba(28, 28, 30, 0.5);
 }
 
 /* ========== 卡片展开/收起 ========== */
 .expandable {
-  max - height: 0!important;
+  max-height: 0 !important;
   overflow: hidden;
-  transition: max - height 0.35s cubic - bezier(0.4, 0, 0.2, 1),
-    opacity 0.3s ease,
-      padding 0.35s cubic - bezier(0.4, 0, 0.2, 1);
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease,
+              padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
-  padding - top: 0!important;
-  padding - bottom: 0!important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
   /* 移除 will-change，避免泛白 */
 }
-.server - list {
-  max - height: 5000px; /* 足够大的值以容纳所有内容 */
+.server-list {
+  max-height: 5000px; /* 足够大的值以容纳所有内容 */
   opacity: 1;
-  transition: max - height 0.35s cubic - bezier(0.4, 0, 0.2, 1),
-    opacity 0.3s ease,
-      padding 0.35s cubic - bezier(0.4, 0, 0.2, 1);
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease,
+              padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   /* 移除 will-change 和 contain，避免泛白 */
 }
 
 /* 展开/收起按钮样式优化 */
-.toggle - expand {
-  user - select: none;
-  -webkit - user - select: none;
-  -moz - user - select: none;
+.toggle-expand {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
 }
-.toggle - expand:active {
+.toggle-expand:active {
   transform: scale(0.95);
 }
-body[data - theme= "dark"] .toggle - expand:hover {
+body[data-theme="dark"] .toggle-expand:hover {
   background: rgba(10, 132, 255, 0.1);
-  border - color: rgba(10, 132, 255, 0.3);
+  border-color: rgba(10, 132, 255, 0.3);
 }
 
 /* ========== 链接样式 ========== */
 a{
   color: #007AFF;
-  text - decoration: none;
+  text-decoration: none;
   transition: all 0.2s ease;
 }
 a:hover{
   opacity: 0.8;
 }
-body[data - theme= "dark"] a{
+body[data-theme="dark"] a{
   color: #0A84FF;
 }
 
 /* ========== Code 标签 ========== */
 code{
   padding: 2px 6px;
-  border - radius: 4px;
+  border-radius: 4px;
   background: rgba(0, 0, 0, 0.05);
   color: #1d1d1f;
-  font - family: ui - monospace, SFMono - Regular, Menlo, Monaco, Consolas, monospace;
-  font - size: 0.9em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
 }
-body[data - theme= "dark"] code{
+body[data-theme="dark"] code{
   background: rgba(255, 255, 255, 0.1);
   color: #f5f5f7;
 }
 
 /* ========== 可访问性 ========== */
-button: focus - visible,
-  input: focus - visible,
-    textarea: focus - visible,
-      select: focus - visible,
-        a: focus - visible{
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible{
   outline: 2px solid #007AFF;
-  outline - offset: 2px;
+  outline-offset: 2px;
 }
-body[data - theme= "dark"]button: focus - visible,
-  body[data - theme= "dark"]input: focus - visible,
-    body[data - theme= "dark"]textarea: focus - visible,
-      body[data - theme= "dark"]select: focus - visible,
-        body[data - theme= "dark"]a: focus - visible{
-  outline - color: #0A84FF;
+body[data-theme="dark"] button:focus-visible,
+body[data-theme="dark"] input:focus-visible,
+body[data-theme="dark"] textarea:focus-visible,
+body[data-theme="dark"] select:focus-visible,
+body[data-theme="dark"] a:focus-visible{
+  outline-color: #0A84FF;
 }
 
 /* ========== 滚动条样式 ========== */
-:: -webkit - scrollbar{
+::-webkit-scrollbar{
   width: 8px;
   height: 8px;
 }
-:: -webkit - scrollbar - track{
+::-webkit-scrollbar-track{
   background: transparent;
 }
-:: -webkit - scrollbar - thumb{
+::-webkit-scrollbar-thumb{
   background: #d2d2d7;
-  border - radius: 4px;
+  border-radius: 4px;
 }
-:: -webkit - scrollbar - thumb:hover{
+::-webkit-scrollbar-thumb:hover{
   background: #86868b;
 }
-body[data - theme= "dark"] :: -webkit - scrollbar - thumb{
+body[data-theme="dark"] ::-webkit-scrollbar-thumb{
   background: #38383a;
 }
-body[data - theme= "dark"] :: -webkit - scrollbar - thumb:hover{
+body[data-theme="dark"] ::-webkit-scrollbar-thumb:hover{
   background: #98989d;
 }
 </style>
-  <script>
-  (function () {
-    const saved = localStorage.getItem('theme') || 'dark';
-    const accent = localStorage.getItem('accent-color') || 'blue';
-    document.documentElement.setAttribute('data-theme', saved);
-    document.documentElement.setAttribute('data-accent', accent);
-    document.addEventListener('DOMContentLoaded', () => {
-      document.body.setAttribute('data-theme', saved);
-      document.body.setAttribute('data-accent', accent);
-    });
-  })();
+<script>
+(function(){
+  const saved = localStorage.getItem('theme') || 'dark';
+  const accent = localStorage.getItem('accent-color') || 'blue';
+  document.documentElement.setAttribute('data-theme', saved);
+  document.documentElement.setAttribute('data-accent', accent);
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.setAttribute('data-theme', saved);
+    document.body.setAttribute('data-accent', accent);
+  });
+})();
 
-function toggleTheme() {
+function toggleTheme(){
   const cur = document.body.getAttribute('data-theme') || 'dark';
   const nxt = cur === 'dark' ? 'light' : 'dark';
   document.body.setAttribute('data-theme', nxt);
@@ -5107,131 +5750,131 @@ function toggleTheme() {
   window.dispatchEvent(new Event('themeChanged'));
 }
 
-function updateThemeBtn() {
-  const b = document.getElementById('theme-toggle');
-  if (b) {
-    const cur = document.body.getAttribute('data-theme') || 'dark';
-    b.textContent = cur === 'dark' ? '浅色模式' : '深色模式';
+function updateThemeBtn(){
+  const b=document.getElementById('theme-toggle');
+  if(b){
+    const cur=document.body.getAttribute('data-theme')||'dark';
+    b.textContent = cur==='dark' ? '浅色模式' : '深色模式';
   }
 }
 
 // 主题色切换（可选功能）
-function setAccentColor(color) {
+function setAccentColor(color){
   document.body.setAttribute('data-accent', color);
   document.documentElement.setAttribute('data-accent', color);
   localStorage.setItem('accent-color', color);
 }
 
-function toast(msg, type = 'info', ms = 2600) {
-  let root = document.getElementById('toast-root');
-  if (!root) {
-    root = document.createElement('div');
-    root.id = 'toast-root';
+function toast(msg,type='info',ms=2600){
+  let root=document.getElementById('toast-root');
+  if(!root){
+    root=document.createElement('div');
+    root.id='toast-root';
     document.body.appendChild(root);
   }
-  const el = document.createElement('div');
-  el.className = 'toast ' + (type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warn' ? 'warn' : '');
-  el.textContent = msg;
+  const el=document.createElement('div');
+  el.className='toast '+(type==='success'?'success':type==='error'?'error':type==='warn'?'warn':'');
+  el.textContent=msg;
   root.appendChild(el);
-  requestAnimationFrame(() => el.classList.add('show'));
-  setTimeout(() => {
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{
     el.classList.remove('show');
-    setTimeout(() => el.remove(), 250);
-  }, ms);
+    setTimeout(()=>el.remove(),250);
+  },ms);
 }
 
-function copyToClipboard(text) {
-  if (!text) {
-    toast('没有可复制的内容', 'warn');
+function copyToClipboard(text){
+  if(!text){
+    toast('没有可复制的内容','warn');
     return;
   }
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => toast('已复制到剪贴板', 'success')).catch(() => toast('复制失败', 'error'));
-  } else {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.left = '-9999px';
-    ta.style.top = '-9999px';
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>toast('已复制到剪贴板','success')).catch(()=>toast('复制失败','error'));
+  }else{
+    const ta=document.createElement('textarea');
+    ta.value=text;
+    ta.style.position='fixed';
+    ta.style.left='-9999px';
+    ta.style.top='-9999px';
     document.body.appendChild(ta);
     ta.select();
-    try {
+    try{
       document.execCommand('copy');
-      toast('已复制到剪贴板', 'success');
-    } catch (e) {
-      toast('复制失败', 'error');
+      toast('已复制到剪贴板','success');
+    }catch(e){
+      toast('复制失败','error');
     }
     document.body.removeChild(ta);
   }
 }
 
-function modalEdit(title, fields, onOk) {
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease-out;';
-  const card = document.createElement('div');
-  card.className = 'panel border p-6';
-  card.style.width = 'min(680px,92vw)';
-  card.style.animation = 'scaleUp 0.25s ease-out';
-  const h = document.createElement('div');
-  h.className = 'text-lg font-semibold mb-4';
-  h.textContent = title;
+function modalEdit(title, fields, onOk){
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease-out;';
+  const card=document.createElement('div');
+  card.className='panel border p-6';
+  card.style.width='min(680px,92vw)';
+  card.style.animation='scaleUp 0.25s ease-out';
+  const h=document.createElement('div');
+  h.className='text-lg font-semibold mb-4';
+  h.textContent=title;
   card.appendChild(h);
-  const form = document.createElement('div');
-  form.className = 'grid grid-cols-2 gap-4 text-sm';
-  fields.forEach(f => {
-    const box = document.createElement('div');
-    const lab = document.createElement('div');
-    lab.className = 'muted text-xs mb-2 font-medium';
-    lab.textContent = f.label;
-    const inp = f.type === 'textarea' ? document.createElement('textarea') : document.createElement('input');
-    if (f.type !== 'textarea') inp.type = 'text';
-    inp.value = f.value || '';
-    inp.placeholder = f.placeholder || '';
-    if (f.type === 'textarea') inp.rows = 3;
-    inp.className = 'w-full';
+  const form=document.createElement('div');
+  form.className='grid grid-cols-2 gap-4 text-sm';
+  fields.forEach(f=>{
+    const box=document.createElement('div');
+    const lab=document.createElement('div');
+    lab.className='muted text-xs mb-2 font-medium';
+    lab.textContent=f.label;
+    const inp=f.type==='textarea'?document.createElement('textarea'):document.createElement('input');
+    if(f.type!=='textarea') inp.type='text';
+    inp.value=f.value||'';
+    inp.placeholder=f.placeholder||'';
+    if(f.type==='textarea') inp.rows=3;
+    inp.className='w-full';
     box.appendChild(lab);
     box.appendChild(inp);
-    box._get = () => inp.value;
-    box._key = f.key;
+    box._get=()=>inp.value;
+    box._key=f.key;
     form.appendChild(box);
   });
   card.appendChild(form);
-  const actions = document.createElement('div');
-  actions.className = 'mt-6 flex items-center justify-end gap-3';
-  const btn1 = document.createElement('button');
-  btn1.textContent = '取消';
-  btn1.className = 'btn-secondary';
-  btn1.onclick = () => wrap.remove();
-  const btn2 = document.createElement('button');
-  btn2.textContent = '保存';
-  btn2.className = 'btn-primary';
-  btn2.onclick = () => { const data = {}; form.childNodes.forEach((n) => { data[n._key] = n._get(); }); try { onOk(data, () => wrap.remove()); } catch (e) { console.error(e); } };
-  actions.append(btn1, btn2);
+  const actions=document.createElement('div');
+  actions.className='mt-6 flex items-center justify-end gap-3';
+  const btn1=document.createElement('button');
+  btn1.textContent='取消';
+  btn1.className='btn-secondary';
+  btn1.onclick=()=>wrap.remove();
+  const btn2=document.createElement('button');
+  btn2.textContent='保存';
+  btn2.className='btn-primary';
+  btn2.onclick=()=>{ const data={}; form.childNodes.forEach((n)=>{ data[n._key]=n._get(); }); try{ onOk(data,()=>wrap.remove()); }catch(e){ console.error(e); } };
+  actions.append(btn1,btn2);
   card.appendChild(actions);
   wrap.appendChild(card);
   document.body.appendChild(wrap);
-
+  
   // 添加 ESC 键关闭
   const handleEsc = (e) => {
-    if (e.key === 'Escape') {
+    if(e.key === 'Escape') {
       wrap.remove();
       document.removeEventListener('keydown', handleEsc);
     }
   };
   document.addEventListener('keydown', handleEsc);
-
+  
   // 点击背景关闭
   wrap.addEventListener('click', (e) => {
-    if (e.target === wrap) {
+    if(e.target === wrap) {
       wrap.remove();
       document.removeEventListener('keydown', handleEsc);
     }
   });
-
+  
   // 聚焦第一个输入框
   setTimeout(() => {
     const firstInput = form.querySelector('input, textarea');
-    if (firstInput) firstInput.focus();
+    if(firstInput) firstInput.focus();
   }, 100);
 }
 
@@ -5240,198 +5883,198 @@ function guessCountryFlag(v) {
 
   const rules = [
     // ========= 东亚 / 东北亚 =========
-    { k: ["china", "prc", "cn", "中国", "beijing", "shanghai", "guangzhou"], f: "🇨🇳" },
-    { k: ["hong kong", "hk", "香港"], f: "🇭🇰" },
-    { k: ["macau", "macao", "澳门"], f: "🇲🇴" },
-    { k: ["taiwan", "台灣", "台湾"], f: "🇹🇼" },
-    { k: ["japan", "tokyo", "osaka", "日本"], f: "🇯🇵" },
-    { k: ["korea", "south korea", "republic of korea", "首尔", "韓國", "韩国", "seoul"], f: "🇰🇷" },
-    { k: ["north korea", "dprk", "朝鲜", "pyongyang"], f: "🇰🇵" },
-    { k: ["mongolia", "蒙古"], f: "🇲🇳" },
+    { k: ["china","prc","cn","中国","beijing","shanghai","guangzhou"], f: "🇨🇳" },
+    { k: ["hong kong","hk","香港"], f: "🇭🇰" },
+    { k: ["macau","macao","澳门"], f: "🇲🇴" },
+    { k: ["taiwan","台灣","台湾"], f: "🇹🇼" },
+    { k: ["japan","tokyo","osaka","日本"], f: "🇯🇵" },
+    { k: ["korea","south korea","republic of korea","首尔","韓國","韩国","seoul"], f: "🇰🇷" },
+    { k: ["north korea","dprk","朝鲜","pyongyang"], f: "🇰🇵" },
+    { k: ["mongolia","蒙古"], f: "🇲🇳" },
 
     // ========= 东南亚 =========
-    { k: ["vietnam", "越南", "hanoi", "ho chi minh"], f: "🇻🇳" },
-    { k: ["thailand", "泰国", "bangkok"], f: "🇹🇭" },
-    { k: ["malaysia", "马来西亚", "kuala lumpur"], f: "🇲🇾" },
-    { k: ["singapore", "新加坡"], f: "🇸🇬" },
-    { k: ["philippines", "菲律宾", "manila"], f: "🇵🇭" },
-    { k: ["indonesia", "印尼", "jakarta"], f: "🇮🇩" },
-    { k: ["myanmar", "burma", "缅甸"], f: "🇲🇲" },
-    { k: ["cambodia", "柬埔寨", "phnom penh"], f: "🇰🇭" },
-    { k: ["laos", "老挝", "vientiane"], f: "🇱🇦" },
-    { k: ["brunei", "文莱"], f: "🇧🇳" },
-    { k: ["timor-leste", "east timor", "timor", "东帝汶"], f: "🇹🇱" },
+    { k: ["vietnam","越南","hanoi","ho chi minh"], f: "🇻🇳" },
+    { k: ["thailand","泰国","bangkok"], f: "🇹🇭" },
+    { k: ["malaysia","马来西亚","kuala lumpur"], f: "🇲🇾" },
+    { k: ["singapore","新加坡"], f: "🇸🇬" },
+    { k: ["philippines","菲律宾","manila"], f: "🇵🇭" },
+    { k: ["indonesia","印尼","jakarta"], f: "🇮🇩" },
+    { k: ["myanmar","burma","缅甸"], f: "🇲🇲" },
+    { k: ["cambodia","柬埔寨","phnom penh"], f: "🇰🇭" },
+    { k: ["laos","老挝","vientiane"], f: "🇱🇦" },
+    { k: ["brunei","文莱"], f: "🇧🇳" },
+    { k: ["timor-leste","east timor","timor","东帝汶"], f: "🇹🇱" },
 
     // ========= 南亚 =========
-    { k: ["india", "印度", "new delhi", "mumbai"], f: "🇮🇳" },
-    { k: ["pakistan", "巴基斯坦", "islamabad"], f: "🇵🇰" },
-    { k: ["bangladesh", "孟加拉", "dhaka"], f: "🇧🇩" },
-    { k: ["nepal", "尼泊尔", "kathmandu"], f: "🇳🇵" },
-    { k: ["sri lanka", "斯里兰卡", "colombo"], f: "🇱🇰" },
-    { k: ["maldives", "马尔代夫"], f: "🇲🇻" },
-    { k: ["bhutan", "不丹"], f: "🇧🇹" },
-    { k: ["afghanistan", "阿富汗"], f: "🇦🇫" },
+    { k: ["india","印度","new delhi","mumbai"], f: "🇮🇳" },
+    { k: ["pakistan","巴基斯坦","islamabad"], f: "🇵🇰" },
+    { k: ["bangladesh","孟加拉","dhaka"], f: "🇧🇩" },
+    { k: ["nepal","尼泊尔","kathmandu"], f: "🇳🇵" },
+    { k: ["sri lanka","斯里兰卡","colombo"], f: "🇱🇰" },
+    { k: ["maldives","马尔代夫"], f: "🇲🇻" },
+    { k: ["bhutan","不丹"], f: "🇧🇹" },
+    { k: ["afghanistan","阿富汗"], f: "🇦🇫" },
 
     // ========= 中东 / 西亚 =========
-    { k: ["saudi arabia", "saudi", "沙特", "riyadh"], f: "🇸🇦" },
-    { k: ["united arab emirates", "uae", "dubai", "abu dhabi", "阿联酋"], f: "🇦🇪" },
-    { k: ["israel", "以色列", "tel aviv", "jerusalem"], f: "🇮🇱" },
-    { k: ["iran", "伊朗", "tehran"], f: "🇮🇷" },
-    { k: ["iraq", "伊拉克", "baghdad"], f: "🇮🇶" },
-    { k: ["turkey", "turkiye", "土耳其", "ankara", "istanbul"], f: "🇹🇷" },
-    { k: ["qatar", "卡塔尔", "doha"], f: "🇶🇦" },
-    { k: ["kuwait", "科威特"], f: "🇰🇼" },
-    { k: ["bahrain", "巴林"], f: "🇧🇭" },
-    { k: ["oman", "阿曼", "muscat"], f: "🇴🇲" },
-    { k: ["jordan", "约旦", "amman"], f: "🇯🇴" },
-    { k: ["lebanon", "黎巴嫩", "beirut"], f: "🇱🇧" },
-    { k: ["yemen", "也门"], f: "🇾🇪" },
-    { k: ["syria", "syrian arab republic", "叙利亚"], f: "🇸🇾" },
-    { k: ["palestine", "palestinian", "巴勒斯坦"], f: "🇵🇸" },
+    { k: ["saudi arabia","saudi","沙特","riyadh"], f: "🇸🇦" },
+    { k: ["united arab emirates","uae","dubai","abu dhabi","阿联酋"], f: "🇦🇪" },
+    { k: ["israel","以色列","tel aviv","jerusalem"], f: "🇮🇱" },
+    { k: ["iran","伊朗","tehran"], f: "🇮🇷" },
+    { k: ["iraq","伊拉克","baghdad"], f: "🇮🇶" },
+    { k: ["turkey","turkiye","土耳其","ankara","istanbul"], f: "🇹🇷" },
+    { k: ["qatar","卡塔尔","doha"], f: "🇶🇦" },
+    { k: ["kuwait","科威特"], f: "🇰🇼" },
+    { k: ["bahrain","巴林"], f: "🇧🇭" },
+    { k: ["oman","阿曼","muscat"], f: "🇴🇲" },
+    { k: ["jordan","约旦","amman"], f: "🇯🇴" },
+    { k: ["lebanon","黎巴嫩","beirut"], f: "🇱🇧" },
+    { k: ["yemen","也门"], f: "🇾🇪" },
+    { k: ["syria","syrian arab republic","叙利亚"], f: "🇸🇾" },
+    { k: ["palestine","palestinian","巴勒斯坦"], f: "🇵🇸" },
 
     // ========= 欧洲（西欧 / 北欧 / 南欧 / 东欧） =========
-    { k: ["united kingdom", "uk", "great britain", "england", "london", "英国"], f: "🇬🇧" },
-    { k: ["france", "paris", "法国"], f: "🇫🇷" },
-    { k: ["germany", "berlin", "德国"], f: "🇩🇪" },
-    { k: ["netherlands", "amsterdam", "荷兰"], f: "🇳🇱" },
-    { k: ["belgium", "比利时", "brussels"], f: "🇧🇪" },
-    { k: ["luxembourg", "卢森堡"], f: "🇱🇺" },
-    { k: ["switzerland", "瑞士", "zurich", "geneva"], f: "🇨🇭" },
-    { k: ["austria", "奥地利", "vienna"], f: "🇦🇹" },
-    { k: ["ireland", "爱尔兰", "dublin"], f: "🇮🇪" },
-    { k: ["iceland", "冰岛", "reykjavik"], f: "🇮🇸" },
-    { k: ["denmark", "丹麦", "copenhagen"], f: "🇩🇰" },
-    { k: ["sweden", "瑞典", "stockholm"], f: "🇸🇪" },
-    { k: ["norway", "挪威", "oslo"], f: "🇳🇴" },
-    { k: ["finland", "芬兰", "helsinki"], f: "🇫🇮" },
+    { k: ["united kingdom","uk","great britain","england","london","英国"], f: "🇬🇧" },
+    { k: ["france","paris","法国"], f: "🇫🇷" },
+    { k: ["germany","berlin","德国"], f: "🇩🇪" },
+    { k: ["netherlands","amsterdam","荷兰"], f: "🇳🇱" },
+    { k: ["belgium","比利时","brussels"], f: "🇧🇪" },
+    { k: ["luxembourg","卢森堡"], f: "🇱🇺" },
+    { k: ["switzerland","瑞士","zurich","geneva"], f: "🇨🇭" },
+    { k: ["austria","奥地利","vienna"], f: "🇦🇹" },
+    { k: ["ireland","爱尔兰","dublin"], f: "🇮🇪" },
+    { k: ["iceland","冰岛","reykjavik"], f: "🇮🇸" },
+    { k: ["denmark","丹麦","copenhagen"], f: "🇩🇰" },
+    { k: ["sweden","瑞典","stockholm"], f: "🇸🇪" },
+    { k: ["norway","挪威","oslo"], f: "🇳🇴" },
+    { k: ["finland","芬兰","helsinki"], f: "🇫🇮" },
 
-    { k: ["spain", "madrid", "barcelona", "西班牙"], f: "🇪🇸" },
-    { k: ["portugal", "里斯本", "葡萄牙"], f: "🇵🇹" },
-    { k: ["italy", "rome", "milan", "意大利"], f: "🇮🇹" },
-    { k: ["greece", "雅典", "希腊"], f: "🇬🇷" },
-    { k: ["malta", "马耳他"], f: "🇲🇹" },
-    { k: ["cyprus", "塞浦路斯"], f: "🇨🇾" },
+    { k: ["spain","madrid","barcelona","西班牙"], f: "🇪🇸" },
+    { k: ["portugal","里斯本","葡萄牙"], f: "🇵🇹" },
+    { k: ["italy","rome","milan","意大利"], f: "🇮🇹" },
+    { k: ["greece","雅典","希腊"], f: "🇬🇷" },
+    { k: ["malta","马耳他"], f: "🇲🇹" },
+    { k: ["cyprus","塞浦路斯"], f: "🇨🇾" },
 
-    { k: ["poland", "波兰"], f: "🇵🇱" },
-    { k: ["czech", "czech republic", "捷克"], f: "🇨🇿" },
-    { k: ["slovakia", "斯洛伐克"], f: "🇸🇰" },
-    { k: ["hungary", "匈牙利"], f: "🇭🇺" },
-    { k: ["romania", "罗马尼亚"], f: "🇷🇴" },
-    { k: ["bulgaria", "保加利亚"], f: "🇧🇬" },
-    { k: ["slovenia", "斯洛文尼亚"], f: "🇸🇮" },
-    { k: ["croatia", "克罗地亚"], f: "🇭🇷" },
-    { k: ["serbia", "塞尔维亚"], f: "🇷🇸" },
-    { k: ["bosnia", "bosnia and herzegovina", "波黑", "波斯尼亚"], f: "🇧🇦" },
-    { k: ["montenegro", "黑山"], f: "🇲🇪" },
-    { k: ["north macedonia", "macedonia", "北马其顿"], f: "🇲🇰" },
-    { k: ["albania", "阿尔巴尼亚"], f: "🇦🇱" },
-    { k: ["kosovo", "科索沃"], f: "🇽🇰" },
-    { k: ["moldova", "moldovan", "moldavia", "chisinau", "摩尔多瓦"], f: "🇲🇩" },
-    { k: ["ukraine", "乌克兰", "kyiv", "kiev"], f: "🇺🇦" },
-    { k: ["belarus", "白俄罗斯"], f: "🇧🇾" },
-    { k: ["russia", "russian federation", "moscow", "俄罗斯"], f: "🇷🇺" },
-    { k: ["estonia", "爱沙尼亚"], f: "🇪🇪" },
-    { k: ["latvia", "拉脱维亚"], f: "🇱🇻" },
-    { k: ["lithuania", "立陶宛"], f: "🇱🇹" },
+    { k: ["poland","波兰"], f: "🇵🇱" },
+    { k: ["czech","czech republic","捷克"], f: "🇨🇿" },
+    { k: ["slovakia","斯洛伐克"], f: "🇸🇰" },
+    { k: ["hungary","匈牙利"], f: "🇭🇺" },
+    { k: ["romania","罗马尼亚"], f: "🇷🇴" },
+    { k: ["bulgaria","保加利亚"], f: "🇧🇬" },
+    { k: ["slovenia","斯洛文尼亚"], f: "🇸🇮" },
+    { k: ["croatia","克罗地亚"], f: "🇭🇷" },
+    { k: ["serbia","塞尔维亚"], f: "🇷🇸" },
+    { k: ["bosnia","bosnia and herzegovina","波黑","波斯尼亚"], f: "🇧🇦" },
+    { k: ["montenegro","黑山"], f: "🇲🇪" },
+    { k: ["north macedonia","macedonia","北马其顿"], f: "🇲🇰" },
+    { k: ["albania","阿尔巴尼亚"], f: "🇦🇱" },
+    { k: ["kosovo","科索沃"], f: "🇽🇰" },
+    { k: ["moldova","moldovan","moldavia","chisinau","摩尔多瓦"], f: "🇲🇩" },
+    { k: ["ukraine","乌克兰","kyiv","kiev"], f: "🇺🇦" },
+    { k: ["belarus","白俄罗斯"], f: "🇧🇾" },
+    { k: ["russia","russian federation","moscow","俄罗斯"], f: "🇷🇺" },
+    { k: ["estonia","爱沙尼亚"], f: "🇪🇪" },
+    { k: ["latvia","拉脱维亚"], f: "🇱🇻" },
+    { k: ["lithuania","立陶宛"], f: "🇱🇹" },
 
     // ========= 北美 =========
-    { k: ["united states", "usa", "u.s.", "america", "los angeles", "new york", "美国"], f: "🇺🇸" },
-    { k: ["canada", "toronto", "vancouver", "canadian", "加拿大"], f: "🇨🇦" },
-    { k: ["mexico", "mexican", "墨西哥", "mexico city"], f: "🇲🇽" },
-    { k: ["greenland", "格陵兰"], f: "🇬🇱" },
+    { k: ["united states","usa","u.s.","america","los angeles","new york","美国"], f: "🇺🇸" },
+    { k: ["canada","toronto","vancouver","canadian","加拿大"], f: "🇨🇦" },
+    { k: ["mexico","mexican","墨西哥","mexico city"], f: "🇲🇽" },
+    { k: ["greenland","格陵兰"], f: "🇬🇱" },
 
     // ========= 中美洲 & 加勒比 =========
-    { k: ["cuba", "古巴", "havana"], f: "🇨🇺" },
-    { k: ["dominican republic", "dominican", "多米尼加"], f: "🇩🇴" },
-    { k: ["haiti", "海地"], f: "🇭🇹" },
-    { k: ["jamaica", "牙买加"], f: "🇯🇲" },
-    { k: ["puerto rico", "波多黎各"], f: "🇵🇷" },
-    { k: ["panama", "巴拿马"], f: "🇵🇦" },
-    { k: ["costa rica", "哥斯达黎加"], f: "🇨🇷" },
-    { k: ["guatemala", "危地马拉"], f: "🇬🇹" },
-    { k: ["honduras", "洪都拉斯"], f: "🇭🇳" },
-    { k: ["nicaragua", "尼加拉瓜"], f: "🇳🇮" },
-    { k: ["el salvador", "萨尔瓦多"], f: "🇸🇻" },
-    { k: ["belize", "伯利兹"], f: "🇧🇿" },
-    { k: ["trinidad and tobago", "trinidad", "特立尼达和多巴哥"], f: "🇹🇹" },
-    { k: ["barbados", "巴巴多斯"], f: "🇧🇧" },
-    { k: ["bahamas", "巴哈马"], f: "🇧🇸" },
-    { k: ["grenada", "格林纳达"], f: "🇬🇩" },
-    { k: ["saint lucia", "圣卢西亚"], f: "🇱🇨" },
-    { k: ["saint kitts", "kitts and nevis", "圣基茨"], f: "🇰🇳" },
-    { k: ["saint vincent", "st vincent", "圣文森特"], f: "🇻🇨" },
+    { k: ["cuba","古巴","havana"], f: "🇨🇺" },
+    { k: ["dominican republic","dominican","多米尼加"], f: "🇩🇴" },
+    { k: ["haiti","海地"], f: "🇭🇹" },
+    { k: ["jamaica","牙买加"], f: "🇯🇲" },
+    { k: ["puerto rico","波多黎各"], f: "🇵🇷" },
+    { k: ["panama","巴拿马"], f: "🇵🇦" },
+    { k: ["costa rica","哥斯达黎加"], f: "🇨🇷" },
+    { k: ["guatemala","危地马拉"], f: "🇬🇹" },
+    { k: ["honduras","洪都拉斯"], f: "🇭🇳" },
+    { k: ["nicaragua","尼加拉瓜"], f: "🇳🇮" },
+    { k: ["el salvador","萨尔瓦多"], f: "🇸🇻" },
+    { k: ["belize","伯利兹"], f: "🇧🇿" },
+    { k: ["trinidad and tobago","trinidad","特立尼达和多巴哥"], f: "🇹🇹" },
+    { k: ["barbados","巴巴多斯"], f: "🇧🇧" },
+    { k: ["bahamas","巴哈马"], f: "🇧🇸" },
+    { k: ["grenada","格林纳达"], f: "🇬🇩" },
+    { k: ["saint lucia","圣卢西亚"], f: "🇱🇨" },
+    { k: ["saint kitts","kitts and nevis","圣基茨"], f: "🇰🇳" },
+    { k: ["saint vincent","st vincent","圣文森特"], f: "🇻🇨" },
 
     // ========= 南美 =========
-    { k: ["brazil", "brasil", "巴西"], f: "🇧🇷" },
-    { k: ["argentina", "阿根廷"], f: "🇦🇷" },
-    { k: ["chile", "智利"], f: "🇨🇱" },
-    { k: ["colombia", "哥伦比亚"], f: "🇨🇴" },
-    { k: ["peru", "秘鲁"], f: "🇵🇪" },
-    { k: ["uruguay", "乌拉圭"], f: "🇺🇾" },
-    { k: ["paraguay", "巴拉圭"], f: "🇵🇾" },
-    { k: ["bolivia", "玻利维亚"], f: "🇧🇴" },
-    { k: ["ecuador", "厄瓜多尔"], f: "🇪🇨" },
-    { k: ["venezuela", "委内瑞拉"], f: "🇻🇪" },
-    { k: ["guyana", "圭亚那"], f: "🇬🇾" },
-    { k: ["suriname", "苏里南"], f: "🇸🇷" },
+    { k: ["brazil","brasil","巴西"], f: "🇧🇷" },
+    { k: ["argentina","阿根廷"], f: "🇦🇷" },
+    { k: ["chile","智利"], f: "🇨🇱" },
+    { k: ["colombia","哥伦比亚"], f: "🇨🇴" },
+    { k: ["peru","秘鲁"], f: "🇵🇪" },
+    { k: ["uruguay","乌拉圭"], f: "🇺🇾" },
+    { k: ["paraguay","巴拉圭"], f: "🇵🇾" },
+    { k: ["bolivia","玻利维亚"], f: "🇧🇴" },
+    { k: ["ecuador","厄瓜多尔"], f: "🇪🇨" },
+    { k: ["venezuela","委内瑞拉"], f: "🇻🇪" },
+    { k: ["guyana","圭亚那"], f: "🇬🇾" },
+    { k: ["suriname","苏里南"], f: "🇸🇷" },
 
     // ========= 大洋洲 =========
-    { k: ["australia", "悉尼", "melbourne", "澳大利亚"], f: "🇦🇺" },
-    { k: ["new zealand", "新西兰", "auckland"], f: "🇳🇿" },
-    { k: ["fiji", "斐济"], f: "🇫🇯" },
-    { k: ["papua new guinea", "巴布亚新几内亚"], f: "🇵🇬" },
-    { k: ["samoa", "萨摩亚"], f: "🇼🇸" },
-    { k: ["tonga", "汤加"], f: "🇹🇴" },
-    { k: ["vanuatu", "瓦努阿图"], f: "🇻🇺" },
-    { k: ["solomon islands", "所罗门群岛"], f: "🇸🇧" },
-    { k: ["palau", "帕劳"], f: "🇵🇼" },
-    { k: ["micronesia", "密克罗尼西亚"], f: "🇫🇲" },
-    { k: ["marshall islands", "马绍尔群岛"], f: "🇲🇭" },
-    { k: ["kiribati", "基里巴斯"], f: "🇰🇮" },
-    { k: ["nauru", "瑙鲁"], f: "🇳🇷" },
-    { k: ["tuvalu", "图瓦卢"], f: "🇹🇻" },
+    { k: ["australia","悉尼","melbourne","澳大利亚"], f: "🇦🇺" },
+    { k: ["new zealand","新西兰","auckland"], f: "🇳🇿" },
+    { k: ["fiji","斐济"], f: "🇫🇯" },
+    { k: ["papua new guinea","巴布亚新几内亚"], f: "🇵🇬" },
+    { k: ["samoa","萨摩亚"], f: "🇼🇸" },
+    { k: ["tonga","汤加"], f: "🇹🇴" },
+    { k: ["vanuatu","瓦努阿图"], f: "🇻🇺" },
+    { k: ["solomon islands","所罗门群岛"], f: "🇸🇧" },
+    { k: ["palau","帕劳"], f: "🇵🇼" },
+    { k: ["micronesia","密克罗尼西亚"], f: "🇫🇲" },
+    { k: ["marshall islands","马绍尔群岛"], f: "🇲🇭" },
+    { k: ["kiribati","基里巴斯"], f: "🇰🇮" },
+    { k: ["nauru","瑙鲁"], f: "🇳🇷" },
+    { k: ["tuvalu","图瓦卢"], f: "🇹🇻" },
 
     // ========= 非洲 =========
-    { k: ["south africa", "南非", "johannesburg"], f: "🇿🇦" },
-    { k: ["egypt", "埃及", "cairo"], f: "🇪🇬" },
-    { k: ["nigeria", "尼日利亚"], f: "🇳🇬" },
-    { k: ["kenya", "肯尼亚", "nairobi"], f: "🇰🇪" },
-    { k: ["ethiopia", "埃塞俄比亚"], f: "🇪🇹" },
-    { k: ["ghana", "加纳"], f: "🇬🇭" },
-    { k: ["morocco", "摩洛哥"], f: "🇲🇦" },
-    { k: ["algeria", "阿尔及利亚"], f: "🇩🇿" },
-    { k: ["tunisia", "突尼斯"], f: "🇹🇳" },
-    { k: ["libya", "利比亚"], f: "🇱🇾" },
-    { k: ["sudan", "苏丹"], f: "🇸🇩" },
-    { k: ["south sudan", "南苏丹"], f: "🇸🇸" },
-    { k: ["tanzania", "坦桑尼亚"], f: "🇹🇿" },
-    { k: ["uganda", "乌干达"], f: "🇺🇬" },
-    { k: ["angola", "安哥拉"], f: "🇦🇴" },
-    { k: ["mozambique", "莫桑比克"], f: "🇲🇿" },
-    { k: ["zambia", "赞比亚"], f: "🇿🇲" },
-    { k: ["zimbabwe", "津巴布韦"], f: "🇿🇼" },
-    { k: ["rwanda", "卢旺达"], f: "🇷🇼" },
-    { k: ["burundi", "布隆迪"], f: "🇧🇮" },
-    { k: ["botswana", "博茨瓦纳"], f: "🇧🇼" },
-    { k: ["namibia", "纳米比亚"], f: "🇳🇦" },
-    { k: ["madagascar", "马达加斯加"], f: "🇲🇬" },
-    { k: ["seychelles", "塞舌尔"], f: "🇸🇨" },
-    { k: ["mauritius", "毛里求斯"], f: "🇲🇺" },
-    { k: ["senegal", "塞内加尔"], f: "🇸🇳" },
-    { k: ["mali", "马里"], f: "🇲🇱" },
-    { k: ["niger", "尼日尔"], f: "🇳🇪" },
-    { k: ["cameroon", "喀麦隆"], f: "🇨🇲" },
-    { k: ["ivory coast", "cote d ivoire", "科特迪瓦"], f: "🇨🇮" },
-    { k: ["gabon", "加蓬"], f: "🇬🇦" },
-    { k: ["congo", "republic of the congo", "刚果共和国"], f: "🇨🇬" },
-    { k: ["dr congo", "democratic republic of the congo", "刚果金"], f: "🇨🇩" },
-    { k: ["guinea", "几内亚"], f: "🇬🇳" },
-    { k: ["guinea-bissau", "几内亚比绍"], f: "🇬🇼" },
-    { k: ["sierra leone", "塞拉利昂"], f: "🇸🇱" },
-    { k: ["liberia", "利比里亚"], f: "🇱🇷" },
-    { k: ["eritrea", "厄立特里亚"], f: "🇪🇷" },
-    { k: ["djibouti", "吉布提"], f: "🇩🇯" },
-    { k: ["somalia", "索马里"], f: "🇸🇴" }
+    { k: ["south africa","南非","johannesburg"], f: "🇿🇦" },
+    { k: ["egypt","埃及","cairo"], f: "🇪🇬" },
+    { k: ["nigeria","尼日利亚"], f: "🇳🇬" },
+    { k: ["kenya","肯尼亚","nairobi"], f: "🇰🇪" },
+    { k: ["ethiopia","埃塞俄比亚"], f: "🇪🇹" },
+    { k: ["ghana","加纳"], f: "🇬🇭" },
+    { k: ["morocco","摩洛哥"], f: "🇲🇦" },
+    { k: ["algeria","阿尔及利亚"], f: "🇩🇿" },
+    { k: ["tunisia","突尼斯"], f: "🇹🇳" },
+    { k: ["libya","利比亚"], f: "🇱🇾" },
+    { k: ["sudan","苏丹"], f: "🇸🇩" },
+    { k: ["south sudan","南苏丹"], f: "🇸🇸" },
+    { k: ["tanzania","坦桑尼亚"], f: "🇹🇿" },
+    { k: ["uganda","乌干达"], f: "🇺🇬" },
+    { k: ["angola","安哥拉"], f: "🇦🇴" },
+    { k: ["mozambique","莫桑比克"], f: "🇲🇿" },
+    { k: ["zambia","赞比亚"], f: "🇿🇲" },
+    { k: ["zimbabwe","津巴布韦"], f: "🇿🇼" },
+    { k: ["rwanda","卢旺达"], f: "🇷🇼" },
+    { k: ["burundi","布隆迪"], f: "🇧🇮" },
+    { k: ["botswana","博茨瓦纳"], f: "🇧🇼" },
+    { k: ["namibia","纳米比亚"], f: "🇳🇦" },
+    { k: ["madagascar","马达加斯加"], f: "🇲🇬" },
+    { k: ["seychelles","塞舌尔"], f: "🇸🇨" },
+    { k: ["mauritius","毛里求斯"], f: "🇲🇺" },
+    { k: ["senegal","塞内加尔"], f: "🇸🇳" },
+    { k: ["mali","马里"], f: "🇲🇱" },
+    { k: ["niger","尼日尔"], f: "🇳🇪" },
+    { k: ["cameroon","喀麦隆"], f: "🇨🇲" },
+    { k: ["ivory coast","cote d ivoire","科特迪瓦"], f: "🇨🇮" },
+    { k: ["gabon","加蓬"], f: "🇬🇦" },
+    { k: ["congo","republic of the congo","刚果共和国"], f: "🇨🇬" },
+    { k: ["dr congo","democratic republic of the congo","刚果金"], f: "🇨🇩" },
+    { k: ["guinea","几内亚"], f: "🇬🇳" },
+    { k: ["guinea-bissau","几内亚比绍"], f: "🇬🇼" },
+    { k: ["sierra leone","塞拉利昂"], f: "🇸🇱" },
+    { k: ["liberia","利比里亚"], f: "🇱🇷" },
+    { k: ["eritrea","厄立特里亚"], f: "🇪🇷" },
+    { k: ["djibouti","吉布提"], f: "🇩🇯" },
+    { k: ["somalia","索马里"], f: "🇸🇴" }
   ];
 
   for (const r of rules) {
@@ -5446,46 +6089,46 @@ function guessCountryFlag(v) {
 
 
 /* 重要：重写的 VPS 登录信息弹窗，支持长密钥换行+滚动+复制 */
-function modalLoginInfo(v) {
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease-out;';
-  const card = document.createElement('div');
-  card.className = 'panel border p-6';
-  card.style.width = 'min(640px,96vw)';
-  card.style.maxHeight = '90vh';
-  card.style.overflowY = 'auto';
-  card.style.animation = 'scaleUp 0.25s ease-out';
+function modalLoginInfo(v){
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:fadeIn 0.2s ease-out;';
+  const card=document.createElement('div');
+  card.className='panel border p-6';
+  card.style.width='min(640px,96vw)';
+  card.style.maxHeight='90vh';
+  card.style.overflowY='auto';
+  card.style.animation='scaleUp 0.25s ease-out';
 
-  const title = document.createElement('div');
-  title.className = 'text-lg font-semibold mb-4';
-  title.textContent = 'VPS 登录信息（仅管理员可见）';
+  const title=document.createElement('div');
+  title.className='text-lg font-semibold mb-4';
+  title.textContent='VPS 登录信息（仅管理员可见）';
   card.appendChild(title);
 
-  const rows = document.createElement('div');
-  rows.className = 'space-y-4 text-sm';
+  const rows=document.createElement('div');
+  rows.className='space-y-4 text-sm';
 
-  function addRow(label, value, canCopy = true, isCode = false) {
-    const row = document.createElement('div');
-    row.className = 'space-y-2';
+  function addRow(label,value,canCopy=true,isCode=false){
+    const row=document.createElement('div');
+    row.className='space-y-2';
 
-    const head = document.createElement('div');
-    head.className = 'muted text-xs font-medium';
-    head.textContent = label;
+    const head=document.createElement('div');
+    head.className='muted text-xs font-medium';
+    head.textContent=label;
     row.appendChild(head);
 
-    const body = document.createElement('div');
-    body.className = 'flex items-start gap-2';
+    const body=document.createElement('div');
+    body.className='flex items-start gap-2';
 
-    const val = isCode ? document.createElement('pre') : document.createElement('div');
-    val.className = 'flex-1 modal-text-block';
-    val.textContent = value || '-';
+    const val=isCode?document.createElement('pre'):document.createElement('div');
+    val.className='flex-1 modal-text-block';
+    val.textContent=value || '-';
     body.appendChild(val);
 
-    if (canCopy && value) {
-      const btn = document.createElement('button');
-      btn.className = 'btn-secondary text-xs px-3 py-2 whitespace-nowrap self-start';
-      btn.textContent = '复制';
-      btn.onclick = () => copyToClipboard(value);
+    if(canCopy && value){
+      const btn=document.createElement('button');
+      btn.className='btn-secondary text-xs px-3 py-2 whitespace-nowrap self-start';
+      btn.textContent='复制';
+      btn.onclick=()=>copyToClipboard(value);
       body.appendChild(btn);
     }
 
@@ -5493,39 +6136,39 @@ function modalLoginInfo(v) {
     rows.appendChild(row);
   }
 
-  const sponsor = v.donatedByUsername || '';
-  if (sponsor) {
-    addRow('赞助人', '@' + sponsor, true, false);
+  const sponsor=v.donatedByUsername||'';
+  if(sponsor){
+    addRow('赞助人','@'+sponsor,true,false);
   }
 
-  const flag = guessCountryFlag(v);
-  const ipLoc = (v.country || '未填写') + (v.region ? ' · ' + v.region : '') + (v.ipLocation ? ' · ' + v.ipLocation : '');
-  addRow('IP 归属', (flag ? flag + ' ' : '') + ipLoc, true, false);
+  const flag=guessCountryFlag(v);
+  const ipLoc=(v.country||'未填写')+(v.region?' · '+v.region:'')+(v.ipLocation?' · '+v.ipLocation:'');
+  addRow('IP 归属',(flag?flag+' ':'')+ipLoc,true,false);
 
-  addRow('IP 地址', v.ip || '', true, false);
-  addRow('端口', String(v.port || ''), true, false);
+  addRow('IP 地址', v.ip || '', true,false);
+  addRow('端口', String(v.port||''), true,false);
 
-  addRow('系统用户名', v.username || '', true, false);
-  addRow('认证方式', v.authType === 'key' ? '密钥' : '密码', false, false);
+  addRow('系统用户名', v.username || '', true,false);
+  addRow('认证方式', v.authType==='key'?'密钥':'密码', false,false);
 
-  if (v.authType === 'password') {
+  if(v.authType==='password'){
     addRow('登录密码', v.password || '', true, true);
-  } else {
+  }else{
     addRow('SSH 私钥', v.privateKey || '', true, true);
   }
 
   const statusText = v.verifyStatus || 'unknown';
-  const extra = v.verifyErrorMsg ? ('（' + v.verifyErrorMsg + '）') : '';
-  addRow('验证状态', statusText + extra, false, false);
+  const extra = v.verifyErrorMsg ? ('（'+v.verifyErrorMsg+'）') : '';
+  addRow('验证状态', statusText+extra, false,false);
 
   card.appendChild(rows);
 
-  const footer = document.createElement('div');
-  footer.className = 'mt-6 flex justify-end';
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '关闭';
-  closeBtn.className = 'btn-secondary';
-  closeBtn.onclick = () => {
+  const footer=document.createElement('div');
+  footer.className='mt-6 flex justify-end';
+  const closeBtn=document.createElement('button');
+  closeBtn.textContent='关闭';
+  closeBtn.className='btn-secondary';
+  closeBtn.onclick=()=>{
     wrap.remove();
     document.removeEventListener('keydown', handleEsc);
   };
@@ -5534,71 +6177,71 @@ function modalLoginInfo(v) {
 
   wrap.appendChild(card);
   document.body.appendChild(wrap);
-
+  
   // 添加 ESC 键关闭
   const handleEsc = (e) => {
-    if (e.key === 'Escape') {
+    if(e.key === 'Escape') {
       wrap.remove();
       document.removeEventListener('keydown', handleEsc);
     }
   };
   document.addEventListener('keydown', handleEsc);
-
+  
   // 点击背景关闭
   wrap.addEventListener('click', (e) => {
-    if (e.target === wrap) {
+    if(e.target === wrap) {
       wrap.remove();
       document.removeEventListener('keydown', handleEsc);
     }
   });
 }
 
-function medalByRank(i) {
-  const arr = ["👑", "🏆", "🥇", "🥈", "🥉", "💎", "🔥", "🌟", "✨", "⚡", "🎖️", "🛡️", "🎗️", "🎯", "🚀", "🧿", "🪙", "🧭", "🗡️", "🦄", "🐉", "🦅", "🦁", "🐯", "🐺", "🐻", "🐼", "🐧", "🐬", "🐳", "🛰️", "🪐", "🌙", "🌈", "🌊", "🌋", "🏔️", "🏰", "🧱", "⚙️", "🔧", "🔭", "🧪", "🧠", "🪄", "🔮", "🎩", "🎼", "🎷", "🎻", "🥁", "🎹"];
-  return arr[i % arr.length];
+function medalByRank(i){
+  const arr=["👑","🏆","🥇","🥈","🥉","💎","🔥","🌟","✨","⚡","🎖️","🛡️","🎗️","🎯","🚀","🧿","🪙","🧭","🗡️","🦄","🐉","🦅","🦁","🐯","🐺","🐻","🐼","🐧","🐬","🐳","🛰️","🪐","🌙","🌈","🌊","🌋","🏔️","🏰","🧱","⚙️","🔧","🔭","🧪","🧠","🪄","🔮","🎩","🎼","🎷","🎻","🥁","🎹"];
+  return arr[i%arr.length];
 }
 
 // 勋章系统
-function getBadge(count) {
-  if (count >= 10) return { emoji: '👑', name: '超级赞助商', color: '#FFD700', desc: '投喂10台+' };
-  if (count >= 5) return { emoji: '💎', name: '白金赞助商', color: '#E5E4E2', desc: '投喂5-9台' };
-  if (count >= 3) return { emoji: '🏆', name: '金牌赞助商', color: '#CD7F32', desc: '投喂3-4台' };
-  if (count >= 2) return { emoji: '🥇', name: '银牌赞助商', color: '#C0C0C0', desc: '投喂2台' };
-  return { emoji: '⭐', name: '新星赞助商', color: '#4A90E2', desc: '投喂1台' };
+function getBadge(count){
+  if(count >= 10) return {emoji:'👑',name:'超级赞助商',color:'#FFD700',desc:'投喂10台+'};
+  if(count >= 5) return {emoji:'💎',name:'白金赞助商',color:'#E5E4E2',desc:'投喂5-9台'};
+  if(count >= 3) return {emoji:'🏆',name:'金牌赞助商',color:'#CD7F32',desc:'投喂3-4台'};
+  if(count >= 2) return {emoji:'🥇',name:'银牌赞助商',color:'#C0C0C0',desc:'投喂2台'};
+  return {emoji:'⭐',name:'新星赞助商',color:'#4A90E2',desc:'投喂1台'};
 }
 
-function renderBadge(badge) {
-  return '<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold" ' +
-    'style="background:' + badge.color + '22;border:1px solid ' + badge.color + '44;color:' + badge.color + '">' +
-    '<span>' + badge.emoji + '</span>' +
-    '<span>' + badge.name + '</span>' +
+function renderBadge(badge){
+  return '<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold" '+
+    'style="background:'+badge.color+'22;border:1px solid '+badge.color+'44;color:'+badge.color+'">'+
+    '<span>'+badge.emoji+'</span>'+
+    '<span>'+badge.name+'</span>'+
     '</div>';
 }
 
 // 数字计数动画
-function animateNumber(element, target, duration = 800) {
+function animateNumber(element, target, duration = 800){
   const start = 0;
   const startTime = performance.now();
-
-  function update(currentTime) {
+  
+  function update(currentTime){
     const elapsed = currentTime - startTime;
     const progress = Math.min(elapsed / duration, 1);
     const easeProgress = 1 - Math.pow(1 - progress, 3); // easeOutCubic
     const current = Math.floor(start + (target - start) * easeProgress);
-
+    
     element.textContent = current;
-
-    if (progress < 1) {
+    
+    if(progress < 1){
       requestAnimationFrame(update);
     } else {
       element.textContent = target;
     }
   }
-
+  
   requestAnimationFrame(update);
 }
 </script>
-  `;
+`;
 }
 
 /* ==================== 导出 ==================== */
