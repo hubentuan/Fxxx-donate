@@ -4680,32 +4680,53 @@ body[data-theme="dark"] {
 
 /* Glassmorphism Utilities */
 .glass {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border-light);
-  box-shadow: var(--glass-shadow);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
 }
 
-body[data-theme="dark"] .glass {
-  background: rgba(20, 20, 35, 0.6);
-  border: 1px solid var(--glass-border-dark);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+/* Dark Mode Overrides for Glass, Panel, and Card */
+body[data-theme="dark"] .glass,
+body[data-theme="dark"] .panel,
+body[data-theme="dark"] .card {
+  background: rgba(20, 20, 35, 0.75); /* Darker background for contrast */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  color: #f5f5f7; /* Ensure text is white */
 }
 
-/* Panel & Card Overrides */
+/* Panel & Card Base */
 .panel, .card {
   @apply glass rounded-2xl transition-all duration-300;
 }
 
+/* Hover Effects */
 .panel:hover, .card:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 255, 0.8);
 }
 
 body[data-theme="dark"] .panel:hover, 
 body[data-theme="dark"] .card:hover {
-  box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(25, 25, 40, 0.85); /* Slightly lighter on hover */
+}
+
+/* Premium Gradient Border Effect for Featured Cards */
+.card.featured {
+  position: relative;
+  background: linear-gradient(#fff, #fff) padding-box,
+              linear-gradient(135deg, #6366f1, #8b5cf6) border-box;
+  border: 2px solid transparent;
+}
+
+body[data-theme="dark"] .card.featured {
+  background: linear-gradient(#0f0f1a, #0f0f1a) padding-box,
+              linear-gradient(135deg, #6366f1, #8b5cf6) border-box;
 }
 
 /* Gradient Text */
