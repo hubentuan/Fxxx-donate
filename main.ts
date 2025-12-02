@@ -721,7 +721,7 @@ app.put('/api/admin/vps/:id/config', requireAdmin, async c => {
   r.value.port = p;
   r.value.username = String(username).trim();
   r.value.authType = authType as 'password' | 'key';
-  
+
   if (authType === 'password') {
     r.value.password = String(password);
     r.value.privateKey = undefined;
@@ -748,8 +748,8 @@ app.put('/api/admin/vps/:id/config', requireAdmin, async c => {
 
   return c.json({
     success: true,
-    message: isConnectable 
-      ? '✅ 配置更新成功，连通性验证通过' 
+    message: isConnectable
+      ? '✅ 配置更新成功，连通性验证通过'
       : '⚠️ 配置已保存，但无法连接到服务器，请检查配置',
     data: {
       id: r.value.id,
@@ -1043,43 +1043,42 @@ app.get('/donate', c => {
 <body class="min-h-screen" data-theme="dark">
 <div class="max-w-6xl mx-auto px-6 py-8 md:py-12">
 
-  <header class="mb-10 animate-in">
-    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-      <div class="flex-1 space-y-5">
-        <h1 class="grad-title text-4xl md:text-5xl font-bold leading-tight">
+  <header class="mb-12 animate-in">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
+      <div class="flex-1 space-y-6">
+        <h1 class="grad-title text-5xl md:text-6xl font-bold leading-tight tracking-tight">
           风萧萧公益机场 · VPS 投喂榜
         </h1>
 
-        <div class="panel border p-6 space-y-4">
-          <p class="text-sm leading-relaxed">
-            <span class="muted">这是一个完全非盈利的公益项目，目前没有运营团队，由我独自维护。</span><br>
+        <div class="glass rounded-2xl p-8 space-y-5">
+          <p class="text-base leading-relaxed text-secondary">
+            <span class="font-medium text-primary">这是一个完全非盈利的公益项目，目前没有运营团队，由我独自维护。</span><br>
             同时也非常感谢以下几位佬的日常协助：
             <a href="https://linux.do/u/shklrt" target="_blank"
-               class="font-semibold transition-colors hover:opacity-80">@shklrt</a>、
+               class="font-semibold text-blue-500 hover:underline">@shklrt</a>、
             <a href="https://linux.do/u/sar60677" target="_blank"
-               class="font-semibold transition-colors hover:opacity-80">@sar60677</a>、
+               class="font-semibold text-blue-500 hover:underline">@sar60677</a>、
             <a href="https://linux.do/u/carrydelahaye" target="_blank"
-               class="font-semibold transition-colors hover:opacity-80">@Carry&nbsp;Delahaye</a>
+               class="font-semibold text-blue-500 hover:underline">@Carry&nbsp;Delahaye</a>
             <a href="https://linux.do/u/kkkyyx" target="_blank"
-               class="font-semibold transition-colors hover:opacity-80">@kkkyyx</a>。
+               class="font-semibold text-blue-500 hover:underline">@kkkyyx</a>。
           </p>
 
-          <div class="alert-warning text-sm leading-relaxed rounded-xl px-4 py-3">
-            <span class="font-semibold">💝 榜单按投喂 VPS 数量排序，</span>
-            但无论名次高低，您的每一次支持，对我和这个项目来说都弥足珍贵，衷心感谢！
+          <div class="bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-sm leading-relaxed rounded-xl px-5 py-3 font-medium">
+            <span class="text-lg mr-1">💝</span> 榜单按投喂 VPS 数量排序，但无论名次高低，您的每一次支持，对我和这个项目来说都弥足珍贵，衷心感谢！
           </div>
 
-          <p class="text-sm leading-relaxed flex items-start gap-2">
+          <p class="text-sm leading-relaxed flex items-start gap-2 text-secondary">
             <span class="text-lg mt-0.5">🤝</span>
             <span>感谢大家的投喂，这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，而是大家的共同成果！共荣！🚀</span>
           </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3">
-          <button onclick="gotoDonatePage()" class="btn-primary">
-            <span class="text-lg">🧡</span> 我要投喂 VPS
+        <div class="flex flex-wrap items-center gap-4">
+          <button onclick="gotoDonatePage()" class="btn-primary flex items-center gap-2 shadow-lg shadow-blue-500/30">
+            <span class="text-xl">🧡</span> <span class="font-semibold">我要投喂 VPS</span>
           </button>
-          <button id="theme-toggle" onclick="toggleTheme()">浅色模式</button>
+          <button id="theme-toggle" onclick="toggleTheme()" class="btn-secondary">浅色模式</button>
         </div>
       </div>
     </div>
@@ -1106,22 +1105,22 @@ app.get('/donate', c => {
       <div id="globe-container" style="width: 100%; height: 500px; border-radius: 8px; overflow: hidden; background: #000;"></div>
       
       <!-- 统计信息 -->
-      <div id="globe-stats" class="mt-4 flex gap-6 text-sm flex-wrap">
-        <div class="flex items-center gap-2">
-          <span class="muted">📍 您的位置:</span>
-          <span id="visitor-location" class="font-bold text-cyan-400">检测中...</span>
+      <div id="globe-stats" class="mt-6 flex gap-8 text-sm flex-wrap justify-center md:justify-start">
+        <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700">
+          <span class="text-secondary">📍 您的位置:</span>
+          <span id="visitor-location" class="font-bold text-blue-500">检测中...</span>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="muted">🖥️ 总服务器:</span>
-          <span id="total-servers" class="font-bold">0</span>
+        <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700">
+          <span class="text-secondary">🖥️ 总服务器:</span>
+          <span id="total-servers" class="font-bold text-primary">0</span>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="muted">✅ 活跃:</span>
+        <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700">
+          <span class="text-secondary">✅ 活跃:</span>
           <span id="active-servers" class="font-bold text-green-500">0</span>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="muted">🔗 连接数:</span>
-          <span id="total-connections" class="font-bold text-blue-500">0</span>
+        <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700">
+          <span class="text-secondary">🔗 连接数:</span>
+          <span id="total-connections" class="font-bold text-blue-400">0</span>
         </div>
       </div>
       
@@ -1279,30 +1278,28 @@ function renderLeaderboard(){
     wrap.dataset.cardId = cardId;
 
     wrap.innerHTML =
-      '<div class="flex items-center justify-between p-5 pb-4 border-b gap-4 bg-gradient-to-r '+gradientClass+'">'+
-        '<div class="flex items-center gap-4 flex-1 min-w-0">'+
-          '<div class="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl">'+medalByRank(idx)+'</div>'+
+      '<div class="flex items-center justify-between p-6 pb-5 border-b border-gray-100 dark:border-gray-800 gap-6 bg-gradient-to-r '+gradientClass+'">'+
+        '<div class="flex items-center gap-5 flex-1 min-w-0">'+
+          '<div class="flex-shrink-0 w-14 h-14 flex items-center justify-center text-4xl filter drop-shadow-md">'+medalByRank(idx)+'</div>'+
           '<div class="flex flex-col gap-1.5 min-w-0">'+
-            '<a class="font-bold text-xl hover:opacity-80 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a>'+
-            '<div class="flex items-center gap-2 flex-wrap">'+
+            '<a class="font-bold text-xl md:text-2xl hover:text-blue-500 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a>'+
+            '<div class="flex items-center gap-3 flex-wrap">'+
               renderBadge(badge)+
-              '<span class="text-xs muted">共投喂 '+it.count+' 台服务器</span>'+
+              '<span class="text-xs font-medium text-secondary bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">共投喂 '+it.count+' 台</span>'+
             '</div>'+
           '</div>'+
         '</div>'+
-        '<div class="flex items-center gap-3">'+
-          '<div class="flex-shrink-0 flex items-center justify-center w-16 h-16 panel border rounded-2xl">'+
-            '<div class="text-center">'+
-              '<div class="font-bold text-2xl leading-none mb-1">'+it.count+'</div>'+
-              '<div class="text-xs muted leading-none">VPS</div>'+
-            '</div>'+
+        '<div class="flex items-center gap-4">'+
+          '<div class="flex-shrink-0 flex flex-col items-center justify-center w-20 h-20 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">'+
+            '<div class="font-bold text-3xl leading-none mb-1 text-primary">'+it.count+'</div>'+
+            '<div class="text-[10px] font-semibold text-secondary uppercase tracking-wider">VPS</div>'+
           '</div>'+
-          '<button class="toggle-expand flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg panel border hover:bg-sky-500/10 transition-all cursor-pointer" data-card="'+cardId+'" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
+          '<button class="toggle-expand flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-secondary hover:text-blue-500 transition-all cursor-pointer" data-card="'+cardId+'" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
             '<span class="text-lg transition-transform duration-300 '+(isExpanded ? 'rotate-0' : '-rotate-90')+'">'+'▼'+'</span>'+
           '</button>'+
         '</div>'+
       '</div>'+
-      '<div class="server-list px-5 pb-5 pt-4 space-y-3'+(isExpanded ? '' : ' expandable')+'">'+
+      '<div class="server-list px-6 pb-6 pt-5 space-y-4 bg-gray-50/50 dark:bg-black/20'+(isExpanded ? '' : ' expandable')+'">'+
         serversHTML+
       '</div>';
 
@@ -2961,36 +2958,36 @@ app.get('/donate/vps', c => {
   const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
 <body class="min-h-screen" data-theme="dark">
 <div class="max-w-7xl mx-auto px-6 py-8 md:py-12">
-  <header class="mb-10 animate-fade-in">
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-      <div class="space-y-3">
-        <h1 class="grad-title-animated text-4xl md:text-5xl font-bold leading-tight">风萧萧公益机场 · VPS 投喂中心</h1>
-        <p class="text-sm muted flex items-center gap-2">
-          <span class="text-lg">📍</span>
+  <header class="mb-12 animate-fade-in">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+      <div class="space-y-4">
+        <h1 class="grad-title-animated text-5xl md:text-6xl font-bold leading-tight tracking-tight">风萧萧公益机场 · VPS 投喂中心</h1>
+        <p class="text-base text-secondary flex items-center gap-2 font-medium">
+          <span class="text-xl">📍</span>
           <span>提交新 VPS / 查看我的投喂记录</span>
         </p>
       </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <div id="user-info" class="text-sm panel px-5 py-2.5 border"></div>
-        <a href="/donate" class="btn-secondary flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-4">
+        <div id="user-info" class="text-sm glass px-5 py-2.5 rounded-full font-medium text-secondary"></div>
+        <a href="/donate" class="btn-secondary flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-gray-700">
           <span>🏠</span>
           <span>首页</span>
         </a>
-        <button onclick="logout()" class="btn-secondary">
+        <button onclick="logout()" class="btn-secondary hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors">
           退出登录
         </button>
-        <button id="theme-toggle" onclick="toggleTheme()">浅色模式</button>
+        <button id="theme-toggle" onclick="toggleTheme()" class="btn-secondary">浅色模式</button>
       </div>
     </div>
   </header>
 
-  <main class="grid lg:grid-cols-2 gap-8 items-start">
-    <section class="panel border p-8">
-      <div class="flex items-center gap-3 mb-5">
-        <span class="text-3xl">🧡</span>
-        <h2 class="text-2xl font-bold">提交新的 VPS 投喂</h2>
+  <main class="grid lg:grid-cols-2 gap-10 items-start">
+    <section class="glass rounded-2xl p-8 shadow-lg">
+      <div class="flex items-center gap-4 mb-6">
+        <span class="text-4xl filter drop-shadow-sm">🧡</span>
+        <h2 class="text-2xl font-bold text-primary">提交新的 VPS 投喂</h2>
       </div>
-      <div class="alert-warning text-sm mb-6 leading-relaxed rounded-xl px-4 py-3">
+      <div class="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm mb-8 leading-relaxed rounded-xl px-5 py-4 font-medium">
         ⚠️ 请确保服务器是你有控制权的机器，并允许用于公益节点。禁止长时间占满带宽、刷流量、倒卖账号等行为。
       </div>
 
@@ -3588,22 +3585,22 @@ async function loadDonations(){
     box.innerHTML='';
     data.forEach(v=>{
       const div=document.createElement('div');
-      div.className='card border px-5 py-4 transition-all';
+      div.className='glass rounded-xl p-5 transition-all hover:shadow-md border border-gray-100 dark:border-gray-800';
       const dt=v.donatedAt?new Date(v.donatedAt):null, t=dt?dt.toLocaleString():'';
       const uname=v.donatedByUsername||'';
       const p='https://linux.do/u/'+encodeURIComponent(uname);
-      div.innerHTML='<div class="flex items-center justify-between gap-2 mb-3 pb-3 border-b">'+
-        '<div class="text-sm font-medium flex items-center gap-2"><span>🖥️</span><span class="break-words">'+v.ip+':'+v.port+'</span></div>'+
+      div.innerHTML='<div class="flex items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">'+
+        '<div class="text-base font-semibold flex items-center gap-2 text-primary"><span>🖥️</span><span class="break-words font-mono">'+v.ip+':'+v.port+'</span></div>'+
         '<div class="'+scls(v.status)+' text-xs px-2.5 py-1 rounded-full font-semibold">'+stxt(v.status)+'</div></div>'+
-        '<div class="text-sm mb-3">投喂者：<a href="'+p+'" target="_blank" class="underline hover:text-cyan-300 transition-colors">@'+uname+'</a></div>'+
-        '<div class="grid grid-cols-2 gap-3 text-sm mt-3">'+
-          '<div class="flex items-center gap-2"><span class="opacity-60">🌍</span><span class="truncate">'+(v.country||'未填写')+(v.region?' · '+v.region:'')+(v.ipLocation?' · '+v.ipLocation:'')+'</span></div>'+
-          '<div class="flex items-center gap-2"><span class="opacity-60">📊</span><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
-          '<div class="flex items-center gap-2"><span class="opacity-60">📅</span><span class="truncate">'+(v.expiryDate||'未填写')+'</span></div>'+
+        '<div class="text-sm mb-4 flex items-center gap-2 text-secondary"><span>👤</span> 投喂者：<a href="'+p+'" target="_blank" class="font-medium text-blue-500 hover:underline transition-colors">@'+uname+'</a></div>'+
+        '<div class="grid grid-cols-2 gap-4 text-sm">'+
+          '<div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg"><span class="opacity-60">🌍</span><span class="truncate font-medium">'+(v.country||'未填写')+(v.region?' · '+v.region:'')+(v.ipLocation?' · '+v.ipLocation:'')+'</span></div>'+
+          '<div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg"><span class="opacity-60">📊</span><span class="truncate font-medium">'+(v.traffic||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg"><span class="opacity-60">📅</span><span class="truncate font-medium">'+(v.expiryDate||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg"><span class="opacity-60">⚙️</span><span class="truncate font-medium">'+(v.specs||'未填写')+'</span></div>'+
         '</div>'+
-        '<div class="text-sm muted mt-3 panel border rounded-lg px-3 py-2 break-words flex items-start gap-2"><span class="opacity-60">⚙️</span><span>'+(v.specs||'未填写')+'</span></div>'+
-        (v.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2 break-words flex items-start gap-2"><span class="opacity-60">💬</span><span>'+v.note+'</span></div>':'')+
-        (t?'<div class="text-xs muted mt-3 flex items-center gap-2"><span class="opacity-60">🕐</span><span>'+t+'</span></div>':'');
+        (v.note?'<div class="text-sm mt-4 bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 rounded-lg px-3 py-2.5 break-words flex items-start gap-2"><span class="opacity-60 mt-0.5">💬</span><span>'+v.note+'</span></div>':'')+
+        (t?'<div class="text-xs text-secondary mt-3 flex items-center gap-1.5 justify-end"><span class="opacity-60">🕐</span><span>'+t+'</span></div>':'');
       box.appendChild(div);
     });
   }catch(err){
@@ -3786,21 +3783,21 @@ async function checkAdmin(){
 function renderLogin(root){
   root.innerHTML='';
   const wrap=document.createElement('div');
-  wrap.className='panel max-w-md mx-auto border p-8 animate-in';
-  wrap.innerHTML='<div class="text-center mb-6">'+
-    '<div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="background:#007AFF">'+
-      '<span class="text-3xl">🔐</span>'+
+  wrap.className='glass max-w-md mx-auto rounded-2xl p-10 animate-in shadow-xl';
+  wrap.innerHTML='<div class="text-center mb-8">'+
+    '<div class="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 bg-blue-500/10 text-blue-500">'+
+      '<span class="text-4xl">🔐</span>'+
     '</div>'+
-    '<h1 class="text-2xl font-bold mb-2">管理员登录</h1>'+
-    '<p class="text-sm muted">请输入管理员密码以继续</p>'+
+    '<h1 class="text-3xl font-bold mb-3 text-primary">管理员登录</h1>'+
+    '<p class="text-sm text-secondary">请输入管理员密码以继续访问后台</p>'+
   '</div>'+
-    '<form id="admin-login-form" class="space-y-4">'+
+    '<form id="admin-login-form" class="space-y-6">'+
       '<div>'+
-        '<label class="block mb-2 text-sm font-medium flex items-center gap-2">'+
+        '<label class="block mb-2 text-sm font-medium flex items-center gap-2 text-primary">'+
           '<span>🔑</span> 密码'+
         '</label>'+
         '<input type="password" name="password" placeholder="请输入管理员密码" '+
-               'class="w-full rounded-lg border px-4 py-3 text-sm focus:ring-2 focus:ring-cyan-500"/>'+
+               'class="w-full"/>'+
       '</div>'+
       '<div id="admin-login-msg" class="text-sm min-h-[1.5rem] font-medium"></div>'+
       '<button type="submit" class="w-full btn-primary">'+
@@ -3837,27 +3834,27 @@ function renderLogin(root){
 async function renderAdmin(root, name){
   root.innerHTML='';
   const header=document.createElement('header');
-  header.className='mb-8 animate-in';
+  header.className='mb-10 animate-in';
   header.innerHTML='<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">'+
-    '<div class="space-y-3">'+
-      '<div class="flex items-center gap-3">'+
-        '<div class="inline-flex items-center justify-center w-12 h-12 rounded-xl" style="background:#007AFF">'+
+    '<div class="space-y-4">'+
+      '<div class="flex items-center gap-4">'+
+        '<div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-500 text-white shadow-lg shadow-blue-500/30">'+
           '<span class="text-2xl">⚙️</span>'+
         '</div>'+
-        '<h1 class="grad-title-animated text-3xl md:text-4xl font-bold">VPS 管理后台</h1>'+
+        '<h1 class="grad-title-animated text-4xl md:text-5xl font-bold tracking-tight">VPS 管理后台</h1>'+
       '</div>'+
-      '<p class="text-sm muted flex items-center gap-2 ml-15">'+
+      '<p class="text-sm text-secondary flex items-center gap-2 ml-1">'+
         '<span class="text-base">🔒</span>'+
         '<span>仅管理员可见，可查看全部投喂 VPS 与认证信息</span>'+
       '</p>'+
     '</div>'+
     '<div class="flex flex-wrap items-center gap-3">'+
-      '<div class="panel px-5 py-2.5 border">'+
+      '<div class="glass px-5 py-2.5 rounded-full border border-gray-200 dark:border-gray-700 flex items-center gap-2">'+
         '<span class="text-sm">👤</span>'+
-        '<span class="text-sm font-medium">'+name+'</span>'+
+        '<span class="text-sm font-medium text-primary">'+name+'</span>'+
       '</div>'+
       '<button id="theme-toggle" class="btn-secondary">浅色模式</button>'+
-      '<button id="btn-admin-logout" class="btn-danger">'+
+      '<button id="btn-admin-logout" class="btn-secondary hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors">'+
         '退出登录'+
       '</button>'+
     '</div>'+
@@ -3880,72 +3877,72 @@ async function renderAdmin(root, name){
 
   const cfg=document.createElement('section');
   cfg.id='admin-config';
-  cfg.className='mt-6 space-y-4';
+  cfg.className='mt-8 space-y-6';
   cfg.innerHTML=
-  '<div class="panel border p-6">'+
+  '<div class="glass rounded-2xl p-6 border border-gray-100 dark:border-gray-800">'+
     '<div class="flex items-center justify-between mb-4">'+
       '<div class="flex items-center gap-3">'+
-        '<span class="text-xl">🔗</span>'+
-        '<h2 class="text-lg font-bold">OAuth 配置</h2>'+
+        '<span class="text-2xl">🔗</span>'+
+        '<h2 class="text-xl font-bold text-primary">OAuth 配置</h2>'+
       '</div>'+
       '<button id="btn-toggle-oauth" class="btn-secondary text-xs">展开</button>'+
     '</div>'+
-    '<div id="oauth-body" class="hidden">'+
-      '<form id="oauth-form" class="grid md:grid-cols-3 gap-4">'+
+    '<div id="oauth-body" class="hidden pt-4 border-t border-gray-100 dark:border-gray-800">'+
+      '<form id="oauth-form" class="grid md:grid-cols-3 gap-5">'+
         '<div>'+
-          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5">'+
+          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5 text-secondary">'+
             '<span>🆔</span> Client ID'+
           '</label>'+
-          '<input name="clientId" placeholder="输入 Client ID" class="w-full rounded-lg border px-3 py-2 text-sm"/>'+
+          '<input name="clientId" placeholder="输入 Client ID" class="w-full"/>'+
         '</div>'+
         '<div>'+
-          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5">'+
+          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5 text-secondary">'+
             '<span>🔐</span> Client Secret'+
           '</label>'+
-          '<input name="clientSecret" placeholder="输入 Client Secret" class="w-full rounded-lg border px-3 py-2 text-sm"/>'+
+          '<input name="clientSecret" placeholder="输入 Client Secret" class="w-full"/>'+
         '</div>'+
         '<div>'+
-          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5">'+
+          '<label class="block mb-2 text-sm font-medium flex items-center gap-1.5 text-secondary">'+
             '<span>🔗</span> Redirect URI'+
           '</label>'+
-          '<input name="redirectUri" placeholder="输入 Redirect URI" class="w-full rounded-lg border px-3 py-2 text-sm"/>'+
+          '<input name="redirectUri" placeholder="输入 Redirect URI" class="w-full"/>'+
         '</div>'+
       '</form>'+
-      '<div class="mt-4 flex gap-2">'+
+      '<div class="mt-5 flex gap-2">'+
         '<button id="btn-save-oauth" class="btn-primary">'+
           '<span>💾</span> 保存 OAuth 配置'+
         '</button>'+
       '</div>'+
     '</div>'+
   '</div>'+
-  '<div class="panel border p-6">'+
+  '<div class="glass rounded-2xl p-6 border border-gray-100 dark:border-gray-800">'+
     '<div class="flex items-center justify-between mb-4">'+
       '<div class="flex items-center gap-3">'+
-        '<span class="text-xl">🔑</span>'+
-        '<h2 class="text-lg font-bold">管理员密码</h2>'+
+        '<span class="text-2xl">🔑</span>'+
+        '<h2 class="text-xl font-bold text-primary">管理员密码</h2>'+
       '</div>'+
       '<button id="btn-toggle-password" class="btn-secondary text-xs">展开</button>'+
     '</div>'+
-    '<div id="password-body" class="hidden">'+
-      '<div class="alert-warning text-sm mb-4 rounded-xl px-3 py-2">'+
+    '<div id="password-body" class="hidden pt-4 border-t border-gray-100 dark:border-gray-800">'+
+      '<div class="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm mb-5 rounded-xl px-4 py-3">'+
         '⚠️ 仅用于 <code>/admin</code> 后台登录，至少 6 位，建议与 Linux.do 账号密码不同'+
       '</div>'+
-      '<div class="grid md:grid-cols-2 gap-4 mb-4">'+
+      '<div class="grid md:grid-cols-2 gap-5 mb-5">'+
         '<div>'+
-          '<label class="block mb-2 text-sm font-medium">新密码</label>'+
+          '<label class="block mb-2 text-sm font-medium text-secondary">新密码</label>'+
           '<input id="admin-pass-input" type="password" placeholder="输入新的管理员密码" '+
-                 'class="w-full rounded-lg border px-3 py-2.5 text-sm"/>'+
+                 'class="w-full"/>'+
         '</div>'+
         '<div>'+
-          '<label class="block mb-2 text-sm font-medium">确认密码</label>'+
+          '<label class="block mb-2 text-sm font-medium text-secondary">确认密码</label>'+
           '<input id="admin-pass-input2" type="password" placeholder="再次输入以确认" '+
-                 'class="w-full rounded-lg border px-3 py-2.5 text-sm"/>'+
+                 'class="w-full"/>'+
         '</div>'+
       '</div>'+
       '<button id="btn-save-admin-pass" class="btn-primary">'+
         '<span>🔒</span> 保存密码'+
       '</button>'+
-      '<p class="text-xs muted mt-3">💡 修改成功后立即生效，下次登录需要使用新密码</p>'+
+      '<p class="text-xs text-secondary mt-3">💡 修改成功后立即生效，下次登录需要使用新密码</p>'+
     '</div>'+
   '</div>';
   root.appendChild(cfg);
@@ -3979,19 +3976,19 @@ async function renderAdmin(root, name){
 
   const listWrap=document.createElement('section');
   listWrap.className='mt-8';
-  listWrap.innerHTML='<div class="panel border p-6 mb-6">'+
+  listWrap.innerHTML='<div class="glass rounded-2xl p-6 mb-6 border border-gray-100 dark:border-gray-800">'+
     '<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">'+
       '<div class="flex items-center gap-3">'+
         '<span class="text-2xl">📋</span>'+
-        '<h2 class="text-2xl font-bold">VPS 列表</h2>'+
+        '<h2 class="text-xl font-bold text-primary">VPS 列表</h2>'+
       '</div>'+
-      '<button id="btn-verify-all" class="btn-primary">'+
+      '<button id="btn-verify-all" class="btn-primary shadow-lg shadow-blue-500/20">'+
         '<span>🔄</span> 一键验证全部'+
       '</button>'+
     '</div>'+
-    '<div class="flex flex-col md:flex-row gap-3">'+
+    '<div class="flex flex-col md:flex-row gap-4">'+
       '<div class="flex flex-wrap items-center gap-2">'+
-        '<span class="text-sm font-medium">筛选：</span>'+
+        '<span class="text-sm font-medium text-secondary">筛选：</span>'+
         '<button data-status="all" class="btn-secondary text-xs">全部</button>'+
         '<button data-status="active" class="btn-secondary text-xs">✅ 运行中</button>'+
         '<button data-status="failed" class="btn-secondary text-xs">❌ 失败</button>'+
@@ -4003,7 +4000,7 @@ async function renderAdmin(root, name){
       '</div>'+
     '</div>'+
   '</div>'+
-  '<div id="vps-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>';
+  '<div id="vps-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>';
   root.appendChild(listWrap);
 
   listWrap.querySelectorAll('button[data-status]').forEach(btn=> btn.addEventListener('click',()=>{
@@ -4054,14 +4051,14 @@ async function loadStats(){
     const d=j.data||{};
     function card(label,value,key,icon){
       const percent = d.totalVPS > 0 ? Math.round((value / d.totalVPS) * 100) : 0;
-      return '<button data-gok="'+key+'" class="stat-card stat-'+key+' border px-4 py-3 text-left">'+
-        '<div class="flex items-center justify-between mb-2">'+
-          '<div class="stat-label text-xs muted">'+icon+' '+label+'</div>'+
-          '<div class="text-xs muted">'+percent+'%</div>'+
+      return '<button data-gok="'+key+'" class="stat-card stat-'+key+' border border-gray-100 dark:border-gray-800 px-5 py-4 text-left rounded-2xl hover:shadow-md transition-all">'+
+        '<div class="flex items-center justify-between mb-3">'+
+          '<div class="stat-label text-xs font-medium text-secondary uppercase tracking-wider">'+icon+' '+label+'</div>'+
+          '<div class="text-xs font-bold text-secondary">'+percent+'%</div>'+
         '</div>'+
-        '<div class="stat-value mb-2">'+value+'</div>'+
-        '<div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">'+
-          '<div class="h-full rounded-full transition-all duration-500" style="width:'+percent+'%;background:currentColor"></div>'+
+        '<div class="stat-value mb-3 text-3xl font-bold tracking-tight">'+value+'</div>'+
+        '<div class="w-full h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">'+
+          '<div class="h-full rounded-full transition-all duration-1000 ease-out" style="width:'+percent+'%;background:currentColor"></div>'+
         '</div>'+
         '</button>';
     }
@@ -4449,54 +4446,54 @@ function openEditModal(vpsId) {
   const modal = document.createElement('div');
   modal.id = 'edit-config-modal';
   modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
-  modal.style.background = 'rgba(0, 0, 0, 0.5)';
-  modal.style.backdropFilter = 'blur(4px)';
+  modal.style.background = 'rgba(0, 0, 0, 0.4)';
+  modal.style.backdropFilter = 'blur(8px)';
   
   modal.innerHTML = \`
-    <div class="panel border max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in">
-      <div class="sticky top-0 bg-inherit border-b px-6 py-4 flex items-center justify-between">
+    <div class="glass max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800">
+      <div class="sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
         <div class="flex items-center gap-3">
           <span class="text-2xl">⚙️</span>
-          <h3 class="text-xl font-bold">编辑 VPS 配置</h3>
+          <h3 class="text-xl font-bold text-primary">编辑 VPS 配置</h3>
         </div>
-        <button onclick="closeEditModal()" class="text-2xl hover:opacity-70 transition-opacity">✕</button>
+        <button onclick="closeEditModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-secondary">✕</button>
       </div>
       
-      <form id="edit-config-form" class="p-6 space-y-5">
-        <div class="alert-warning text-sm leading-relaxed rounded-xl px-4 py-3">
+      <form id="edit-config-form" class="p-6 space-y-6">
+        <div class="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm leading-relaxed rounded-xl px-5 py-4 font-medium">
           ⚠️ 修改配置后将自动进行连通性测试。即使测试失败，配置也会被保存。
         </div>
         
-        <div class="grid md:grid-cols-2 gap-5">
+        <div class="grid md:grid-cols-2 gap-6">
           <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>🌐</span> 服务器 IP <span class="text-red-400">*</span>
+            <label class="block mb-2 text-sm font-medium flex items-center gap-1.5 text-secondary">
+              <span>🌐</span> 服务器 IP <span class="text-red-500">*</span>
             </label>
             <input name="ip" required value="\${vps.ip}" placeholder="示例：203.0.113.8"
-                   class="w-full rounded-lg border px-3 py-2 text-sm" />
+                   class="w-full" />
           </div>
           <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>🔌</span> 端口 <span class="text-red-400">*</span>
+            <label class="block mb-2 text-sm font-medium flex items-center gap-1.5 text-secondary">
+              <span>🔌</span> 端口 <span class="text-red-500">*</span>
             </label>
             <input name="port" required type="number" min="1" max="65535" value="\${vps.port}"
-                   class="w-full rounded-lg border px-3 py-2 text-sm" />
+                   class="w-full" />
           </div>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-5">
+        <div class="grid md:grid-cols-2 gap-6">
           <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>👤</span> 系统用户名 <span class="text-red-400">*</span>
+            <label class="block mb-2 text-sm font-medium flex items-center gap-1.5 text-secondary">
+              <span>👤</span> 系统用户名 <span class="text-red-500">*</span>
             </label>
             <input name="username" required value="\${vps.username}" placeholder="示例：root"
-                   class="w-full rounded-lg border px-3 py-2 text-sm" />
+                   class="w-full" />
           </div>
           <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
+            <label class="block mb-2 text-sm font-medium flex items-center gap-1.5 text-secondary">
               <span>🔐</span> 认证方式
             </label>
-            <select name="authType" class="w-full rounded-lg border px-3 py-2 text-sm">
+            <select name="authType" class="w-full">
               <option value="password" \${vps.authType === 'password' ? 'selected' : ''}>🔑 密码</option>
               <option value="key" \${vps.authType === 'key' ? 'selected' : ''}>🗝️ SSH 私钥</option>
             </select>
@@ -4713,590 +4710,192 @@ tailwind.config = {
 </script>
 <style>
 :root{
-  --radius: 0.5rem;
+  --radius: 12px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  
+  /* Light Mode Colors */
+  --bg-body: #F5F5F7;
+  --bg-card: #FFFFFF;
+  --bg-glass: rgba(255, 255, 255, 0.7);
+  --text-primary: #1D1D1F;
+  --text-secondary: #86868B;
+  --border-color: rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
+  
+  /* Accents */
+  --color-blue: #0071E3;
+  --color-green: #34C759;
+  --color-red: #FF3B30;
+  --color-orange: #FF9500;
+  
   color-scheme: light;
-}
-html{
-  scroll-behavior: smooth;
-}
-html,body{
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-size: 15px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-}
-body{
-  background: linear-gradient(135deg,
-    #f0e6ff 0%,    /* 淡紫色 */
-    #e9d5ff 20%,   /* 浅紫色 */
-    #ddd6fe 40%,   /* 紫罗兰 */
-    #c4b5fd 60%,   /* 中紫色 */
-    #e9d5ff 80%,   /* 浅紫色 */
-    #f0e6ff 100%   /* 淡紫色 */
-  );
-  background-size: 400% 400%;
-  background-attachment: fixed; /* 固定背景，避免滚动时泛白 */
-  animation: gradientShift 15s ease infinite;
-  color: #1d1d1f;
-  min-height: 100vh;
-  transition: color 0.3s ease;
-  position: relative;
-}
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-body::before{
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(135deg,
-    rgba(139, 92, 246, 0.05) 0%,
-    rgba(168, 85, 247, 0.04) 25%,
-    rgba(147, 51, 234, 0.03) 50%,
-    rgba(126, 34, 206, 0.04) 75%,
-    rgba(139, 92, 246, 0.05) 100%
-  );
-  pointer-events: none;
-  z-index: 0;
-}
-body > *{
-  position: relative;
-  z-index: 1;
 }
 
 body[data-theme="dark"]{
+  /* Dark Mode Colors */
+  --bg-body: #000000;
+  --bg-card: #1C1C1E;
+  --bg-glass: rgba(28, 28, 30, 0.7);
+  --text-primary: #F5F5F7;
+  --text-secondary: #86868B;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+  
+  /* Dark Accents */
+  --color-blue: #0A84FF;
+  --color-green: #32D74B;
+  --color-red: #FF453A;
+  --color-orange: #FF9F0A;
+  
   color-scheme: dark;
-  background: linear-gradient(135deg,
-    #1a0a2e 0%,    /* 深紫蓝 */
-    #16213e 25%,   /* 深蓝灰 */
-    #0f3460 50%,   /* 深蓝 */
-    #1a1a2e 75%,   /* 深灰蓝 */
-    #0a0e27 100%   /* 极深蓝 */
-  );
-  background-size: 400% 400%;
-  background-attachment: fixed; /* 固定背景，避免滚动时泛白 */
-  animation: gradientShift 15s ease infinite;
-  color: #f5f5f7;
-}
-body[data-theme="dark"]::before{
-  background: linear-gradient(135deg,
-    rgba(138, 43, 226, 0.1) 0%,
-    rgba(72, 52, 212, 0.08) 25%,
-    rgba(59, 130, 246, 0.06) 50%,
-    rgba(16, 185, 129, 0.05) 75%,
-    rgba(14, 165, 233, 0.08) 100%
-  );
 }
 
-/* ========== 动画 ========== */
-@keyframes slideUpAndFade {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes scaleUp {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-@keyframes slideInFromBottom {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes slideOut {
-  from {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(-50px) scale(0.9);
-  }
+html{
+  scroll-behavior: smooth;
 }
 
-.animate-in {
-  animation: slideUpAndFade 0.3s ease-out;
-}
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
-}
-.animate-slide-in {
-  animation: slideInFromBottom 0.4s ease-out forwards;
-}
-
-/* ========== 加载指示器 ========== */
-.loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid transparent;
-  border-top-color: #007AFF;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-body[data-theme="dark"] .loading-spinner {
-  border-top-color: #0A84FF;
-}
-
-/* ========== 骨架屏 ========== */
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(220, 220, 225, 0.6) 0%,
-    rgba(235, 235, 240, 0.8) 50%,
-    rgba(220, 220, 225, 0.6) 100%
-  );
-  background-size: 200% 100%;
-  animation: skeletonLoading 1.5s ease-in-out infinite;
-  border-radius: 8px;
-}
-@keyframes skeletonLoading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-body[data-theme="dark"] .skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(44, 44, 46, 0.6) 0%,
-    rgba(56, 56, 58, 0.8) 50%,
-    rgba(44, 44, 46, 0.6) 100%
-  );
-  background-size: 200% 100%;
-  animation: skeletonLoading 1.5s ease-in-out infinite;
-}
-
-/* 骨架屏卡片 */
-.skeleton-card {
-  padding: 20px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-}
-body[data-theme="dark"] .skeleton-card {
-  background: rgba(28, 28, 30, 0.8);
-  border-color: rgba(56, 56, 58, 0.6);
-}
-
-.skeleton-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.skeleton-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-}
-.skeleton-title {
-  height: 20px;
-  width: 40%;
-  border-radius: 4px;
-}
-.skeleton-text {
-  height: 16px;
-  width: 100%;
-  border-radius: 4px;
-  margin-bottom: 8px;
-}
-.skeleton-text.short {
-  width: 60%;
-}
-.skeleton-text.medium {
-  width: 80%;
-}
-
-/* ========== 卡片与面板 ========== */
-.panel,.card{
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 12px;
-  box-shadow:
-    0 2px 16px rgba(0, 0, 0, 0.06),
-    0 0 0 1px rgba(255, 255, 255, 0.8),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  transition: all 0.2s ease;
-  word-break: break-word;
-  /* 移除 overflow: hidden，避免展开收起时泛白 */
-  /* 性能优化：使用 transform 而不是 contain */
-  will-change: transform;
-  transform: translateZ(0);
-}
-.card:hover {
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    0 0 0 1px rgba(255, 255, 255, 0.9),
-    inset 0 1px 0 rgba(255, 255, 255, 1);
-  transform: translateY(-2px) translateZ(0);
-}
-
-body[data-theme="dark"] .panel,
-body[data-theme="dark"] .card{
-  background: rgba(28, 28, 30, 0.8);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-color: rgba(56, 56, 58, 0.6);
-  box-shadow: 
-    0 2px 16px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(56, 56, 58, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
-}
-body[data-theme="dark"] .card:hover{
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(56, 56, 58, 0.8),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-/* ========== 弹窗内文本块 ========== */
-.modal-text-block{
-  word-break: break-all;
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
-  max-height: 260px;
-  overflow-y: auto;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(245, 245, 247, 0.9);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(210, 210, 215, 0.8);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 13px;
-  line-height: 1.5;
-}
-body[data-theme="dark"] .modal-text-block{
-  background: rgba(44, 44, 46, 0.9);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-color: rgba(56, 56, 58, 0.8);
-  color: #f5f5f7;
-}
-
-/* ========== 文字样式 ========== */
-.muted{
-  color: #6b6b6f;
-}
-body[data-theme="dark"] .muted{
-  color: #a8a8ad;
-}
-
-.grad-title{
-  color: #1d1d1f;
-  font-weight: 700;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
-}
-body[data-theme="dark"] .grad-title{
-  color: #f5f5f7;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-/* ========== 流光渐变标题 ========== */
-.grad-title-animated {
-  background: linear-gradient(
-    90deg,
-    #8b5cf6 0%,
-    #a855f7 25%,
-    #d946ef 50%,
-    #a855f7 75%,
-    #8b5cf6 100%
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: gradientFlow 3s linear infinite;
-  font-weight: 700;
-}
-
-@keyframes gradientFlow {
-  0% { background-position: 0% center; }
-  100% { background-position: 200% center; }
-}
-
-body[data-theme="dark"] .grad-title-animated {
-  background: linear-gradient(
-    90deg,
-    #a78bfa 0%,
-    #c084fc 25%,
-    #e879f9 50%,
-    #c084fc 75%,
-    #a78bfa 100%
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* ========== Toast 通知 ========== */
-#toast-root{
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  pointer-events: none;
-}
-.toast{
-  padding: 12px 20px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  color: #1d1d1f;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.8);
-  transform: translateY(-20px);
-  opacity: 0;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: auto;
-  min-width: 280px;
-  max-width: 420px;
-  font-size: 14px;
-  font-weight: 500;
-}
-.toast.show{ 
-  transform: translateY(0); 
-  opacity: 1;
-  animation: slideDown 0.25s ease-out;
-}
-.toast.success{ 
-  border-left: 3px solid #34C759;
-}
-.toast.error{ 
-  border-left: 3px solid #FF3B30;
-}
-.toast.warn{ 
-  border-left: 3px solid #FF9500;
-}
-body[data-theme="dark"] .toast{
-  background: rgba(44, 44, 46, 0.9);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  color: #f5f5f7;
-  border-color: rgba(56, 56, 58, 0.8);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(56,56,58,0.6);
-}
-body[data-theme="dark"] .toast.success{ border-left-color: #32D74B; }
-body[data-theme="dark"] .toast.error{ border-left-color: #FF453A; }
-body[data-theme="dark"] .toast.warn{ border-left-color: #FF9F0A; }
-
-/* ========== 辅助文字 ========== */
-.help{ 
-  font-size: 12px;
-  color: #86868b;
-}
-body[data-theme="dark"] .help{
-  color: #98989d;
-}
-
-/* ========== 警告框 ========== */
-.alert-warning{
-  background: linear-gradient(135deg, rgba(255, 149, 0, 0.08), rgba(255, 204, 0, 0.05));
-  border: 1px solid rgba(255, 149, 0, 0.25);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-body[data-theme="dark"] .alert-warning{
-  background: linear-gradient(135deg, rgba(255, 159, 10, 0.12), rgba(255, 214, 10, 0.08));
-  border-color: rgba(255, 159, 10, 0.3);
-}
-
-/* ========== 状态徽章 ========== */
-.badge-ok{
-  color: #34C759;
-  font-weight: 600;
-  position: relative;
-}
-.badge-ok::before{
-  content: '';
-  position: absolute;
-  left: -12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 6px;
-  height: 6px;
-  background: #34C759;
-  border-radius: 50%;
-  animation: pulse-green 2s ease-in-out infinite;
-}
-@keyframes pulse-green {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52,199,89,0.7); }
-  50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(52,199,89,0); }
-}
-.badge-fail{
-  color: #FF3B30;
-  font-weight: 600;
-}
-.badge-idle{
-  color: #86868b;
-  font-weight: 600;
-}
-body[data-theme="dark"] .badge-ok{ color: #32D74B; }
-body[data-theme="dark"] .badge-ok::before{ background: #32D74B; }
-body[data-theme="dark"] .badge-fail{ color: #FF453A; }
-body[data-theme="dark"] .badge-idle{ color: #98989d; }
-
-/* ========== 主题切换按钮 ========== */
-#theme-toggle{
-  border-radius: 10px;
-  padding: 8px 16px;
-  border: 1px solid rgba(210, 210, 215, 0.8);
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #1d1d1f;
-  font-size: 13px;
-  font-weight: 500;
-  transition: all 0.15s ease;
-  cursor: pointer;
-}
-#theme-toggle:hover{
-  background: rgba(245, 245, 247, 0.95);
-  transform: scale(0.98);
-}
-#theme-toggle:active{
-  transform: scale(0.96);
-  opacity: 0.8;
-}
-body[data-theme="dark"] #theme-toggle{
-  background: rgba(44, 44, 46, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #f5f5f7;
-  border-color: rgba(56, 56, 58, 0.8);
-}
-body[data-theme="dark"] #theme-toggle:hover{
-  background: rgba(56, 56, 58, 0.9);
-}
-
-/* ========== 统计卡片 ========== */
-.stat-card{
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 12px;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(255,255,255,0.8);
-}
-.stat-card:hover{
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.9);
-}
-.stat-card:active{
-  transform: translateY(-1px) scale(0.98);
-}
-.stat-card .stat-label{
-  font-size: 12px;
-  font-weight: 500;
-  color: #86868b;
-}
-.stat-card .stat-value{
-  font-size: 28px;
-  font-weight: 700;
-  color: #007AFF;
-}
-.stat-card.stat-all .stat-value{ color: #007AFF; }
-.stat-card.stat-active .stat-value{ color: #34C759; }
-.stat-card.stat-failed .stat-value{ color: #FF3B30; }
-.stat-card.stat-inactive .stat-value{ color: #FF9500; }
-.stat-card.stat-pending .stat-value{ color: #FF9500; }
-.stat-card.stat-today .stat-value{ color: #007AFF; }
-
-body[data-theme="dark"] .stat-card{
-  background: rgba(28, 28, 30, 0.8);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-color: rgba(56, 56, 58, 0.6);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.4), 0 0 0 1px rgba(56,56,58,0.5);
-}
-body[data-theme="dark"] .stat-card:hover{
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(56,56,58,0.8);
-}
-body[data-theme="dark"] .stat-card .stat-label{
-  color: #98989d;
-}
-body[data-theme="dark"] .stat-card .stat-value{
-  color: #0A84FF;
-}
-body[data-theme="dark"] .stat-card.stat-all .stat-value{ color: #0A84FF; }
-body[data-theme="dark"] .stat-card.stat-active .stat-value{ color: #32D74B; }
-body[data-theme="dark"] .stat-card.stat-failed .stat-value{ color: #FF453A; }
-body[data-theme="dark"] .stat-card.stat-inactive .stat-value{ color: #FF9F0A; }
-body[data-theme="dark"] .stat-card.stat-pending .stat-value{ color: #FF9F0A; }
-body[data-theme="dark"] .stat-card.stat-today .stat-value{ color: #0A84FF; }
-
-/* ========== 文字大小 ========== */
-.text-xs{ font-size: 13px; line-height: 1.4; }
-.text-sm{ font-size: 14px; line-height: 1.45; }
-
-/* ========== 表单元素 ========== */
-input, textarea, select{
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #1d1d1f;
-  border: 1px solid rgba(210, 210, 215, 0.8);
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 15px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  position: relative;
+body{
+  font-family: var(--font-sans);
+  background-color: var(--bg-body);
+  color: var(--text-primary);
+  margin: 0;
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  font-feature-settings: "kern" 1;
 }
-select{
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%231d1d1f' stroke='%231d1d1f' stroke-width='0.5' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 12px;
-  padding-right: 40px;
-  cursor: pointer;
+
+/* ========== Layout & Containers ========== */
+.panel, .card {
+  background: var(--bg-card);
+  border-radius: 18px; /* More rounded */
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.2s ease;
 }
-optgroup{
+
+.panel:hover, .card:hover {
+  transform: scale(1.005);
+  box-shadow: var(--shadow-md);
+}
+
+/* Glassmorphism Utility */
+.glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-color);
+}
+
+/* ========== Typography ========== */
+h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
-  color: #6b6b6f;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.text-sm { font-size: 13px; }
+.text-xs { font-size: 11px; }
+.muted { color: var(--text-secondary); }
+
+/* Gradient Title */
+.grad-title {
+  background: linear-gradient(135deg, var(--color-blue), #5E5CE6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ========== Buttons ========== */
+.btn-primary {
+  background: var(--color-blue);
+  color: white;
+  border: none;
+  border-radius: 9999px; /* Pill shape */
+  padding: 10px 20px;
   font-size: 14px;
-  padding: 10px 14px;
-  background: #f5f5f7;
-  text-rendering: optimizeLegibility;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 113, 227, 0.3);
+}
+
+.btn-primary:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 8px rgba(0, 113, 227, 0.4);
+  opacity: 0.95;
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: rgba(118, 118, 128, 0.12);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(118, 118, 128, 0.2);
+}
+
+/* ========== Forms ========== */
+input, select, textarea {
+  background: rgba(118, 118, 128, 0.08); /* Light gray fill */
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 15px;
+  width: 100%;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+  background: var(--bg-card);
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+}
+
+/* ========== Badges ========== */
+.badge-ok, .badge-fail, .badge-idle {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-ok { background: rgba(52, 199, 89, 0.15); color: var(--color-green); }
+.badge-fail { background: rgba(255, 59, 48, 0.15); color: var(--color-red); }
+.badge-idle { background: rgba(142, 142, 147, 0.15); color: var(--text-secondary); }
+
+/* ========== Animations ========== */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.animate-in { animation: fadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+/* ========== Scrollbar ========== */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background-color: rgba(128, 128, 128, 0.5); }
   font-feature-settings: "kern" 1;
 }
 option{
