@@ -3792,7 +3792,7 @@ if(portInput){
 });
 
 /* ==================== /admin 管理后台 ==================== */
-app.get('/admin', c => {
+app.get('/admin', (c: Context) => {
   const head = commonHead('VPS 管理后台');
   const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
 <body class="min-h-screen">
