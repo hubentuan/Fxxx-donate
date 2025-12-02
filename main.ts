@@ -1043,87 +1043,75 @@ app.get('/donate', c => {
 <body class="min-h-screen" data-theme="dark">
 <div class="max-w-6xl mx-auto px-6 py-8 md:py-12">
 
-  <header class="mb-20 animate-entry relative z-10 pt-10">
-    <div class="text-center space-y-8 max-w-5xl mx-auto">
-      
-      <!-- Glowing Pill Badge -->
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md shadow-[0_0_20px_rgba(139,92,246,0.2)] mb-4">
-        <span class="relative flex h-2 w-2">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-        </span>
-        <span class="text-xs font-bold tracking-wider text-white uppercase">系统运行正常 · 12 RPM</span>
-      </div>
-
-      <h1 class="text-display text-7xl md:text-9xl tracking-tighter text-white drop-shadow-[0_0_40px_rgba(139,92,246,0.3)] leading-none">
-        让 <span class="text-gradient">公益节点</span><br>
-        触手可及
+  <header class="mb-16 animate-entry relative z-10">
+    <div class="text-center space-y-6 max-w-4xl mx-auto">
+      <h1 class="text-display text-6xl md:text-8xl tracking-tight text-primary drop-shadow-2xl">
+        <span class="text-gradient">VPS 投喂榜</span>
       </h1>
-      
-      <p class="text-lg md:text-xl text-secondary font-medium max-w-2xl mx-auto leading-relaxed opacity-80">
-        聚合全球热佬力量，提供稳定、高速、免费的公益节点服务。<br>
-        专为开发者、研究人员和 AI 爱好者打造。
+      <p class="text-xl md:text-2xl text-secondary font-medium max-w-2xl mx-auto leading-relaxed">
+        汇聚全球热佬力量，共建公益节点网络。<br>
+        <span class="text-base opacity-75 mt-2 block">目前由我独自维护，感谢 @shklrt, @sar60677, @Carry Delahaye, @kkkyyx 的日常协助。</span>
       </p>
       
-      <div class="flex flex-wrap justify-center gap-6 pt-8">
-        <button onclick="gotoDonatePage()" class="btn-primary text-lg px-10 py-4 rounded-full flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(139,92,246,0.4)]">
-          <span class="text-xl">⚡</span> 开始使用
+      <div class="flex flex-wrap justify-center gap-4 pt-4">
+        <button onclick="gotoDonatePage()" class="btn-primary btn-primary-glow text-lg px-8 py-4 rounded-full flex items-center gap-3 transition-transform hover:scale-105 active:scale-95">
+          <span class="text-2xl">🧡</span> 我要投喂
         </button>
-        <button id="theme-toggle" onclick="toggleTheme()" class="btn-secondary rounded-full px-8 py-4 text-lg backdrop-blur-md bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20">
-          >_ 控制台
+        <button id="theme-toggle" onclick="toggleTheme()" class="btn-secondary rounded-full px-6 py-4 text-lg backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/20">
+          🌓 切换模式
         </button>
       </div>
     </div>
   </header>
 
   <!-- 3D地球可视化区域 -->
-  <!-- Dark Glass Stats Strip -->
-  <section id="stats-section" class="mb-24 animate-entry delay-1 relative z-10 max-w-4xl mx-auto">
-    <div class="glass-panel p-8 rounded-3xl flex flex-col md:flex-row items-center justify-around gap-8 md:gap-4 bg-black/40 backdrop-blur-2xl border-white/5">
+  <section id="globe-section" class="mb-16 animate-entry delay-1 relative z-10">
+    <div class="glass-panel p-1 md:p-2 overflow-hidden relative group">
+      <div class="absolute inset-0 bg-blue-500/5 blur-3xl group-hover:bg-blue-500/10 transition-colors duration-500"></div>
       
-      <div class="text-center group cursor-default">
-        <div class="text-sm font-bold uppercase tracking-widest text-secondary mb-2 group-hover:text-white transition-colors">支持模型</div>
-        <div class="text-4xl font-bold text-white group-hover:text-cyan-400 transition-colors drop-shadow-lg">--</div>
+      <div class="relative z-10 flex justify-between items-center p-6 pb-2">
+        <div>
+          <h2 class="text-3xl font-bold tracking-tight">全球节点分布</h2>
+          <p class="text-secondary font-medium">Real-time Global Network</p>
+        </div>
+        <div id="globe-controls" class="flex gap-2">
+          <button id="toggle-size" class="btn-secondary text-xs rounded-full px-3 py-1 bg-white/20 backdrop-blur-md border-0 hover:bg-white/30">最小化</button>
+          <button id="toggle-rotate" class="btn-secondary text-xs rounded-full px-3 py-1 bg-white/20 backdrop-blur-md border-0 hover:bg-white/30">暂停</button>
+        </div>
       </div>
       
-      <div class="hidden md:block w-px h-16 bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
+      <!-- 地球容器 -->
+      <div id="globe-container" style="width: 100%; height: 600px; border-radius: 20px; overflow: hidden; background: transparent;"></div>
       
-      <div class="text-center group cursor-default">
-        <div class="text-sm font-bold uppercase tracking-widest text-secondary mb-2 group-hover:text-white transition-colors">活跃节点</div>
-        <div id="active-servers" class="text-4xl font-bold text-white group-hover:text-purple-400 transition-colors drop-shadow-lg count-up">0</div>
+      <!-- Bento Grid 统计信息 -->
+      <div id="globe-stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 mt-[-80px] relative z-20 mx-4 mb-4">
+        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
+          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">您的位置</span>
+          <span id="visitor-location" class="font-bold text-blue-500 text-lg truncate w-full">检测中...</span>
+        </div>
+        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
+          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">总服务器</span>
+          <span id="total-servers" class="font-bold text-primary text-2xl count-up">0</span>
+        </div>
+        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
+          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">活跃节点</span>
+          <span id="active-servers" class="font-bold text-green-500 text-2xl count-up">0</span>
+        </div>
+        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
+          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">实时连接</span>
+          <span id="total-connections" class="font-bold text-blue-400 text-2xl count-up">0</span>
+        </div>
       </div>
-      
-      <div class="hidden md:block w-px h-16 bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
-      
-      <div class="text-center group cursor-default">
-        <div class="text-sm font-bold uppercase tracking-widest text-secondary mb-2 group-hover:text-white transition-colors">可用性</div>
-        <div class="text-4xl font-bold text-white group-hover:text-green-400 transition-colors drop-shadow-lg">99%</div>
-      </div>
-
     </div>
   </section>
 
-  <!-- Hidden Globe (Optional, kept for logic compatibility but hidden in UI for now to match reference) -->
-  <div id="globe-container" style="display:none;"></div>
-  <div id="visitor-location" style="display:none;"></div>
-  <div id="total-servers" style="display:none;"></div>
-  <div id="total-connections" style="display:none;"></div>
-
   <section class="mb-16 animate-entry delay-2 relative z-10">
-  <section class="mb-16 animate-entry delay-2 relative z-10">
-    <div class="flex items-center justify-between mb-8 px-2">
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border border-white/10">
-          <span class="text-2xl">🏆</span>
-        </div>
-        <div>
-          <h2 class="text-2xl font-bold text-white">捐赠榜单</h2>
-          <p id="leaderboard-count" class="text-sm text-secondary font-medium mt-0.5">加载中...</p>
-        </div>
+    <div class="flex items-end justify-between mb-8 px-2">
+      <div>
+        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">捐赠榜单</h2>
+        <p id="leaderboard-count" class="text-lg text-secondary mt-2 font-medium"></p>
       </div>
-      <a href="/donate/vps" class="btn-secondary text-xs rounded-lg px-4 py-2 flex items-center gap-2 hover:bg-white/10 transition-colors">
-        查看全部 >
-      </a>
+      <div class="text-4xl">🏆</div>
     </div>
     
     <div id="leaderboard" class="space-y-6">
@@ -4731,91 +4719,147 @@ body {
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 0px; background: transparent; }
-:root {
-  /* Dark Neon Palette */
-  --bg-body: #0B0B15;
-  --bg-glass: rgba(255, 255, 255, 0.03);
-  --border-glass: rgba(255, 255, 255, 0.08);
-  --text-primary: #FFFFFF;
-  --text-secondary: #A1A1AA;
-  --color-primary: #8B5CF6; /* Neon Purple */
-  --color-cyan: #06B6D4;    /* Neon Cyan */
-  --color-success: #10B981;
-  --color-error: #EF4444;
-  
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --radius-card: 24px;
+  font-feature-settings: "kern" 1;
 }
-
-body {
-  background-color: var(--bg-body);
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.15), transparent 60%);
-  background-size: 40px 40px, 40px 40px, 100% 100%;
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+option{
+  padding: 10px 14px;
+  color: #1d1d1f;
+  background: #ffffff;
+  font-size: 14.5px;
+  font-weight: 400;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  letter-spacing: 0.01em;
 }
-
-/* Typography */
-.text-display {
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  background: linear-gradient(135deg, #FFFFFF 0%, #A1A1AA 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 30px rgba(255,255,255,0.1);
+option:hover,
+option:focus{
+  background: #f5f5f7;
+  color: #000000;
 }
-
-.text-gradient {
-  background: linear-gradient(to right, var(--color-primary), var(--color-cyan));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: bold;
+input:hover, textarea:hover, select:hover{
+  border-color: #86868b;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
-
-/* Glass Components */
-.glass-panel {
-  background: var(--bg-glass);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--border-glass);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-.card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.card-hover:hover {
-  transform: translateY(-4px);
-  border-color: rgba(139, 92, 246, 0.3);
-  box-shadow: 0 12px 40px rgba(139, 92, 246, 0.15);
-}
-
-/* Inputs */
-input, select, textarea {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--border-glass);
-  color: white;
-  border-radius: 12px;
-  padding: 12px 16px;
-  transition: all 0.2s;
-  width: 100%;
-}
-input:focus, select:focus, textarea:focus {
+input:focus, textarea:focus, select:focus{
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12), 0 2px 8px rgba(139, 92, 246, 0.15);
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
-  background: rgba(0, 0, 0, 0.5);
+  transform: translateY(-2px);
 }
-input::placeholder { color: rgba(255, 255, 255, 0.3); }
+input::placeholder,
+textarea::placeholder{
+  color: #86868b;
+  transition: opacity 0.2s ease;
+}
+input:focus::placeholder,
+textarea:focus::placeholder{
+  opacity: 0.5;
+}
+input:disabled, textarea:disabled, select:disabled{
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f5f7;
+}
 
-/* Force Dark Mode Overrides */
-body[data-theme="dark"] {
-  --bg-body: #0B0B15; /* Ensure dark mode stays dark */
+/* 输入框错误状态 */
+input.error, textarea.error, select.error{
+  border-color: #FF3B30;
+  animation: shake 0.3s ease;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* 输入框成功状态 */
+input.success, textarea.success, select.success{
+  border-color: #34C759;
+}
+
+body[data-theme="dark"] input,
+body[data-theme="dark"] textarea,
+body[data-theme="dark"] select{
+  background: rgba(44, 44, 46, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #f5f5f7;
+  border-color: rgba(56, 56, 58, 0.8);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+}
+body[data-theme="dark"] select{
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23f5f5f7' stroke='%23f5f5f7' stroke-width='0.5' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+}
+body[data-theme="dark"] optgroup{
+  color: #d1d1d6;
+  background: #1c1c1e;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  border: none;
+}
+body[data-theme="dark"] option{
+  color: #f5f5f7;
+  background: #2c2c2e;
+  font-size: 14.5px;
+  font-weight: 400;
+  padding: 10px 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  letter-spacing: 0.01em;
+}
+body[data-theme="dark"] option:hover,
+body[data-theme="dark"] option:focus{
+  background: #3a3a3c;
+  color: #ffffff;
+}
+body[data-theme="dark"] input:hover,
+body[data-theme="dark"] textarea:hover,
+body[data-theme="dark"] select:hover{
+  border-color: #98989d;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+body[data-theme="dark"] input:focus,
+body[data-theme="dark"] textarea:focus,
+body[data-theme="dark"] select:focus{
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.18), 0 2px 8px rgba(139, 92, 246, 0.2);
+  transform: translateY(-2px);
+}
+body[data-theme="dark"] input.error,
+body[data-theme="dark"] textarea.error,
+body[data-theme="dark"] select.error{
+  border-color: #FF453A;
+}
+body[data-theme="dark"] input.success,
+body[data-theme="dark"] textarea.success,
+body[data-theme="dark"] select.success{
+  border-color: #32D74B;
+}
+body[data-theme="dark"] input::placeholder,
+body[data-theme="dark"] textarea::placeholder{
+  color: #98989d;
+}
+body[data-theme="dark"] input:disabled,
+body[data-theme="dark"] textarea:disabled,
+body[data-theme="dark"] select:disabled{
+  background: #1c1c1e;
 }
 
 /* ========== 按钮 ========== */
@@ -4841,44 +4885,65 @@ button:disabled{
 }
 
 /* 主按钮（渐变蓝色背景）*/
-/* Buttons */
-.btn-primary {
-  background: linear-gradient(135deg, var(--color-primary), #7C3AED);
-  color: white;
+.btn-primary{
+  background: #007AFF;
+  color: #ffffff;
   border: none;
   padding: 12px 24px;
-  font-weight: 600;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+  font-size: 15px;
+  box-shadow: 0 2px 8px rgba(0,122,255,0.2);
   position: relative;
   overflow: hidden;
 }
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
+.btn-primary:hover{
+  background: #0077ED;
+  box-shadow: 0 4px 12px rgba(0,122,255,0.3);
 }
-.btn-primary::after {
+.btn-primary.loading{
+  pointer-events: none;
+  opacity: 0.8;
+}
+.btn-primary.loading::after{
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(rgba(255,255,255,0.2), transparent);
-  opacity: 0;
-  transition: opacity 0.2s;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-left: 8px;
 }
-.btn-primary:hover::after { opacity: 1; }
-
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-glass);
-  color: var(--text-secondary);
-  padding: 10px 20px;
-  border-radius: 12px;
-  font-size: 14px;
+.btn-primary.success{
+  background: #34C759;
+  animation: successPulse 0.5s ease;
 }
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-color: rgba(255, 255, 255, 0.2);
+.btn-primary.error{
+  background: #FF3B30;
+  animation: errorShake 0.4s ease;
+}
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(52,199,89,0.5); }
+  100% { transform: scale(1); }
+}
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+body[data-theme="dark"] .btn-primary{
+  background: #0A84FF;
+  box-shadow: 0 2px 8px rgba(10,132,255,0.3);
+}
+body[data-theme="dark"] .btn-primary:hover{
+  background: #0077ED;
+}
+body[data-theme="dark"] .btn-primary.success{
+  background: #32D74B;
+}
+body[data-theme="dark"] .btn-primary.error{
+  background: #FF453A;
 }
 
 /* 次要按钮（边框按钮）*/
