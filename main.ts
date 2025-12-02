@@ -3447,28 +3447,39 @@ async function loadDonations(){
     }
     const data=j.data||[];
     if(!data.length){
-      box.innerHTML='<div class="muted text-sm py-8 text-center">还没有投喂记录，先在左侧提交一台吧～</div>';
+      box.innerHTML='<div class="flex flex-col items-center justify-center py-12 text-secondary space-y-3"><div class="text-4xl opacity-50">📭</div><span class="text-sm font-medium">暂无投喂记录</span></div>';
       return;
     }
     box.innerHTML='';
-    data.forEach(v=>{
+    data.forEach((v, idx)=>{
       const div=document.createElement('div');
-      div.className='glass rounded-xl p-5 transition-all hover:shadow-md border border-gray-100 dark:border-gray-800';
+      div.className='glass-panel p-5 mb-4 transition-all hover:scale-[1.02] border border-white/10 relative overflow-hidden group animate-entry';
+      div.style.animationDelay = (idx * 0.1) + 's';
+      
       const dt=v.donatedAt?new Date(v.donatedAt):null, t=dt?dt.toLocaleString():'';
       const uname=v.donatedByUsername||'';
       const p='https://linux.do/u/'+encodeURIComponent(uname);
-      div.innerHTML='<div class="flex items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">'+
-        '<div class="text-base font-semibold flex items-center gap-2 text-primary"><span>🖥️</span><span class="break-words font-mono">'+v.ip+':'+v.port+'</span></div>'+
-        '<div class="'+scls(v.status)+' text-xs px-2.5 py-1 rounded-full font-semibold">'+stxt(v.status)+'</div></div>'+
-        '<div class="text-sm mb-4 flex items-center gap-2 text-secondary"><span>👤</span> 投喂者：<a href="'+p+'" target="_blank" class="font-medium text-blue-500 hover:underline transition-colors">@'+uname+'</a></div>'+
-        '<div class="grid grid-cols-2 gap-4 text-sm">'+
-          '<div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg"><span class="opacity-60">🌍</span><span class="truncate font-medium">'+(v.country||'未填写')+(v.region?' · '+v.region:'')+(v.ipLocation?' · '+v.ipLocation:'')+'</span></div>'+
-          '<div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg"><span class="opacity-60">📊</span><span class="truncate font-medium">'+(v.traffic||'未填写')+'</span></div>'+
-          '<div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg"><span class="opacity-60">📅</span><span class="truncate font-medium">'+(v.expiryDate||'未填写')+'</span></div>'+
-          '<div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg"><span class="opacity-60">⚙️</span><span class="truncate font-medium">'+(v.specs||'未填写')+'</span></div>'+
+      const statusColor = v.status === 'active' ? 'text-green-500 bg-green-500/10 border-green-500/20' : 
+                         (v.status === 'failed' ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-secondary bg-gray-500/10 border-gray-500/20');
+
+      div.innerHTML='<div class="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>'+
+        '<div class="relative z-10 flex items-start justify-between gap-4 mb-4">'+
+          '<div class="flex items-center gap-3">'+
+            '<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 flex items-center justify-center text-xl shadow-sm">🎁</div>'+
+            '<div>'+
+              '<div class="font-bold text-primary tracking-tight text-lg font-mono">'+v.ip+':'+v.port+'</div>'+
+              '<div class="text-xs text-secondary font-medium mt-0.5">'+t+'</div>'+
+            '</div>'+
+          '</div>'+
+          '<div class="'+statusColor+' text-xs px-2.5 py-1 rounded-lg font-bold border">'+stxt(v.status)+'</div>'+
         '</div>'+
-        (v.note?'<div class="text-sm mt-4 bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 rounded-lg px-3 py-2.5 break-words flex items-start gap-2"><span class="opacity-60 mt-0.5">💬</span><span>'+v.note+'</span></div>':'')+
-        (t?'<div class="text-xs text-secondary mt-3 flex items-center gap-1.5 justify-end"><span class="opacity-60">🕐</span><span>'+t+'</span></div>':'');
+        '<div class="relative z-10 grid grid-cols-2 gap-3 text-sm mb-4">'+
+          '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2 rounded-lg"><span class="opacity-60">🌍</span><span class="truncate font-medium text-xs">'+(v.country||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2 rounded-lg"><span class="opacity-60">📊</span><span class="truncate font-medium text-xs">'+(v.traffic||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2 rounded-lg"><span class="opacity-60">📅</span><span class="truncate font-medium text-xs">'+(v.expiryDate||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2 rounded-lg"><span class="opacity-60">⚙️</span><span class="truncate font-medium text-xs">'+(v.specs||'未填写')+'</span></div>'+
+        '</div>'+
+        (v.note?'<div class="relative z-10 text-xs bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 rounded-lg px-3 py-2.5 break-words flex items-start gap-2 font-medium"><span class="opacity-60 mt-0.5">💬</span><span>'+v.note+'</span></div>':'');
       box.appendChild(div);
     });
   }catch(err){
