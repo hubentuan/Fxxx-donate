@@ -4383,7 +4383,7 @@ function openEditModal(vpsId) {
           <div class="w-6 h-6 text-indigo-500">\${ICONS.settings}</div>
           <h3 class="text-xl font-bold">编辑 VPS 配置</h3>
         </div>
-        <button onclick="closeEditModal()" class="text-2xl hover:opacity-70 transition-opacity">✕</button>
+        <button onclick="closeEditModal()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors"><div class="w-5 h-5 opacity-60">\${ICONS.x}</div></button>
       </div>
       
       <form id="edit-config-form" class="p-6 space-y-5">
@@ -4420,10 +4420,13 @@ function openEditModal(vpsId) {
             <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
               <div class="w-4 h-4 opacity-60">\${ICONS.lock}</div> 认证方式
             </label>
-            <select name="authType" class="w-full rounded-lg border px-3 py-2 text-sm">
-              <option value="password" \${vps.authType === 'password' ? 'selected' : ''}>密码认证</option>
-              <option value="key" \${vps.authType === 'key' ? 'selected' : ''}>SSH 私钥认证</option>
-            </select>
+            <div class="relative">
+              <select name="authType" class="w-full appearance-none rounded-xl border border-white/10 bg-black/5 dark:bg-white/5 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">
+                <option value="password" \${vps.authType === 'password' ? 'selected' : ''}>密码认证</option>
+                <option value="key" \${vps.authType === 'key' ? 'selected' : ''}>SSH 私钥认证</option>
+              </select>
+              <div class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40 pointer-events-none">\${ICONS.chevronDown}</div>
+            </div>
           </div>
         </div>
 
