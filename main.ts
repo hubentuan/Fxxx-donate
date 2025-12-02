@@ -1043,127 +1043,82 @@ app.get('/donate', c => {
 <body class="min-h-screen" data-theme="dark">
 <div class="max-w-6xl mx-auto px-6 py-8 md:py-12">
 
-  <header class="mb-12 animate-in">
-    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
-      <div class="flex-1 space-y-6">
-        <h1 class="grad-title text-5xl md:text-6xl font-bold leading-tight tracking-tight">
-          风萧萧公益机场 · VPS 投喂榜
-        </h1>
-
-        <div class="glass rounded-2xl p-8 space-y-5">
-          <p class="text-base leading-relaxed text-secondary">
-            <span class="font-medium text-primary">这是一个完全非盈利的公益项目，目前没有运营团队，由我独自维护。</span><br>
-            同时也非常感谢以下几位佬的日常协助：
-            <a href="https://linux.do/u/shklrt" target="_blank"
-               class="font-semibold text-blue-500 hover:underline">@shklrt</a>、
-            <a href="https://linux.do/u/sar60677" target="_blank"
-               class="font-semibold text-blue-500 hover:underline">@sar60677</a>、
-            <a href="https://linux.do/u/carrydelahaye" target="_blank"
-               class="font-semibold text-blue-500 hover:underline">@Carry&nbsp;Delahaye</a>
-            <a href="https://linux.do/u/kkkyyx" target="_blank"
-               class="font-semibold text-blue-500 hover:underline">@kkkyyx</a>。
-          </p>
-
-          <div class="bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-sm leading-relaxed rounded-xl px-5 py-3 font-medium">
-            <span class="text-lg mr-1">💝</span> 榜单按投喂 VPS 数量排序，但无论名次高低，您的每一次支持，对我和这个项目来说都弥足珍贵，衷心感谢！
-          </div>
-
-          <p class="text-sm leading-relaxed flex items-start gap-2 text-secondary">
-            <span class="text-lg mt-0.5">🤝</span>
-            <span>感谢大家的投喂，这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，而是大家的共同成果！共荣！🚀</span>
-          </p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-4">
-          <button onclick="gotoDonatePage()" class="btn-primary flex items-center gap-2 shadow-lg shadow-blue-500/30">
-            <span class="text-xl">🧡</span> <span class="font-semibold">我要投喂 VPS</span>
-          </button>
-          <button id="theme-toggle" onclick="toggleTheme()" class="btn-secondary">浅色模式</button>
-        </div>
+  <header class="mb-16 animate-entry relative z-10">
+    <div class="text-center space-y-6 max-w-4xl mx-auto">
+      <h1 class="text-display text-6xl md:text-8xl tracking-tight text-primary drop-shadow-2xl">
+        <span class="text-gradient">VPS 投喂榜</span>
+      </h1>
+      <p class="text-xl md:text-2xl text-secondary font-medium max-w-2xl mx-auto leading-relaxed">
+        汇聚全球热佬力量，共建公益节点网络。<br>
+        <span class="text-base opacity-75 mt-2 block">目前由我独自维护，感谢 @shklrt, @sar60677, @Carry Delahaye, @kkkyyx 的日常协助。</span>
+      </p>
+      
+      <div class="flex flex-wrap justify-center gap-4 pt-4">
+        <button onclick="gotoDonatePage()" class="btn-primary btn-primary-glow text-lg px-8 py-4 rounded-full flex items-center gap-3 transition-transform hover:scale-105 active:scale-95">
+          <span class="text-2xl">🧡</span> 我要投喂
+        </button>
+        <button id="theme-toggle" onclick="toggleTheme()" class="btn-secondary rounded-full px-6 py-4 text-lg backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/20">
+          🌓 切换模式
+        </button>
       </div>
     </div>
   </header>
 
   <!-- 3D地球可视化区域 -->
-  <section id="globe-section" class="mb-8 animate-in">
-    <div class="panel border p-6">
-      <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
-        <div class="flex items-center gap-3">
-          <span class="text-3xl">🌍</span>
-          <div>
-            <h2 class="text-2xl font-bold leading-tight">全球服务器分布</h2>
-            <p class="text-sm muted mt-1">实时展示全球VPS节点位置与连接</p>
-          </div>
+  <section id="globe-section" class="mb-16 animate-entry delay-1 relative z-10">
+    <div class="glass-panel p-1 md:p-2 overflow-hidden relative group">
+      <div class="absolute inset-0 bg-blue-500/5 blur-3xl group-hover:bg-blue-500/10 transition-colors duration-500"></div>
+      
+      <div class="relative z-10 flex justify-between items-center p-6 pb-2">
+        <div>
+          <h2 class="text-3xl font-bold tracking-tight">全球节点分布</h2>
+          <p class="text-secondary font-medium">Real-time Global Network</p>
         </div>
-        <div id="globe-controls" class="flex gap-2 flex-wrap">
-          <button id="toggle-size" class="btn-secondary text-sm">最小化</button>
-          <button id="toggle-rotate" class="btn-secondary text-sm">暂停旋转</button>
+        <div id="globe-controls" class="flex gap-2">
+          <button id="toggle-size" class="btn-secondary text-xs rounded-full px-3 py-1 bg-white/20 backdrop-blur-md border-0 hover:bg-white/30">最小化</button>
+          <button id="toggle-rotate" class="btn-secondary text-xs rounded-full px-3 py-1 bg-white/20 backdrop-blur-md border-0 hover:bg-white/30">暂停</button>
         </div>
       </div>
       
       <!-- 地球容器 -->
-      <div id="globe-container" style="width: 100%; height: 500px; border-radius: 8px; overflow: hidden; background: #000;"></div>
+      <div id="globe-container" style="width: 100%; height: 600px; border-radius: 20px; overflow: hidden; background: transparent;"></div>
       
-      <!-- 统计信息 -->
-      <div id="globe-stats" class="mt-6 flex gap-8 text-sm flex-wrap justify-center md:justify-start">
-        <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700">
-          <span class="text-secondary">📍 您的位置:</span>
-          <span id="visitor-location" class="font-bold text-blue-500">检测中...</span>
+      <!-- Bento Grid 统计信息 -->
+      <div id="globe-stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 mt-[-80px] relative z-20 mx-4 mb-4">
+        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
+          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">您的位置</span>
+          <span id="visitor-location" class="font-bold text-blue-500 text-lg truncate w-full">检测中...</span>
         </div>
-        <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700">
-          <span class="text-secondary">🖥️ 总服务器:</span>
-          <span id="total-servers" class="font-bold text-primary">0</span>
+        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
+          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">总服务器</span>
+          <span id="total-servers" class="font-bold text-primary text-2xl count-up">0</span>
         </div>
-        <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700">
-          <span class="text-secondary">✅ 活跃:</span>
-          <span id="active-servers" class="font-bold text-green-500">0</span>
+        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
+          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">活跃节点</span>
+          <span id="active-servers" class="font-bold text-green-500 text-2xl count-up">0</span>
         </div>
-        <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700">
-          <span class="text-secondary">🔗 连接数:</span>
-          <span id="total-connections" class="font-bold text-blue-400">0</span>
-        </div>
-      </div>
-      
-      <!-- 连接线图例 -->
-      <div class="connection-legend mt-3">
-        <div class="legend-item">
-          <div class="legend-line legend-visitor"></div>
-          <span class="muted">星联主线（您→服务器）</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-line legend-nearby"></div>
-          <span class="muted">近距离互联（&lt;3000km）</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-line legend-medium"></div>
-          <span class="muted">跨区域互联（1000-5000km）</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-line legend-long"></div>
-          <span class="muted">跨大洲互联（5000-8000km）</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-line legend-ultra-long"></div>
-          <span class="muted">全球对角线（&gt;8000km）</span>
+        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
+          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">实时连接</span>
+          <span id="total-connections" class="font-bold text-blue-400 text-2xl count-up">0</span>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="mb-8">
-    <div class="flex items-center gap-3 mb-6">
-      <span class="text-3xl">🏆</span>
+  <section class="mb-16 animate-entry delay-2 relative z-10">
+    <div class="flex items-end justify-between mb-8 px-2">
       <div>
-        <h2 class="text-3xl font-bold leading-tight">捐赠榜单</h2>
-        <p id="leaderboard-count" class="text-sm muted mt-1"></p>
+        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">捐赠榜单</h2>
+        <p id="leaderboard-count" class="text-lg text-secondary mt-2 font-medium"></p>
       </div>
+      <div class="text-4xl">🏆</div>
     </div>
     
-    <div id="leaderboard" class="space-y-5">
-      <div class="flex items-center justify-center py-12">
-        <div class="flex flex-col items-center gap-3">
-          <div class="loading-spinner"></div>
-          <div class="muted text-sm">正在加载榜单...</div>
+    <div id="leaderboard" class="space-y-6">
+      <div class="flex items-center justify-center py-20">
+        <div class="flex flex-col items-center gap-4">
+          <div class="loading-spinner w-10 h-10 border-4 border-blue-500 border-t-transparent"></div>
+          <div class="text-secondary font-medium">正在加载数据...</div>
         </div>
       </div>
     </div>
