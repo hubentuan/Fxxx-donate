@@ -2885,101 +2885,136 @@ app.get('/donate/vps', c => {
   )}-${String(nextYear.getDate()).padStart(2, '0')}`;
 
   const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
-<body class="min-h-screen" data-theme="dark">
-<div class="max-w-7xl mx-auto px-6 py-8 md:py-12">
-  <header class="mb-10 animate-fade-in">
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-      <div class="space-y-3">
-        <h1 class="grad-title-animated text-4xl md:text-5xl font-bold leading-tight">风萧萧公益机场 · VPS 投喂中心</h1>
-        <p class="text-sm muted flex items-center gap-2">
-          <span class="text-lg">📍</span>
-          <span>提交新 VPS / 查看我的投喂记录</span>
+<body class="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30">
+<div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+  <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+  <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 py-8 md:py-12">
+  <!-- Header -->
+  <header class="mb-12 animate-fade-in">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div>
+        <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 mb-3 tracking-tight">
+          VPS 投喂中心
+        </h1>
+        <p class="text-slate-400 flex items-center gap-2 text-lg">
+          <span class="w-6 h-6 text-pink-500 animate-pulse">${ICONS.heart || '🧡'}</span>
+          <span>共建公益节点网络，感谢您的无私奉献</span>
         </p>
       </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <div id="user-info" class="text-sm panel px-5 py-2.5 border"></div>
-        <a href="/donate" class="btn-secondary flex items-center gap-2">
-          <span>🏠</span>
-          <span>首页</span>
-        </a>
-        <button onclick="logout()" class="btn-secondary">
-          退出登录
-        </button>
-        <button id="theme-toggle" onclick="toggleTheme()">浅色模式</button>
+      <div class="flex items-center gap-3">
+         <div id="user-info" class="glass px-5 py-2.5 rounded-full text-sm border border-white/10 shadow-lg backdrop-blur-md bg-white/5"></div>
+         <a href="/donate" class="btn-secondary rounded-full px-6 py-2.5 hover:bg-white/10 transition-all">首页</a>
+         <button onclick="logout()" class="btn-secondary rounded-full px-6 py-2.5 hover:bg-red-500/20 hover:text-red-300 transition-all">退出</button>
       </div>
     </div>
   </header>
 
-  <main class="grid lg:grid-cols-2 gap-8 items-start">
-    <section class="panel border p-8">
-      <div class="flex items-center gap-3 mb-5">
-        <span class="text-3xl">🧡</span>
-        <h2 class="text-2xl font-bold">提交新的 VPS 投喂</h2>
-      </div>
-      <div class="alert-warning text-sm mb-6 leading-relaxed rounded-xl px-4 py-3">
-        ⚠️ 请确保服务器是你有控制权的机器，并允许用于公益节点。禁止长时间占满带宽、刷流量、倒卖账号等行为。
-      </div>
+  <div class="grid lg:grid-cols-12 gap-8 items-start">
+    <!-- Left: Submission Form -->
+    <section class="lg:col-span-7 space-y-6 animate-slide-up" style="animation-delay: 0.1s">
+       <div class="glass rounded-[2rem] p-1 border border-white/10 shadow-2xl shadow-indigo-500/5 bg-slate-900/40 backdrop-blur-xl">
+         <div class="bg-slate-900/50 rounded-[1.8rem] p-6 md:p-8">
+            <div class="flex items-center gap-4 mb-8">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                <div class="w-6 h-6">${ICONS.server}</div>
+              </div>
+              <div>
+                <h2 class="text-xl font-bold text-white">提交新节点</h2>
+                <p class="text-sm text-slate-400">请填写服务器连接信息</p>
+              </div>
+            </div>
+            
+            <div class="alert-info bg-indigo-500/10 border border-indigo-500/20 text-indigo-200 text-sm mb-8 rounded-2xl p-5 leading-relaxed flex gap-3">
+              <div class="w-5 h-5 flex-shrink-0 mt-0.5 text-indigo-400">${ICONS.info}</div>
+              <div>请确保服务器是你有控制权的机器。禁止提交被黑/扫描到的机器。</div>
+            </div>
 
-      <form id="donate-form" class="space-y-5">
-        <div class="grid md:grid-cols-2 gap-5">
-          <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>🌐</span> 服务器 IP <span class="text-red-400">*</span>
-            </label>
-            <input name="ip" required placeholder="示例：203.0.113.8 或 [2001:db8::1]"
-                   class="w-full" />
-            <div class="help mt-1.5 flex items-center gap-1"><span class="opacity-60">💡</span>支持 IPv4 / IPv6</div>
-          </div>
-          <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>🔌</span> 端口 <span class="text-red-400">*</span>
-            </label>
-            <input name="port" required type="number" min="1" max="65535" placeholder="示例：22 / 443 / 8080"
-                   class="w-full" />
-          </div>
-        </div>
+            <form id="donate-form" class="space-y-8">
+              <!-- IP & Port -->
+              <div class="grid md:grid-cols-2 gap-6">
+                <div class="group">
+                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                    服务器 IP <span class="text-red-400">*</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.globe}</div>
+                    <input name="ip" required placeholder="1.2.3.4"
+                           class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                  </div>
+                  <div class="text-xs text-slate-500 mt-1.5 pl-1">支持 IPv4 / IPv6</div>
+                </div>
+                <div class="group">
+                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                    端口 <span class="text-red-400">*</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.plug}</div>
+                    <input name="port" required type="number" min="1" max="65535" placeholder="22"
+                           class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                  </div>
+                </div>
+              </div>
 
-        <div class="grid md:grid-cols-2 gap-5">
-          <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>👤</span> 系统用户名 <span class="text-red-400">*</span>
-            </label>
-            <input name="username" required placeholder="示例：root / ubuntu"
-                   class="w-full" />
-          </div>
-          <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>🔐</span> 认证方式
-            </label>
-            <select name="authType" class="w-full">
-              <option value="password">🔑 密码</option>
-              <option value="key">🗝️ SSH 私钥</option>
-            </select>
-          </div>
-        </div>
+              <!-- User & Auth -->
+              <div class="grid md:grid-cols-2 gap-6">
+                <div class="group">
+                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                    用户名 <span class="text-red-400">*</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.user}</div>
+                    <input name="username" required placeholder="root"
+                           class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                  </div>
+                </div>
+                <div class="group">
+                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                    认证方式
+                  </label>
+                  <div class="relative">
+                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 z-10 pointer-events-none">${ICONS.lock}</div>
+                    <div class="absolute right-4 top-3.5 w-5 h-5 text-slate-500 z-10 pointer-events-none">${ICONS.chevronDown}</div>
+                    <select name="authType" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-10 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none appearance-none">
+                      <option value="password">密码认证</option>
+                      <option value="key">密钥认证</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
 
-        <div id="password-field">
-          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-            <span>🔑</span> 密码（密码登录必填）
-          </label>
-          <input name="password" type="password" placeholder="示例：MyStrongP@ssw0rd"
-                 class="w-full" />
-        </div>
+              <!-- Password/Key -->
+              <div id="password-field" class="group animate-fade-in">
+                <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                  密码
+                </label>
+                <div class="relative">
+                  <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.key}</div>
+                  <input name="password" type="password" placeholder="输入服务器密码"
+                         class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                </div>
+              </div>
 
-        <div id="key-field" class="hidden">
-          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-            <span>🗝️</span> SSH 私钥（密钥登录必填）
-          </label>
-          <textarea name="privateKey" rows="4" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
-                    class="w-full font-mono"></textarea>
-        </div>
+              <div id="key-field" class="hidden group animate-fade-in">
+                <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                  SSH 私钥
+                </label>
+                <textarea name="privateKey" rows="4" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
+                          class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 px-4 text-slate-200 font-mono text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none"></textarea>
+              </div>
 
-        <div class="grid md:grid-cols-2 gap-5">
-          <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>🌍</span> 国家 / 区域 <span class="text-red-400">*</span>
-            </label>
-            <select name="country" required class="w-full">
+              <!-- Country & Region -->
+              <div class="grid md:grid-cols-2 gap-6">
+                 <div class="group">
+                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                    国家/地区 <span class="text-red-400">*</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 z-10 pointer-events-none">${ICONS.globe}</div>
+                    <div class="absolute right-4 top-3.5 w-5 h-5 text-slate-500 z-10 pointer-events-none">${ICONS.chevronDown}</div>
+                    <select name="country" required class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-10 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none appearance-none">
 <option value="">请选择国家/区域</option>
 
 <!-- 🌏 亚洲（东亚 / 东南亚 / 南亚 / 中亚） -->
