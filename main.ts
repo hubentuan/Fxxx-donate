@@ -6,7 +6,7 @@ import { setCookie, getCookie } from 'https://deno.land/x/hono@v3.11.7/helper.ts
 
 declare const Deno: any;
 
-/* ==================== 类型定义 ==================== */
+
 interface OAuthConfig {
   clientId: string;
   clientSecret: string;
