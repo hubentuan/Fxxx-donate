@@ -918,263 +918,172 @@ app.get('/donate', c => {
   const html = `<!doctype html><html lang="zh-CN"><head>${head}
 <script src="https://unpkg.com/globe.gl"></script>
 <style>
-  /* 3D地球容器样式 */
   #globe-container {
     width: 100%;
     height: 500px;
-    border-radius: 8px;
+    border-radius: 16px;
     overflow: hidden;
     background: #000;
-    transition: height 0.3s ease;
+    transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
   }
   
-  /* 最小化状态 */
   #globe-container.minimized {
-    height: 200px;
-  }
-  
-  /* 地球控制按钮样式 */
-  #globe-controls {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-  
-  /* 统计信息样式 */
-  #globe-stats {
-    display: flex;
-    gap: 1.5rem;
-    font-size: 0.875rem;
-    margin-top: 1rem;
-    flex-wrap: wrap;
+    height: 240px;
   }
   
   /* 访问者位置标记动画 */
   @keyframes pulse-glow {
-    0%, 100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.7;
-      transform: scale(1.1);
-    }
-  }
-  
-  /* 连接线图例 */
-  .connection-legend {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    font-size: 0.75rem;
-    margin-top: 0.5rem;
-  }
-  
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.2); }
   }
   
   .legend-line {
-    width: 20px;
-    height: 2px;
-    border-radius: 1px;
+    width: 24px;
+    height: 3px;
+    border-radius: 2px;
   }
   
-  .legend-visitor {
-    background: linear-gradient(90deg, rgba(6, 182, 212, 0.9), rgba(251, 191, 36, 1.0));
-  }
-  
-  .legend-nearby {
-    background: linear-gradient(90deg, rgba(34, 197, 94, 0.4), rgba(74, 222, 128, 0.5));
-  }
-  
-  .legend-medium {
-    background: linear-gradient(90deg, rgba(59, 130, 246, 0.5), rgba(96, 165, 250, 0.6));
-  }
-  
-  .legend-long {
-    background: linear-gradient(90deg, rgba(168, 85, 247, 0.6), rgba(192, 132, 252, 0.7));
-  }
-  
-  .legend-ultra-long {
-    background: linear-gradient(90deg, rgba(236, 72, 153, 0.7), rgba(244, 114, 182, 0.8));
-  }
-  
-  /* 移动端响应式样式 */
+  .legend-visitor { background: linear-gradient(90deg, #06b6d4, #f59e0b); }
+  .legend-nearby { background: linear-gradient(90deg, rgba(34, 197, 94, 0.6), rgba(74, 222, 128, 0.8)); }
+  .legend-medium { background: linear-gradient(90deg, rgba(59, 130, 246, 0.6), rgba(96, 165, 250, 0.8)); }
+  .legend-long { background: linear-gradient(90deg, rgba(168, 85, 247, 0.7), rgba(192, 132, 252, 0.9)); }
+  .legend-ultra-long { background: linear-gradient(90deg, rgba(236, 72, 153, 0.8), rgba(244, 114, 182, 1.0)); }
+
   @media (max-width: 768px) {
-    #globe-container {
-      height: 300px;
-    }
-    
-    #globe-container.minimized {
-      height: 150px;
-    }
-    
-    #globe-stats {
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    
-    #globe-controls {
-      width: 100%;
-      justify-content: stretch;
-    }
-    
-    #globe-controls button {
-      flex: 1;
-    }
-  }
-  
-  /* 小屏幕优化 */
-  @media (max-width: 480px) {
-    #globe-container {
-      height: 250px;
-      border-radius: 4px;
-    }
-    
-    #globe-container.minimized {
-      height: 120px;
-    }
+    #globe-container { height: 350px; }
+    #globe-container.minimized { height: 180px; }
   }
 </style>
 </head>
 <body class="min-h-screen" data-theme="dark">
-<div class="max-w-6xl mx-auto px-6 py-8 md:py-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 relative z-10">
 
-  <header class="mb-10 animate-in">
-    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-      <div class="flex-1 space-y-5">
-        <h1 class="grad-title text-4xl md:text-5xl font-bold leading-tight">
-          风萧萧公益机场 · VPS 投喂榜
-        </h1>
-
-        <div class="panel border p-6 space-y-4">
-          <p class="text-sm leading-relaxed">
-            <span class="muted">这是一个完全非盈利的公益项目，目前没有运营团队，由我独自维护。</span><br>
-            同时也非常感谢以下几位佬的日常协助：
-            <a href="https://linux.do/u/shklrt" target="_blank"
-               class="font-semibold transition-colors hover:opacity-80">@shklrt</a>、
-            <a href="https://linux.do/u/sar60677" target="_blank"
-               class="font-semibold transition-colors hover:opacity-80">@sar60677</a>、
-            <a href="https://linux.do/u/carrydelahaye" target="_blank"
-               class="font-semibold transition-colors hover:opacity-80">@Carry&nbsp;Delahaye</a>
-            <a href="https://linux.do/u/kkkyyx" target="_blank"
-               class="font-semibold transition-colors hover:opacity-80">@kkkyyx</a>。
-          </p>
-
-          <div class="alert-warning text-sm leading-relaxed rounded-xl px-4 py-3">
-            <span class="font-semibold">💝 榜单按投喂 VPS 数量排序，</span>
-            但无论名次高低，您的每一次支持，对我和这个项目来说都弥足珍贵，衷心感谢！
-          </div>
-
-          <p class="text-sm leading-relaxed flex items-start gap-2">
-            <span class="text-lg mt-0.5">🤝</span>
-            <span>感谢大家的投喂，这个机场的发展离不开各位热佬的大力支持！这不是我一个人的功劳，而是大家的共同成果！共荣！🚀</span>
-          </p>
+  <header class="mb-12 animate-in">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
+      <div class="flex-1 space-y-6">
+        <div>
+          <h1 class="grad-title-animated text-5xl md:text-6xl font-bold leading-tight tracking-tight mb-2">
+            VPS 投喂榜
+          </h1>
+          <p class="text-lg opacity-80 font-medium">风萧萧公益机场 · 全球节点实时监控</p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3">
-          <button onclick="gotoDonatePage()" class="btn-primary">
-            <span class="text-lg">🧡</span> 我要投喂 VPS
+        <div class="panel p-6 md:p-8 space-y-5 backdrop-blur-xl bg-white/50 dark:bg-black/40 border border-white/20 dark:border-white/10">
+          <p class="text-base leading-relaxed">
+            <span class="opacity-70">这是一个完全非盈利的公益项目，目前由我独自维护。</span><br>
+            <span class="block mt-2">特别感谢以下几位佬的日常协助：
+            <a href="https://linux.do/u/shklrt" target="_blank" class="font-semibold text-indigo-500 hover:text-indigo-400 transition-colors">@shklrt</a>、
+            <a href="https://linux.do/u/sar60677" target="_blank" class="font-semibold text-indigo-500 hover:text-indigo-400 transition-colors">@sar60677</a>、
+            <a href="https://linux.do/u/carrydelahaye" target="_blank" class="font-semibold text-indigo-500 hover:text-indigo-400 transition-colors">@Carry&nbsp;Delahaye</a>、
+            <a href="https://linux.do/u/kkkyyx" target="_blank" class="font-semibold text-indigo-500 hover:text-indigo-400 transition-colors">@kkkyyx</a>。
+            </span>
+          </p>
+
+          <div class="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm leading-relaxed rounded-xl px-5 py-4 flex items-start gap-3">
+            <span class="text-xl mt-0.5">💝</span>
+            <div>
+              <span class="font-bold">榜单按投喂 VPS 数量排序。</span>
+              无论名次高低，您的每一次支持，对我和这个项目来说都弥足珍贵，衷心感谢！
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-2 text-sm opacity-80">
+             <span class="text-lg">🤝</span>
+             <span>感谢大家的投喂，这个机场的发展离不开各位热佬的大力支持！共荣！🚀</span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <button onclick="gotoDonatePage()" class="btn-primary flex items-center gap-2 px-6 py-3 text-base shadow-lg shadow-indigo-500/20">
+            <span class="text-xl">🧡</span> 我要投喂 VPS
           </button>
-          <button id="theme-toggle" onclick="toggleTheme()">浅色模式</button>
+          <button id="theme-toggle" onclick="toggleTheme()" class="btn-secondary px-5 py-3">
+            浅色模式
+          </button>
         </div>
       </div>
     </div>
   </header>
 
   <!-- 3D地球可视化区域 -->
-  <section id="globe-section" class="mb-8 animate-in">
-    <div class="panel border p-6">
-      <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
-        <div class="flex items-center gap-3">
-          <span class="text-3xl">🌍</span>
+  <section id="globe-section" class="mb-12 animate-in" style="animation-delay: 0.1s">
+    <div class="panel p-1 overflow-hidden border border-white/20 dark:border-white/10 shadow-2xl shadow-indigo-500/10">
+      <div class="relative bg-black rounded-xl overflow-hidden">
+        <div class="absolute top-4 left-4 z-10 flex items-center gap-3 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+          <span class="text-2xl">🌍</span>
           <div>
-            <h2 class="text-2xl font-bold leading-tight">全球服务器分布</h2>
-            <p class="text-sm muted mt-1">实时展示全球VPS节点位置与连接</p>
+            <h2 class="text-sm font-bold text-white leading-none">全球分布</h2>
+            <p class="text-[10px] text-gray-400 mt-0.5">实时节点监控</p>
           </div>
         </div>
-        <div id="globe-controls" class="flex gap-2 flex-wrap">
-          <button id="toggle-size" class="btn-secondary text-sm">最小化</button>
-          <button id="toggle-rotate" class="btn-secondary text-sm">暂停旋转</button>
+        
+        <div class="absolute top-4 right-4 z-10 flex gap-2">
+          <button id="toggle-size" class="bg-black/60 hover:bg-black/80 text-white text-xs px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-md transition-colors">最小化</button>
+          <button id="toggle-rotate" class="bg-black/60 hover:bg-black/80 text-white text-xs px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-md transition-colors">暂停旋转</button>
         </div>
-      </div>
-      
-      <!-- 地球容器 -->
-      <div id="globe-container" style="width: 100%; height: 500px; border-radius: 8px; overflow: hidden; background: #000;"></div>
-      
-      <!-- 统计信息 -->
-      <div id="globe-stats" class="mt-4 flex gap-6 text-sm flex-wrap">
-        <div class="flex items-center gap-2">
-          <span class="muted">📍 您的位置:</span>
-          <span id="visitor-location" class="font-bold text-cyan-400">检测中...</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="muted">🖥️ 总服务器:</span>
-          <span id="total-servers" class="font-bold">0</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="muted">✅ 活跃:</span>
-          <span id="active-servers" class="font-bold text-green-500">0</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="muted">🔗 连接数:</span>
-          <span id="total-connections" class="font-bold text-blue-500">0</span>
-        </div>
-      </div>
-      
-      <!-- 连接线图例 -->
-      <div class="connection-legend mt-3">
-        <div class="legend-item">
-          <div class="legend-line legend-visitor"></div>
-          <span class="muted">星联主线（您→服务器）</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-line legend-nearby"></div>
-          <span class="muted">近距离互联（&lt;3000km）</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-line legend-medium"></div>
-          <span class="muted">跨区域互联（1000-5000km）</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-line legend-long"></div>
-          <span class="muted">跨大洲互联（5000-8000km）</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-line legend-ultra-long"></div>
-          <span class="muted">全球对角线（&gt;8000km）</span>
+
+        <!-- 地球容器 -->
+        <div id="globe-container"></div>
+        
+        <!-- 底部统计条 -->
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent pt-12 pb-4 px-6 flex flex-wrap items-end justify-between gap-4 pointer-events-none">
+          <div id="globe-stats" class="flex gap-6 text-xs md:text-sm font-medium text-white pointer-events-auto">
+            <div class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/5">
+              <span class="opacity-70">📍 位置:</span>
+              <span id="visitor-location" class="text-cyan-400">检测中...</span>
+            </div>
+            <div class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/5">
+              <span class="opacity-70">🖥️ 总数:</span>
+              <span id="total-servers">0</span>
+            </div>
+            <div class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/5">
+              <span class="opacity-70">✅ 活跃:</span>
+              <span id="active-servers" class="text-emerald-400">0</span>
+            </div>
+            <div class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/5">
+              <span class="opacity-70">🔗 连接:</span>
+              <span id="total-connections" class="text-blue-400">0</span>
+            </div>
+          </div>
+          
+          <div class="connection-legend flex gap-3 text-[10px] text-gray-400 pointer-events-auto bg-black/40 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/5">
+            <div class="flex items-center gap-1.5"><div class="w-3 h-0.5 rounded-full bg-gradient-to-r from-cyan-500 to-amber-400"></div><span>主线</span></div>
+            <div class="flex items-center gap-1.5"><div class="w-3 h-0.5 rounded-full bg-gradient-to-r from-green-500/50 to-green-400/80"></div><span>近距</span></div>
+            <div class="flex items-center gap-1.5"><div class="w-3 h-0.5 rounded-full bg-gradient-to-r from-blue-500/50 to-blue-400/80"></div><span>跨区</span></div>
+            <div class="flex items-center gap-1.5"><div class="w-3 h-0.5 rounded-full bg-gradient-to-r from-purple-500/60 to-purple-400/80"></div><span>跨洲</span></div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="mb-8">
-    <div class="flex items-center gap-3 mb-6">
-      <span class="text-3xl">🏆</span>
-      <div>
-        <h2 class="text-3xl font-bold leading-tight">捐赠榜单</h2>
-        <p id="leaderboard-count" class="text-sm muted mt-1"></p>
+  <section class="mb-12 animate-in" style="animation-delay: 0.2s">
+    <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-2xl shadow-lg shadow-orange-500/20">🏆</div>
+        <div>
+          <h2 class="text-3xl font-bold leading-tight">捐赠榜单</h2>
+          <p id="leaderboard-count" class="text-sm opacity-60 mt-1 font-medium"></p>
+        </div>
       </div>
     </div>
     
-    <div id="leaderboard" class="space-y-5">
-      <div class="flex items-center justify-center py-12">
-        <div class="flex flex-col items-center gap-3">
-          <div class="loading-spinner"></div>
-          <div class="muted text-sm">正在加载榜单...</div>
+    <div id="leaderboard" class="space-y-6">
+      <div class="flex items-center justify-center py-20">
+        <div class="flex flex-col items-center gap-4">
+          <div class="loading-spinner w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+          <div class="opacity-60 text-sm font-medium">正在加载榜单数据...</div>
         </div>
       </div>
     </div>
   </section>
 
-  <footer class="mt-16 pt-8 pb-8 text-center">
-    <div class="panel border px-4 md:px-6 py-4 inline-block max-w-full">
-      <p class="flex items-center justify-center gap-2 text-sm muted flex-wrap">
-        <span class="text-lg flex-shrink-0">ℹ️</span>
-        <span class="break-words">说明：本项目仅作公益用途，请勿滥用资源（长时间占满带宽、刷流量、倒卖账号等）。</span>
+  <footer class="mt-20 pt-10 pb-10 text-center border-t border-gray-200 dark:border-white/5">
+    <div class="inline-block panel px-6 py-4 rounded-full border bg-white/50 dark:bg-white/5 backdrop-blur-md">
+      <p class="flex items-center justify-center gap-2 text-sm opacity-60 font-medium">
+        <span class="text-lg">ℹ️</span>
+        <span>说明：本项目仅作公益用途，请勿滥用资源。</span>
       </p>
     </div>
   </footer>
@@ -1207,7 +1116,7 @@ async function gotoDonatePage(){
 }
 
 function statusText(s){ return s==='active'?'运行中':(s==='failed'?'失败':'未启用'); }
-function statusCls(s){ return s==='active'?'badge-ok':(s==='failed'?'badge-fail':'badge-idle'); }
+function statusCls(s){ return s==='active'?'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20':(s==='failed'?'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20':'bg-gray-500/10 text-gray-500 border-gray-500/20'); }
 
 function renderLeaderboard(){
   const box = document.getElementById('leaderboard');
@@ -1216,104 +1125,113 @@ function renderLeaderboard(){
   countEl.textContent = allLeaderboardData.length ? ('共 '+allLeaderboardData.length+' 位投喂者') : '';
 
   if(!allLeaderboardData.length){
-    box.innerHTML='<div class="muted text-sm py-8 text-center">暂时还没有投喂记录</div>';
+    box.innerHTML='<div class="opacity-60 text-sm py-12 text-center">暂时还没有投喂记录</div>';
     return;
   }
 
-  // 性能优化：批量读取localStorage
   const expandedStates = {};
   for(let i = 0; i < allLeaderboardData.length; i++){
     expandedStates['card-'+i] = localStorage.getItem('card-'+i) !== 'collapsed';
   }
 
-  // 性能优化：使用DocumentFragment批量插入DOM
   const fragment = document.createDocumentFragment();
-
-  // 性能优化：限制动画数量，只给前20个添加入场动画
   const animationLimit = 20;
 
   allLeaderboardData.forEach((it,idx)=>{
     const cardId = 'card-'+idx;
     const isExpanded = expandedStates[cardId];
 
-    let gradientClass = '';
-    if(idx === 0) gradientClass = 'from-amber-500/5 to-transparent';
-    else if(idx === 1) gradientClass = 'from-slate-400/5 to-transparent';
-    else if(idx === 2) gradientClass = 'from-orange-600/5 to-transparent';
+    let gradientClass = 'bg-white/60 dark:bg-white/5'; // Default glass
+    let borderClass = 'border-white/40 dark:border-white/10';
+    let rankBadge = '';
+    
+    if(idx === 0) {
+      gradientClass = 'bg-gradient-to-r from-amber-500/10 to-transparent dark:from-amber-500/20';
+      borderClass = 'border-amber-500/30';
+      rankBadge = '<div class="absolute -top-3 -left-3 w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-amber-500/40 z-10">1</div>';
+    }
+    else if(idx === 1) {
+      gradientClass = 'bg-gradient-to-r from-slate-400/10 to-transparent dark:from-slate-400/20';
+      borderClass = 'border-slate-400/30';
+      rankBadge = '<div class="absolute -top-3 -left-3 w-8 h-8 bg-slate-400 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-slate-400/40 z-10">2</div>';
+    }
+    else if(idx === 2) {
+      gradientClass = 'bg-gradient-to-r from-orange-700/10 to-transparent dark:from-orange-700/20';
+      borderClass = 'border-orange-700/30';
+      rankBadge = '<div class="absolute -top-3 -left-3 w-8 h-8 bg-orange-700 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-orange-700/40 z-10">3</div>';
+    }
 
     const badge=getBadge(it.count);
 
-    // 性能优化：构建服务器列表HTML
     let serversHTML = '';
     (it.servers||[]).forEach(srv=>{
-      serversHTML += '<div class="panel border rounded-xl p-4 transition-all hover:shadow-sm">'+
+      serversHTML += '<div class="panel border border-white/20 dark:border-white/5 rounded-xl p-4 transition-all hover:bg-white/40 dark:hover:bg-white/10 group">'+
         '<div class="flex items-start justify-between gap-3 mb-3">'+
-          '<div class="flex items-center gap-2.5 flex-1 min-w-0">'+
-            '<span class="text-xl flex-shrink-0">🌍</span>'+
-            '<div class="flex flex-col gap-1 min-w-0">'+
+          '<div class="flex items-center gap-3 flex-1 min-w-0">'+
+            '<div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🌍</div>'+
+            '<div class="flex flex-col gap-0.5 min-w-0">'+
               '<span class="font-semibold text-sm truncate">'+(srv.country||'未填写')+(srv.region?' · '+srv.region:'')+'</span>'+
-              (srv.ipLocation?'<span class="text-xs muted truncate">'+srv.ipLocation+'</span>':'')+
+              (srv.ipLocation?'<span class="text-xs opacity-60 truncate">'+srv.ipLocation+'</span>':'')+
             '</div>'+
           '</div>'+
-          '<span class="'+statusCls(srv.status)+' text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0">'+statusText(srv.status)+'</span>'+
+          '<span class="'+statusCls(srv.status)+' text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider border flex-shrink-0">'+statusText(srv.status)+'</span>'+
         '</div>'+
-        '<div class="grid grid-cols-2 gap-3 text-sm">'+
-          '<div class="flex items-center gap-2 panel border rounded-lg px-3 py-2">'+
-            '<span class="opacity-60">📊</span>'+
-            '<span class="truncate font-medium">'+(srv.traffic||'未填写')+'</span>'+
+        '<div class="grid grid-cols-2 gap-3 text-xs">'+
+          '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-lg px-3 py-2">'+
+            '<span class="opacity-50">📊</span>'+
+            '<span class="truncate font-medium opacity-80">'+(srv.traffic||'未填写')+'</span>'+
           '</div>'+
-          '<div class="flex items-center gap-2 panel border rounded-lg px-3 py-2">'+
-            '<span class="opacity-60">📅</span>'+
-            '<span class="truncate font-medium">'+(srv.expiryDate||'未填写')+'</span>'+
+          '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-lg px-3 py-2">'+
+            '<span class="opacity-50">📅</span>'+
+            '<span class="truncate font-medium opacity-80">'+(srv.expiryDate||'未填写')+'</span>'+
           '</div>'+
         '</div>'+
-        (srv.specs?'<div class="text-sm mt-3 panel border rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">⚙️</span><span class="flex-1">'+srv.specs+'</span></div>':'')+
-        (srv.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">💬</span><span class="flex-1">'+srv.note+'</span></div>':'');
+        (srv.specs?'<div class="text-xs mt-3 bg-black/5 dark:bg-white/5 rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-50 text-sm">⚙️</span><span class="flex-1 opacity-80">'+srv.specs+'</span></div>':'')+
+        (srv.note?'<div class="text-xs mt-3 bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-sm">💬</span><span class="flex-1">'+srv.note+'</span></div>':'');
       serversHTML += '</div>';
     });
 
-    // 性能优化：一次性构建完整的卡片HTML
     const wrap=document.createElement('div');
-    wrap.className='card border transition-all' + (idx < animationLimit ? ' animate-slide-in' : '');
-    if(idx < animationLimit) wrap.style.animationDelay = (idx * 0.05) + 's';
+    wrap.className='card border transition-all relative ' + borderClass + (idx < animationLimit ? ' animate-slide-in' : '');
+    if(idx < animationLimit) wrap.style.animationDelay = (idx * 0.05 + 0.3) + 's';
     wrap.dataset.cardId = cardId;
 
     wrap.innerHTML =
-      '<div class="flex items-center justify-between p-5 pb-4 border-b gap-4 bg-gradient-to-r '+gradientClass+'">'+
-        '<div class="flex items-center gap-4 flex-1 min-w-0">'+
-          '<div class="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl">'+medalByRank(idx)+'</div>'+
+      rankBadge +
+      '<div class="flex items-center justify-between p-5 md:p-6 border-b border-white/10 gap-4 '+gradientClass+'">'+
+        '<div class="flex items-center gap-5 flex-1 min-w-0">'+
+          '<div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-white/80 dark:bg-white/10 flex items-center justify-center text-3xl shadow-sm border border-white/20">'+medalByRank(idx)+'</div>'+
           '<div class="flex flex-col gap-1.5 min-w-0">'+
-            '<a class="font-bold text-xl hover:opacity-80 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a>'+
+            '<a class="font-bold text-xl hover:text-indigo-400 truncate transition-colors flex items-center gap-2" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">'+
+              '@'+it.username+
+              '<span class="text-xs opacity-40 font-normal px-2 py-0.5 rounded-full border border-white/10">Linux.do</span>'+
+            '</a>'+
             '<div class="flex items-center gap-2 flex-wrap">'+
               renderBadge(badge)+
-              '<span class="text-xs muted">共投喂 '+it.count+' 台服务器</span>'+
+              '<span class="text-xs opacity-60 font-medium">已投喂 '+it.count+' 台</span>'+
             '</div>'+
           '</div>'+
         '</div>'+
-        '<div class="flex items-center gap-3">'+
-          '<div class="flex-shrink-0 flex items-center justify-center w-16 h-16 panel border rounded-2xl">'+
-            '<div class="text-center">'+
-              '<div class="font-bold text-2xl leading-none mb-1">'+it.count+'</div>'+
-              '<div class="text-xs muted leading-none">VPS</div>'+
-            '</div>'+
+        '<div class="flex items-center gap-4">'+
+          '<div class="hidden sm:flex flex-col items-end">'+
+             '<div class="text-2xl font-bold leading-none">'+it.count+'</div>'+
+             '<div class="text-[10px] uppercase tracking-wider opacity-50 font-bold mt-1">Servers</div>'+
           '</div>'+
-          '<button class="toggle-expand flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg panel border hover:bg-sky-500/10 transition-all cursor-pointer" data-card="'+cardId+'" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
-            '<span class="text-lg transition-transform duration-300 '+(isExpanded ? 'rotate-0' : '-rotate-90')+'">'+'▼'+'</span>'+
+          '<button class="toggle-expand flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white/50 dark:bg-white/5 hover:bg-indigo-500/10 hover:text-indigo-500 border border-white/10 transition-all cursor-pointer" data-card="'+cardId+'" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
+            '<span class="text-lg transition-transform duration-300 '+(isExpanded ? 'rotate-0' : '-rotate-90')+'">▼</span>'+
           '</button>'+
         '</div>'+
       '</div>'+
-      '<div class="server-list px-5 pb-5 pt-4 space-y-3'+(isExpanded ? '' : ' expandable')+'">'+
+      '<div class="server-list px-5 md:px-6 pb-6 pt-5 space-y-4 bg-white/30 dark:bg-black/20'+(isExpanded ? '' : ' expandable')+'">'+
         serversHTML+
       '</div>';
 
     fragment.appendChild(wrap);
   });
 
-  // 性能优化：一次性插入所有DOM
   box.innerHTML = '';
   box.appendChild(fragment);
 
-  // 性能优化：使用事件委托处理所有按钮点击
   box.addEventListener('click', (e) => {
     const toggleBtn = e.target.closest('.toggle-expand');
     if(!toggleBtn) return;
@@ -1343,15 +1261,16 @@ function renderLeaderboard(){
 async function loadLeaderboard(){
   const box = document.getElementById('leaderboard'), countEl=document.getElementById('leaderboard-count');
   
-  // 显示骨架屏
-  box.innerHTML='<div class="space-y-5">'+
-    '<div class="skeleton-card"><div class="skeleton-header">'+
-    '<div class="skeleton skeleton-avatar"></div>'+
-    '<div class="flex-1"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-text short mt-2"></div></div>'+
+  // 骨架屏优化
+  box.innerHTML='<div class="space-y-6">'+
+    Array(3).fill(0).map(()=>
+    '<div class="card p-6 flex items-center gap-4 animate-pulse">'+
+    '<div class="w-14 h-14 rounded-2xl bg-gray-200 dark:bg-white/5"></div>'+
+    '<div class="flex-1 space-y-3">'+
+    '<div class="h-5 w-1/3 bg-gray-200 dark:bg-white/5 rounded"></div>'+
+    '<div class="h-4 w-1/4 bg-gray-200 dark:bg-white/5 rounded"></div>'+
     '</div>'+
-    '<div class="skeleton skeleton-text"></div>'+
-    '<div class="skeleton skeleton-text medium"></div>'+
-    '</div>'.repeat(3)+
+    '</div>').join('')+
     '</div>';
 
   const timeoutPromise = new Promise((_, reject) =>
@@ -1367,20 +1286,20 @@ async function loadLeaderboard(){
     const res = await Promise.race([fetchPromise, timeoutPromise]);
 
     if(!res.ok) {
-      box.innerHTML='<div class="text-red-400 text-sm">加载失败: HTTP '+res.status+'<br><button onclick="loadLeaderboard()" class="mt-2 px-3 py-1 rounded-lg border">重试</button></div>';
+      box.innerHTML='<div class="text-red-400 text-sm text-center py-8">加载失败: HTTP '+res.status+'<br><button onclick="loadLeaderboard()" class="mt-4 btn-secondary">重试</button></div>';
       return;
     }
 
     const j = await res.json();
     if(!j.success){
-      box.innerHTML='<div class="text-red-400 text-sm">加载失败: '+(j.message||'未知错误')+'<br><button onclick="loadLeaderboard()" class="btn-secondary mt-4">重试</button></div>';
+      box.innerHTML='<div class="text-red-400 text-sm text-center py-8">加载失败: '+(j.message||'未知错误')+'<br><button onclick="loadLeaderboard()" class="btn-secondary mt-4">重试</button></div>';
       return;
     }
 
     allLeaderboardData = j.data||[];
     
     if(!allLeaderboardData.length){
-      box.innerHTML='<div class="muted text-sm py-8 text-center">暂时还没有投喂记录，成为第一个投喂者吧～</div>';
+      box.innerHTML='<div class="opacity-60 text-sm py-12 text-center">暂时还没有投喂记录，成为第一个投喂者吧～</div>';
       countEl.textContent = '';
       return;
     }
@@ -1395,6 +1314,7 @@ async function loadLeaderboard(){
 loadLeaderboard();
 
 // ==================== Globe.gl 初始化和渲染 ====================
+
 
 let globeInstance = null;
 let serversData = [];
