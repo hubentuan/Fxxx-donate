@@ -4182,46 +4182,46 @@ function renderVpsList(){
     const uname=v.donatedByUsername||'';
     const p='https://linux.do/u/'+encodeURIComponent(uname);
 
-    card.innerHTML='<div class="flex items-center justify-between gap-2 pb-3 border-b">'+
+    card.innerHTML='<div class="flex items-center justify-between gap-2 pb-3 border-b border-white/10">'+
         '<div class="flex items-center gap-2 text-sm font-medium">'+
-          '<span>🖥️</span>'+
-          '<span class="break-words">'+v.ip+':'+v.port+'</span>'+
+          '<div class="w-5 h-5 text-indigo-500">'+ICONS.server+'</div>'+
+          '<span class="break-words font-mono">'+v.ip+':'+v.port+'</span>'+
         '</div>'+
         '<span class="'+scls(v.status)+' text-xs px-2 py-1 rounded-full">'+stxt(v.status)+'</span>'+
       '</div>'+
       '<div class="space-y-2 text-xs">'+
         '<div class="flex items-center gap-2">'+
-          '<span class="opacity-60">👤</span>'+
+          '<div class="w-4 h-4 opacity-60">'+ICONS.user+'</div>'+
           '<span>投喂者：<a href="'+p+'" target="_blank" class="text-sky-500 hover:text-cyan-400 underline transition-colors">@'+uname+'</a></span>'+
         '</div>'+
         '<div class="flex items-center gap-2">'+
-          '<span class="opacity-60">🌍</span>'+
+          '<div class="w-4 h-4 opacity-60">'+ICONS.globe+'</div>'+
           '<span>'+(v.country||'未填写')+(v.region?' · '+v.region:'')+(v.ipLocation?' · '+v.ipLocation:'')+'</span>'+
         '</div>'+
         '<div class="grid grid-cols-2 gap-2">'+
-          '<div class="flex items-center gap-1.5 panel border rounded-lg px-2 py-1.5"><span class="opacity-60">📊</span><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
-          '<div class="flex items-center gap-1.5 panel border rounded-lg px-2 py-1.5"><span class="opacity-60">📅</span><span class="truncate">'+(v.expiryDate||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-1.5 panel border border-white/10 rounded-lg px-2 py-1.5"><div class="w-3.5 h-3.5 opacity-60">'+ICONS.chart+'</div><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
+          '<div class="flex items-center gap-1.5 panel border border-white/10 rounded-lg px-2 py-1.5"><div class="w-3.5 h-3.5 opacity-60">'+ICONS.calendar+'</div><span class="truncate">'+(v.expiryDate||'未填写')+'</span></div>'+
         '</div>'+
-        '<div class="panel border rounded-lg px-2 py-1.5 flex items-start gap-1.5">'+
-          '<span class="opacity-60">⚙️</span>'+
+        '<div class="panel border border-white/10 rounded-lg px-2 py-1.5 flex items-start gap-1.5">'+
+          '<div class="w-3.5 h-3.5 opacity-60 mt-0.5">'+ICONS.cpu+'</div>'+
           '<span class="break-words">'+(v.specs||'未填写')+'</span>'+
         '</div>'+
         (v.note?'<div class="bg-amber-500/5 border border-amber-500/20 rounded-lg px-2 py-1.5 text-amber-600 dark:text-amber-300 flex items-start gap-1.5">'+
-          '<span class="opacity-60">💬</span>'+
+          '<div class="w-3.5 h-3.5 opacity-60 mt-0.5">'+ICONS.message+'</div>'+
           '<span class="break-words">'+v.note+'</span>'+
         '</div>':'')+
         (v.adminNote?'<div class="bg-cyan-500/5 border border-cyan-500/20 rounded-lg px-2 py-1.5 text-cyan-600 dark:text-cyan-300 flex items-start gap-1.5">'+
-          '<span class="opacity-60">📝</span>'+
+          '<div class="w-3.5 h-3.5 opacity-60 mt-0.5">'+ICONS.note+'</div>'+
           '<span class="break-words">'+v.adminNote+'</span>'+
         '</div>':'')+
-        (t?'<div class="flex items-center gap-1.5 text-xs muted"><span class="opacity-60">🕐</span><span>'+t+'</span></div>':'')+
+        (t?'<div class="flex items-center gap-1.5 text-xs muted"><div class="w-3.5 h-3.5 opacity-60">'+ICONS.clock+'</div><span>'+t+'</span></div>':'')+
       '</div>'+
-      '<div class="flex flex-wrap gap-2 pt-3 border-t">'+
-        '<button class="btn-secondary text-xs" data-act="login" data-id="'+v.id+'">🔍 查看</button>'+
-        '<button class="btn-secondary text-xs" data-act="verify" data-id="'+v.id+'">✅ 验证</button>'+
-        '<button class="btn-secondary text-xs" data-act="editConfig" data-id="'+v.id+'">⚙️ 编辑配置</button>'+
-        '<button class="btn-secondary text-xs" data-act="edit" data-id="'+v.id+'">✏️ 编辑信息</button>'+
-        '<button class="btn-danger text-xs" data-act="del" data-id="'+v.id+'">🗑️ 删除</button>'+
+      '<div class="flex flex-wrap gap-2 pt-3 border-t border-white/10">'+
+        '<button class="btn-secondary text-xs flex items-center gap-1" data-act="login" data-id="'+v.id+'"><div class="w-3 h-3">'+ICONS.search+'</div> 查看</button>'+
+        '<button class="btn-secondary text-xs flex items-center gap-1" data-act="verify" data-id="'+v.id+'"><div class="w-3 h-3">'+ICONS.check+'</div> 验证</button>'+
+        '<button class="btn-secondary text-xs flex items-center gap-1" data-act="editConfig" data-id="'+v.id+'"><div class="w-3 h-3">'+ICONS.settings+'</div> 配置</button>'+
+        '<button class="btn-secondary text-xs flex items-center gap-1" data-act="edit" data-id="'+v.id+'"><div class="w-3 h-3">'+ICONS.edit+'</div> 信息</button>'+
+        '<button class="btn-danger text-xs flex items-center gap-1" data-act="del" data-id="'+v.id+'"><div class="w-3 h-3">'+ICONS.trash+'</div> 删除</button>'+
       '</div>';
 
     card.querySelectorAll('button[data-act]').forEach(btn=>{
@@ -5777,7 +5777,13 @@ const ICONS = {
   edit: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>',
   trash: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
   settings: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
-  note: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>'
+  note: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+  alert: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>',
+  key: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
+  lock: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+  save: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>',
+  plug: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></svg>',
+  bulb: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.4 1.5-3.8 0-3.3-2.7-6-6-6 0 0-6 .7-6 6 0 1.4.5 2.8 1.5 3.8.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>'
 };
   (function () {
     const saved = localStorage.getItem('theme') || 'dark';
