@@ -6,7 +6,7 @@ import { setCookie, getCookie } from 'https://deno.land/x/hono@v3.11.7/helper.ts
 
 declare const Deno: any;
 
-
+/* ==================== 类型定义 ==================== */
 interface OAuthConfig {
   clientId: string;
   clientSecret: string;
@@ -3019,24 +3019,6 @@ app.get('/donate/vps', c => {
                   </div>
                 </div>
               </div>
-                           class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
-                  </div>
-                </div>
-                <div class="group">
-                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
-                    认证方式
-                  </label>
-                  <div class="relative">
-                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 z-10 pointer-events-none">${ICONS.lock}</div>
-                    <div class="absolute right-4 top-3.5 w-5 h-5 text-slate-500 z-10 pointer-events-none">${ICONS.chevronDown}</div>
-                    <select name="authType" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-10 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none appearance-none">
-                      <option value="password">密码认证</option>
-                      <option value="key">密钥认证</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
               <!-- Auth Fields -->
               <div id="password-field" class="group">
                 <label class="block mb-2.5 text-sm font-medium text-slate-400 group-focus-within:text-indigo-400 transition-colors">
