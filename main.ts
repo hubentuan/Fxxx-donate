@@ -1,8 +1,10 @@
 /// <reference lib="deno.unstable" />
 
-import { Hono } from 'https://deno.land/x/hono@v3.11.7/mod.ts';
+import { Hono, Context, Next } from 'https://deno.land/x/hono@v3.11.7/mod.ts';
 import { cors } from 'https://deno.land/x/hono@v3.11.7/middleware.ts';
 import { setCookie, getCookie } from 'https://deno.land/x/hono@v3.11.7/helper.ts';
+
+declare const Deno: any;
 
 /* ==================== 类型定义 ==================== */
 interface OAuthConfig {
@@ -224,7 +226,7 @@ async function linuxDoUser(accessToken: string) {
 }
 
 /* ==================== 中间件 ==================== */
-const requireAuth = async (c: any, next: any) => {
+const requireAuth = async (c: Context, next: Next) => {
   const sid = getCookie(c, 'session_id');
   if (!sid) return c.json({ success: false, message: '未登录' }, 401);
   const s = await getSession(sid);
@@ -233,7 +235,7 @@ const requireAuth = async (c: any, next: any) => {
   await next();
 };
 
-const requireAdmin = async (c: any, next: any) => {
+const requireAdmin = async (c: Context, next: Next) => {
   const sid = getCookie(c, 'admin_session_id');
   if (!sid) return c.json({ success: false, message: '未登录' }, 401);
   const s = await getSession(sid);
@@ -246,10 +248,10 @@ const requireAdmin = async (c: any, next: any) => {
 const app = new Hono();
 app.use('*', cors());
 
-app.get('/', c => c.redirect('/donate'));
+app.get('/', (c: Context) => c.redirect('/donate'));
 
 /* ---- Favicon 路由（防止 404 错误）---- */
-app.get('/favicon.ico', c => {
+app.get('/favicon.ico', (c: Context) => {
   // 返回一个简单的橙色心形 SVG favicon
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🧡</text></svg>`;
   return c.body(svg, 200, {
@@ -259,7 +261,7 @@ app.get('/favicon.ico', c => {
 });
 
 /* ---- OAuth 登录 ---- */
-app.get('/oauth/login', async c => {
+app.get('/oauth/login', async (c: Context) => {
   const redirectPath = c.req.query('redirect') || '/donate/vps';
   const cfg = await getOAuth();
   if (!cfg) {
@@ -279,7 +281,7 @@ app.get('/oauth/login', async c => {
   return c.redirect(url.toString());
 });
 
-app.get('/oauth/callback', async c => {
+app.get('/oauth/callback', async (c: Context) => {
   const code = c.req.query('code');
   const error = c.req.query('error');
   const state = c.req.query('state') || '/donate';
@@ -335,14 +337,14 @@ app.get('/oauth/callback', async c => {
 });
 
 /* ---- 用户 API ---- */
-app.get('/api/logout', async c => {
+app.get('/api/logout', async (c: Context) => {
   const sid = getCookie(c, 'session_id');
   if (sid) await kv.delete(['sessions', sid]);
   setCookie(c, 'session_id', '', { maxAge: 0, path: '/' });
   return c.json({ success: true });
 });
 
-app.get('/api/user/info', requireAuth, async c => {
+app.get('/api/user/info', requireAuth, async (c: Context) => {
   const s = c.get('session');
   const r = await kv.get<string[]>(['user_donations', s.userId]);
   return c.json({
@@ -356,7 +358,7 @@ app.get('/api/user/info', requireAuth, async c => {
   });
 });
 
-app.get('/api/user/donations', requireAuth, async c => {
+app.get('/api/user/donations', requireAuth, async (c: Context) => {
   const s = c.get('session');
   const ids = (await kv.get<string[]>(['user_donations', s.userId])).value || [];
   const arr: VPSServer[] = [];
@@ -392,7 +394,7 @@ app.get('/api/user/donations', requireAuth, async c => {
   return c.json({ success: true, data: safe });
 });
 
-app.put('/api/user/donations/:id/note', requireAuth, async c => {
+app.put('/api/user/donations/:id/note', requireAuth, async (c: Context) => {
   const s = c.get('session');
   const id = c.req.param('id');
   const { note } = await c.req.json();
@@ -4605,7 +4607,7 @@ function commonHead(title: string): string {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>${title}</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🧡</text></svg>" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z'/></svg>" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
