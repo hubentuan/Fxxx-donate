@@ -4709,193 +4709,147 @@ tailwind.config = {
 }
 </script>
 <style>
-:root{
-  --radius: 12px;
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+:root {
+  --font-sans: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   
-  /* Light Mode Colors */
-  --bg-body: #F5F5F7;
-  --bg-card: #FFFFFF;
-  --bg-glass: rgba(255, 255, 255, 0.7);
-  --text-primary: #1D1D1F;
-  --text-secondary: #86868B;
-  --border-color: rgba(0, 0, 0, 0.05);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
-  
-  /* Accents */
-  --color-blue: #0071E3;
-  --color-green: #34C759;
-  --color-red: #FF3B30;
-  --color-orange: #FF9500;
+  /* Light Mode - Crisp & Airy */
+  --bg-body: #F2F2F7;
+  --bg-blob: #E5E5EA;
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-surface: rgba(255, 255, 255, 0.65);
+  --glass-highlight: rgba(255, 255, 255, 0.5);
+  --text-primary: #000000;
+  --text-secondary: #6e6e73;
+  --accent-glow: rgba(0, 122, 255, 0.15);
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
   
   color-scheme: light;
 }
 
-body[data-theme="dark"]{
-  /* Dark Mode Colors */
+body[data-theme="dark"] {
+  /* Dark Mode - Deep & Rich */
   --bg-body: #000000;
-  --bg-card: #1C1C1E;
-  --bg-glass: rgba(28, 28, 30, 0.7);
-  --text-primary: #F5F5F7;
-  --text-secondary: #86868B;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
-  
-  /* Dark Accents */
-  --color-blue: #0A84FF;
-  --color-green: #32D74B;
-  --color-red: #FF453A;
-  --color-orange: #FF9F0A;
+  --bg-blob: #1c1c1e;
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-surface: rgba(28, 28, 30, 0.6);
+  --glass-highlight: rgba(255, 255, 255, 0.05);
+  --text-primary: #FFFFFF;
+  --text-secondary: #86868b;
+  --accent-glow: rgba(10, 132, 255, 0.2);
+  --card-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
   
   color-scheme: dark;
 }
 
-html{
-  scroll-behavior: smooth;
-}
-
-body{
+body {
   font-family: var(--font-sans);
   background-color: var(--bg-body);
   color: var(--text-primary);
   margin: 0;
   min-height: 100vh;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background-image: 
+    radial-gradient(circle at 0% 0%, var(--bg-blob) 0%, transparent 50%),
+    radial-gradient(circle at 100% 0%, var(--bg-blob) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, var(--bg-blob) 0%, transparent 50%),
+    radial-gradient(circle at 0% 100%, var(--bg-blob) 0%, transparent 50%);
+  background-attachment: fixed;
+  transition: background-color 0.5s ease;
 }
 
-/* ========== Layout & Containers ========== */
-.panel, .card {
-  background: var(--bg-card);
-  border-radius: 18px; /* More rounded */
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.2s ease;
+/* ========== Bento Grid & Glass ========== */
+.glass-panel {
+  background: var(--glass-surface);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--card-shadow);
+  border-radius: 24px; /* Super rounded */
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
 }
 
-.panel:hover, .card:hover {
-  transform: scale(1.005);
-  box-shadow: var(--shadow-md);
+.glass-panel:hover {
+  transform: translateY(-2px) scale(1.005);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+  border-color: var(--glass-highlight);
 }
 
-/* Glassmorphism Utility */
-.glass {
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--border-color);
+.bento-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
-/* ========== Typography ========== */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
+/* ========== Typography (Massive) ========== */
+.text-display {
+  font-family: "SF Pro Display", var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
-.text-sm { font-size: 13px; }
-.text-xs { font-size: 11px; }
-.muted { color: var(--text-secondary); }
-
-/* Gradient Title */
-.grad-title {
-  background: linear-gradient(135deg, var(--color-blue), #5E5CE6);
+.text-gradient {
+  background: linear-gradient(135deg, #007AFF, #5856D6, #AF52DE);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* ========== Buttons ========== */
-.btn-primary {
-  background: var(--color-blue);
-  color: white;
-  border: none;
-  border-radius: 9999px; /* Pill shape */
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 113, 227, 0.3);
-}
-
-.btn-primary:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 8px rgba(0, 113, 227, 0.4);
-  opacity: 0.95;
-}
-
-.btn-primary:active {
-  transform: scale(0.98);
-}
-
-.btn-secondary {
-  background: rgba(118, 118, 128, 0.12);
-  color: var(--text-primary);
-  border: none;
+/* ========== Controls ========== */
+.btn-pill {
   border-radius: 9999px;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 12px 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: all 0.2s ease;
+  border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.btn-secondary:hover {
-  background: rgba(118, 118, 128, 0.2);
+.btn-primary-glow {
+  background: #007AFF;
+  color: white;
+  box-shadow: 0 4px 20px var(--accent-glow);
+}
+.btn-primary-glow:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 25px var(--accent-glow);
 }
 
-/* ========== Forms ========== */
-input, select, textarea {
-  background: rgba(118, 118, 128, 0.08); /* Light gray fill */
+.input-apple {
+  background: rgba(120, 120, 128, 0.1);
   border: 1px solid transparent;
-  border-radius: 12px;
-  padding: 12px 16px;
-  color: var(--text-primary);
-  font-family: inherit;
-  font-size: 15px;
+  border-radius: 16px;
+  padding: 16px;
+  font-size: 16px;
+  transition: all 0.2s;
   width: 100%;
-  transition: all 0.2s ease;
+  color: var(--text-primary);
+}
+.input-apple:focus {
+  background: var(--glass-surface);
+  border-color: #007AFF;
+  box-shadow: 0 0 0 4px var(--accent-glow);
   outline: none;
 }
 
-input:focus, select:focus, textarea:focus {
-  background: var(--bg-card);
-  border-color: var(--color-blue);
-  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
-}
-
-/* ========== Badges ========== */
-.badge-ok, .badge-fail, .badge-idle {
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.badge-ok { background: rgba(52, 199, 89, 0.15); color: var(--color-green); }
-.badge-fail { background: rgba(255, 59, 48, 0.15); color: var(--color-red); }
-.badge-idle { background: rgba(142, 142, 147, 0.15); color: var(--text-secondary); }
-
 /* ========== Animations ========== */
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.animate-in { animation: fadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-
-/* ========== Scrollbar ========== */
-::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.3);
-  border-radius: 5px;
-  border: 2px solid transparent;
-  background-clip: content-box;
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
-::-webkit-scrollbar-thumb:hover { background-color: rgba(128, 128, 128, 0.5); }
+
+.animate-entry {
+  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 0px; background: transparent; }
   font-feature-settings: "kern" 1;
 }
 option{
