@@ -1168,7 +1168,7 @@ function renderLeaderboard(){
       serversHTML += '<div class="panel border border-white/20 dark:border-white/5 rounded-xl p-4 transition-all hover:bg-white/40 dark:hover:bg-white/10 group">'+
         '<div class="flex items-start justify-between gap-3 mb-3">'+
           '<div class="flex items-center gap-3 flex-1 min-w-0">'+
-            '<div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🌍</div>'+
+            '<div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform"><div class="w-6 h-6">'+ICONS.globe+'</div></div>'+
             '<div class="flex flex-col gap-0.5 min-w-0">'+
               '<span class="font-semibold text-sm truncate">'+(srv.country||'未填写')+(srv.region?' · '+srv.region:'')+'</span>'+
               (srv.ipLocation?'<span class="text-xs opacity-60 truncate">'+srv.ipLocation+'</span>':'')+
@@ -1178,16 +1178,16 @@ function renderLeaderboard(){
         '</div>'+
         '<div class="grid grid-cols-2 gap-3 text-xs">'+
           '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-lg px-3 py-2">'+
-            '<span class="opacity-50">📊</span>'+
+            '<div class="w-4 h-4 opacity-50">'+ICONS.chart+'</div>'+
             '<span class="truncate font-medium opacity-80">'+(srv.traffic||'未填写')+'</span>'+
           '</div>'+
           '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-lg px-3 py-2">'+
-            '<span class="opacity-50">📅</span>'+
+            '<div class="w-4 h-4 opacity-50">'+ICONS.calendar+'</div>'+
             '<span class="truncate font-medium opacity-80">'+(srv.expiryDate||'未填写')+'</span>'+
           '</div>'+
         '</div>'+
-        (srv.specs?'<div class="text-xs mt-3 bg-black/5 dark:bg-white/5 rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-50 text-sm">⚙️</span><span class="flex-1 opacity-80">'+srv.specs+'</span></div>':'')+
-        (srv.note?'<div class="text-xs mt-3 bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-sm">💬</span><span class="flex-1">'+srv.note+'</span></div>':'');
+        (srv.specs?'<div class="text-xs mt-3 bg-black/5 dark:bg-white/5 rounded-lg px-3 py-2.5 flex items-start gap-2"><div class="w-4 h-4 opacity-50 flex-shrink-0">'+ICONS.cpu+'</div><span class="flex-1 opacity-80">'+srv.specs+'</span></div>':'')+
+        (srv.note?'<div class="text-xs mt-3 bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 rounded-lg px-3 py-2.5 flex items-start gap-2"><div class="w-4 h-4 opacity-60 flex-shrink-0">'+ICONS.message+'</div><span class="flex-1">'+srv.note+'</span></div>':'');
       serversHTML += '</div>';
     });
 
@@ -1218,12 +1218,16 @@ function renderLeaderboard(){
              '<div class="text-[10px] uppercase tracking-wider opacity-50 font-bold mt-1">Servers</div>'+
           '</div>'+
           '<button class="toggle-expand flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white/50 dark:bg-white/5 hover:bg-indigo-500/10 hover:text-indigo-500 border border-white/10 transition-all cursor-pointer" data-card="'+cardId+'" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
-            '<span class="text-lg transition-transform duration-300 '+(isExpanded ? 'rotate-0' : '-rotate-90')+'">▼</span>'+
+            '<div class="w-5 h-5 transition-transform duration-300 '+(isExpanded ? 'rotate-180' : 'rotate-0')+'">'+ICONS.chevronDown+'</div>'+
           '</button>'+
         '</div>'+
       '</div>'+
-      '<div class="server-list px-5 md:px-6 pb-6 pt-5 space-y-4 bg-white/30 dark:bg-black/20'+(isExpanded ? '' : ' expandable')+'">'+
-        serversHTML+
+      '<div class="server-list-wrapper grid transition-[grid-template-rows] duration-300 ease-out" style="grid-template-rows: '+(isExpanded ? '1fr' : '0fr')+'">'+
+        '<div class="overflow-hidden">'+
+          '<div class="server-list px-5 md:px-6 pb-6 pt-5 space-y-4 bg-white/30 dark:bg-black/20">'+
+            serversHTML+
+          '</div>'+
+        '</div>'+
       '</div>';
 
     fragment.appendChild(wrap);
@@ -1238,20 +1242,20 @@ function renderLeaderboard(){
 
     const cardId = toggleBtn.dataset.card;
     const wrap = toggleBtn.closest('[data-card-id]');
-    const listEl = wrap.querySelector('.server-list');
-    const toggleIcon = toggleBtn.querySelector('span');
-    const isCurrentlyExpanded = !listEl.classList.contains('expandable');
+    const wrapper = wrap.querySelector('.server-list-wrapper');
+    const toggleIcon = toggleBtn.querySelector('div');
+    const isCurrentlyExpanded = wrapper.style.gridTemplateRows === '1fr';
 
     if(isCurrentlyExpanded){
-      listEl.classList.add('expandable');
-      toggleIcon.classList.remove('rotate-0');
-      toggleIcon.classList.add('-rotate-90');
+      wrapper.style.gridTemplateRows = '0fr';
+      toggleIcon.classList.remove('rotate-180');
+      toggleIcon.classList.add('rotate-0');
       toggleBtn.setAttribute('title', '展开列表');
       localStorage.setItem(cardId, 'collapsed');
     } else {
-      listEl.classList.remove('expandable');
-      toggleIcon.classList.remove('-rotate-90');
-      toggleIcon.classList.add('rotate-0');
+      wrapper.style.gridTemplateRows = '1fr';
+      toggleIcon.classList.remove('rotate-0');
+      toggleIcon.classList.add('rotate-180');
       toggleBtn.setAttribute('title', '收起列表');
       localStorage.removeItem(cardId);
     }
