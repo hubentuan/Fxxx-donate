@@ -4864,9 +4864,7 @@ body[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
   from { opacity: 0; transform: translateX(-20px); }
   to { opacity: 1; transform: translateX(0); }
 }
-</style>
-`;
-}
+
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
