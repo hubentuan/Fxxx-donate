@@ -4380,7 +4380,7 @@ function openEditModal(vpsId) {
     <div class="panel border max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in">
       <div class="sticky top-0 bg-inherit border-b px-6 py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="w-6 h-6 text-indigo-500">${ICONS.settings}</div>
+          <div class="w-6 h-6 text-indigo-500">\${ICONS.settings}</div>
           <h3 class="text-xl font-bold">编辑 VPS 配置</h3>
         </div>
         <button onclick="closeEditModal()" class="text-2xl hover:opacity-70 transition-opacity">✕</button>
@@ -4388,20 +4388,20 @@ function openEditModal(vpsId) {
       
       <form id="edit-config-form" class="p-6 space-y-5">
         <div class="alert-warning text-sm leading-relaxed rounded-xl px-4 py-3">
-          <div class="flex items-start gap-2"><div class="w-5 h-5 flex-shrink-0 mt-0.5">${ICONS.alert}</div><span>修改配置后将自动进行连通性测试。即使测试失败，配置也会被保存。</span></div>
+          <div class="flex items-start gap-2"><div class="w-5 h-5 flex-shrink-0 mt-0.5">\${ICONS.alert}</div><span>修改配置后将自动进行连通性测试。即使测试失败，配置也会被保存。</span></div>
         </div>
         
         <div class="grid md:grid-cols-2 gap-5">
           <div>
             <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <div class="w-4 h-4 opacity-60">${ICONS.globe}</div> 服务器 IP <span class="text-red-400">*</span>
+              <div class="w-4 h-4 opacity-60">\${ICONS.globe}</div> 服务器 IP <span class="text-red-400">*</span>
             </label>
             <input name="ip" required value="\${vps.ip}" placeholder="示例：203.0.113.8"
                    class="w-full rounded-lg border px-3 py-2 text-sm" />
           </div>
           <div>
             <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <div class="w-4 h-4 opacity-60">${ICONS.plug}</div> 端口 <span class="text-red-400">*</span>
+              <div class="w-4 h-4 opacity-60">\${ICONS.plug}</div> 端口 <span class="text-red-400">*</span>
             </label>
             <input name="port" required type="number" min="1" max="65535" value="\${vps.port}"
                    class="w-full rounded-lg border px-3 py-2 text-sm" />
@@ -4411,14 +4411,14 @@ function openEditModal(vpsId) {
         <div class="grid md:grid-cols-2 gap-5">
           <div>
             <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <div class="w-4 h-4 opacity-60">${ICONS.user}</div> 系统用户名 <span class="text-red-400">*</span>
+              <div class="w-4 h-4 opacity-60">\${ICONS.user}</div> 系统用户名 <span class="text-red-400">*</span>
             </label>
             <input name="username" required value="\${vps.username}" placeholder="示例：root"
                    class="w-full rounded-lg border px-3 py-2 text-sm" />
           </div>
           <div>
             <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <div class="w-4 h-4 opacity-60">${ICONS.lock}</div> 认证方式
+              <div class="w-4 h-4 opacity-60">\${ICONS.lock}</div> 认证方式
             </label>
             <select name="authType" class="w-full rounded-lg border px-3 py-2 text-sm">
               <option value="password" \${vps.authType === 'password' ? 'selected' : ''}>密码认证</option>
@@ -4429,23 +4429,23 @@ function openEditModal(vpsId) {
 
         <div id="edit-password-field" class="\${vps.authType === 'password' ? '' : 'hidden'}">
           <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-            <div class="w-4 h-4 opacity-60">${ICONS.key}</div> 密码
+            <div class="w-4 h-4 opacity-60">\${ICONS.key}</div> 密码
           </label>
           <input name="password" type="password" placeholder="留空则不修改密码"
                  class="w-full rounded-lg border px-3 py-2 text-sm" />
           <div class="help mt-1.5 flex items-center gap-1">
-            <div class="w-3.5 h-3.5">${ICONS.bulb}</div>当前已设置密码，留空则保持不变
+            <div class="w-3.5 h-3.5">\${ICONS.bulb}</div>当前已设置密码，留空则保持不变
           </div>
         </div>
 
         <div id="edit-key-field" class="\${vps.authType === 'key' ? '' : 'hidden'}">
           <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-            <div class="w-4 h-4 opacity-60">${ICONS.key}</div> SSH 私钥
+            <div class="w-4 h-4 opacity-60">\${ICONS.key}</div> SSH 私钥
           </label>
           <textarea name="privateKey" rows="4" placeholder="留空则不修改私钥"
                     class="w-full rounded-lg border px-3 py-2 text-sm font-mono"></textarea>
           <div class="help mt-1.5 flex items-center gap-1">
-            <div class="w-3.5 h-3.5">${ICONS.bulb}</div>当前已设置私钥，留空则保持不变
+            <div class="w-3.5 h-3.5">\${ICONS.bulb}</div>当前已设置私钥，留空则保持不变
           </div>
         </div>
 
@@ -4456,7 +4456,7 @@ function openEditModal(vpsId) {
             取消
           </button>
           <button type="submit" id="edit-submit-btn" class="btn-primary flex-1">
-            <div class="w-4 h-4">${ICONS.save}</div> 保存配置
+            <div class="w-4 h-4">\${ICONS.save}</div> 保存配置
           </button>
         </div>
       </form>
