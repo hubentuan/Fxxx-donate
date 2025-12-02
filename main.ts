@@ -5210,562 +5210,559 @@ body[data-theme="dark"] .badge-fail { color: #FF453A; }
 body[data-theme="dark"] .badge-idle { color: #98989d; }
 
 /* ========== 主题切换按钮 ========== */
-#theme - toggle{
-  border - radius: 10px;
+#theme-toggle {
+  border-radius: 10px;
   padding: 8px 16px;
   border: 1px solid rgba(210, 210, 215, 0.8);
   background: rgba(255, 255, 255, 0.9);
-  backdrop - filter: blur(10px);
-  -webkit - backdrop - filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #1d1d1f;
-  font - size: 13px;
-  font - weight: 500;
+  font-size: 13px;
+  font-weight: 500;
   transition: all 0.15s ease;
   cursor: pointer;
 }
-#theme - toggle:hover{
+#theme-toggle:hover {
   background: rgba(245, 245, 247, 0.95);
   transform: scale(0.98);
 }
-#theme - toggle:active{
+#theme-toggle:active {
   transform: scale(0.96);
   opacity: 0.8;
 }
-body[data - theme= "dark"]#theme - toggle{
+body[data-theme="dark"] #theme-toggle {
   background: rgba(44, 44, 46, 0.85);
-  backdrop - filter: blur(10px);
-  -webkit - backdrop - filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #f5f5f7;
-  border - color: rgba(56, 56, 58, 0.8);
+  border-color: rgba(56, 56, 58, 0.8);
 }
-body[data - theme= "dark"]#theme - toggle:hover{
+body[data-theme="dark"] #theme-toggle:hover {
   background: rgba(56, 56, 58, 0.9);
 }
 
 /* ========== 统计卡片 ========== */
-.stat - card{
+.stat-card {
   background: rgba(255, 255, 255, 0.85);
-  backdrop - filter: blur(20px) saturate(180 %);
-  -webkit - backdrop - filter: blur(20px) saturate(180 %);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.6);
-  border - radius: 12px;
+  border-radius: 12px;
   transition: all 0.2s ease;
   cursor: pointer;
-  box - shadow: 0 2px 12px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.8);
 }
-.stat - card:hover{
+.stat-card:hover {
   transform: translateY(-2px);
-  box - shadow: 0 4px 20px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.9);
 }
-.stat - card:active{
+.stat-card:active {
   transform: translateY(-1px) scale(0.98);
 }
-.stat - card.stat - label{
-  font - size: 12px;
-  font - weight: 500;
+.stat-card .stat-label {
+  font-size: 12px;
+  font-weight: 500;
   color: #86868b;
 }
-.stat - card.stat - value{
-  font - size: 28px;
-  font - weight: 700;
+.stat-card .stat-value {
+  font-size: 28px;
+  font-weight: 700;
   color: #007AFF;
 }
-.stat - card.stat - all.stat - value{ color: #007AFF; }
-.stat - card.stat - active.stat - value{ color: #34C759; }
-.stat - card.stat - failed.stat - value{ color: #FF3B30; }
-.stat - card.stat - inactive.stat - value{ color: #FF9500; }
-.stat - card.stat - pending.stat - value{ color: #FF9500; }
-.stat - card.stat - today.stat - value{ color: #007AFF; }
+.stat-card.stat-all .stat-value { color: #007AFF; }
+.stat-card.stat-active .stat-value { color: #34C759; }
+.stat-card.stat-failed .stat-value { color: #FF3B30; }
+.stat-card.stat-inactive .stat-value { color: #FF9500; }
+.stat-card.stat-pending .stat-value { color: #FF9500; }
+.stat-card.stat-today .stat-value { color: #007AFF; }
 
-body[data - theme= "dark"] .stat - card{
+body[data-theme="dark"] .stat-card {
   background: rgba(28, 28, 30, 0.8);
-  backdrop - filter: blur(20px) saturate(180 %);
-  -webkit - backdrop - filter: blur(20px) saturate(180 %);
-  border - color: rgba(56, 56, 58, 0.6);
-  box - shadow: 0 2px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(56, 56, 58, 0.5);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-color: rgba(56, 56, 58, 0.6);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(56, 56, 58, 0.5);
 }
-body[data - theme= "dark"] .stat - card:hover{
-  box - shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(56, 56, 58, 0.8);
+body[data-theme="dark"] .stat-card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(56, 56, 58, 0.8);
 }
-body[data - theme= "dark"] .stat - card.stat - label{
+body[data-theme="dark"] .stat-card .stat-label {
   color: #98989d;
 }
-body[data - theme= "dark"] .stat - card.stat - value{
+body[data-theme="dark"] .stat-card .stat-value {
   color: #0A84FF;
 }
-body[data - theme= "dark"] .stat - card.stat - all.stat - value{ color: #0A84FF; }
-body[data - theme= "dark"] .stat - card.stat - active.stat - value{ color: #32D74B; }
-body[data - theme= "dark"] .stat - card.stat - failed.stat - value{ color: #FF453A; }
-body[data - theme= "dark"] .stat - card.stat - inactive.stat - value{ color: #FF9F0A; }
-body[data - theme= "dark"] .stat - card.stat - pending.stat - value{ color: #FF9F0A; }
-body[data - theme= "dark"] .stat - card.stat - today.stat - value{ color: #0A84FF; }
+body[data-theme="dark"] .stat-card.stat-all .stat-value { color: #0A84FF; }
+body[data-theme="dark"] .stat-card.stat-active .stat-value { color: #32D74B; }
+body[data-theme="dark"] .stat-card.stat-failed .stat-value { color: #FF453A; }
+body[data-theme="dark"] .stat-card.stat-inactive .stat-value { color: #FF9F0A; }
+body[data-theme="dark"] .stat-card.stat-pending .stat-value { color: #FF9F0A; }
+body[data-theme="dark"] .stat-card.stat-today .stat-value { color: #0A84FF; }
 
 /* ========== 文字大小 ========== */
-.text - xs{ font - size: 13px; line - height: 1.4; }
-.text - sm{ font - size: 14px; line - height: 1.45; }
+.text-xs { font-size: 13px; line-height: 1.4; }
+.text-sm { font-size: 14px; line-height: 1.45; }
 
 /* ========== 表单元素 ========== */
-input, textarea, select{
+input, textarea, select {
   background: rgba(255, 255, 255, 0.95);
-  backdrop - filter: blur(10px);
-  -webkit - backdrop - filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #1d1d1f;
   border: 1px solid rgba(210, 210, 215, 0.8);
-  border - radius: 10px;
+  border-radius: 10px;
   padding: 10px 14px;
-  font - size: 15px;
-  transition: all 0.2s cubic - bezier(0.4, 0, 0.2, 1);
-  -webkit - appearance: none;
-  -moz - appearance: none;
+  font-size: 15px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-appearance: none;
+  -moz-appearance: none;
   appearance: none;
   position: relative;
-  -webkit - font - smoothing: antialiased;
-  -moz - osx - font - smoothing: grayscale;
-  text - rendering: optimizeLegibility;
-  font - feature - settings: "kern" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
 }
-select{
-  background - image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%231d1d1f' stroke='%231d1d1f' stroke-width='0.5' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
-  background - repeat: no - repeat;
-  background - position: right 12px center;
-  background - size: 12px;
-  padding - right: 40px;
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%231d1d1f' stroke='%231d1d1f' stroke-width='0.5' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 40px;
   cursor: pointer;
 }
-optgroup{
-  font - weight: 600;
+optgroup {
+  font-weight: 600;
   color: #6b6b6f;
-  font - size: 14px;
+  font-size: 14px;
   padding: 10px 14px;
   background: #f5f5f7;
-  text - rendering: optimizeLegibility;
-  font - feature - settings: "kern" 1;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
 }
-option{
+option {
   padding: 10px 14px;
   color: #1d1d1f;
   background: #ffffff;
-  font - size: 14.5px;
-  font - weight: 400;
-  line - height: 1.6;
-  text - rendering: optimizeLegibility;
-  font - feature - settings: "kern" 1;
-  letter - spacing: 0.01em;
+  font-size: 14.5px;
+  font-weight: 400;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  letter-spacing: 0.01em;
 }
-option: hover,
-  option:focus{
+option:hover,
+option:focus {
   background: #f5f5f7;
   color: #000000;
 }
-input: hover, textarea: hover, select:hover{
-  border - color: #86868b;
+input:hover, textarea:hover, select:hover {
+  border-color: #86868b;
   transform: translateY(-1px);
-  box - shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
-input: focus, textarea: focus, select:focus{
-  border - color: #8b5cf6;
-  box - shadow: 0 0 0 4px rgba(139, 92, 246, 0.12), 0 2px 8px rgba(139, 92, 246, 0.15);
+input:focus, textarea:focus, select:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12), 0 2px 8px rgba(139, 92, 246, 0.15);
   outline: none;
   transform: translateY(-2px);
 }
-input:: placeholder,
-  textarea::placeholder{
+input::placeholder,
+textarea::placeholder {
   color: #86868b;
   transition: opacity 0.2s ease;
 }
-input: focus:: placeholder,
-  textarea: focus::placeholder{
+input:focus::placeholder,
+textarea:focus::placeholder {
   opacity: 0.5;
 }
-input: disabled, textarea: disabled, select:disabled{
+input:disabled, textarea:disabled, select:disabled {
   opacity: 0.5;
-  cursor: not - allowed;
+  cursor: not-allowed;
   background: #f5f5f7;
 }
 
 /* 输入框错误状态 */
-input.error, textarea.error, select.error{
-  border - color: #FF3B30;
+input.error, textarea.error, select.error {
+  border-color: #FF3B30;
   animation: shake 0.3s ease;
 }
 @keyframes shake {
-  0 %, 100 % { transform: translateX(0); }
-  25 % { transform: translateX(-8px); }
-  75 % { transform: translateX(8px); }
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
 }
 
 /* 输入框成功状态 */
-input.success, textarea.success, select.success{
-  border - color: #34C759;
+input.success, textarea.success, select.success {
+  border-color: #34C759;
 }
 
-body[data - theme= "dark"]input,
-  body[data - theme= "dark"]textarea,
-    body[data - theme= "dark"] select{
+body[data-theme="dark"] input,
+body[data-theme="dark"] textarea,
+body[data-theme="dark"] select {
   background: rgba(44, 44, 46, 0.95);
-  backdrop - filter: blur(10px);
-  -webkit - backdrop - filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #f5f5f7;
-  border - color: rgba(56, 56, 58, 0.8);
-  -webkit - font - smoothing: antialiased;
-  -moz - osx - font - smoothing: grayscale;
-  text - rendering: optimizeLegibility;
-  font - feature - settings: "kern" 1;
+  border-color: rgba(56, 56, 58, 0.8);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
 }
-body[data - theme= "dark"] select{
-  background - image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23f5f5f7' stroke='%23f5f5f7' stroke-width='0.5' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
-  background - repeat: no - repeat;
-  background - position: right 12px center;
-  background - size: 12px;
+body[data-theme="dark"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23f5f5f7' stroke='%23f5f5f7' stroke-width='0.5' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
 }
-body[data - theme= "dark"] optgroup{
+body[data-theme="dark"] optgroup {
   color: #d1d1d6;
   background: #1c1c1e;
-  font - size: 14px;
-  font - weight: 600;
+  font-size: 14px;
+  font-weight: 600;
   padding: 10px 14px;
-  -webkit - font - smoothing: antialiased;
-  -moz - osx - font - smoothing: grayscale;
-  text - rendering: optimizeLegibility;
-  font - feature - settings: "kern" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
   border: none;
 }
-body[data - theme= "dark"] option{
+body[data-theme="dark"] option {
   color: #f5f5f7;
   background: #2c2c2e;
-  font - size: 14.5px;
-  font - weight: 400;
+  font-size: 14.5px;
+  font-weight: 400;
   padding: 10px 14px;
-  line - height: 1.6;
-  -webkit - font - smoothing: antialiased;
-  -moz - osx - font - smoothing: grayscale;
-  text - rendering: optimizeLegibility;
-  font - feature - settings: "kern" 1;
-  letter - spacing: 0.01em;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  letter-spacing: 0.01em;
 }
-body[data - theme= "dark"]option: hover,
-  body[data - theme= "dark"]option:focus{
+body[data-theme="dark"] option:hover,
+body[data-theme="dark"] option:focus {
   background: #3a3a3c;
   color: #ffffff;
 }
-body[data - theme= "dark"]input: hover,
-  body[data - theme= "dark"]textarea: hover,
-    body[data - theme= "dark"]select:hover{
-  border - color: #98989d;
+body[data-theme="dark"] input:hover,
+body[data-theme="dark"] textarea:hover,
+body[data-theme="dark"] select:hover {
+  border-color: #98989d;
   transform: translateY(-1px);
-  box - shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
-body[data - theme= "dark"]input: focus,
-  body[data - theme= "dark"]textarea: focus,
-    body[data - theme= "dark"]select:focus{
-  border - color: #8b5cf6;
-  box - shadow: 0 0 0 4px rgba(139, 92, 246, 0.18), 0 2px 8px rgba(139, 92, 246, 0.2);
+body[data-theme="dark"] input:focus,
+body[data-theme="dark"] textarea:focus,
+body[data-theme="dark"] select:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.18), 0 2px 8px rgba(139, 92, 246, 0.2);
   transform: translateY(-2px);
 }
-body[data - theme= "dark"]input.error,
-  body[data - theme= "dark"]textarea.error,
-    body[data - theme= "dark"]select.error{
-  border - color: #FF453A;
+body[data-theme="dark"] input.error,
+body[data-theme="dark"] textarea.error,
+body[data-theme="dark"] select.error {
+  border-color: #FF453A;
 }
-body[data - theme= "dark"]input.success,
-  body[data - theme= "dark"]textarea.success,
-    body[data - theme= "dark"]select.success{
-  border - color: #32D74B;
+body[data-theme="dark"] input.success,
+body[data-theme="dark"] textarea.success,
+body[data-theme="dark"] select.success {
+  border-color: #32D74B;
 }
-body[data - theme= "dark"]input:: placeholder,
-  body[data - theme= "dark"]textarea::placeholder{
+body[data-theme="dark"] input::placeholder,
+body[data-theme="dark"] textarea::placeholder {
   color: #98989d;
 }
-body[data - theme= "dark"]input: disabled,
-  body[data - theme= "dark"]textarea: disabled,
-    body[data - theme= "dark"]select:disabled{
+body[data-theme="dark"] input:disabled,
+body[data-theme="dark"] textarea:disabled,
+body[data-theme="dark"] select:disabled {
   background: #1c1c1e;
 }
 
 /* ========== 按钮 ========== */
-button{
+button {
   transition: all 0.15s ease;
   cursor: pointer;
-  font - weight: 500;
-  border - radius: 10px;
-  -webkit - tap - highlight - color: transparent;
+  font-weight: 500;
+  border-radius: 10px;
+  -webkit-tap-highlight-color: transparent;
 }
-button:hover{
+button:hover {
   opacity: 0.85;
   transform: scale(0.98);
 }
-button:active{
+button:active {
   opacity: 0.7;
   transform: scale(0.96);
 }
-button:disabled{
+button:disabled {
   opacity: 0.4;
-  cursor: not - allowed;
+  cursor: not-allowed;
   transform: none!important;
 }
 
 /* 主按钮（渐变蓝色背景）*/
-.btn - primary{
+.btn-primary {
   background: #007AFF;
   color: #ffffff;
   border: none;
   padding: 12px 24px;
-  font - size: 15px;
-  box - shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+  font-size: 15px;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
   position: relative;
   overflow: hidden;
 }
-.btn - primary:hover{
+.btn-primary:hover {
   background: #0077ED;
-  box - shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
 }
-.btn - primary.loading{
-  pointer - events: none;
+.btn-primary.loading {
+  pointer-events: none;
   opacity: 0.8;
 }
-.btn - primary.loading::after{
+.btn-primary.loading::after {
   content: '';
   position: absolute;
   width: 16px;
   height: 16px;
   border: 2px solid #ffffff;
-  border - top - color: transparent;
-  border - radius: 50 %;
+  border-top-color: transparent;
+  border-radius: 50%;
   animation: spin 0.6s linear infinite;
-  margin - left: 8px;
+  margin-left: 8px;
 }
-.btn - primary.success{
+.btn-primary.success {
   background: #34C759;
   animation: successPulse 0.5s ease;
 }
-.btn - primary.error{
+.btn-primary.error {
   background: #FF3B30;
   animation: errorShake 0.4s ease;
 }
 @keyframes successPulse {
-  0 % { transform: scale(1); }
-  50 % { transform: scale(1.05); box- shadow: 0 0 20px rgba(52, 199, 89, 0.5);
-}
-100 % { transform: scale(1); }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(52, 199, 89, 0.5); }
+  100% { transform: scale(1); }
 }
 @keyframes errorShake {
-  0 %, 100 % { transform: translateX(0); }
-  25 % { transform: translateX(-10px); }
-  75 % { transform: translateX(10px); }
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
 }
-body[data - theme= "dark"] .btn - primary{
+body[data-theme="dark"] .btn-primary {
   background: #0A84FF;
-  box - shadow: 0 2px 8px rgba(10, 132, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(10, 132, 255, 0.3);
 }
-body[data - theme= "dark"] .btn - primary:hover{
+body[data-theme="dark"] .btn-primary:hover {
   background: #0077ED;
 }
-body[data - theme= "dark"] .btn - primary.success{
+body[data-theme="dark"] .btn-primary.success {
   background: #32D74B;
 }
-body[data - theme= "dark"] .btn - primary.error{
+body[data-theme="dark"] .btn-primary.error {
   background: #FF453A;
 }
 
 /* 次要按钮（边框按钮）*/
-.btn - secondary{
+.btn-secondary {
   background: transparent;
   color: #1d1d1f;
   border: 1px solid #d2d2d7;
   padding: 8px 16px;
-  font - size: 13px;
+  font-size: 13px;
 }
-.btn - secondary:hover{
+.btn-secondary:hover {
   background: #f5f5f7;
   opacity: 1;
 }
-body[data - theme= "dark"] .btn - secondary{
+body[data-theme="dark"] .btn-secondary {
   color: #f5f5f7;
-  border - color: #38383a;
+  border-color: #38383a;
 }
-body[data - theme= "dark"] .btn - secondary:hover{
+body[data-theme="dark"] .btn-secondary:hover {
   background: #2c2c2e;
 }
 
 /* 危险按钮（删除等）*/
-.btn - danger{
+.btn-danger {
   background: transparent;
   color: #FF3B30;
   border: 1px solid #FF3B30;
   padding: 8px 16px;
-  font - size: 13px;
+  font-size: 13px;
 }
-.btn - danger:hover{
+.btn-danger:hover {
   background: #FF3B30;
   color: #ffffff;
   opacity: 1;
 }
-body[data - theme= "dark"] .btn - danger{
+body[data-theme="dark"] .btn-danger {
   color: #FF453A;
-  border - color: #FF453A;
+  border-color: #FF453A;
 }
-body[data - theme= "dark"] .btn - danger:hover{
+body[data-theme="dark"] .btn-danger:hover {
   background: #FF453A;
 }
 
 /* ========== 响应式设计 ========== */
-@media(max - width: 640px) {
-  html, body{
-    font - size: 14px;
+@media(max-width: 640px) {
+  html, body {
+    font-size: 14px;
   }
-  .grad - title{
-    font - size: 24px;
-    line - height: 1.3;
+  .grad-title {
+    font-size: 24px;
+    line-height: 1.3;
   }
-  .panel,.card{
-    border - radius: 12px;
+  .panel, .card {
+    border-radius: 12px;
   }
-  button{
-    min - height: 44px;
-    min - width: 44px;
+  button {
+    min-height: 44px;
+    min-width: 44px;
   }
-  .toast{
-    min - width: 260px;
-    max - width: calc(100vw - 40px);
+  .toast {
+    min-width: 260px;
+    max-width: calc(100vw - 40px);
   }
   /* 移动端卡片可左右滑动 */
-  .swipeable{
-    touch - action: pan - y;
-    user - select: none;
+  .swipeable {
+    touch-action: pan-y;
+    user-select: none;
   }
 }
 
 /* ========== 数字计数动画 ========== */
-.count - up {
-  display: inline - block;
-  animation: countUp 0.8s cubic - bezier(0.4, 0, 0.2, 1);
+.count-up {
+  display: inline-block;
+  animation: countUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 @keyframes countUp {
-  0 % {
+  0% {
     opacity: 0;
     transform: translateY(20px) scale(0.8);
   }
-  100 % {
+  100% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
 /* ========== 进度条动画 ========== */
-.progress - bar {
-  transition: width 0.6s cubic - bezier(0.4, 0, 0.2, 1);
+.progress-bar {
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ========== ECharts 地图容器 ========== */
-#server - map - chart {
-  border - radius: 12px;
+#server-map-chart {
+  border-radius: 12px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.5);
-  backdrop - filter: blur(10px);
-  -webkit - backdrop - filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
-body[data - theme= "dark"]#server - map - chart {
+body[data-theme="dark"] #server-map-chart {
   background: rgba(28, 28, 30, 0.5);
 }
 
 /* ========== 卡片展开/收起 ========== */
 .expandable {
-  max - height: 0!important;
+  max-height: 0!important;
   overflow: hidden;
-  transition: max - height 0.35s cubic - bezier(0.4, 0, 0.2, 1),
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
     opacity 0.3s ease,
-      padding 0.35s cubic - bezier(0.4, 0, 0.2, 1);
+      padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
-  padding - top: 0!important;
-  padding - bottom: 0!important;
-  /* 移除 will-change，避免泛白 */
+  padding-top: 0!important;
+  padding-bottom: 0!important;
 }
-.server - list {
-  max - height: 5000px; /* 足够大的值以容纳所有内容 */
+.server-list {
+  max-height: 5000px; /* 足够大的值以容纳所有内容 */
   opacity: 1;
-  transition: max - height 0.35s cubic - bezier(0.4, 0, 0.2, 1),
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
     opacity 0.3s ease,
-      padding 0.35s cubic - bezier(0.4, 0, 0.2, 1);
-  /* 移除 will-change 和 contain，避免泛白 */
+      padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 展开/收起按钮样式优化 */
-.toggle - expand {
-  user - select: none;
-  -webkit - user - select: none;
-  -moz - user - select: none;
+.toggle-expand {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
 }
-.toggle - expand:active {
+.toggle-expand:active {
   transform: scale(0.95);
 }
-body[data - theme= "dark"] .toggle - expand:hover {
+body[data-theme="dark"] .toggle-expand:hover {
   background: rgba(10, 132, 255, 0.1);
-  border - color: rgba(10, 132, 255, 0.3);
+  border-color: rgba(10, 132, 255, 0.3);
 }
 
 /* ========== 链接样式 ========== */
-a{
+a {
   color: #007AFF;
-  text - decoration: none;
+  text-decoration: none;
   transition: all 0.2s ease;
 }
-a:hover{
+a:hover {
   opacity: 0.8;
 }
-body[data - theme= "dark"] a{
+body[data-theme="dark"] a {
   color: #0A84FF;
 }
 
 /* ========== Code 标签 ========== */
-code{
+code {
   padding: 2px 6px;
-  border - radius: 4px;
+  border-radius: 4px;
   background: rgba(0, 0, 0, 0.05);
   color: #1d1d1f;
-  font - family: ui - monospace, SFMono - Regular, Menlo, Monaco, Consolas, monospace;
-  font - size: 0.9em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
 }
-body[data - theme= "dark"] code{
+body[data-theme="dark"] code {
   background: rgba(255, 255, 255, 0.1);
   color: #f5f5f7;
 }
 
 /* ========== 可访问性 ========== */
-button: focus - visible,
-  input: focus - visible,
-    textarea: focus - visible,
-      select: focus - visible,
-        a: focus - visible{
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
   outline: 2px solid #007AFF;
-  outline - offset: 2px;
+  outline-offset: 2px;
 }
-body[data - theme= "dark"]button: focus - visible,
-  body[data - theme= "dark"]input: focus - visible,
-    body[data - theme= "dark"]textarea: focus - visible,
-      body[data - theme= "dark"]select: focus - visible,
-        body[data - theme= "dark"]a: focus - visible{
-  outline - color: #0A84FF;
+body[data-theme="dark"] button:focus-visible,
+body[data-theme="dark"] input:focus-visible,
+body[data-theme="dark"] textarea:focus-visible,
+body[data-theme="dark"] select:focus-visible,
+body[data-theme="dark"] a:focus-visible {
+  outline-color: #0A84FF;
 }
 
 /* ========== 滚动条样式 ========== */
-:: -webkit - scrollbar{
+::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-:: -webkit - scrollbar - track{
+::-webkit-scrollbar-track {
   background: transparent;
 }
-:: -webkit - scrollbar - thumb{
+::-webkit-scrollbar-thumb {
   background: #d2d2d7;
-  border - radius: 4px;
+  border-radius: 4px;
 }
-:: -webkit - scrollbar - thumb:hover{
+::-webkit-scrollbar-thumb:hover {
   background: #86868b;
 }
-body[data - theme= "dark"] :: -webkit - scrollbar - thumb{
+body[data-theme="dark"] ::-webkit-scrollbar-thumb {
   background: #38383a;
 }
-body[data - theme= "dark"] :: -webkit - scrollbar - thumb:hover{
+body[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
   background: #98989d;
 }
 </style>
