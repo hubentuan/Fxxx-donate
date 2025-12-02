@@ -1200,61 +1200,62 @@ function renderLeaderboard(){
     // 性能优化：构建服务器列表HTML
     let serversHTML = '';
     (it.servers||[]).forEach(srv=>{
-      serversHTML += '<div class="panel border rounded-xl p-4 transition-all hover:shadow-sm">'+
+      serversHTML += '<div class="bg-white/50 dark:bg-white/5 border border-white/20 rounded-2xl p-4 transition-all hover:bg-white/80 dark:hover:bg-white/10">'+
         '<div class="flex items-start justify-between gap-3 mb-3">'+
-          '<div class="flex items-center gap-2.5 flex-1 min-w-0">'+
-            '<span class="text-xl flex-shrink-0">🌍</span>'+
-            '<div class="flex flex-col gap-1 min-w-0">'+
-              '<span class="font-semibold text-sm truncate">'+(srv.country||'未填写')+(srv.region?' · '+srv.region:'')+'</span>'+
-              (srv.ipLocation?'<span class="text-xs muted truncate">'+srv.ipLocation+'</span>':'')+
+          '<div class="flex items-center gap-3 flex-1 min-w-0">'+
+            '<span class="text-2xl flex-shrink-0 filter drop-shadow-sm">🌍</span>'+
+            '<div class="flex flex-col gap-0.5 min-w-0">'+
+              '<span class="font-bold text-sm truncate tracking-tight">'+(srv.country||'未填写')+(srv.region?' · '+srv.region:'')+'</span>'+
+              (srv.ipLocation?'<span class="text-xs text-secondary truncate font-medium">'+srv.ipLocation+'</span>':'')+
             '</div>'+
           '</div>'+
-          '<span class="'+statusCls(srv.status)+' text-xs px-2.5 py-1 rounded-full font-semibold flex-shrink-0">'+statusText(srv.status)+'</span>'+
+          '<span class="'+statusCls(srv.status)+' text-xs px-3 py-1 rounded-full font-bold flex-shrink-0 shadow-sm">'+statusText(srv.status)+'</span>'+
         '</div>'+
         '<div class="grid grid-cols-2 gap-3 text-sm">'+
-          '<div class="flex items-center gap-2 panel border rounded-lg px-3 py-2">'+
+          '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-xl px-3 py-2">'+
             '<span class="opacity-60">📊</span>'+
-            '<span class="truncate font-medium">'+(srv.traffic||'未填写')+'</span>'+
+            '<span class="truncate font-semibold text-xs">'+(srv.traffic||'未填写')+'</span>'+
           '</div>'+
-          '<div class="flex items-center gap-2 panel border rounded-lg px-3 py-2">'+
+          '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 rounded-xl px-3 py-2">'+
             '<span class="opacity-60">📅</span>'+
-            '<span class="truncate font-medium">'+(srv.expiryDate||'未填写')+'</span>'+
+            '<span class="truncate font-semibold text-xs">'+(srv.expiryDate||'未填写')+'</span>'+
           '</div>'+
         '</div>'+
-        (srv.specs?'<div class="text-sm mt-3 panel border rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">⚙️</span><span class="flex-1">'+srv.specs+'</span></div>':'')+
-        (srv.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2.5 flex items-start gap-2"><span class="opacity-60 text-base">💬</span><span class="flex-1">'+srv.note+'</span></div>':'');
+        (srv.specs?'<div class="text-xs mt-3 bg-black/5 dark:bg-white/5 rounded-xl px-3 py-2.5 flex items-start gap-2 font-medium"><span class="opacity-60 text-sm">⚙️</span><span class="flex-1 leading-relaxed">'+srv.specs+'</span></div>':'')+
+        (srv.note?'<div class="text-xs mt-3 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl px-3 py-2.5 flex items-start gap-2 font-medium"><span class="opacity-60 text-sm">💬</span><span class="flex-1 leading-relaxed">'+srv.note+'</span></div>':'');
       serversHTML += '</div>';
     });
 
     // 性能优化：一次性构建完整的卡片HTML
     const wrap=document.createElement('div');
-    wrap.className='card border transition-all' + (idx < animationLimit ? ' animate-slide-in' : '');
-    if(idx < animationLimit) wrap.style.animationDelay = (idx * 0.05) + 's';
+    wrap.className='glass-panel mb-6 transition-all duration-500' + (idx < animationLimit ? ' animate-entry' : '');
+    if(idx < animationLimit) wrap.style.animationDelay = (idx * 0.1) + 's';
     wrap.dataset.cardId = cardId;
 
     wrap.innerHTML =
-      '<div class="flex items-center justify-between p-6 pb-5 border-b border-gray-100 dark:border-gray-800 gap-6 bg-gradient-to-r '+gradientClass+'">'+
-        '<div class="flex items-center gap-5 flex-1 min-w-0">'+
-          '<div class="flex-shrink-0 w-14 h-14 flex items-center justify-center text-4xl filter drop-shadow-md">'+medalByRank(idx)+'</div>'+
-          '<div class="flex flex-col gap-1.5 min-w-0">'+
-            '<a class="font-bold text-xl md:text-2xl hover:text-blue-500 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a>'+
+      '<div class="flex items-center justify-between p-6 md:p-8 gap-6 relative overflow-hidden group">'+
+        '<div class="absolute inset-0 bg-gradient-to-r '+gradientClass+' opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>'+
+        '<div class="relative z-10 flex items-center gap-6 flex-1 min-w-0">'+
+          '<div class="flex-shrink-0 w-16 h-16 flex items-center justify-center text-5xl filter drop-shadow-xl transform group-hover:scale-110 transition-transform duration-300">'+medalByRank(idx)+'</div>'+
+          '<div class="flex flex-col gap-2 min-w-0">'+
+            '<a class="font-bold text-2xl md:text-3xl tracking-tight hover:text-blue-500 truncate transition-colors" target="_blank" href="https://linux.do/u/'+encodeURIComponent(it.username)+'">@'+it.username+'</a>'+
             '<div class="flex items-center gap-3 flex-wrap">'+
               renderBadge(badge)+
-              '<span class="text-xs font-medium text-secondary bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">共投喂 '+it.count+' 台</span>'+
+              '<span class="text-xs font-bold text-secondary bg-black/5 dark:bg-white/10 px-2.5 py-1 rounded-lg">共投喂 '+it.count+' 台</span>'+
             '</div>'+
           '</div>'+
         '</div>'+
-        '<div class="flex items-center gap-4">'+
-          '<div class="flex-shrink-0 flex flex-col items-center justify-center w-20 h-20 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">'+
-            '<div class="font-bold text-3xl leading-none mb-1 text-primary">'+it.count+'</div>'+
-            '<div class="text-[10px] font-semibold text-secondary uppercase tracking-wider">VPS</div>'+
+        '<div class="relative z-10 flex items-center gap-6">'+
+          '<div class="hidden md:flex flex-col items-end">'+
+            '<div class="font-bold text-4xl leading-none mb-1 text-primary tracking-tighter">'+it.count+'</div>'+
+            '<div class="text-[10px] font-bold text-secondary uppercase tracking-widest">VPS Nodes</div>'+
           '</div>'+
-          '<button class="toggle-expand flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-secondary hover:text-blue-500 transition-all cursor-pointer" data-card="'+cardId+'" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
-            '<span class="text-lg transition-transform duration-300 '+(isExpanded ? 'rotate-0' : '-rotate-90')+'">'+'▼'+'</span>'+
+          '<button class="toggle-expand flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 hover:bg-blue-500 hover:text-white transition-all cursor-pointer shadow-sm hover:shadow-blue-500/30" data-card="'+cardId+'" title="'+(isExpanded ? '收起列表' : '展开列表')+'">'+
+            '<span class="text-xl transition-transform duration-300 '+(isExpanded ? 'rotate-0' : '-rotate-90')+'">'+'▼'+'</span>'+
           '</button>'+
         '</div>'+
       '</div>'+
-      '<div class="server-list px-6 pb-6 pt-5 space-y-4 bg-gray-50/50 dark:bg-black/20'+(isExpanded ? '' : ' expandable')+'">'+
+      '<div class="server-list px-6 md:px-8 pb-8 pt-2 space-y-4 '+(isExpanded ? '' : ' expandable')+'">'+
         serversHTML+
       '</div>';
 
