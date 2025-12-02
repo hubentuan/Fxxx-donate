@@ -92,7 +92,7 @@ const isIPv6 = (ip: string) => {
 const isValidIP = (ip: string) => isIPv4(ip) || isIPv6(ip);
 
 async function getAllVPS(): Promise<VPSServer[]> {
-  const iter = kv.list<VPSServer>({ prefix: ['vps'] });
+  const iter = kv.list({ prefix: ['vps'] });
   const arr: VPSServer[] = [];
   for await (const e of iter) arr.push(e.value);
   return arr.sort((a, b) => b.donatedAt - a.donatedAt);
@@ -119,7 +119,7 @@ async function portOK(ip: string, port: number) {
 async function addVPS(server: Omit<VPSServer, 'id'>) {
   const v: VPSServer = { id: genId(), ...server };
   await kv.set(['vps', v.id], v);
-  const r = await kv.get<string[]>(['user_donations', v.donatedBy]);
+  const r = await kv.get(['user_donations', v.donatedBy]);
   const list = r.value || [];
   list.push(v.id);
   await kv.set(['user_donations', v.donatedBy], list);
@@ -127,10 +127,10 @@ async function addVPS(server: Omit<VPSServer, 'id'>) {
 }
 
 async function delVPS(id: string) {
-  const r = await kv.get<VPSServer>(['vps', id]);
+  const r = await kv.get(['vps', id]);
   if (!r.value) return false;
   await kv.delete(['vps', id]);
-  const u = await kv.get<string[]>(['user_donations', r.value.donatedBy]);
+  const u = await kv.get(['user_donations', r.value.donatedBy]);
   if (u.value) {
     await kv.set(['user_donations', r.value.donatedBy], u.value.filter(x => x !== id));
   }
@@ -138,7 +138,7 @@ async function delVPS(id: string) {
 }
 
 async function updVPSStatus(id: string, s: VPSServer['status']) {
-  const r = await kv.get<VPSServer>(['vps', id]);
+  const r = await kv.get(['vps', id]);
   if (!r.value) return false;
   r.value.status = s;
   await kv.set(['vps', id], r.value);
@@ -147,18 +147,18 @@ async function updVPSStatus(id: string, s: VPSServer['status']) {
 
 /* ==================== 配置 & 会话 ==================== */
 const getOAuth = async () =>
-  (await kv.get<OAuthConfig>(['config', 'oauth'])).value || null;
+  (await kv.get(['config', 'oauth'])).value || null;
 const setOAuth = async (c: OAuthConfig) => {
   await kv.set(['config', 'oauth'], c);
 };
 const getAdminPwd = async () =>
-  (await kv.get<string>(['config', 'admin_password'])).value || 'admin123';
+  (await kv.get(['config', 'admin_password'])).value || 'admin123';
 const setAdminPwd = async (p: string) => {
   await kv.set(['config', 'admin_password'], p);
 };
 
 async function getSession(id: string) {
-  const r = await kv.get<Session>(['sessions', id]);
+  const r = await kv.get(['sessions', id]);
   if (!r.value) return null;
   if (r.value.expiresAt < Date.now()) {
     await kv.delete(['sessions', id]);
@@ -186,7 +186,7 @@ async function createSession(
 }
 
 async function getUser(linuxDoId: string) {
-  return (await kv.get<User>(['users', linuxDoId])).value || null;
+  return (await kv.get(['users', linuxDoId])).value || null;
 }
 
 async function upsertUser(linuxDoId: string, username: string, avatarUrl?: string) {
@@ -346,7 +346,7 @@ app.get('/api/logout', async (c: Context) => {
 
 app.get('/api/user/info', requireAuth, async (c: Context) => {
   const s = c.get('session');
-  const r = await kv.get<string[]>(['user_donations', s.userId]);
+  const r = await kv.get(['user_donations', s.userId]);
   return c.json({
     success: true,
     data: {
@@ -360,11 +360,11 @@ app.get('/api/user/info', requireAuth, async (c: Context) => {
 
 app.get('/api/user/donations', requireAuth, async (c: Context) => {
   const s = c.get('session');
-  const ids = (await kv.get<string[]>(['user_donations', s.userId])).value || [];
+  const ids = (await kv.get(['user_donations', s.userId])).value || [];
   const arr: VPSServer[] = [];
 
   for (const id of ids) {
-    const r = await kv.get<VPSServer>(['vps', id]);
+    const r = await kv.get(['vps', id]);
     if (r.value) arr.push(r.value);
   }
 
@@ -399,7 +399,7 @@ app.put('/api/user/donations/:id/note', requireAuth, async (c: Context) => {
   const id = c.req.param('id');
   const { note } = await c.req.json();
 
-  const r = await kv.get<VPSServer>(['vps', id]);
+  const r = await kv.get(['vps', id]);
   if (!r.value) return c.json({ success: false, message: 'VPS 不存在' }, 404);
   if (r.value.donatedBy !== s.userId)
     return c.json({ success: false, message: '无权修改' }, 403);
