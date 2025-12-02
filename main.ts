@@ -441,7 +441,7 @@ app.put('/api/user/donations/:id/note', requireAuth, async (c: Context) => {
 });
 
 /* ---- 公共榜单 API ---- */
-app.get('/api/leaderboard', async c => {
+app.get('/api/leaderboard', async (c: Context) => {
   try {
     const all = await getAllVPS();
     const map = new Map<string, { username: string; count: number; servers: any[] }>();
@@ -478,7 +478,7 @@ app.get('/api/leaderboard', async c => {
 });
 
 /* ---- 投喂 API ---- */
-app.post('/api/donate', requireAuth, async c => {
+app.post('/api/donate', requireAuth, async (c: Context) => {
   const s = c.get('session');
   const body = await c.req.json();
   const {
@@ -578,7 +578,7 @@ app.post('/api/donate', requireAuth, async c => {
 });
 
 /* ---- 管理员 API ---- */
-app.get('/api/admin/check-session', async c => {
+app.get('/api/admin/check-session', async (c: Context) => {
   try {
     const sid = getCookie(c, 'admin_session_id');
     if (!sid) return c.json({ success: false, isAdmin: false });
@@ -597,7 +597,7 @@ app.get('/api/admin/check-session', async c => {
   }
 });
 
-app.post('/api/admin/login', async c => {
+app.post('/api/admin/login', async (c: Context) => {
   const { password } = await c.req.json();
   const real = await getAdminPwd();
 
@@ -627,7 +627,7 @@ app.post('/api/admin/login', async c => {
   return c.json({ success: true, message: '登录成功' });
 });
 
-app.get('/api/admin/logout', async c => {
+app.get('/api/admin/logout', async (c: Context) => {
   const sid = getCookie(c, 'admin_session_id');
   if (sid) await kv.delete(['sessions', sid]);
   setCookie(c, 'admin_session_id', '', { maxAge: 0, path: '/' });
@@ -644,7 +644,7 @@ app.get('/api/admin/vps', requireAdmin, async c => {
   }
 });
 
-app.delete('/api/admin/vps/:id', requireAdmin, async c => {
+app.delete('/api/admin/vps/:id', requireAdmin, async (c: Context) => {
   const ok = await delVPS(c.req.param('id'));
   return c.json(
     ok ? { success: true, message: 'VPS 已删除' } : { success: false, message: '不存在' },
@@ -652,7 +652,7 @@ app.delete('/api/admin/vps/:id', requireAdmin, async c => {
   );
 });
 
-app.put('/api/admin/vps/:id/status', requireAdmin, async c => {
+app.put('/api/admin/vps/:id/status', requireAdmin, async (c: Context) => {
   const id = c.req.param('id');
   const { status } = await c.req.json();
 
@@ -667,11 +667,11 @@ app.put('/api/admin/vps/:id/status', requireAdmin, async c => {
   );
 });
 
-app.put('/api/admin/vps/:id/notes', requireAdmin, async c => {
+app.put('/api/admin/vps/:id/notes', requireAdmin, async (c: Context) => {
   const id = c.req.param('id');
   const { note, adminNote, country, region, traffic, expiryDate, specs } = await c.req.json();
 
-  const r = await kv.get<VPSServer>(['vps', id]);
+  const r = await kv.get(['vps', id]);
   if (!r.value) return c.json({ success: false, message: '不存在' }, 404);
 
   if (note !== undefined) r.value.note = String(note);
@@ -686,12 +686,12 @@ app.put('/api/admin/vps/:id/notes', requireAdmin, async c => {
   return c.json({ success: true, message: '信息已更新' });
 });
 
-app.get('/api/admin/config/oauth', requireAdmin, async c => {
+app.get('/api/admin/config/oauth', requireAdmin, async (c: Context) => {
   const oauth = await getOAuth();
   return c.json({ success: true, data: oauth || {} });
 });
 
-app.put('/api/admin/config/oauth', requireAdmin, async c => {
+app.put('/api/admin/config/oauth', requireAdmin, async (c: Context) => {
   const { clientId, clientSecret, redirectUri } = await c.req.json();
 
   if (!clientId || !clientSecret || !redirectUri) {
@@ -702,7 +702,7 @@ app.put('/api/admin/config/oauth', requireAdmin, async c => {
   return c.json({ success: true, message: 'OAuth 配置已更新' });
 });
 
-app.put('/api/admin/config/password', requireAdmin, async c => {
+app.put('/api/admin/config/password', requireAdmin, async (c: Context) => {
   const { password } = await c.req.json();
 
   if (!password || String(password).length < 6) {
@@ -714,7 +714,7 @@ app.put('/api/admin/config/password', requireAdmin, async c => {
 });
 
 /* VPS 配置编辑 */
-app.put('/api/admin/vps/:id/config', requireAdmin, async c => {
+app.put('/api/admin/vps/:id/config', requireAdmin, async (c: Context) => {
   const id = c.req.param('id');
   const { ip, port, username, authType, password, privateKey } = await c.req.json();
 
@@ -744,7 +744,7 @@ app.put('/api/admin/vps/:id/config', requireAdmin, async c => {
   }
 
   // 获取现有VPS记录
-  const r = await kv.get<VPSServer>(['vps', id]);
+  const r = await kv.get(['vps', id]);
   if (!r.value) {
     return c.json({ success: false, message: 'VPS 不存在' }, 404);
   }
@@ -795,7 +795,7 @@ app.put('/api/admin/vps/:id/config', requireAdmin, async c => {
 });
 
 /* 后端统计：今日新增按固定东八区日期判断 */
-app.get('/api/admin/stats', requireAdmin, async c => {
+app.get('/api/admin/stats', requireAdmin, async (c: Context) => {
   try {
     const all = await getAllVPS();
 
@@ -852,9 +852,9 @@ app.get('/api/admin/stats', requireAdmin, async c => {
   }
 });
 
-app.post('/api/admin/vps/:id/mark-verified', requireAdmin, async c => {
+app.post('/api/admin/vps/:id/mark-verified', requireAdmin, async (c: Context) => {
   const id = c.req.param('id');
-  const r = await kv.get<VPSServer>(['vps', id]);
+  const r = await kv.get(['vps', id]);
 
   if (!r.value) return c.json({ success: false, message: '不存在' }, 404);
 
@@ -868,9 +868,9 @@ app.post('/api/admin/vps/:id/mark-verified', requireAdmin, async c => {
 });
 
 /* 单个一键验证接口 */
-app.post('/api/admin/vps/:id/verify', requireAdmin, async c => {
+app.post('/api/admin/vps/:id/verify', requireAdmin, async (c: Context) => {
   const id = c.req.param('id');
-  const r = await kv.get<VPSServer>(['vps', id]);
+  const r = await kv.get(['vps', id]);
   if (!r.value) return c.json({ success: false, message: '不存在' }, 404);
 
   const v = r.value;
@@ -911,7 +911,7 @@ app.post('/api/admin/vps/:id/verify', requireAdmin, async c => {
 });
 
 /* 一键验证全部 VPS */
-app.post('/api/admin/verify-all', requireAdmin, async c => {
+app.post('/api/admin/verify-all', requireAdmin, async (c: Context) => {
   const all = await getAllVPS();
   let total = 0;
   let success = 0;
@@ -920,7 +920,7 @@ app.post('/api/admin/verify-all', requireAdmin, async c => {
   for (const v of all) {
     total++;
     const ok = await portOK(v.ip, v.port);
-    const r = await kv.get<VPSServer>(['vps', v.id]);
+    const r = await kv.get(['vps', v.id]);
     if (!r.value) continue;
     const cur = r.value;
     cur.lastVerifyAt = Date.now();
@@ -946,7 +946,7 @@ app.post('/api/admin/verify-all', requireAdmin, async c => {
 });
 
 /* ==================== /donate 榜单页 ==================== */
-app.get('/donate', c => {
+app.get('/donate', (c: Context) => {
   const head = commonHead('风萧萧公益机场 · VPS 投喂榜');
   const html = `<!doctype html><html lang="zh-CN"><head>${head}
 <script src="https://unpkg.com/globe.gl"></script>
@@ -3037,286 +3037,70 @@ app.get('/donate/vps', c => {
                 </div>
               </div>
 
-              <!-- Password/Key -->
-              <div id="password-field" class="group animate-fade-in">
-                <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
-                  密码
+              <!-- Auth Fields -->
+              <div id="password-field" class="group">
+                <label class="block mb-2.5 text-sm font-medium text-slate-400 group-focus-within:text-indigo-400 transition-colors">
+                  密码 <span class="text-red-400">*</span>
                 </label>
                 <div class="relative">
-                  <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.key}</div>
-                  <input name="password" type="password" placeholder="输入服务器密码"
-                         class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                  <div class="absolute left-5 top-4 w-6 h-6 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.key}</div>
+                  <input name="password" type="password" placeholder="••••••••••••"
+                         class="w-full bg-white text-slate-900 border-0 rounded-xl py-4 pl-14 pr-5 placeholder-slate-400 focus:ring-4 focus:ring-indigo-500/30 transition-all outline-none text-lg font-medium shadow-[0_0_20px_rgba(255,255,255,0.1)]" />
+                </div>
+              </div>
+              
+              <div id="private-key-field" class="hidden group">
+                <label class="block mb-2.5 text-sm font-medium text-slate-400 group-focus-within:text-indigo-400 transition-colors">
+                  SSH 私钥 <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                  <div class="absolute left-5 top-4 w-6 h-6 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.key}</div>
+                  <textarea name="privateKey" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----..." rows="5"
+                            class="w-full bg-[#1A1B26] border border-white/5 rounded-xl py-4 pl-14 pr-5 text-white placeholder-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none font-mono text-sm leading-relaxed"></textarea>
                 </div>
               </div>
 
-              <div id="key-field" class="hidden group animate-fade-in">
-                <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
-                  SSH 私钥
-                </label>
-                <textarea name="privateKey" rows="4" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
-                          class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 px-4 text-slate-200 font-mono text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none"></textarea>
-              </div>
-
-              <!-- Country & Region -->
+              <!-- Location -->
               <div class="grid md:grid-cols-2 gap-6">
-                 <div class="group">
-                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                <div class="group">
+                  <label class="block mb-2.5 text-sm font-medium text-slate-400 group-focus-within:text-indigo-400 transition-colors">
                     国家/地区 <span class="text-red-400">*</span>
                   </label>
                   <div class="relative">
-                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 z-10 pointer-events-none">${ICONS.globe}</div>
-                    <div class="absolute right-4 top-3.5 w-5 h-5 text-slate-500 z-10 pointer-events-none">${ICONS.chevronDown}</div>
-                    <select name="country" required class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-10 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none appearance-none">
-<option value="">请选择国家/区域</option>
-
-<!-- 🌏 亚洲（东亚 / 东南亚 / 南亚 / 中亚） -->
-<optgroup label="🌏 亚洲">
-  <!-- 东亚 / 东北亚 -->
-  <option value="🇨🇳 中国大陆">🇨🇳 中国大陆</option>
-  <option value="🇭🇰 中国香港">🇭🇰 中国香港</option>
-  <option value="🇲🇴 中国澳门">🇲🇴 中国澳门</option>
-  <option value="🇹🇼 中国台湾">🇹🇼 中国台湾</option>
-  <option value="🇯🇵 日本">🇯🇵 日本</option>
-  <option value="🇰🇷 韩国">🇰🇷 韩国</option>
-  <option value="🇰🇵 朝鲜">🇰🇵 朝鲜</option>
-  <option value="🇲🇳 蒙古">🇲🇳 蒙古</option>
-
-  <!-- 东南亚 -->
-  <option value="🇻🇳 越南">🇻🇳 越南</option>
-  <option value="🇹🇭 泰国">🇹🇭 泰国</option>
-  <option value="🇲🇾 马来西亚">🇲🇾 马来西亚</option>
-  <option value="🇸🇬 新加坡">🇸🇬 新加坡</option>
-  <option value="🇵🇭 菲律宾">🇵🇭 菲律宾</option>
-  <option value="🇮🇩 印度尼西亚">🇮🇩 印度尼西亚</option>
-  <option value="🇲🇲 缅甸">🇲🇲 缅甸</option>
-  <option value="🇰🇭 柬埔寨">🇰🇭 柬埔寨</option>
-  <option value="🇱🇦 老挝">🇱🇦 老挝</option>
-  <option value="🇧🇳 文莱">🇧🇳 文莱</option>
-  <option value="🇹🇱 东帝汶">🇹🇱 东帝汶</option>
-
-  <!-- 南亚 -->
-  <option value="🇮🇳 印度">🇮🇳 印度</option>
-  <option value="🇵🇰 巴基斯坦">🇵🇰 巴基斯坦</option>
-  <option value="🇧🇩 孟加拉国">🇧🇩 孟加拉国</option>
-  <option value="🇳🇵 尼泊尔">🇳🇵 尼泊尔</option>
-  <option value="🇱🇰 斯里兰卡">🇱🇰 斯里兰卡</option>
-  <option value="🇲🇻 马尔代夫">🇲🇻 马尔代夫</option>
-  <option value="🇧🇹 不丹">🇧🇹 不丹</option>
-  <option value="🇦🇫 阿富汗">🇦🇫 阿富汗</option>
-
-  <!-- 中亚 -->
-  <option value="🇰🇿 哈萨克斯坦">🇰🇿 哈萨克斯坦</option>
-  <option value="🇺🇿 乌兹别克斯坦">🇺🇿 乌兹别克斯坦</option>
-  <option value="🇹🇲 土库曼斯坦">🇹🇲 土库曼斯坦</option>
-  <option value="🇹🇯 塔吉克斯坦">🇹🇯 塔吉克斯坦</option>
-  <option value="🇰🇬 吉尔吉斯斯坦">🇰🇬 吉尔吉斯斯坦</option>
-</optgroup>
-
-<!-- 🌏 中东 / 西亚 -->
-<optgroup label="🌏 中东">
-  <option value="🇸🇦 沙特阿拉伯">🇸🇦 沙特阿拉伯</option>
-  <option value="🇦🇪 阿联酋">🇦🇪 阿联酋</option>
-  <option value="🇹🇷 土耳其">🇹🇷 土耳其</option>
-  <option value="🇮🇱 以色列">🇮🇱 以色列</option>
-  <option value="🇮🇷 伊朗">🇮🇷 伊朗</option>
-  <option value="🇮🇶 伊拉克">🇮🇶 伊拉克</option>
-  <option value="🇯🇴 约旦">🇯🇴 约旦</option>
-  <option value="🇰🇼 科威特">🇰🇼 科威特</option>
-  <option value="🇶🇦 卡塔尔">🇶🇦 卡塔尔</option>
-  <option value="🇴🇲 阿曼">🇴🇲 阿曼</option>
-  <option value="🇧🇭 巴林">🇧🇭 巴林</option>
-  <option value="🇱🇧 黎巴嫩">🇱🇧 黎巴嫩</option>
-  <option value="🇾🇪 也门">🇾🇪 也门</option>
-  <option value="🇸🇾 叙利亚">🇸🇾 叙利亚</option>
-  <option value="🇵🇸 巴勒斯坦">🇵🇸 巴勒斯坦</option>
-</optgroup>
-
-<!-- 🌍 欧洲 -->
-<optgroup label="🌍 欧洲">
-  <!-- 西欧 / 北欧 -->
-  <option value="🇬🇧 英国">🇬🇧 英国</option>
-  <option value="🇫🇷 法国">🇫🇷 法国</option>
-  <option value="🇩🇪 德国">🇩🇪 德国</option>
-  <option value="🇳🇱 荷兰">🇳🇱 荷兰</option>
-  <option value="🇧🇪 比利时">🇧🇪 比利时</option>
-  <option value="🇱🇺 卢森堡">🇱🇺 卢森堡</option>
-  <option value="🇨🇭 瑞士">🇨🇭 瑞士</option>
-  <option value="🇦🇹 奥地利">🇦🇹 奥地利</option>
-  <option value="🇮🇪 爱尔兰">🇮🇪 爱尔兰</option>
-  <option value="🇮🇸 冰岛">🇮🇸 冰岛</option>
-  <option value="🇩🇰 丹麦">🇩🇰 丹麦</option>
-  <option value="🇸🇪 瑞典">🇸🇪 瑞典</option>
-  <option value="🇳🇴 挪威">🇳🇴 挪威</option>
-  <option value="🇫🇮 芬兰">🇫🇮 芬兰</option>
-
-  <!-- 南欧 -->
-  <option value="🇪🇸 西班牙">🇪🇸 西班牙</option>
-  <option value="🇵🇹 葡萄牙">🇵🇹 葡萄牙</option>
-  <option value="🇮🇹 意大利">🇮🇹 意大利</option>
-  <option value="🇬🇷 希腊">🇬🇷 希腊</option>
-  <option value="🇲🇹 马耳他">🇲🇹 马耳他</option>
-  <option value="🇨🇾 塞浦路斯">🇨🇾 塞浦路斯</option>
-
-  <!-- 中东欧 / 巴尔干 -->
-  <option value="🇵🇱 波兰">🇵🇱 波兰</option>
-  <option value="🇨🇿 捷克">🇨🇿 捷克</option>
-  <option value="🇸🇰 斯洛伐克">🇸🇰 斯洛伐克</option>
-  <option value="🇭🇺 匈牙利">🇭🇺 匈牙利</option>
-  <option value="🇷🇴 罗马尼亚">🇷🇴 罗马尼亚</option>
-  <option value="🇧🇬 保加利亚">🇧🇬 保加利亚</option>
-  <option value="🇸🇮 斯洛文尼亚">🇸🇮 斯洛文尼亚</option>
-  <option value="🇭🇷 克罗地亚">🇭🇷 克罗地亚</option>
-  <option value="🇷🇸 塞尔维亚">🇷🇸 塞尔维亚</option>
-  <option value="🇧🇦 波黑">🇧🇦 波黑</option>
-  <option value="🇲🇪 黑山">🇲🇪 黑山</option>
-  <option value="🇲🇰 北马其顿">🇲🇰 北马其顿</option>
-  <option value="🇦🇱 阿尔巴尼亚">🇦🇱 阿尔巴尼亚</option>
-  <option value="🇽🇰 科索沃">🇽🇰 科索沃</option>
-  <option value="🇲🇩 摩尔多瓦">🇲🇩 摩尔多瓦</option>
-
-  <!-- 东欧 / 波罗的海 -->
-  <option value="🇺🇦 乌克兰">🇺🇦 乌克兰</option>
-  <option value="🇧🇾 白俄罗斯">🇧🇾 白俄罗斯</option>
-  <option value="🇷🇺 俄罗斯">🇷🇺 俄罗斯</option>
-  <option value="🇪🇪 爱沙尼亚">🇪🇪 爱沙尼亚</option>
-  <option value="🇱🇻 拉脱维亚">🇱🇻 拉脱维亚</option>
-  <option value="🇱🇹 立陶宛">🇱🇹 立陶宛</option>
-</optgroup>
-
-<!-- 🌎 北美 -->
-<optgroup label="🌎 北美">
-  <option value="🇺🇸 美国">🇺🇸 美国</option>
-  <option value="🇨🇦 加拿大">🇨🇦 加拿大</option>
-  <option value="🇲🇽 墨西哥">🇲🇽 墨西哥</option>
-  <option value="🇬🇱 格陵兰">🇬🇱 格陵兰</option>
-</optgroup>
-
-<!-- 🌎 中美洲 / 加勒比 -->
-<optgroup label="🌎 中美洲 / 加勒比">
-  <option value="🇨🇺 古巴">🇨🇺 古巴</option>
-  <option value="🇩🇴 多米尼加">🇩🇴 多米尼加</option>
-  <option value="🇭🇹 海地">🇭🇹 海地</option>
-  <option value="🇯🇲 牙买加">🇯🇲 牙买加</option>
-  <option value="🇵🇷 波多黎各">🇵🇷 波多黎各</option>
-  <option value="🇵🇦 巴拿马">🇵🇦 巴拿马</option>
-  <option value="🇨🇷 哥斯达黎加">🇨🇷 哥斯达黎加</option>
-  <option value="🇬🇹 危地马拉">🇬🇹 危地马拉</option>
-  <option value="🇭🇳 洪都拉斯">🇭🇳 洪都拉斯</option>
-  <option value="🇳🇮 尼加拉瓜">🇳🇮 尼加拉瓜</option>
-  <option value="🇸🇻 萨尔瓦多">🇸🇻 萨尔瓦多</option>
-  <option value="🇧🇿 伯利兹">🇧🇿 伯利兹</option>
-  <option value="🇹🇹 特立尼达和多巴哥">🇹🇹 特立尼达和多巴哥</option>
-  <option value="🇧🇧 巴巴多斯">🇧🇧 巴巴多斯</option>
-  <option value="🇧🇸 巴哈马">🇧🇸 巴哈马</option>
-  <option value="🇬🇩 格林纳达">🇬🇩 格林纳达</option>
-  <option value="🇱🇨 圣卢西亚">🇱🇨 圣卢西亚</option>
-  <option value="🇰🇳 圣基茨和尼维斯">🇰🇳 圣基茨和尼维斯</option>
-  <option value="🇻🇨 圣文森特和格林纳丁斯">🇻🇨 圣文森特和格林纳丁斯</option>
-  <option value="🇦🇬 安提瓜和巴布达">🇦🇬 安提瓜和巴布达</option>
-  <option value="🇩🇲 多米尼克">🇩🇲 多米尼克</option>
-</optgroup>
-
-<!-- 🌎 南美 -->
-<optgroup label="🌎 南美">
-  <option value="🇧🇷 巴西">🇧🇷 巴西</option>
-  <option value="🇦🇷 阿根廷">🇦🇷 阿根廷</option>
-  <option value="🇨🇱 智利">🇨🇱 智利</option>
-  <option value="🇨🇴 哥伦比亚">🇨🇴 哥伦比亚</option>
-  <option value="🇵🇪 秘鲁">🇵🇪 秘鲁</option>
-  <option value="🇺🇾 乌拉圭">🇺🇾 乌拉圭</option>
-  <option value="🇵🇾 巴拉圭">🇵🇾 巴拉圭</option>
-  <option value="🇧🇴 玻利维亚">🇧🇴 玻利维亚</option>
-  <option value="🇪🇨 厄瓜多尔">🇪🇨 厄瓜多尔</option>
-  <option value="🇻🇪 委内瑞拉">🇻🇪 委内瑞拉</option>
-  <option value="🇬🇾 圭亚那">🇬🇾 圭亚那</option>
-  <option value="🇸🇷 苏里南">🇸🇷 苏里南</option>
-  <option value="🇬🇫 法属圭亚那">🇬🇫 法属圭亚那</option>
-</optgroup>
-
-<!-- 🌏 大洋洲 -->
-<optgroup label="🌏 大洋洲">
-  <option value="🇦🇺 澳大利亚">🇦🇺 澳大利亚</option>
-  <option value="🇳🇿 新西兰">🇳🇿 新西兰</option>
-  <option value="🇫🇯 斐济">🇫🇯 斐济</option>
-  <option value="🇵🇬 巴布亚新几内亚">🇵🇬 巴布亚新几内亚</option>
-  <option value="🇼🇸 萨摩亚">🇼🇸 萨摩亚</option>
-  <option value="🇹🇴 汤加">🇹🇴 汤加</option>
-  <option value="🇻🇺 瓦努阿图">🇻🇺 瓦努阿图</option>
-  <option value="🇸🇧 所罗门群岛">🇸🇧 所罗门群岛</option>
-  <option value="🇵🇼 帕劳">🇵🇼 帕劳</option>
-  <option value="🇫🇲 密克罗尼西亚">🇫🇲 密克罗尼西亚</option>
-  <option value="🇲🇭 马绍尔群岛">🇲🇭 马绍尔群岛</option>
-  <option value="🇰🇮 基里巴斯">🇰🇮 基里巴斯</option>
-  <option value="🇳🇷 瑙鲁">🇳🇷 瑙鲁</option>
-  <option value="🇹🇻 图瓦卢">🇹🇻 图瓦卢</option>
-</optgroup>
-
-<!-- 🌍 非洲 -->
-<optgroup label="🌍 非洲">
-  <option value="🇿🇦 南非">🇿🇦 南非</option>
-  <option value="🇪🇬 埃及">🇪🇬 埃及</option>
-  <option value="🇳🇬 尼日利亚">🇳🇬 尼日利亚</option>
-  <option value="🇰🇪 肯尼亚">🇰🇪 肯尼亚</option>
-  <option value="🇪🇹 埃塞俄比亚">🇪🇹 埃塞俄比亚</option>
-  <option value="🇬🇭 加纳">🇬🇭 加纳</option>
-  <option value="🇲🇦 摩洛哥">🇲🇦 摩洛哥</option>
-  <option value="🇩🇿 阿尔及利亚">🇩🇿 阿尔及利亚</option>
-  <option value="🇹🇳 突尼斯">🇹🇳 突尼斯</option>
-  <option value="🇱🇾 利比亚">🇱🇾 利比亚</option>
-  <option value="🇸🇩 苏丹">🇸🇩 苏丹</option>
-  <option value="🇸🇸 南苏丹">🇸🇸 南苏丹</option>
-  <option value="🇹🇿 坦桑尼亚">🇹🇿 坦桑尼亚</option>
-  <option value="🇺🇬 乌干达">🇺🇬 乌干达</option>
-  <option value="🇦🇴 安哥拉">🇦🇴 安哥拉</option>
-  <option value="🇲🇿 莫桑比克">🇲🇿 莫桑比克</option>
-  <option value="🇿🇲 赞比亚">🇿🇲 赞比亚</option>
-  <option value="🇿🇼 津巴布韦">🇿🇼 津巴布韦</option>
-  <option value="🇷🇼 卢旺达">🇷🇼 卢旺达</option>
-  <option value="🇧🇮 布隆迪">🇧🇮 布隆迪</option>
-  <option value="🇧🇼 博茨瓦纳">🇧🇼 博茨瓦纳</option>
-  <option value="🇳🇦 纳米比亚">🇳🇦 纳米比亚</option>
-  <option value="🇲🇬 马达加斯加">🇲🇬 马达加斯加</option>
-  <option value="🇸🇨 塞舌尔">🇸🇨 塞舌尔</option>
-  <option value="🇲🇺 毛里求斯">🇲🇺 毛里求斯</option>
-  <option value="🇸🇳 塞内加尔">🇸🇳 塞内加尔</option>
-  <option value="🇲🇱 马里">🇲🇱 马里</option>
-  <option value="🇳🇪 尼日尔">🇳🇪 尼日尔</option>
-  <option value="🇨🇲 喀麦隆">🇨🇲 喀麦隆</option>
-  <option value="🇨🇮 科特迪瓦">🇨🇮 科特迪瓦</option>
-  <option value="🇬🇦 加蓬">🇬🇦 加蓬</option>
-  <option value="🇨🇬 刚果共和国">🇨🇬 刚果共和国</option>
-  <option value="🇨🇩 刚果民主共和国">🇨🇩 刚果民主共和国</option>
-  <option value="🇬🇳 几内亚">🇬🇳 几内亚</option>
-  <option value="🇬🇼 几内亚比绍">🇬🇼 几内亚比绍</option>
-  <option value="🇸🇱 塞拉利昂">🇸🇱 塞拉利昂</option>
-  <option value="🇱🇷 利比里亚">🇱🇷 利比里亚</option>
-  <option value="🇪🇷 厄立特里亚">🇪🇷 厄立特里亚</option>
-  <option value="🇩🇯 吉布提">🇩🇯 吉布提</option>
-  <option value="🇸🇴 索马里">🇸🇴 索马里</option>
-  <option value="🇹🇩 乍得">🇹🇩 乍得</option>
-  <option value="🇧🇫 布基纳法索">🇧🇫 布基纳法索</option>
-  <option value="🇹🇬 多哥">🇹🇬 多哥</option>
-  <option value="🇧🇯 贝宁">🇧🇯 贝宁</option>
-  <option value="🇲🇷 毛里塔尼亚">🇲🇷 毛里塔尼亚</option>
-  <option value="🇬🇲 冈比亚">🇬🇲 冈比亚</option>
-  <option value="🇨🇻 佛得角">🇨🇻 佛得角</option>
-  <option value="🇰🇲 科摩罗">🇰🇲 科摩罗</option>
-  <option value="🇸🇿 斯威士兰">🇸🇿 斯威士兰</option>
-  <option value="🇱🇸 莱索托">🇱🇸 莱索托</option>
-  <option value="🇲🇼 马拉维">🇲🇼 马拉维</option>
-</optgroup>
-
-            </select>
+                    <div class="absolute left-5 top-4 w-6 h-6 text-slate-500 z-10">${ICONS.globe}</div>
+                     <select id="country-select" name="country" class="w-full bg-[#1A1B26] border border-white/5 rounded-xl py-4 pl-14 pr-5 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none appearance-none text-lg cursor-pointer">
+                      <option value="" disabled selected>请选择国家/区域</option>
+                      <optgroup label="热门区域">
+                        <option value="HK">🇭🇰 香港 (Hong Kong)</option>
+                        <option value="JP">🇯🇵 日本 (Japan)</option>
+                        <option value="US">🇺🇸 美国 (United States)</option>
+                        <option value="SG">🇸🇬 新加坡 (Singapore)</option>
+                        <option value="KR">🇰🇷 韩国 (South Korea)</option>
+                        <option value="TW">🇹🇼 台湾 (Taiwan)</option>
+                      </optgroup>
+                      <optgroup label="其他区域">
+                        <option value="CN">🇨🇳 中国 (China)</option>
+                        <option value="GB">🇬🇧 英国 (United Kingdom)</option>
+                        <option value="DE">🇩🇪 德国 (Germany)</option>
+                        <option value="FR">🇫🇷 法国 (France)</option>
+                        <option value="RU">🇷🇺 俄罗斯 (Russia)</option>
+                        <option value="CA">🇨🇦 加拿大 (Canada)</option>
+                        <option value="AU">🇦🇺 澳大利亚 (Australia)</option>
+                      </optgroup>
+                    </select>
+                    <div class="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 pointer-events-none">
+                      ${ICONS.chevronDown}
+                    </div>
                   </div>
                 </div>
                 <div class="group">
-                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
-                    具体位置 <span class="text-slate-500 text-xs font-normal">(可选)</span>
+                  <label class="block mb-2.5 text-sm font-medium text-slate-400 group-focus-within:text-indigo-400 transition-colors">
+                    具体位置 <span class="text-slate-600 text-xs font-normal">(可选)</span>
                   </label>
                   <div class="relative">
-                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.search}</div>
+                    <div class="absolute left-5 top-4 w-6 h-6 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.search}</div>
                     <input name="region" placeholder="例如：东京、洛杉矶"
-                           class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                           class="w-full bg-[#1A1B26] border border-white/5 rounded-xl py-4 pl-14 pr-5 text-white placeholder-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none text-lg" />
                   </div>
                 </div>
               </div>
@@ -3324,54 +3108,54 @@ app.get('/donate/vps', c => {
               <!-- Traffic & Expiry -->
               <div class="grid md:grid-cols-2 gap-6">
                 <div class="group">
-                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                  <label class="block mb-2.5 text-sm font-medium text-slate-400 group-focus-within:text-indigo-400 transition-colors">
                     流量/带宽 <span class="text-red-400">*</span>
                   </label>
                   <div class="relative">
-                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.chart}</div>
+                    <div class="absolute left-5 top-4 w-6 h-6 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.chart}</div>
                     <input name="traffic" required placeholder="1T/月 · 1Gbps"
-                           class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                           class="w-full bg-[#1A1B26] border border-white/5 rounded-xl py-4 pl-14 pr-5 text-white placeholder-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none text-lg" />
                   </div>
                 </div>
                 <div class="group">
-                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                  <label class="block mb-2.5 text-sm font-medium text-slate-400 group-focus-within:text-indigo-400 transition-colors">
                     到期时间 <span class="text-red-400">*</span>
                   </label>
                   <div class="relative">
-                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.calendar}</div>
+                    <div class="absolute left-5 top-4 w-6 h-6 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.calendar}</div>
                     <input name="expiryDate" required type="date" min="${minDate}" value="${ny}"
-                           class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                           class="w-full bg-[#1A1B26] border border-white/5 rounded-xl py-4 pl-14 pr-5 text-white placeholder-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none text-lg" />
                   </div>
                 </div>
               </div>
 
               <!-- Specs -->
               <div class="group">
-                <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                <label class="block mb-2.5 text-sm font-medium text-slate-400 group-focus-within:text-indigo-400 transition-colors">
                   配置描述 <span class="text-red-400">*</span>
                 </label>
                 <div class="relative">
-                  <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.cpu}</div>
+                  <div class="absolute left-5 top-4 w-6 h-6 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.cpu}</div>
                   <input name="specs" required placeholder="1C1G · 20G SSD"
-                         class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                         class="w-full bg-[#1A1B26] border border-white/5 rounded-xl py-4 pl-14 pr-5 text-white placeholder-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none text-lg" />
                 </div>
               </div>
 
               <!-- Note -->
               <div class="group">
-                <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
-                  备注 <span class="text-slate-500 text-xs font-normal">(可选)</span>
+                <label class="block mb-2.5 text-sm font-medium text-slate-400 group-focus-within:text-indigo-400 transition-colors">
+                  备注 <span class="text-slate-600 text-xs font-normal">(可选)</span>
                 </label>
                 <div class="relative">
-                  <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.message}</div>
+                  <div class="absolute left-5 top-4 w-6 h-6 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.message}</div>
                   <textarea name="note" rows="3" placeholder="例如：三网回程优化，解锁流媒体..."
-                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none"></textarea>
+                            class="w-full bg-[#1A1B26] border border-white/5 rounded-xl py-4 pl-14 pr-5 text-white placeholder-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none text-lg"></textarea>
                 </div>
               </div>
 
               <div id="donate-message" class="text-sm min-h-[1.5rem] font-medium text-center"></div>
 
-              <button id="donate-submit-btn" type="submit" class="w-full btn-primary py-4 rounded-xl text-lg font-bold shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+              <button id="donate-submit-btn" type="submit" class="w-full btn-primary py-5 rounded-xl text-xl font-bold shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all transform hover:-translate-y-0.5 active:translate-y-0 bg-gradient-to-r from-indigo-600 to-purple-600 border-0">
                 🚀 提交投喂
               </button>
             </form>
@@ -3381,40 +3165,40 @@ app.get('/donate/vps', c => {
 
     <!-- Right: My Donations -->
     <section class="lg:col-span-5 space-y-6 animate-slide-up" style="animation-delay: 0.2s">
-       <div class="glass rounded-[2rem] p-1 border border-white/10 shadow-2xl shadow-purple-500/5 bg-slate-900/40 backdrop-blur-xl">
-         <div class="bg-slate-900/50 rounded-[1.8rem] p-6 md:p-8 min-h-[600px]">
-            <div class="flex items-center justify-between mb-6">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-purple-500/20 flex items-center justify-center text-purple-400">
-                  <div class="w-5 h-5">${ICONS.star}</div>
-                </div>
-                <h2 class="text-xl font-bold text-white">我的投喂</h2>
+       <div class="relative bg-[#13141F] rounded-[2rem] p-8 border border-white/5 shadow-2xl min-h-[800px]">
+          <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-purple-400 border border-white/5">
+                <div class="w-6 h-6">${ICONS.star}</div>
               </div>
-              <div class="flex gap-2">
-                <button onclick="exportDonations()" class="btn-secondary p-2 rounded-lg" title="导出">
-                  <div class="w-4 h-4">${ICONS.save}</div>
-                </button>
-                <button onclick="loadDonations()" class="btn-secondary p-2 rounded-lg" title="刷新">
-                  <div class="w-4 h-4">${ICONS.clock}</div>
-                </button>
-              </div>
+              <h2 class="text-xl font-bold text-white">我的投喂</h2>
             </div>
-            
-            <div id="donations-list" class="space-y-4">
-              <!-- List content will be injected by JS -->
+            <div class="flex gap-2">
+              <button onclick="exportDonations()" class="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all border border-white/5" title="导出">
+                <div class="w-5 h-5">${ICONS.save}</div>
+              </button>
+              <button onclick="loadDonations()" class="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all border border-white/5" title="刷新">
+                <div class="w-5 h-5">${ICONS.clock}</div>
+              </button>
             </div>
-         </div>
+          </div>
+          
+          <div id="donations-list" class="space-y-4">
+            <!-- List content will be injected by JS -->
+          </div>
        </div>
     </section>
   </div>
 
-  <footer class="mt-16 pt-8 pb-8 text-center animate-fade-in">
-    <div class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/5 border border-white/10 text-sm text-slate-400">
-      <span class="w-4 h-4 text-indigo-400">${ICONS.info}</span>
-      <span>感谢您为公益事业做出的贡献</span>
+  <footer class="mt-20 pb-12 text-center animate-fade-in">
+    <div class="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-white/5 border border-white/5 text-slate-400 backdrop-blur-sm">
+      <span class="w-5 h-5 text-indigo-400">${ICONS.info}</span>
+      <span class="text-sm font-medium">感谢您为公益事业做出的贡献</span>
     </div>
   </footer>
 </div>
+
+
 <div id="toast-root"></div>
 <script>
 updateThemeBtn();
