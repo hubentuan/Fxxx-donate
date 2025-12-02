@@ -3650,26 +3650,29 @@ async function checkAdmin(){
 
 function renderLogin(root){
   root.innerHTML='';
+  root.innerHTML='';
   const wrap=document.createElement('div');
-  wrap.className='glass max-w-md mx-auto rounded-2xl p-10 animate-in shadow-xl';
-  wrap.innerHTML='<div class="text-center mb-8">'+
-    '<div class="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 bg-blue-500/10 text-blue-500">'+
-      '<span class="text-4xl">🔐</span>'+
-    '</div>'+
-    '<h1 class="text-3xl font-bold mb-3 text-primary">管理员登录</h1>'+
-    '<p class="text-sm text-secondary">请输入管理员密码以继续访问后台</p>'+
-  '</div>'+
-    '<form id="admin-login-form" class="space-y-6">'+
-      '<div>'+
-        '<label class="block mb-2 text-sm font-medium flex items-center gap-2 text-primary">'+
-          '<span>🔑</span> 密码'+
-        '</label>'+
-        '<input type="password" name="password" placeholder="请输入管理员密码" '+
-               'class="w-full"/>'+
+  wrap.className='glass-panel max-w-md mx-auto p-10 animate-entry relative overflow-hidden';
+  wrap.innerHTML='<div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>'+
+    '<div class="text-center mb-10">'+
+      '<div class="inline-flex items-center justify-center w-24 h-24 rounded-3xl mb-6 bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/30 transform hover:scale-105 transition-transform duration-300">'+
+        '<span class="text-5xl filter drop-shadow-md">🔐</span>'+
       '</div>'+
-      '<div id="admin-login-msg" class="text-sm min-h-[1.5rem] font-medium"></div>'+
-      '<button type="submit" class="w-full btn-primary">'+
-        '<span class="text-lg">🚀</span> 登录'+
+      '<h1 class="text-4xl font-bold mb-3 text-primary tracking-tight">管理员登录</h1>'+
+      '<p class="text-base text-secondary font-medium">请输入访问密钥以进入控制台</p>'+
+    '</div>'+
+    '<form id="admin-login-form" class="space-y-6">'+
+      '<div class="space-y-2">'+
+        '<label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">管理员密码</label>'+
+        '<div class="relative">'+
+          '<span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🔑</span>'+
+          '<input type="password" name="password" placeholder="••••••••" '+
+                 'class="input-apple pl-12 text-lg tracking-widest"/>'+
+        '</div>'+
+      '</div>'+
+      '<div id="admin-login-msg" class="text-sm min-h-[1.5rem] font-medium text-center text-red-500"></div>'+
+      '<button type="submit" class="w-full btn-primary btn-primary-glow py-4 rounded-2xl text-lg font-bold tracking-wide flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]">'+
+        '<span>🚀</span> 立即登录'+
       '</button>'+
     '</form>';
   root.appendChild(wrap);
