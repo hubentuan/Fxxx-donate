@@ -3384,23 +3384,23 @@ async function loadDonations(){
   const box=document.getElementById('donations-list');
   
   // 显示骨架屏
-  box.innerHTML='<div class="space-y-4">'+
-    '<div class="skeleton-card"><div class="skeleton-header">'+
-    '<div class="skeleton skeleton-avatar"></div>'+
-    '<div class="flex-1"><div class="skeleton skeleton-title"></div></div>'+
-    '</div>'+
-    '<div class="skeleton skeleton-text"></div>'+
-    '<div class="skeleton skeleton-text medium"></div>'+
-    '<div class="skeleton skeleton-text short"></div>'+
-    '</div>'+
-    '<div class="skeleton-card"><div class="skeleton-header">'+
-    '<div class="skeleton skeleton-avatar"></div>'+
-    '<div class="flex-1"><div class="skeleton skeleton-title"></div></div>'+
-    '</div>'+
-    '<div class="skeleton skeleton-text"></div>'+
-    '<div class="skeleton skeleton-text medium"></div>'+
-    '</div>'+
-    '</div>';
+  box.innerHTML=\`<div class="space-y-4">
+    <div class="skeleton-card"><div class="skeleton-header">
+    <div class="skeleton skeleton-avatar"></div>
+    <div class="flex-1"><div class="skeleton skeleton-title"></div></div>
+    </div>
+    <div class="skeleton skeleton-text"></div>
+    <div class="skeleton skeleton-text medium"></div>
+    <div class="skeleton skeleton-text short"></div>
+    </div>
+    <div class="skeleton-card"><div class="skeleton-header">
+    <div class="skeleton skeleton-avatar"></div>
+    <div class="flex-1"><div class="skeleton skeleton-title"></div></div>
+    </div>
+    <div class="skeleton skeleton-text"></div>
+    <div class="skeleton skeleton-text medium"></div>
+    </div>
+    </div>\`;
   
   try{
     const r=await fetch('/api/user/donations',{credentials:'same-origin',cache:'no-store'});
@@ -3411,29 +3411,56 @@ async function loadDonations(){
     }
     const data=j.data||[];
     if(!data.length){
-      box.innerHTML='<div class="muted text-sm py-8 text-center flex flex-col items-center gap-3"><div class="w-12 h-12 opacity-20">'+ICONS.server+'</div><p>还没有投喂记录，先在左侧提交一台吧～</p></div>';
+      box.innerHTML=\`<div class="muted text-sm py-8 text-center flex flex-col items-center gap-3"><div class="w-12 h-12 opacity-20">\${ICONS.server}</div><p>还没有投喂记录，先在左侧提交一台吧～</p></div>\`;
       return;
     }
     box.innerHTML='';
     data.forEach(v=>{
       const div=document.createElement('div');
-      div.className='card border p-4 transition-all hover:border-indigo-500/30 group';
+      div.className='card border p-4 transition-all hover:border-indigo-500/30 group bg-[#1A1B26]/50 border-white/5 rounded-xl';
       const dt=v.donatedAt?new Date(v.donatedAt):null, t=dt?dt.toLocaleString():'';
       const uname=v.donatedByUsername||'';
       const p='https://linux.do/u/'+encodeURIComponent(uname);
       
-      div.innerHTML='<div class="flex items-center justify-between gap-2 mb-3 pb-3 border-b border-white/5">'+
-        '<div class="text-sm font-medium flex items-center gap-2"><div class="w-4 h-4 text-indigo-400">'+ICONS.server+'</div><span class="break-words font-mono">'+v.ip+':'+v.port+'</span></div>'+
-        '<div class="'+scls(v.status)+' text-xs px-2.5 py-1 rounded-full font-semibold">'+stxt(v.status)+'</div></div>'+
-        '<div class="text-sm mb-3 flex items-center gap-2"><div class="w-4 h-4 opacity-50">'+ICONS.user+'</div><span>投喂者：<a href="'+p+'" target="_blank" class="underline hover:text-cyan-300 transition-colors">@'+uname+'</a></span></div>'+
-        '<div class="grid grid-cols-2 gap-3 text-sm mt-3">'+
-          '<div class="flex items-center gap-2"><div class="w-4 h-4 opacity-50">'+ICONS.globe+'</div><span class="truncate">'+(v.country||'未填写')+(v.region?' · '+v.region:'')+(v.ipLocation?' · '+v.ipLocation:'')+'</span></div>'+
-          '<div class="flex items-center gap-2"><div class="w-4 h-4 opacity-50">'+ICONS.chart+'</div><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
-          '<div class="flex items-center gap-2"><div class="w-4 h-4 opacity-50">'+ICONS.calendar+'</div><span class="truncate">'+(v.expiryDate||'未填写')+'</span></div>'+
-        '</div>'+
-        '<div class="text-sm muted mt-3 panel border border-white/5 rounded-lg px-3 py-2 break-words flex items-start gap-2 bg-white/5"><div class="w-4 h-4 opacity-50 mt-0.5">'+ICONS.cpu+'</div><span>'+(v.specs||'未填写')+'</span></div>'+
-        (v.note?'<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2 break-words flex items-start gap-2 text-amber-200/80"><div class="w-4 h-4 opacity-50 mt-0.5">'+ICONS.message+'</div><span>'+v.note+'</span></div>':'')+
-        (t?'<div class="text-xs muted mt-3 flex items-center gap-2"><div class="w-4 h-4 opacity-50">'+ICONS.clock+'</div><span>'+t+'</span></div>':'');
+      div.innerHTML=\`
+        <div class="flex items-center justify-between gap-2 mb-3 pb-3 border-b border-white/5">
+          <div class="text-sm font-medium flex items-center gap-2">
+            <div class="w-4 h-4 text-indigo-400">\${ICONS.server}</div>
+            <span class="break-words font-mono">\${v.ip}:\${v.port}</span>
+          </div>
+          <div class="\${scls(v.status)} text-xs px-2.5 py-1 rounded-full font-semibold">\${stxt(v.status)}</div>
+        </div>
+        <div class="text-sm mb-3 flex items-center gap-2">
+          <div class="w-4 h-4 opacity-50">\${ICONS.user}</div>
+          <span>投喂者：<a href="\${p}" target="_blank" class="underline hover:text-cyan-300 transition-colors">@\${uname}</a></span>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-sm mt-3">
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-4 opacity-50">\${ICONS.globe}</div>
+            <span class="truncate">\${(v.country||'未填写')}\${(v.region?' · '+v.region:'')}\${(v.ipLocation?' · '+v.ipLocation:'')}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-4 opacity-50">\${ICONS.chart}</div>
+            <span class="truncate">\${(v.traffic||'未填写')}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-4 opacity-50">\${ICONS.calendar}</div>
+            <span class="truncate">\${(v.expiryDate||'未填写')}</span>
+          </div>
+        </div>
+        <div class="text-sm muted mt-3 panel border border-white/5 rounded-lg px-3 py-2 break-words flex items-start gap-2 bg-white/5">
+          <div class="w-4 h-4 opacity-50 mt-0.5">\${ICONS.cpu}</div>
+          <span>\${(v.specs||'未填写')}</span>
+        </div>
+        \${v.note ? \`<div class="text-sm mt-3 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2 break-words flex items-start gap-2 text-amber-200/80">
+          <div class="w-4 h-4 opacity-50 mt-0.5">\${ICONS.message}</div>
+          <span>\${v.note}</span>
+        </div>\` : ''}
+        \${t ? \`<div class="text-xs muted mt-3 flex items-center gap-2">
+          <div class="w-4 h-4 opacity-50">\${ICONS.clock}</div>
+          <span>\${t}</span>
+        </div>\` : ''}
+      \`;
       box.appendChild(div);
     });
   }catch(err){
