@@ -2916,75 +2916,77 @@ app.get('/donate/vps', c => {
   )}-${String(nextYear.getDate()).padStart(2, '0')}`;
 
   const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
-<body class="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30">
+<body class="min-h-screen bg-[#0B0C15] text-slate-200 font-sans selection:bg-indigo-500/30">
+<!-- Background Effects -->
 <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-  <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
-  <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+  <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px]"></div>
+  <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[120px]"></div>
+  <div class="absolute top-[20%] right-[20%] w-[30%] h-[30%] bg-blue-600/5 rounded-full blur-[100px]"></div>
 </div>
 
-<div class="max-w-7xl mx-auto px-4 py-8 md:py-12">
+<div class="max-w-[1600px] mx-auto px-6 py-8 md:py-12">
   <!-- Header -->
-  <header class="mb-12 animate-fade-in">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-      <div>
-        <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 mb-3 tracking-tight">
-          VPS 投喂中心
-        </h1>
-        <p class="text-slate-400 flex items-center gap-2 text-lg">
-          <span class="w-6 h-6 text-pink-500 animate-pulse">${ICONS.heart || '🧡'}</span>
-          <span>共建公益节点网络，感谢您的无私奉献</span>
-        </p>
-      </div>
-      <div class="flex items-center gap-3">
-         <div id="user-info" class="glass px-5 py-2.5 rounded-full text-sm border border-white/10 shadow-lg backdrop-blur-md bg-white/5"></div>
-         <a href="/donate" class="btn-secondary rounded-full px-6 py-2.5 hover:bg-white/10 transition-all">首页</a>
-         <button onclick="logout()" class="btn-secondary rounded-full px-6 py-2.5 hover:bg-red-500/20 hover:text-red-300 transition-all">退出</button>
-      </div>
+  <header class="mb-12 animate-fade-in flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div>
+      <h1 class="text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight flex items-center gap-4">
+        VPS 投喂中心
+      </h1>
+      <p class="text-slate-400 flex items-center gap-2 text-lg">
+        <span class="w-5 h-5 text-pink-500 animate-pulse">${ICONS.heart || '🧡'}</span>
+        <span>共建公益节点网络，感谢您的无私奉献</span>
+      </p>
+    </div>
+    <div class="flex items-center gap-4">
+       <div id="user-info" class="hidden md:block px-5 py-2.5 rounded-full text-sm border border-white/5 bg-white/5 text-slate-300 backdrop-blur-md"></div>
+       <a href="/donate" class="btn-secondary rounded-full px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-all">首页</a>
+       <button onclick="logout()" class="btn-secondary rounded-full px-6 py-2.5 bg-white/5 hover:bg-red-500/20 border border-white/10 text-white hover:text-red-300 transition-all">退出</button>
     </div>
   </header>
 
   <div class="grid lg:grid-cols-12 gap-8 items-start">
     <!-- Left: Submission Form -->
     <section class="lg:col-span-7 space-y-6 animate-slide-up" style="animation-delay: 0.1s">
-       <div class="glass rounded-[2rem] p-1 border border-white/10 shadow-2xl shadow-indigo-500/5 bg-slate-900/40 backdrop-blur-xl">
-         <div class="bg-slate-900/50 rounded-[1.8rem] p-6 md:p-8">
-            <div class="flex items-center gap-4 mb-8">
-              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
-                <div class="w-6 h-6">${ICONS.server}</div>
+       <div class="relative group">
+         <div class="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[2.1rem] opacity-30 blur group-hover:opacity-50 transition duration-1000"></div>
+         <div class="relative bg-[#13141F] rounded-[2rem] p-8 border border-white/5 shadow-2xl">
+            
+            <div class="flex items-center gap-5 mb-8">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                <div class="w-7 h-7">${ICONS.server}</div>
               </div>
               <div>
-                <h2 class="text-xl font-bold text-white">提交新节点</h2>
-                <p class="text-sm text-slate-400">请填写服务器连接信息</p>
+                <h2 class="text-2xl font-bold text-white">提交新节点</h2>
+                <p class="text-slate-400 mt-1">请填写服务器连接信息</p>
               </div>
             </div>
             
-            <div class="alert-info bg-indigo-500/10 border border-indigo-500/20 text-indigo-200 text-sm mb-8 rounded-2xl p-5 leading-relaxed flex gap-3">
-              <div class="w-5 h-5 flex-shrink-0 mt-0.5 text-indigo-400">${ICONS.info}</div>
-              <div>请确保服务器是你有控制权的机器。禁止提交被黑/扫描到的机器。</div>
+            <div class="bg-indigo-500/5 border border-indigo-500/10 rounded-2xl p-5 mb-8 flex gap-4">
+              <div class="w-6 h-6 flex-shrink-0 text-indigo-400 mt-0.5">${ICONS.info}</div>
+              <div class="text-indigo-200/80 text-sm leading-relaxed">请确保服务器是你有控制权的机器。禁止提交被黑/扫描到的机器。</div>
             </div>
 
             <form id="donate-form" class="space-y-8">
               <!-- IP & Port -->
               <div class="grid md:grid-cols-2 gap-6">
                 <div class="group">
-                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                  <label class="block mb-2.5 text-sm font-medium text-slate-400 group-focus-within:text-indigo-400 transition-colors">
                     服务器 IP <span class="text-red-400">*</span>
                   </label>
                   <div class="relative">
-                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.globe}</div>
+                    <div class="absolute left-5 top-4 w-6 h-6 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.globe}</div>
                     <input name="ip" required placeholder="1.2.3.4"
-                           class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                           class="w-full bg-[#1A1B26] border border-white/5 rounded-xl py-4 pl-14 pr-5 text-white placeholder-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none text-lg" />
                   </div>
-                  <div class="text-xs text-slate-500 mt-1.5 pl-1">支持 IPv4 / IPv6</div>
+                  <div class="text-xs text-slate-600 mt-2 pl-1">支持 IPv4 / IPv6</div>
                 </div>
                 <div class="group">
-                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                  <label class="block mb-2.5 text-sm font-medium text-slate-400 group-focus-within:text-indigo-400 transition-colors">
                     端口 <span class="text-red-400">*</span>
                   </label>
                   <div class="relative">
-                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.plug}</div>
+                    <div class="absolute left-5 top-4 w-6 h-6 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.plug}</div>
                     <input name="port" required type="number" min="1" max="65535" placeholder="22"
-                           class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                           class="w-full bg-[#1A1B26] border border-white/5 rounded-xl py-4 pl-14 pr-5 text-white placeholder-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none text-lg" />
                   </div>
                 </div>
               </div>
@@ -2992,12 +2994,31 @@ app.get('/donate/vps', c => {
               <!-- User & Auth -->
               <div class="grid md:grid-cols-2 gap-6">
                 <div class="group">
-                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                  <label class="block mb-2.5 text-sm font-medium text-slate-400 group-focus-within:text-indigo-400 transition-colors">
                     用户名 <span class="text-red-400">*</span>
                   </label>
                   <div class="relative">
-                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.user}</div>
+                    <div class="absolute left-5 top-4 w-6 h-6 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.user}</div>
                     <input name="username" required placeholder="root"
+                           class="w-full bg-[#1A1B26] border border-white/5 rounded-xl py-4 pl-14 pr-5 text-white placeholder-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none text-lg" />
+                  </div>
+                </div>
+                <div class="group">
+                  <label class="block mb-2.5 text-sm font-medium text-slate-400 group-focus-within:text-indigo-400 transition-colors">
+                    认证方式 <span class="text-red-400">*</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute left-5 top-4 w-6 h-6 text-slate-500 z-10">${ICONS.lock}</div>
+                    <select name="authType" class="w-full bg-[#1A1B26] border border-white/5 rounded-xl py-4 pl-14 pr-5 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none appearance-none text-lg cursor-pointer">
+                      <option value="password">密码认证</option>
+                      <option value="key">SSH 密钥</option>
+                    </select>
+                    <div class="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 pointer-events-none">
+                      ${ICONS.chevronDown}
+                    </div>
+                  </div>
+                </div>
+              </div>
                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
                   </div>
                 </div>
