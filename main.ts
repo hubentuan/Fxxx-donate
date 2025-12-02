@@ -3286,96 +3286,114 @@ app.get('/donate/vps', c => {
 </optgroup>
 
             </select>
-          </div>
-          
-          <!-- 新增：可选的地区/城市字段 -->
-          <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>📍</span> 地区 / 城市 <span class="text-gray-400 text-xs">(可选)</span>
-            </label>
-            <input name="region" placeholder="示例：东京、洛杉矶、法兰克福等"
-                   class="w-full" />
-            <p class="text-xs text-gray-400 mt-1.5">可填写具体城市或地区，留空则自动检测</p>
-          </div>
-          <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>📊</span> 流量 / 带宽 <span class="text-red-400">*</span>
-            </label>
-            <input name="traffic" required placeholder="示例：400G/月 · 上下行 1Gbps"
-                   class="w-full" />
-          </div>
-        </div>
+                  </div>
+                </div>
+                <div class="group">
+                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                    具体位置 <span class="text-slate-500 text-xs font-normal">(可选)</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.search}</div>
+                    <input name="region" placeholder="例如：东京、洛杉矶"
+                           class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                  </div>
+                </div>
+              </div>
 
-        <div class="grid md:grid-cols-2 gap-5">
-          <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>📅</span> 到期日期 <span class="text-red-400">*</span>
-            </label>
-            <input name="expiryDate" required type="date" min="${minDate}" value="${ny}"
-                   class="w-full" />
-            <div class="help mt-1.5 flex items-center gap-1"><span class="opacity-60">💡</span>默认已填为 +1 年（可改）</div>
-          </div>
-          <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>⚙️</span> 配置描述 <span class="text-red-400">*</span>
-            </label>
-            <input name="specs" required placeholder="示例：1C1G · 10Gbps · 1T 流量"
-                   class="w-full" />
-          </div>
-        </div>
+              <!-- Traffic & Expiry -->
+              <div class="grid md:grid-cols-2 gap-6">
+                <div class="group">
+                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                    流量/带宽 <span class="text-red-400">*</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.chart}</div>
+                    <input name="traffic" required placeholder="1T/月 · 1Gbps"
+                           class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                  </div>
+                </div>
+                <div class="group">
+                  <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                    到期时间 <span class="text-red-400">*</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.calendar}</div>
+                    <input name="expiryDate" required type="date" min="${minDate}" value="${ny}"
+                           class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                  </div>
+                </div>
+              </div>
 
-        <div>
-          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-            <span>💬</span> 投喂备注 <span class="help ml-1">（可选，将前台展示）</span>
-          </label>
-          <textarea name="note" rows="3" placeholder="示例：电信到香港方向无法走大陆优选链路，共享带宽，不保证大陆连通性"
-                    class="w-full"></textarea>
-        </div>
+              <!-- Specs -->
+              <div class="group">
+                <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                  配置描述 <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                  <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.cpu}</div>
+                  <input name="specs" required placeholder="1C1G · 20G SSD"
+                         class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none" />
+                </div>
+              </div>
 
-        <div id="donate-message" class="text-sm min-h-[1.5rem] font-medium"></div>
+              <!-- Note -->
+              <div class="group">
+                <label class="block mb-2 text-sm font-medium text-slate-300 group-focus-within:text-indigo-400 transition-colors">
+                  备注 <span class="text-slate-500 text-xs font-normal">(可选)</span>
+                </label>
+                <div class="relative">
+                  <div class="absolute left-4 top-3.5 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors">${ICONS.message}</div>
+                  <textarea name="note" rows="3" placeholder="例如：三网回程优化，解锁流媒体..."
+                            class="w-full bg-slate-800/50 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none"></textarea>
+                </div>
+              </div>
 
-        <button id="donate-submit-btn" type="submit" class="w-full btn-primary mt-4">
-          <span class="text-lg">🚀</span> 提交投喂
-        </button>
-      </form>
+              <div id="donate-message" class="text-sm min-h-[1.5rem] font-medium text-center"></div>
+
+              <button id="donate-submit-btn" type="submit" class="w-full btn-primary py-4 rounded-xl text-lg font-bold shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+                🚀 提交投喂
+              </button>
+            </form>
+         </div>
+       </div>
     </section>
 
-    <section class="panel border p-8">
-      <div class="flex items-center justify-between mb-5">
-        <div class="flex items-center gap-3">
-          <span class="text-3xl">📦</span>
-          <h2 class="text-2xl font-bold">我的投喂记录</h2>
-        </div>
-        <div class="flex gap-2">
-          <button onclick="exportDonations()" class="btn-secondary" title="导出为JSON">
-            📥 导出
-          </button>
-          <button onclick="loadDonations()" class="btn-secondary">
-            🔄 刷新
-          </button>
-        </div>
-      </div>
-      <div id="donations-list" class="space-y-4 text-sm">
-        <div class="flex items-center justify-center py-12">
-          <div class="flex flex-col items-center gap-3">
-            <div class="loading-spinner"></div>
-            <div class="muted text-sm">正在加载...</div>
-          </div>
-        </div>
-      </div>
+    <!-- Right: My Donations -->
+    <section class="lg:col-span-5 space-y-6 animate-slide-up" style="animation-delay: 0.2s">
+       <div class="glass rounded-[2rem] p-1 border border-white/10 shadow-2xl shadow-purple-500/5 bg-slate-900/40 backdrop-blur-xl">
+         <div class="bg-slate-900/50 rounded-[1.8rem] p-6 md:p-8 min-h-[600px]">
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-purple-500/20 flex items-center justify-center text-purple-400">
+                  <div class="w-5 h-5">${ICONS.star}</div>
+                </div>
+                <h2 class="text-xl font-bold text-white">我的投喂</h2>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="exportDonations()" class="btn-secondary p-2 rounded-lg" title="导出">
+                  <div class="w-4 h-4">${ICONS.save}</div>
+                </button>
+                <button onclick="loadDonations()" class="btn-secondary p-2 rounded-lg" title="刷新">
+                  <div class="w-4 h-4">${ICONS.clock}</div>
+                </button>
+              </div>
+            </div>
+            
+            <div id="donations-list" class="space-y-4">
+              <!-- List content will be injected by JS -->
+            </div>
+         </div>
+       </div>
     </section>
-  </main>
+  </div>
 
-  <footer class="mt-16 pt-8 pb-8 text-center">
-    <div class="panel border px-4 md:px-6 py-4 inline-block max-w-full">
-      <p class="flex items-center justify-center gap-2 text-sm muted flex-wrap">
-        <span class="text-lg flex-shrink-0">ℹ️</span>
-        <span class="break-words">友情提示：投喂即视为同意将该 VPS 用于公益机场中转节点。请勿提交有敏感业务的生产机器。</span>
-      </p>
+  <footer class="mt-16 pt-8 pb-8 text-center animate-fade-in">
+    <div class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/5 border border-white/10 text-sm text-slate-400">
+      <span class="w-4 h-4 text-indigo-400">${ICONS.info}</span>
+      <span>感谢您为公益事业做出的贡献</span>
     </div>
   </footer>
 </div>
-
 <div id="toast-root"></div>
 <script>
 updateThemeBtn();
