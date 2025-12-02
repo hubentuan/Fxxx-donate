@@ -3716,28 +3716,23 @@ function renderLogin(root){
 async function renderAdmin(root, name){
   root.innerHTML='';
   const header=document.createElement('header');
-  header.className='mb-10 animate-in';
+  header.className='mb-12 animate-entry relative z-10';
   header.innerHTML='<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">'+
-    '<div class="space-y-4">'+
-      '<div class="flex items-center gap-4">'+
-        '<div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-500 text-white shadow-lg shadow-blue-500/30">'+
-          '<span class="text-2xl">⚙️</span>'+
-        '</div>'+
-        '<h1 class="grad-title-animated text-4xl md:text-5xl font-bold tracking-tight">VPS 管理后台</h1>'+
-      '</div>'+
-      '<p class="text-sm text-secondary flex items-center gap-2 ml-1">'+
+    '<div class="space-y-2">'+
+      '<h1 class="text-display text-4xl md:text-5xl font-bold tracking-tight mb-2"><span class="text-gradient">VPS 管理后台</span></h1>'+
+      '<p class="text-secondary text-lg font-medium flex items-center gap-2">'+
         '<span class="text-base">🔒</span>'+
         '<span>仅管理员可见，可查看全部投喂 VPS 与认证信息</span>'+
       '</p>'+
     '</div>'+
     '<div class="flex flex-wrap items-center gap-3">'+
-      '<div class="glass px-5 py-2.5 rounded-full border border-gray-200 dark:border-gray-700 flex items-center gap-2">'+
-        '<span class="text-sm">👤</span>'+
-        '<span class="text-sm font-medium text-primary">'+name+'</span>'+
+      '<div class="glass-panel px-5 py-2.5 rounded-full flex items-center gap-3 border border-white/10">'+
+        '<div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">'+name.charAt(0).toUpperCase()+'</div>'+
+        '<span class="text-sm font-bold text-primary">'+name+'</span>'+
       '</div>'+
-      '<button id="theme-toggle" class="btn-secondary">浅色模式</button>'+
-      '<button id="btn-admin-logout" class="btn-secondary hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors">'+
-        '退出登录'+
+      '<button id="theme-toggle" class="btn-secondary rounded-full w-10 h-10 flex items-center justify-center bg-white/50 dark:bg-white/10 backdrop-blur-md hover:bg-white/80">🌓</button>'+
+      '<button id="btn-admin-logout" class="btn-secondary rounded-full px-5 py-2.5 flex items-center gap-2 bg-white/50 dark:bg-white/10 backdrop-blur-md hover:bg-white/80 text-red-500 hover:text-red-600 border-red-200 dark:border-red-900/30">'+
+        '<span>🚪</span> 退出登录'+
       '</button>'+
     '</div>'+
   '</div>';
@@ -3931,24 +3926,25 @@ async function loadStats(){
     }
 
     const d=j.data||{};
-    function card(label,value,key,icon){
+    function card(label,value,key,icon,colorClass){
       const percent = d.totalVPS > 0 ? Math.round((value / d.totalVPS) * 100) : 0;
-      return '<button data-gok="'+key+'" class="stat-card stat-'+key+' border border-gray-100 dark:border-gray-800 px-5 py-4 text-left rounded-2xl hover:shadow-md transition-all">'+
-        '<div class="flex items-center justify-between mb-3">'+
-          '<div class="stat-label text-xs font-medium text-secondary uppercase tracking-wider">'+icon+' '+label+'</div>'+
-          '<div class="text-xs font-bold text-secondary">'+percent+'%</div>'+
-        '</div>'+
-        '<div class="stat-value mb-3 text-3xl font-bold tracking-tight">'+value+'</div>'+
-        '<div class="w-full h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">'+
-          '<div class="h-full rounded-full transition-all duration-1000 ease-out" style="width:'+percent+'%;background:currentColor"></div>'+
+      return '<button data-gok="'+key+'" class="stat-card relative overflow-hidden group glass-panel p-6 rounded-3xl text-left transition-all hover:scale-[1.02] hover:shadow-lg border border-white/10">'+
+        '<div class="absolute inset-0 bg-gradient-to-br '+colorClass+' opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>'+
+        '<div class="relative z-10">'+
+          '<div class="flex items-center justify-between mb-4">'+
+            '<div class="w-12 h-12 rounded-2xl bg-gradient-to-br '+colorClass+' flex items-center justify-center text-2xl text-white shadow-lg">'+icon+'</div>'+
+            '<div class="text-xs font-bold px-2.5 py-1 rounded-lg bg-black/5 dark:bg-white/10 backdrop-blur-sm">'+percent+'%</div>'+
+          '</div>'+
+          '<div class="stat-value text-4xl font-bold tracking-tight mb-1">'+value+'</div>'+
+          '<div class="text-sm font-bold text-secondary uppercase tracking-wider">'+label+'</div>'+
         '</div>'+
         '</button>';
     }
-    wrap.innerHTML='<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">'+
-      card('总投喂数',d.totalVPS||0,'all','📊')+
-      card('运行中',d.activeVPS||0,'active','✅')+
-      card('失败',d.failedVPS||0,'failed','❌')+
-      card('今日新增',d.todayNewVPS||0,'today','🆕')+'</div>';
+    wrap.innerHTML='<div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10 animate-entry delay-1">'+
+      card('总投喂数',d.totalVPS||0,'all','📊','from-blue-500 to-cyan-400')+
+      card('运行中',d.activeVPS||0,'active','✅','from-green-500 to-emerald-400')+
+      card('失败',d.failedVPS||0,'failed','❌','from-red-500 to-pink-500')+
+      card('今日新增',d.todayNewVPS||0,'today','🆕','from-orange-500 to-yellow-400')+'</div>';
     
     // 添加数字计数动画
     setTimeout(()=>{
@@ -4129,54 +4125,45 @@ function renderVpsList(){
   }
 
   list.innerHTML='';
-  arr.forEach(v=>{
+  arr.forEach((v, idx)=>{
     const card=document.createElement('div');
-    card.className='card rounded-2xl border p-4 flex flex-col gap-3 text-sm shadow-lg hover:shadow-xl transition-all';
+    card.className='glass-panel p-6 rounded-3xl relative overflow-hidden group animate-entry hover:scale-[1.01] transition-all duration-300';
+    card.style.animationDelay = (idx * 0.05) + 's';
+    
     const dt=v.donatedAt?new Date(v.donatedAt):null;
     const t=dt?dt.toLocaleString():'';
     const uname=v.donatedByUsername||'';
     const p='https://linux.do/u/'+encodeURIComponent(uname);
+    const statusColor = v.status === 'active' ? 'text-green-500 bg-green-500/10 border-green-500/20' : 
+                       (v.status === 'failed' ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-secondary bg-gray-500/10 border-gray-500/20');
 
-    card.innerHTML='<div class="flex items-center justify-between gap-2 pb-3 border-b">'+
-        '<div class="flex items-center gap-2 text-sm font-medium">'+
-          '<span>🖥️</span>'+
-          '<span class="break-words">'+v.ip+':'+v.port+'</span>'+
+    card.innerHTML='<div class="flex items-start justify-between gap-4 mb-6">'+
+        '<div class="flex items-center gap-4">'+
+          '<div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 flex items-center justify-center text-2xl">🖥️</div>'+
+          '<div>'+
+            '<div class="font-bold text-xl tracking-tight font-mono">'+v.ip+':'+v.port+'</div>'+
+            '<div class="flex items-center gap-2 text-xs font-medium mt-1">'+
+              '<span class="text-secondary">投喂者:</span>'+
+              '<a href="'+p+'" target="_blank" class="text-blue-500 hover:text-blue-400 transition-colors">@'+uname+'</a>'+
+            '</div>'+
+          '</div>'+
         '</div>'+
-        '<span class="'+scls(v.status)+' text-xs px-2 py-1 rounded-full">'+stxt(v.status)+'</span>'+
+        '<span class="'+statusColor+' text-xs px-3 py-1.5 rounded-lg font-bold border uppercase tracking-wider">'+stxt(v.status)+'</span>'+
       '</div>'+
-      '<div class="space-y-2 text-xs">'+
-        '<div class="flex items-center gap-2">'+
-          '<span class="opacity-60">👤</span>'+
-          '<span>投喂者：<a href="'+p+'" target="_blank" class="text-sky-500 hover:text-cyan-400 underline transition-colors">@'+uname+'</a></span>'+
-        '</div>'+
-        '<div class="flex items-center gap-2">'+
-          '<span class="opacity-60">🌍</span>'+
-          '<span>'+(v.country||'未填写')+(v.region?' · '+v.region:'')+(v.ipLocation?' · '+v.ipLocation:'')+'</span>'+
-        '</div>'+
-        '<div class="grid grid-cols-2 gap-2">'+
-          '<div class="flex items-center gap-1.5 panel border rounded-lg px-2 py-1.5"><span class="opacity-60">📊</span><span class="truncate">'+(v.traffic||'未填写')+'</span></div>'+
-          '<div class="flex items-center gap-1.5 panel border rounded-lg px-2 py-1.5"><span class="opacity-60">📅</span><span class="truncate">'+(v.expiryDate||'未填写')+'</span></div>'+
-        '</div>'+
-        '<div class="panel border rounded-lg px-2 py-1.5 flex items-start gap-1.5">'+
-          '<span class="opacity-60">⚙️</span>'+
-          '<span class="break-words">'+(v.specs||'未填写')+'</span>'+
-        '</div>'+
-        (v.note?'<div class="bg-amber-500/5 border border-amber-500/20 rounded-lg px-2 py-1.5 text-amber-600 dark:text-amber-300 flex items-start gap-1.5">'+
-          '<span class="opacity-60">💬</span>'+
-          '<span class="break-words">'+v.note+'</span>'+
-        '</div>':'')+
-        (v.adminNote?'<div class="bg-cyan-500/5 border border-cyan-500/20 rounded-lg px-2 py-1.5 text-cyan-600 dark:text-cyan-300 flex items-start gap-1.5">'+
-          '<span class="opacity-60">📝</span>'+
-          '<span class="break-words">'+v.adminNote+'</span>'+
-        '</div>':'')+
-        (t?'<div class="flex items-center gap-1.5 text-xs muted"><span class="opacity-60">🕐</span><span>'+t+'</span></div>':'')+
+      '<div class="grid grid-cols-2 gap-3 mb-6">'+
+        '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2.5 rounded-xl"><span class="opacity-60 text-lg">🌍</span><span class="truncate font-medium text-sm">'+(v.country||'未填写')+'</span></div>'+
+        '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2.5 rounded-xl"><span class="opacity-60 text-lg">📊</span><span class="truncate font-medium text-sm">'+(v.traffic||'未填写')+'</span></div>'+
+        '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2.5 rounded-xl"><span class="opacity-60 text-lg">📅</span><span class="truncate font-medium text-sm">'+(v.expiryDate||'未填写')+'</span></div>'+
+        '<div class="flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2.5 rounded-xl"><span class="opacity-60 text-lg">⚙️</span><span class="truncate font-medium text-sm">'+(v.specs||'未填写')+'</span></div>'+
       '</div>'+
-      '<div class="flex flex-wrap gap-2 pt-3 border-t">'+
-        '<button class="btn-secondary text-xs" data-act="login" data-id="'+v.id+'">🔍 查看</button>'+
-        '<button class="btn-secondary text-xs" data-act="verify" data-id="'+v.id+'">✅ 验证</button>'+
-        '<button class="btn-secondary text-xs" data-act="editConfig" data-id="'+v.id+'">⚙️ 编辑配置</button>'+
-        '<button class="btn-secondary text-xs" data-act="edit" data-id="'+v.id+'">✏️ 编辑信息</button>'+
-        '<button class="btn-danger text-xs" data-act="del" data-id="'+v.id+'">🗑️ 删除</button>'+
+      (v.note?'<div class="mb-4 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-amber-700 dark:text-amber-400 text-xs font-medium flex gap-2"><span class="text-base">💬</span><span class="leading-relaxed">'+v.note+'</span></div>':'')+
+      (v.adminNote?'<div class="mb-4 bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3 text-cyan-700 dark:text-cyan-400 text-xs font-medium flex gap-2"><span class="text-base">📝</span><span class="leading-relaxed">'+v.adminNote+'</span></div>':'')+
+      '<div class="flex flex-wrap gap-2 pt-4 border-t border-gray-100 dark:border-white/5">'+
+        '<button class="btn-secondary text-xs py-2 px-4 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-blue-500 hover:text-white transition-all" data-act="login" data-id="'+v.id+'">🔍 查看</button>'+
+        '<button class="btn-secondary text-xs py-2 px-4 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-green-500 hover:text-white transition-all" data-act="verify" data-id="'+v.id+'">✅ 验证</button>'+
+        '<button class="btn-secondary text-xs py-2 px-4 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-purple-500 hover:text-white transition-all" data-act="editConfig" data-id="'+v.id+'">⚙️ 配置</button>'+
+        '<button class="btn-secondary text-xs py-2 px-4 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-orange-500 hover:text-white transition-all" data-act="edit" data-id="'+v.id+'">✏️ 编辑</button>'+
+        '<button class="btn-secondary text-xs py-2 px-4 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-red-500 hover:text-white transition-all" data-act="del" data-id="'+v.id+'">🗑️ 删除</button>'+
       '</div>';
 
     card.querySelectorAll('button[data-act]').forEach(btn=>{
