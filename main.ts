@@ -2937,267 +2937,179 @@ app.get('/donate/vps', c => {
     </div>
   </header>
 
-  <main class="grid lg:grid-cols-2 gap-10 items-start">
-    <section class="glass rounded-2xl p-8 shadow-lg">
-      <div class="flex items-center gap-4 mb-6">
-        <span class="text-4xl filter drop-shadow-sm">🧡</span>
-        <h2 class="text-2xl font-bold text-primary">提交新的 VPS 投喂</h2>
+  <header class="mb-12 animate-entry relative z-10">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div>
+        <h1 class="text-display text-4xl md:text-5xl font-bold tracking-tight mb-2">
+          <span class="text-gradient">投喂 VPS</span>
+        </h1>
+        <p class="text-secondary text-lg font-medium">您的支持是公益节点网络持续运行的动力</p>
       </div>
-      <div class="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm mb-8 leading-relaxed rounded-xl px-5 py-4 font-medium">
-        ⚠️ 请确保服务器是你有控制权的机器，并允许用于公益节点。禁止长时间占满带宽、刷流量、倒卖账号等行为。
+      <div class="flex items-center gap-3">
+        <a href="/donate" class="btn-secondary rounded-full px-5 py-2.5 flex items-center gap-2 bg-white/50 dark:bg-white/10 backdrop-blur-md hover:bg-white/80">
+          <span>⬅️</span> 返回榜单
+        </a>
+        <button id="theme-toggle" onclick="toggleTheme()" class="btn-secondary rounded-full w-10 h-10 flex items-center justify-center bg-white/50 dark:bg-white/10 backdrop-blur-md hover:bg-white/80">
+          🌓
+        </button>
+        <button onclick="logout()" class="btn-secondary rounded-full px-5 py-2.5 flex items-center gap-2 bg-white/50 dark:bg-white/10 backdrop-blur-md hover:bg-white/80 text-red-500 hover:text-red-600 border-red-200 dark:border-red-900/30">
+          <span>🚪</span> 退出
+        </button>
       </div>
+    </div>
+  </header>
 
-      <form id="donate-form" class="space-y-5">
-        <div class="grid md:grid-cols-2 gap-5">
-          <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>🌐</span> 服务器 IP <span class="text-red-400">*</span>
-            </label>
-            <input name="ip" required placeholder="示例：203.0.113.8 或 [2001:db8::1]"
-                   class="w-full" />
-            <div class="help mt-1.5 flex items-center gap-1"><span class="opacity-60">💡</span>支持 IPv4 / IPv6</div>
+  <main class="grid lg:grid-cols-12 gap-8 items-start relative z-10">
+    <!-- 左侧：投喂表单 -->
+    <section class="col-span-12 lg:col-span-7 animate-entry delay-1">
+      <div class="glass-panel p-8 md:p-10 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+        
+        <div class="flex items-center gap-4 mb-8">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-2xl shadow-lg shadow-blue-500/20 text-white">
+            🎁
           </div>
           <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>🔌</span> 端口 <span class="text-red-400">*</span>
-            </label>
-            <input name="port" required type="number" min="1" max="65535" placeholder="示例：22 / 443 / 8080"
-                   class="w-full" />
-          </div>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-5">
-          <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>👤</span> 系统用户名 <span class="text-red-400">*</span>
-            </label>
-            <input name="username" required placeholder="示例：root / ubuntu"
-                   class="w-full" />
-          </div>
-          <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>🔐</span> 认证方式
-            </label>
-            <select name="authType" class="w-full">
-              <option value="password">🔑 密码</option>
-              <option value="key">🗝️ SSH 私钥</option>
-            </select>
+            <h2 class="text-2xl font-bold tracking-tight">提交节点信息</h2>
+            <p class="text-secondary text-sm">请确保您拥有服务器的控制权</p>
           </div>
         </div>
 
-        <div id="password-field">
-          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-            <span>🔑</span> 密码（密码登录必填）
-          </label>
-          <input name="password" type="password" placeholder="示例：MyStrongP@ssw0rd"
-                 class="w-full" />
+        <div class="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm mb-8 leading-relaxed rounded-2xl px-6 py-4 font-medium flex gap-3">
+          <span class="text-lg">⚠️</span>
+          <span>请确保服务器是你有控制权的机器，并允许用于公益节点。禁止长时间占满带宽、刷流量、倒卖账号等行为。</span>
         </div>
 
-        <div id="key-field" class="hidden">
-          <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-            <span>🗝️</span> SSH 私钥（密钥登录必填）
-          </label>
-          <textarea name="privateKey" rows="4" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
-                    class="w-full font-mono"></textarea>
+        <form id="donate-form" class="space-y-6">
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">服务器 IP <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🌐</span>
+                <input name="ip" required placeholder="203.0.113.8" class="input-apple pl-12" />
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">端口 <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🔌</span>
+                <input name="port" required type="number" min="1" max="65535" placeholder="22" class="input-apple pl-12" />
+              </div>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">用户名 <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">👤</span>
+                <input name="username" required placeholder="root" class="input-apple pl-12" />
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">认证方式</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🔐</span>
+                <select name="authType" class="input-apple pl-12 appearance-none">
+                  <option value="password">密码认证</option>
+                  <option value="key">SSH 私钥认证</option>
+                </select>
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs opacity-50 pointer-events-none">▼</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="password-field" class="space-y-2">
+            <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">密码</label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🔑</span>
+              <input name="password" type="password" placeholder="••••••••" class="input-apple pl-12" />
+            </div>
+          </div>
+
+          <div id="key-field" class="hidden space-y-2">
+            <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">SSH 私钥</label>
+            <div class="relative">
+              <span class="absolute left-4 top-4 text-lg opacity-50">🗝️</span>
+              <textarea name="privateKey" rows="5" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" class="input-apple pl-12 font-mono text-sm leading-relaxed"></textarea>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">国家 / 区域 <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🌍</span>
+                <select name="country" required class="input-apple pl-12 appearance-none">
+                  <option value="">选择位置...</option>
+                  <!-- 🌏 亚洲 -->
+                  <optgroup label="🌏 亚洲">
+                    <option value="🇨🇳 中国大陆">🇨🇳 中国大陆</option>
+                    <option value="🇭🇰 中国香港">🇭🇰 中国香港</option>
+                    <option value="🇹🇼 中国台湾">🇹🇼 中国台湾</option>
+                    <option value="🇯🇵 日本">🇯🇵 日本</option>
+                    <option value="🇰🇷 韩国">🇰🇷 韩国</option>
+                    <option value="🇸🇬 新加坡">🇸🇬 新加坡</option>
+                  </optgroup>
+                  <!-- 🌎 北美 -->
+                  <optgroup label="🌎 北美">
+                    <option value="🇺🇸 美国">🇺🇸 美国</option>
+                    <option value="🇨🇦 加拿大">🇨🇦 加拿大</option>
+                  </optgroup>
+                  <!-- 🌍 欧洲 -->
+                  <optgroup label="🌍 欧洲">
+                    <option value="🇬🇧 英国">🇬🇧 英国</option>
+                    <option value="🇩🇪 德国">🇩🇪 德国</option>
+                    <option value="🇫🇷 法国">🇫🇷 法国</option>
+                    <option value="🇳🇱 荷兰">🇳🇱 荷兰</option>
+                  </optgroup>
+                  <option value="other">其他地区...</option>
+                </select>
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs opacity-50 pointer-events-none">▼</span>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-secondary uppercase tracking-wider ml-1">备注信息</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">💬</span>
+                <input name="note" placeholder="例如：电信优化线路" class="input-apple pl-12" />
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4">
+            <button type="submit" id="submit-btn" class="btn-primary btn-primary-glow w-full py-4 text-lg rounded-2xl font-bold tracking-wide flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]">
+              <span>🚀</span> 确认投喂
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- 右侧：历史记录 -->
+    <section class="col-span-12 lg:col-span-5 animate-entry delay-2">
+      <div class="glass-panel p-6 md:p-8 sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/10 flex items-center justify-center text-xl">
+              📜
+            </div>
+            <h2 class="text-xl font-bold tracking-tight">我的投喂记录</h2>
+          </div>
+          <button onclick="exportDonations()" class="text-xs font-bold bg-gray-100 dark:bg-white/10 hover:bg-blue-500 hover:text-white px-3 py-1.5 rounded-lg transition-colors">
+            导出 JSON
+          </button>
         </div>
-
-        <div class="grid md:grid-cols-2 gap-5">
-          <div>
-            <label class="block mb-2.5 text-sm font-medium flex items-center gap-1.5">
-              <span>🌍</span> 国家 / 区域 <span class="text-red-400">*</span>
-            </label>
-            <select name="country" required class="w-full">
-<option value="">请选择国家/区域</option>
-
-<!-- 🌏 亚洲（东亚 / 东南亚 / 南亚 / 中亚） -->
-<optgroup label="🌏 亚洲">
-  <!-- 东亚 / 东北亚 -->
-  <option value="🇨🇳 中国大陆">🇨🇳 中国大陆</option>
-  <option value="🇭🇰 中国香港">🇭🇰 中国香港</option>
-  <option value="🇲🇴 中国澳门">🇲🇴 中国澳门</option>
-  <option value="🇹🇼 中国台湾">🇹🇼 中国台湾</option>
-  <option value="🇯🇵 日本">🇯🇵 日本</option>
-  <option value="🇰🇷 韩国">🇰🇷 韩国</option>
-  <option value="🇰🇵 朝鲜">🇰🇵 朝鲜</option>
-  <option value="🇲🇳 蒙古">🇲🇳 蒙古</option>
-
-  <!-- 东南亚 -->
-  <option value="🇻🇳 越南">🇻🇳 越南</option>
-  <option value="🇹🇭 泰国">🇹🇭 泰国</option>
-  <option value="🇲🇾 马来西亚">🇲🇾 马来西亚</option>
-  <option value="🇸🇬 新加坡">🇸🇬 新加坡</option>
-  <option value="🇵🇭 菲律宾">🇵🇭 菲律宾</option>
-  <option value="🇮🇩 印度尼西亚">🇮🇩 印度尼西亚</option>
-  <option value="🇲🇲 缅甸">🇲🇲 缅甸</option>
-  <option value="🇰🇭 柬埔寨">🇰🇭 柬埔寨</option>
-  <option value="🇱🇦 老挝">🇱🇦 老挝</option>
-  <option value="🇧🇳 文莱">🇧🇳 文莱</option>
-  <option value="🇹🇱 东帝汶">🇹🇱 东帝汶</option>
-
-  <!-- 南亚 -->
-  <option value="🇮🇳 印度">🇮🇳 印度</option>
-  <option value="🇵🇰 巴基斯坦">🇵🇰 巴基斯坦</option>
-  <option value="🇧🇩 孟加拉国">🇧🇩 孟加拉国</option>
-  <option value="🇳🇵 尼泊尔">🇳🇵 尼泊尔</option>
-  <option value="🇱🇰 斯里兰卡">🇱🇰 斯里兰卡</option>
-  <option value="🇲🇻 马尔代夫">🇲🇻 马尔代夫</option>
-  <option value="🇧🇹 不丹">🇧🇹 不丹</option>
-  <option value="🇦🇫 阿富汗">🇦🇫 阿富汗</option>
-
-  <!-- 中亚 -->
-  <option value="🇰🇿 哈萨克斯坦">🇰🇿 哈萨克斯坦</option>
-  <option value="🇺🇿 乌兹别克斯坦">🇺🇿 乌兹别克斯坦</option>
-  <option value="🇹🇲 土库曼斯坦">🇹🇲 土库曼斯坦</option>
-  <option value="🇹🇯 塔吉克斯坦">🇹🇯 塔吉克斯坦</option>
-  <option value="🇰🇬 吉尔吉斯斯坦">🇰🇬 吉尔吉斯斯坦</option>
-</optgroup>
-
-<!-- 🌏 中东 / 西亚 -->
-<optgroup label="🌏 中东">
-  <option value="🇸🇦 沙特阿拉伯">🇸🇦 沙特阿拉伯</option>
-  <option value="🇦🇪 阿联酋">🇦🇪 阿联酋</option>
-  <option value="🇹🇷 土耳其">🇹🇷 土耳其</option>
-  <option value="🇮🇱 以色列">🇮🇱 以色列</option>
-  <option value="🇮🇷 伊朗">🇮🇷 伊朗</option>
-  <option value="🇮🇶 伊拉克">🇮🇶 伊拉克</option>
-  <option value="🇯🇴 约旦">🇯🇴 约旦</option>
-  <option value="🇰🇼 科威特">🇰🇼 科威特</option>
-  <option value="🇶🇦 卡塔尔">🇶🇦 卡塔尔</option>
-  <option value="🇴🇲 阿曼">🇴🇲 阿曼</option>
-  <option value="🇧🇭 巴林">🇧🇭 巴林</option>
-  <option value="🇱🇧 黎巴嫩">🇱🇧 黎巴嫩</option>
-  <option value="🇾🇪 也门">🇾🇪 也门</option>
-  <option value="🇸🇾 叙利亚">🇸🇾 叙利亚</option>
-  <option value="🇵🇸 巴勒斯坦">🇵🇸 巴勒斯坦</option>
-</optgroup>
-
-<!-- 🌍 欧洲 -->
-<optgroup label="🌍 欧洲">
-  <!-- 西欧 / 北欧 -->
-  <option value="🇬🇧 英国">🇬🇧 英国</option>
-  <option value="🇫🇷 法国">🇫🇷 法国</option>
-  <option value="🇩🇪 德国">🇩🇪 德国</option>
-  <option value="🇳🇱 荷兰">🇳🇱 荷兰</option>
-  <option value="🇧🇪 比利时">🇧🇪 比利时</option>
-  <option value="🇱🇺 卢森堡">🇱🇺 卢森堡</option>
-  <option value="🇨🇭 瑞士">🇨🇭 瑞士</option>
-  <option value="🇦🇹 奥地利">🇦🇹 奥地利</option>
-  <option value="🇮🇪 爱尔兰">🇮🇪 爱尔兰</option>
-  <option value="🇮🇸 冰岛">🇮🇸 冰岛</option>
-  <option value="🇩🇰 丹麦">🇩🇰 丹麦</option>
-  <option value="🇸🇪 瑞典">🇸🇪 瑞典</option>
-  <option value="🇳🇴 挪威">🇳🇴 挪威</option>
-  <option value="🇫🇮 芬兰">🇫🇮 芬兰</option>
-
-  <!-- 南欧 -->
-  <option value="🇪🇸 西班牙">🇪🇸 西班牙</option>
-  <option value="🇵🇹 葡萄牙">🇵🇹 葡萄牙</option>
-  <option value="🇮🇹 意大利">🇮🇹 意大利</option>
-  <option value="🇬🇷 希腊">🇬🇷 希腊</option>
-  <option value="🇲🇹 马耳他">🇲🇹 马耳他</option>
-  <option value="🇨🇾 塞浦路斯">🇨🇾 塞浦路斯</option>
-
-  <!-- 中东欧 / 巴尔干 -->
-  <option value="🇵🇱 波兰">🇵🇱 波兰</option>
-  <option value="🇨🇿 捷克">🇨🇿 捷克</option>
-  <option value="🇸🇰 斯洛伐克">🇸🇰 斯洛伐克</option>
-  <option value="🇭🇺 匈牙利">🇭🇺 匈牙利</option>
-  <option value="🇷🇴 罗马尼亚">🇷🇴 罗马尼亚</option>
-  <option value="🇧🇬 保加利亚">🇧🇬 保加利亚</option>
-  <option value="🇸🇮 斯洛文尼亚">🇸🇮 斯洛文尼亚</option>
-  <option value="🇭🇷 克罗地亚">🇭🇷 克罗地亚</option>
-  <option value="🇷🇸 塞尔维亚">🇷🇸 塞尔维亚</option>
-  <option value="🇧🇦 波黑">🇧🇦 波黑</option>
-  <option value="🇲🇪 黑山">🇲🇪 黑山</option>
-  <option value="🇲🇰 北马其顿">🇲🇰 北马其顿</option>
-  <option value="🇦🇱 阿尔巴尼亚">🇦🇱 阿尔巴尼亚</option>
-  <option value="🇽🇰 科索沃">🇽🇰 科索沃</option>
-  <option value="🇲🇩 摩尔多瓦">🇲🇩 摩尔多瓦</option>
-
-  <!-- 东欧 / 波罗的海 -->
-  <option value="🇺🇦 乌克兰">🇺🇦 乌克兰</option>
-  <option value="🇧🇾 白俄罗斯">🇧🇾 白俄罗斯</option>
-  <option value="🇷🇺 俄罗斯">🇷🇺 俄罗斯</option>
-  <option value="🇪🇪 爱沙尼亚">🇪🇪 爱沙尼亚</option>
-  <option value="🇱🇻 拉脱维亚">🇱🇻 拉脱维亚</option>
-  <option value="🇱🇹 立陶宛">🇱🇹 立陶宛</option>
-</optgroup>
-
-<!-- 🌎 北美 -->
-<optgroup label="🌎 北美">
-  <option value="🇺🇸 美国">🇺🇸 美国</option>
-  <option value="🇨🇦 加拿大">🇨🇦 加拿大</option>
-  <option value="🇲🇽 墨西哥">🇲🇽 墨西哥</option>
-  <option value="🇬🇱 格陵兰">🇬🇱 格陵兰</option>
-</optgroup>
-
-<!-- 🌎 中美洲 / 加勒比 -->
-<optgroup label="🌎 中美洲 / 加勒比">
-  <option value="🇨🇺 古巴">🇨🇺 古巴</option>
-  <option value="🇩🇴 多米尼加">🇩🇴 多米尼加</option>
-  <option value="🇭🇹 海地">🇭🇹 海地</option>
-  <option value="🇯🇲 牙买加">🇯🇲 牙买加</option>
-  <option value="🇵🇷 波多黎各">🇵🇷 波多黎各</option>
-  <option value="🇵🇦 巴拿马">🇵🇦 巴拿马</option>
-  <option value="🇨🇷 哥斯达黎加">🇨🇷 哥斯达黎加</option>
-  <option value="🇬🇹 危地马拉">🇬🇹 危地马拉</option>
-  <option value="🇭🇳 洪都拉斯">🇭🇳 洪都拉斯</option>
-  <option value="🇳🇮 尼加拉瓜">🇳🇮 尼加拉瓜</option>
-  <option value="🇸🇻 萨尔瓦多">🇸🇻 萨尔瓦多</option>
-  <option value="🇧🇿 伯利兹">🇧🇿 伯利兹</option>
-  <option value="🇹🇹 特立尼达和多巴哥">🇹🇹 特立尼达和多巴哥</option>
-  <option value="🇧🇧 巴巴多斯">🇧🇧 巴巴多斯</option>
-  <option value="🇧🇸 巴哈马">🇧🇸 巴哈马</option>
-  <option value="🇬🇩 格林纳达">🇬🇩 格林纳达</option>
-  <option value="🇱🇨 圣卢西亚">🇱🇨 圣卢西亚</option>
-  <option value="🇰🇳 圣基茨和尼维斯">🇰🇳 圣基茨和尼维斯</option>
-  <option value="🇻🇨 圣文森特和格林纳丁斯">🇻🇨 圣文森特和格林纳丁斯</option>
-  <option value="🇦🇬 安提瓜和巴布达">🇦🇬 安提瓜和巴布达</option>
-  <option value="🇩🇲 多米尼克">🇩🇲 多米尼克</option>
-</optgroup>
-
-<!-- 🌎 南美 -->
-<optgroup label="🌎 南美">
-  <option value="🇧🇷 巴西">🇧🇷 巴西</option>
-  <option value="🇦🇷 阿根廷">🇦🇷 阿根廷</option>
-  <option value="🇨🇱 智利">🇨🇱 智利</option>
-  <option value="🇨🇴 哥伦比亚">🇨🇴 哥伦比亚</option>
-  <option value="🇵🇪 秘鲁">🇵🇪 秘鲁</option>
-  <option value="🇺🇾 乌拉圭">🇺🇾 乌拉圭</option>
-  <option value="🇵🇾 巴拉圭">🇵🇾 巴拉圭</option>
-  <option value="🇧🇴 玻利维亚">🇧🇴 玻利维亚</option>
-  <option value="🇪🇨 厄瓜多尔">🇪🇨 厄瓜多尔</option>
-  <option value="🇻🇪 委内瑞拉">🇻🇪 委内瑞拉</option>
-  <option value="🇬🇾 圭亚那">🇬🇾 圭亚那</option>
-  <option value="🇸🇷 苏里南">🇸🇷 苏里南</option>
-  <option value="🇬🇫 法属圭亚那">🇬🇫 法属圭亚那</option>
-</optgroup>
-
-<!-- 🌏 大洋洲 -->
-<optgroup label="🌏 大洋洲">
-  <option value="🇦🇺 澳大利亚">🇦🇺 澳大利亚</option>
-  <option value="🇳🇿 新西兰">🇳🇿 新西兰</option>
-  <option value="🇫🇯 斐济">🇫🇯 斐济</option>
-  <option value="🇵🇬 巴布亚新几内亚">🇵🇬 巴布亚新几内亚</option>
-  <option value="🇼🇸 萨摩亚">🇼🇸 萨摩亚</option>
-  <option value="🇹🇴 汤加">🇹🇴 汤加</option>
-  <option value="🇻🇺 瓦努阿图">🇻🇺 瓦努阿图</option>
-  <option value="🇸🇧 所罗门群岛">🇸🇧 所罗门群岛</option>
-  <option value="🇵🇼 帕劳">🇵🇼 帕劳</option>
-  <option value="🇫🇲 密克罗尼西亚">🇫🇲 密克罗尼西亚</option>
-  <option value="🇲🇭 马绍尔群岛">🇲🇭 马绍尔群岛</option>
-  <option value="🇰🇮 基里巴斯">🇰🇮 基里巴斯</option>
-  <option value="🇳🇷 瑙鲁">🇳🇷 瑙鲁</option>
-  <option value="🇹🇻 图瓦卢">🇹🇻 图瓦卢</option>
-</optgroup>
-
-<!-- 🌍 非洲 -->
-<optgroup label="🌍 非洲">
-  <option value="🇿🇦 南非">🇿🇦 南非</option>
-  <option value="🇪🇬 埃及">🇪🇬 埃及</option>
-  <option value="🇳🇬 尼日利亚">🇳🇬 尼日利亚</option>
-  <option value="🇰🇪 肯尼亚">🇰🇪 肯尼亚</option>
-  <option value="🇪🇹 埃塞俄比亚">🇪🇹 埃塞俄比亚</option>
+        
+        <div id="my-donations" class="space-y-4 min-h-[200px]">
+          <div class="flex flex-col items-center justify-center py-12 text-secondary space-y-3">
+            <div class="loading-spinner w-8 h-8 border-2 border-current border-t-transparent opacity-50"></div>
+            <span class="text-sm font-medium">加载记录中...</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
   <option value="🇬🇭 加纳">🇬🇭 加纳</option>
   <option value="🇲🇦 摩洛哥">🇲🇦 摩洛哥</option>
   <option value="🇩🇿 阿尔及利亚">🇩🇿 阿尔及利亚</option>
