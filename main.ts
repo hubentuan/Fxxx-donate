@@ -1043,75 +1043,87 @@ app.get('/donate', c => {
 <body class="min-h-screen" data-theme="dark">
 <div class="max-w-6xl mx-auto px-6 py-8 md:py-12">
 
-  <header class="mb-16 animate-entry relative z-10">
-    <div class="text-center space-y-6 max-w-4xl mx-auto">
-      <h1 class="text-display text-6xl md:text-8xl tracking-tight text-primary drop-shadow-2xl">
-        <span class="text-gradient">VPS 投喂榜</span>
+  <header class="mb-20 animate-entry relative z-10 pt-10">
+    <div class="text-center space-y-8 max-w-5xl mx-auto">
+      
+      <!-- Glowing Pill Badge -->
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md shadow-[0_0_20px_rgba(139,92,246,0.2)] mb-4">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+        </span>
+        <span class="text-xs font-bold tracking-wider text-white uppercase">系统运行正常 · 12 RPM</span>
+      </div>
+
+      <h1 class="text-display text-7xl md:text-9xl tracking-tighter text-white drop-shadow-[0_0_40px_rgba(139,92,246,0.3)] leading-none">
+        让 <span class="text-gradient">公益节点</span><br>
+        触手可及
       </h1>
-      <p class="text-xl md:text-2xl text-secondary font-medium max-w-2xl mx-auto leading-relaxed">
-        汇聚全球热佬力量，共建公益节点网络。<br>
-        <span class="text-base opacity-75 mt-2 block">目前由我独自维护，感谢 @shklrt, @sar60677, @Carry Delahaye, @kkkyyx 的日常协助。</span>
+      
+      <p class="text-lg md:text-xl text-secondary font-medium max-w-2xl mx-auto leading-relaxed opacity-80">
+        聚合全球热佬力量，提供稳定、高速、免费的公益节点服务。<br>
+        专为开发者、研究人员和 AI 爱好者打造。
       </p>
       
-      <div class="flex flex-wrap justify-center gap-4 pt-4">
-        <button onclick="gotoDonatePage()" class="btn-primary btn-primary-glow text-lg px-8 py-4 rounded-full flex items-center gap-3 transition-transform hover:scale-105 active:scale-95">
-          <span class="text-2xl">🧡</span> 我要投喂
+      <div class="flex flex-wrap justify-center gap-6 pt-8">
+        <button onclick="gotoDonatePage()" class="btn-primary text-lg px-10 py-4 rounded-full flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(139,92,246,0.4)]">
+          <span class="text-xl">⚡</span> 开始使用
         </button>
-        <button id="theme-toggle" onclick="toggleTheme()" class="btn-secondary rounded-full px-6 py-4 text-lg backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/20">
-          🌓 切换模式
+        <button id="theme-toggle" onclick="toggleTheme()" class="btn-secondary rounded-full px-8 py-4 text-lg backdrop-blur-md bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20">
+          >_ 控制台
         </button>
       </div>
     </div>
   </header>
 
   <!-- 3D地球可视化区域 -->
-  <section id="globe-section" class="mb-16 animate-entry delay-1 relative z-10">
-    <div class="glass-panel p-1 md:p-2 overflow-hidden relative group">
-      <div class="absolute inset-0 bg-blue-500/5 blur-3xl group-hover:bg-blue-500/10 transition-colors duration-500"></div>
+  <!-- Dark Glass Stats Strip -->
+  <section id="stats-section" class="mb-24 animate-entry delay-1 relative z-10 max-w-4xl mx-auto">
+    <div class="glass-panel p-8 rounded-3xl flex flex-col md:flex-row items-center justify-around gap-8 md:gap-4 bg-black/40 backdrop-blur-2xl border-white/5">
       
-      <div class="relative z-10 flex justify-between items-center p-6 pb-2">
-        <div>
-          <h2 class="text-3xl font-bold tracking-tight">全球节点分布</h2>
-          <p class="text-secondary font-medium">Real-time Global Network</p>
-        </div>
-        <div id="globe-controls" class="flex gap-2">
-          <button id="toggle-size" class="btn-secondary text-xs rounded-full px-3 py-1 bg-white/20 backdrop-blur-md border-0 hover:bg-white/30">最小化</button>
-          <button id="toggle-rotate" class="btn-secondary text-xs rounded-full px-3 py-1 bg-white/20 backdrop-blur-md border-0 hover:bg-white/30">暂停</button>
-        </div>
+      <div class="text-center group cursor-default">
+        <div class="text-sm font-bold uppercase tracking-widest text-secondary mb-2 group-hover:text-white transition-colors">支持模型</div>
+        <div class="text-4xl font-bold text-white group-hover:text-cyan-400 transition-colors drop-shadow-lg">--</div>
       </div>
       
-      <!-- 地球容器 -->
-      <div id="globe-container" style="width: 100%; height: 600px; border-radius: 20px; overflow: hidden; background: transparent;"></div>
+      <div class="hidden md:block w-px h-16 bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
       
-      <!-- Bento Grid 统计信息 -->
-      <div id="globe-stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 mt-[-80px] relative z-20 mx-4 mb-4">
-        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
-          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">您的位置</span>
-          <span id="visitor-location" class="font-bold text-blue-500 text-lg truncate w-full">检测中...</span>
-        </div>
-        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
-          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">总服务器</span>
-          <span id="total-servers" class="font-bold text-primary text-2xl count-up">0</span>
-        </div>
-        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
-          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">活跃节点</span>
-          <span id="active-servers" class="font-bold text-green-500 text-2xl count-up">0</span>
-        </div>
-        <div class="glass-panel p-4 flex flex-col items-center justify-center text-center bg-white/80 dark:bg-black/60 backdrop-blur-xl border-0 shadow-lg hover:scale-105 transition-transform">
-          <span class="text-xs font-bold uppercase tracking-wider text-secondary mb-1">实时连接</span>
-          <span id="total-connections" class="font-bold text-blue-400 text-2xl count-up">0</span>
-        </div>
+      <div class="text-center group cursor-default">
+        <div class="text-sm font-bold uppercase tracking-widest text-secondary mb-2 group-hover:text-white transition-colors">活跃节点</div>
+        <div id="active-servers" class="text-4xl font-bold text-white group-hover:text-purple-400 transition-colors drop-shadow-lg count-up">0</div>
       </div>
+      
+      <div class="hidden md:block w-px h-16 bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
+      
+      <div class="text-center group cursor-default">
+        <div class="text-sm font-bold uppercase tracking-widest text-secondary mb-2 group-hover:text-white transition-colors">可用性</div>
+        <div class="text-4xl font-bold text-white group-hover:text-green-400 transition-colors drop-shadow-lg">99%</div>
+      </div>
+
     </div>
   </section>
 
+  <!-- Hidden Globe (Optional, kept for logic compatibility but hidden in UI for now to match reference) -->
+  <div id="globe-container" style="display:none;"></div>
+  <div id="visitor-location" style="display:none;"></div>
+  <div id="total-servers" style="display:none;"></div>
+  <div id="total-connections" style="display:none;"></div>
+
   <section class="mb-16 animate-entry delay-2 relative z-10">
-    <div class="flex items-end justify-between mb-8 px-2">
-      <div>
-        <h2 class="text-4xl md:text-5xl font-bold tracking-tight">捐赠榜单</h2>
-        <p id="leaderboard-count" class="text-lg text-secondary mt-2 font-medium"></p>
+  <section class="mb-16 animate-entry delay-2 relative z-10">
+    <div class="flex items-center justify-between mb-8 px-2">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border border-white/10">
+          <span class="text-2xl">🏆</span>
+        </div>
+        <div>
+          <h2 class="text-2xl font-bold text-white">捐赠榜单</h2>
+          <p id="leaderboard-count" class="text-sm text-secondary font-medium mt-0.5">加载中...</p>
+        </div>
       </div>
-      <div class="text-4xl">🏆</div>
+      <a href="/donate/vps" class="btn-secondary text-xs rounded-lg px-4 py-2 flex items-center gap-2 hover:bg-white/10 transition-colors">
+        查看全部 >
+      </a>
     </div>
     
     <div id="leaderboard" class="space-y-6">
