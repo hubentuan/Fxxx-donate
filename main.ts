@@ -3261,7 +3261,7 @@ async function exportDonations(){
 function bindAuthType(){
   const sel=document.querySelector('select[name="authType"]');
   const pwd=document.getElementById('password-field');
-  const key=document.getElementById('key-field');
+  const key=document.getElementById('private-key-field');
   if(sel && pwd && key) {
     sel.addEventListener('change',function(){
       if(sel.value==='password'){
