@@ -71,7 +71,7 @@ const ICONS = {
   message: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
   chevronDown: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="m6 9 6 6 6-6"/></svg>',
   check: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><polyline points="20 6 9 17 4 12"/></svg>',
-  x: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M18 6 6 18"/><path d="m6 6 18 18"/></svg>',
+  x: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
   info: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
   user: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
   clock: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
@@ -86,10 +86,36 @@ const ICONS = {
   save: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>',
   plug: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></svg>',
   bulb: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.4 1.5-3.8 0-3.3-2.7-6-6-6 0 0-6 .7-6 6 0 1.4.5 2.8 1.5 3.8.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>',
-  heart: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-full h-full"><path d="m12 21.35-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35Z"/></svg>'
+  heart: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-full h-full"><path d="m12 21.35-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35Z"/></svg>',
+  rocket: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>',
+  upload: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>',
+  checkCircle: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  warning: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>'
 };
 
 const genId = () => crypto.randomUUID();
+
+/**
+ * 清理 IP 输入：去除所有不可见字符、零宽空格、BOM、全角字符等
+ * 这是修复 "IP 格式不正确" bug 的关键函数
+ */
+function cleanIPInput(raw: string): string {
+  let s = String(raw);
+  // 1. 全角数字/冒号/点 → 半角
+  s = s.replace(/[\uff10-\uff19]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
+  s = s.replace(/\uff1a/g, ':');  // 全角冒号
+  s = s.replace(/\uff0e/g, '.');  // 全角句号
+  s = s.replace(/\u3002/g, '.');  // 中文句号「。」
+  // 2. 剥离所有不可见/控制字符、零宽字符、BOM 等
+  s = s.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/g, '');
+  s = s.replace(/[\u200b-\u200f\u2028-\u202f\u2060\ufeff\ufff0-\uffff]/g, '');
+  // 3. 去首尾空白（含 \r \n \t 等）
+  s = s.trim();
+  // 4. 去掉可能的 http:// 前缀或尾部 / 路径
+  s = s.replace(/^https?:\/\//i, '');
+  s = s.replace(/\/.*$/, '');
+  return s;
+}
 
 async function getIPLocation(ip: string): Promise<string> {
   try {
@@ -106,7 +132,7 @@ async function getIPLocation(ip: string): Promise<string> {
 }
 
 const isIPv4 = (ip: string) => {
-  const trimmed = ip.trim();
+  const trimmed = cleanIPInput(ip);
   if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(trimmed)) return false;
   return trimmed.split('.').every(p => {
     const num = parseInt(p, 10);
@@ -115,7 +141,7 @@ const isIPv4 = (ip: string) => {
 };
 
 const isIPv6 = (ip: string) => {
-  const trimmed = ip.trim().replace(/^\[|\]$/g, '');
+  const trimmed = cleanIPInput(ip).replace(/^\[|\]$/g, '');
   // 简化的IPv6验证，支持完整格式和压缩格式
   const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]+|::(ffff(:0{1,4})?:)?((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))$/;
   return ipv6Regex.test(trimmed);
@@ -512,20 +538,8 @@ app.post('/api/donate', requireAuth, async (c: Context) => {
     return c.json({ success: false, message: '密钥认证需要私钥' }, 400);
   }
 
-  // ✅ 新增：统一把 IP 做 trim，去掉复制带来的空格/换行
-  const ipClean = String(ip).trim();
-
-  // 🔍 调试日志：查看收到的IP值
-  console.log('===== IP验证调试 =====');
-  console.log('原始IP值:', JSON.stringify(ip));
-  console.log('IP类型:', typeof ip);
-  console.log('清理后IP:', JSON.stringify(ipClean));
-  console.log('IPv4验证:', isIPv4(ipClean));
-  console.log('IPv6验证:', isIPv6(ipClean));
-  console.log('最终验证结果:', isValidIP(ipClean));
-  console.log('====================');
-
-  // ✅ 下面开始都用 ipClean
+  // 使用 cleanIPInput 深度清理 IP，去除不可见字符、全角字符等
+  const ipClean = cleanIPInput(ip);
   if (!isValidIP(ipClean)) {
     return c.json({ success: false, message: 'IP 格式不正确' }, 400);
   }
@@ -572,7 +586,7 @@ app.post('/api/donate', requireAuth, async (c: Context) => {
 
   return c.json({
     success: true,
-    message: '✅ 投喂成功，已通过连通性验证，感谢支持！',
+    message: '投喂成功，已通过连通性验证，感谢支持！',
     data: { id: v.id, ipLocation: v.ipLocation }
   });
 });
@@ -732,7 +746,7 @@ app.put('/api/admin/vps/:id/config', requireAdmin, async (c: Context) => {
   }
 
   // 清理并验证IP
-  const ipClean = String(ip).trim();
+  const ipClean = cleanIPInput(ip);
   if (!isValidIP(ipClean)) {
     return c.json({ success: false, message: 'IP 格式不正确' }, 400);
   }
@@ -782,8 +796,8 @@ app.put('/api/admin/vps/:id/config', requireAdmin, async (c: Context) => {
   return c.json({
     success: true,
     message: isConnectable
-      ? '✅ 配置更新成功，连通性验证通过'
-      : '⚠️ 配置已保存，但无法连接到服务器，请检查配置',
+      ? '配置更新成功，连通性验证通过'
+      : '配置已保存，但无法连接到服务器，请检查配置',
     data: {
       id: r.value.id,
       status: r.value.status,
@@ -884,7 +898,7 @@ app.post('/api/admin/vps/:id/verify', requireAdmin, async (c: Context) => {
     await kv.set(['vps', id], v);
     return c.json({
       success: true,
-      message: '✅ 验证成功，VPS 连通正常',
+      message: '验证成功，VPS 连通正常',
       data: {
         status: v.status,
         verifyStatus: v.verifyStatus,
@@ -3137,8 +3151,9 @@ app.get('/donate/vps', c => {
 
               <div id="donate-message" class="text-sm min-h-[1.5rem] font-medium text-center"></div>
 
-              <button id="donate-submit-btn" type="submit" class="w-full btn-primary py-5 rounded-xl text-xl font-bold shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all transform hover:-translate-y-0.5 active:translate-y-0 bg-gradient-to-r from-indigo-600 to-purple-600 border-0">
-                🚀 提交投喂
+              <button id="donate-submit-btn" type="submit" class="w-full btn-primary py-5 rounded-xl text-xl font-bold shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-all transform hover:-translate-y-0.5 active:translate-y-0 bg-gradient-to-r from-indigo-600 to-purple-600 border-0 flex items-center justify-center gap-3">
+                <span class="w-6 h-6">${ICONS.rocket}</span>
+                <span>提交投喂</span>
               </button>
             </form>
          </div>
@@ -3278,13 +3293,25 @@ function bindAuthType(){
 function stxt(s){ return s==='active'?'运行中':(s==='failed'?'失败':'未启用'); }
 function scls(s){ return s==='active'?'badge-ok':(s==='failed'?'badge-fail':'badge-idle'); }
 
+function clientCleanIP(raw){
+  let s = String(raw||'');
+  s = s.replace(/[\uff10-\uff19]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
+  s = s.replace(/\uff1a/g, ':').replace(/\uff0e/g, '.').replace(/\u3002/g, '.');
+  s = s.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/g, '');
+  s = s.replace(/[\u200b-\u200f\u2028-\u202f\u2060\ufeff]/g, '');
+  s = s.trim();
+  s = s.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+  return s;
+}
+
 async function submitDonate(e){
   e.preventDefault();
   const form=e.target, msg=document.getElementById('donate-message'), btn=document.getElementById('donate-submit-btn');
   msg.textContent=''; msg.className='text-xs mt-1 min-h-[1.5rem]';
   const fd=new FormData(form);
+  const cleanedIP = clientCleanIP(fd.get('ip'));
   const payload={
-    ip:fd.get('ip')?.toString().trim(),
+    ip:cleanedIP,
     port:Number(fd.get('port')||''),
     username:fd.get('username')?.toString().trim(),
     authType:fd.get('authType')?.toString(),
