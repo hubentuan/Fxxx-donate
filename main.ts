@@ -121,10 +121,13 @@ async function ipDup(ip: string, port: number) {
   return (await getAllVPS()).some(v => v.ip === ip && v.port === port);
 }
 
-async function portOK(ip: string, port: number) {
+async function portOK(ip: string, port: number, timeoutMs = 5000): Promise<boolean> {
   try {
-    const conn = await Deno.connect({ hostname: ip.replace(/^\[|\]$/g, ''), port, transport: 'tcp' });
-    conn.close();
+    const conn = await Promise.race([
+      Deno.connect({ hostname: ip.replace(/^\[|\]$/g, ''), port, transport: 'tcp' }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs)),
+    ]);
+    try { conn.close(); } catch { }
     return true;
   } catch { return false; }
 }
@@ -1548,20 +1551,32 @@ function showConfigModal(v) {
   const closeModal = () => { const m = document.getElementById('config-modal'); if(m) m.remove(); };
   const isKey = v.authType !== 'password';
   const secretValue = isKey ? (v.privateKey||'') : (v.password||'');
-  overlay.innerHTML = '<div class="modal-content"><div class="p-6 border-b border-white/5 flex items-center justify-between"><h3 class="font-bold text-white">SSH 连接配置</h3><button id="cfg-close-x" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10"><div class="w-5 h-5 opacity-60">${ICONS.x}</div></button></div>' +
+  const statusColor = v.status==='active' ? 'text-emerald-400' : (v.status==='failed' ? 'text-red-400' : 'text-slate-400');
+  const statusText = v.status==='active' ? '运行中' : (v.status==='failed' ? '失败' : '未启用');
+  overlay.innerHTML = '<div class="modal-content" style="max-width:44rem"><div class="p-6 border-b border-white/5 flex items-center justify-between"><h3 class="font-bold text-white">VPS 详细配置</h3><button id="cfg-close-x" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10"><div class="w-5 h-5 opacity-60">${ICONS.x}</div></button></div>' +
     '<div class="p-6 space-y-4">' +
-    '<div class="alert-info text-sm flex gap-2"><div class="w-4 h-4 flex-shrink-0 mt-0.5">${ICONS.info}</div>该 VPS 的 SSH 连接信息，请谨慎保管</div>' +
-    '<div class="grid grid-cols-2 gap-4">' +
-    '<div><div class="text-xs text-slate-500 mb-1">IP</div><div class="p-2.5 rounded-lg bg-white/5 text-sm text-white font-mono">' + v.ip + '</div></div>' +
-    '<div><div class="text-xs text-slate-500 mb-1">端口</div><div class="p-2.5 rounded-lg bg-white/5 text-sm text-white font-mono">' + v.port + '</div></div>' +
+    '<div class="flex items-center justify-between"><div class="flex items-center gap-3"><span class="text-lg font-mono font-bold text-white">' + v.ip + ':' + v.port + '</span><span class="badge ' + (v.status==='active'?'badge-ok':(v.status==='failed'?'badge-fail':'badge-idle')) + '">' + statusText + '</span></div></div>' +
+    '<div class="grid grid-cols-2 gap-3 text-sm">' +
+    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">捐助人</div><a href="https://linux.do/u/' + encodeURIComponent(v.donatedByUsername||'') + '" target="_blank" class="text-indigo-400 hover:underline">' + (v.donatedByUsername||'-') + '</a></div>' +
+    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">国家/地区</div><div class="text-white">' + (v.country||'-') + (v.ipLocation ? ' / '+v.ipLocation : '') + '</div></div>' +
+    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">配置</div><div class="text-white">' + (v.specs||'-') + '</div></div>' +
+    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">流量</div><div class="text-white">' + (v.traffic||'-') + '</div></div>' +
+    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">到期日期</div><div class="text-white">' + (v.expiryDate||'-') + '</div></div>' +
+    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">捐助时间</div><div class="text-white">' + (v.donatedAt ? new Date(v.donatedAt).toLocaleDateString('zh-CN') : '-') + '</div></div>' +
     '</div>' +
-    '<div><div class="text-xs text-slate-500 mb-1">用户名</div><div class="p-2.5 rounded-lg bg-white/5 text-sm text-white font-mono">' + (v.username || 'root') + '</div></div>' +
-    '<div><div class="text-xs text-slate-500 mb-1">认证方式</div><div class="p-2.5 rounded-lg bg-white/5 text-sm text-white">' + (isKey ? '私钥认证' : '密码认证') + '</div></div>' +
-    '<div><div class="text-xs text-slate-500 mb-1 flex items-center justify-between">' + (isKey ? '私钥' : '密码') + ' <button id="toggle-secret" class="text-indigo-400 hover:underline text-xs cursor-pointer">显示</button></div>' +
+    (v.note ? '<div class="p-3 rounded-lg bg-white/5 text-sm"><div class="text-xs text-slate-500 mb-1">备注</div><div class="text-white">' + v.note + '</div></div>' : '') +
+    '<hr class="border-white/5" />' +
+    '<div class="text-xs text-slate-500 font-medium mb-2">SSH 连接信息</div>' +
+    '<div class="grid grid-cols-3 gap-3 text-sm">' +
+    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">用户名</div><div class="text-white font-mono">' + (v.username || 'root') + '</div></div>' +
+    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">端口</div><div class="text-white font-mono">' + v.port + '</div></div>' +
+    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">认证</div><div class="text-white">' + (isKey ? '私钥' : '密码') + '</div></div>' +
+    '</div>' +
+    '<div><div class="text-xs text-slate-500 mb-1 flex items-center justify-between">' + (isKey ? '私钥内容' : '密码') + ' <button id="toggle-secret" class="text-indigo-400 hover:underline text-xs cursor-pointer">显示</button></div>' +
     (isKey ? '<pre id="secret-display" class="p-2.5 rounded-lg bg-white/5 text-xs text-white font-mono max-h-48 overflow-auto whitespace-pre-wrap">' + maskPwd(secretValue) + '</pre>' :
             '<div id="secret-display" class="p-2.5 rounded-lg bg-white/5 text-sm text-white font-mono break-all">' + maskPwd(secretValue) + '</div>') +
     '</div>' +
-    '<div class="flex gap-2"><button id="cfg-copy-ssh" class="btn-primary flex-1">复制 SSH 命令</button><button id="cfg-close-btn" class="btn-secondary flex-1">关闭</button></div>' +
+    '<div class="flex gap-2"><button id="cfg-copy-ssh" class="btn-primary flex-1">复制 SSH 命令</button><button id="cfg-test-btn" class="btn-secondary flex-1">测试连接</button><button id="cfg-close-btn" class="btn-secondary flex-1">关闭</button></div>' +
     '</div></div>';
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
@@ -1576,6 +1591,19 @@ function showConfigModal(v) {
   document.getElementById('cfg-copy-ssh').addEventListener('click', () => {
     const cmd = 'ssh ' + (v.username || 'root') + '@' + v.ip + ' -p ' + v.port;
     navigator.clipboard.writeText(cmd).then(() => toast('SSH 命令已复制','success')).catch(() => toast('复制失败','error'));
+  });
+  document.getElementById('cfg-test-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('cfg-test-btn');
+    btn.textContent = '测试中...';
+    btn.disabled = true;
+    try {
+      const r = await fetch('/api/admin/vps/' + v.id + '/verify', { method: 'POST', credentials: 'same-origin' });
+      const j = await r.json();
+      toast(j.message || '测试完成', j.success ? 'success' : 'error');
+      btn.textContent = j.success ? '✅ 连接正常' : '❌ 连接失败';
+      await loadVps(); await loadStats();
+    } catch { toast('测试异常','error'); btn.textContent = '测试连接'; }
+    btn.disabled = false;
   });
 }
 
