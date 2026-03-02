@@ -920,24 +920,50 @@ function resolveLocation(loc) {
 
 function initGlobe(data) {
   if (typeof Globe === 'undefined') { document.getElementById('globe-container').innerHTML='<div class="flex items-center justify-center h-full text-slate-500">地球加载失败</div>'; return; }
+  const container = document.getElementById('globe-container');
   const points = [];
   data.forEach(d => d.servers.forEach((s, si) => {
     const coords = resolveLocation(s.ipLocation) || resolveLocation(s.country);
     if (coords) {
       const jitter = 0.3;
-      points.push({ lat: coords.lat + (Math.sin(si*12.9898)*43758.5453%1-0.5)*jitter, lng: coords.lng + (Math.cos(si*7.2345)*23421.6312%1-0.5)*jitter, size: s.status==='active'?0.4:0.2, color: s.status==='active'?'#10b981':'#94a3b8', label: d.username + ' - ' + (s.ipLocation||s.country||'未知'), status: s.status });
+      points.push({ lat: coords.lat + (Math.sin(si*12.9898)*43758.5453%1-0.5)*jitter, lng: coords.lng + (Math.cos(si*7.2345)*23421.6312%1-0.5)*jitter, size: s.status==='active'?0.4:0.2, color: s.status==='active'?'#10b981':'#94a3b8', label: d.username + ' - ' + (s.ipLocation||s.country||'未知'), status: s.status, country: s.country });
     }
   }));
+
+  // Build arc connections between servers
+  const arcs = [];
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length && arcs.length < 80; j++) {
+      if (Math.random() < (points.length < 10 ? 0.5 : 0.15)) {
+        arcs.push({ startLat: points[i].lat, startLng: points[i].lng, endLat: points[j].lat, endLng: points[j].lng });
+      }
+    }
+  }
+
   try {
-    const globe = Globe()(document.getElementById('globe-container'))
+    const globe = Globe()(container)
+      .width(container.clientWidth)
+      .height(container.clientHeight)
       .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
       .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
       .backgroundColor('rgba(0,0,0,0)')
-      .pointsData(points).pointLat('lat').pointLng('lng').pointColor('color').pointAltitude(0.015).pointRadius('size')
-      .pointLabel(d => '<div style="background:rgba(15,15,35,0.9);padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);color:#e2e8f0;font-size:13px">'+(d.status==='active'?'<span style="color:#10b981">● </span>':'<span style="color:#94a3b8">● </span>')+d.label+'</div>');
+      .pointsData(points).pointLat('lat').pointLng('lng').pointColor('color').pointAltitude(0.018).pointRadius('size').pointResolution(16)
+      .pointLabel(d => '<div style="background:rgba(15,15,35,0.95);padding:8px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);color:#e2e8f0;font-size:13px;backdrop-filter:blur(8px)">'+(d.status==='active'?'<span style="color:#10b981">● </span>':'<span style="color:#94a3b8">● </span>')+d.label+'</div>')
+      .arcsData(arcs)
+      .arcStartLat(d => d.startLat).arcStartLng(d => d.startLng)
+      .arcEndLat(d => d.endLat).arcEndLng(d => d.endLng)
+      .arcColor(() => ['rgba(99,102,241,0.3)', 'rgba(139,92,246,0.3)'])
+      .arcStroke(0.4)
+      .arcDashLength(0.5)
+      .arcDashGap(0.4)
+      .arcDashAnimateTime(3000)
+      .arcDashInitialGap(() => Math.random());
     globe.controls().autoRotate = true;
-    globe.controls().autoRotateSpeed = 0.5;
+    globe.controls().autoRotateSpeed = 0.4;
     globe.controls().enableZoom = true;
+    globe.controls().enableRotate = true;
+    // Resize handler
+    window.addEventListener('resize', () => { globe.width(container.clientWidth).height(container.clientHeight); });
   } catch(err) { console.error('Globe error:', err); }
 }
 
@@ -1011,7 +1037,109 @@ app.get('/donate/vps', (c: Context) => {
           <div class="grid md:grid-cols-2 gap-5">
             <div><label class="block mb-2 text-sm font-medium text-slate-400">国家/地区 <span class="text-red-400">*</span></label>
               <div class="relative"><div class="absolute left-3.5 top-3 w-5 h-5 text-slate-500">${ICONS.globe}</div>
-              <input name="country" required placeholder="如：日本、美国" class="input-field" /></div></div>
+              <select name="country" required class="select-field">
+                <option value="" disabled selected>请选择国家/地区</option>
+                <optgroup label="热门地区">
+                  <option value="HK">🇭🇰 香港 (Hong Kong)</option>
+                  <option value="JP">🇯🇵 日本 (Japan)</option>
+                  <option value="SG">🇸🇬 新加坡 (Singapore)</option>
+                  <option value="TW">🇹🇼 台湾 (Taiwan)</option>
+                  <option value="KR">🇰🇷 韩国 (Korea)</option>
+                  <option value="US">🇺🇸 美国 (USA)</option>
+                  <option value="DE">🇩🇪 德国 (Germany)</option>
+                  <option value="GB">🇬🇧 英国 (UK)</option>
+                  <option value="NL">🇳🇱 荷兰 (Netherlands)</option>
+                  <option value="FR">🇫🇷 法国 (France)</option>
+                </optgroup>
+                <optgroup label="亚洲">
+                  <option value="CN">🇨🇳 中国 (China)</option>
+                  <option value="IN">🇮🇳 印度 (India)</option>
+                  <option value="TH">🇹🇭 泰国 (Thailand)</option>
+                  <option value="VN">🇻🇳 越南 (Vietnam)</option>
+                  <option value="MY">🇲🇾 马来西亚 (Malaysia)</option>
+                  <option value="PH">🇵🇭 菲律宾 (Philippines)</option>
+                  <option value="ID">🇮🇩 印尼 (Indonesia)</option>
+                  <option value="BD">🇧🇩 孟加拉 (Bangladesh)</option>
+                  <option value="PK">🇵🇰 巴基斯坦 (Pakistan)</option>
+                  <option value="MM">🇲🇲 缅甸 (Myanmar)</option>
+                  <option value="KH">🇰🇭 柬埔寨 (Cambodia)</option>
+                  <option value="LA">🇱🇦 老挝 (Laos)</option>
+                  <option value="MN">🇲🇳 蒙古 (Mongolia)</option>
+                  <option value="NP">🇳🇵 尼泊尔 (Nepal)</option>
+                  <option value="LK">🇱🇰 斯里兰卡 (Sri Lanka)</option>
+                  <option value="KZ">🇰🇿 哈萨克斯坦 (Kazakhstan)</option>
+                  <option value="UZ">🇺🇿 乌兹别克斯坦 (Uzbekistan)</option>
+                  <option value="MO">🇲🇴 澳门 (Macau)</option>
+                </optgroup>
+                <optgroup label="欧洲">
+                  <option value="RU">🇷🇺 俄罗斯 (Russia)</option>
+                  <option value="SE">🇸🇪 瑞典 (Sweden)</option>
+                  <option value="FI">🇫🇮 芬兰 (Finland)</option>
+                  <option value="NO">🇳🇴 挪威 (Norway)</option>
+                  <option value="DK">🇩🇰 丹麦 (Denmark)</option>
+                  <option value="PL">🇵🇱 波兰 (Poland)</option>
+                  <option value="IT">🇮🇹 意大利 (Italy)</option>
+                  <option value="ES">🇪🇸 西班牙 (Spain)</option>
+                  <option value="PT">🇵🇹 葡萄牙 (Portugal)</option>
+                  <option value="CH">🇨🇭 瑞士 (Switzerland)</option>
+                  <option value="AT">🇦🇹 奥地利 (Austria)</option>
+                  <option value="BE">🇧🇪 比利时 (Belgium)</option>
+                  <option value="IE">🇮🇪 爱尔兰 (Ireland)</option>
+                  <option value="CZ">🇨🇿 捷克 (Czech Republic)</option>
+                  <option value="RO">🇷🇴 罗马尼亚 (Romania)</option>
+                  <option value="HU">🇭🇺 匈牙利 (Hungary)</option>
+                  <option value="UA">🇺🇦 乌克兰 (Ukraine)</option>
+                  <option value="BG">🇧🇬 保加利亚 (Bulgaria)</option>
+                  <option value="HR">🇭🇷 克罗地亚 (Croatia)</option>
+                  <option value="LT">🇱🇹 立陶宛 (Lithuania)</option>
+                  <option value="LV">🇱🇻 拉脱维亚 (Latvia)</option>
+                  <option value="EE">🇪🇪 爱沙尼亚 (Estonia)</option>
+                  <option value="GR">🇬🇷 希腊 (Greece)</option>
+                  <option value="LU">🇱🇺 卢森堡 (Luxembourg)</option>
+                  <option value="IS">🇮🇸 冰岛 (Iceland)</option>
+                  <option value="MD">🇲🇩 摩尔多瓦 (Moldova)</option>
+                  <option value="RS">🇷🇸 塞尔维亚 (Serbia)</option>
+                </optgroup>
+                <optgroup label="美洲">
+                  <option value="CA">🇨🇦 加拿大 (Canada)</option>
+                  <option value="BR">🇧🇷 巴西 (Brazil)</option>
+                  <option value="AR">🇦🇷 阿根廷 (Argentina)</option>
+                  <option value="MX">🇲🇽 墨西哥 (Mexico)</option>
+                  <option value="CL">🇨🇱 智利 (Chile)</option>
+                  <option value="CO">🇨🇴 哥伦比亚 (Colombia)</option>
+                  <option value="PE">🇵🇪 秘鲁 (Peru)</option>
+                  <option value="PA">🇵🇦 巴拿马 (Panama)</option>
+                  <option value="CR">🇨🇷 哥斯达黎加 (Costa Rica)</option>
+                </optgroup>
+                <optgroup label="中东">
+                  <option value="AE">🇦🇪 阿联酋 (UAE)</option>
+                  <option value="SA">🇸🇦 沙特 (Saudi Arabia)</option>
+                  <option value="IL">🇮🇱 以色列 (Israel)</option>
+                  <option value="TR">🇹🇷 土耳其 (Turkey)</option>
+                  <option value="QA">🇶🇦 卡塔尔 (Qatar)</option>
+                  <option value="BH">🇧🇭 巴林 (Bahrain)</option>
+                  <option value="OM">🇴🇲 阿曼 (Oman)</option>
+                  <option value="IR">🇮🇷 伊朗 (Iran)</option>
+                  <option value="IQ">🇮🇶 伊拉克 (Iraq)</option>
+                </optgroup>
+                <optgroup label="大洋洲">
+                  <option value="AU">🇦🇺 澳大利亚 (Australia)</option>
+                  <option value="NZ">🇳🇿 新西兰 (New Zealand)</option>
+                  <option value="FJ">🇫🇯 斐济 (Fiji)</option>
+                </optgroup>
+                <optgroup label="非洲">
+                  <option value="ZA">🇿🇦 南非 (South Africa)</option>
+                  <option value="EG">🇪🇬 埃及 (Egypt)</option>
+                  <option value="NG">🇳🇬 尼日利亚 (Nigeria)</option>
+                  <option value="KE">🇰🇪 肯尼亚 (Kenya)</option>
+                  <option value="MA">🇲🇦 摩洛哥 (Morocco)</option>
+                  <option value="TN">🇹🇳 突尼斯 (Tunisia)</option>
+                </optgroup>
+                <optgroup label="其他">
+                  <option value="OTHER">🌍 其他 (Other)</option>
+                </optgroup>
+              </select>
+              <div class="absolute right-3 top-3.5 w-4 h-4 text-slate-500 pointer-events-none">${ICONS.chevronDown}</div></div></div>
             <div><label class="block mb-2 text-sm font-medium text-slate-400">地区/城市</label>
               <div class="relative"><div class="absolute left-3.5 top-3 w-5 h-5 text-slate-500">${ICONS.globe}</div>
               <input name="region" placeholder="如：东京、洛杉矶" class="input-field" /></div></div>
