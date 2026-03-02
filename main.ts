@@ -766,9 +766,6 @@ app.get('/donate', async (c: Context) => {
       <a href="/oauth/login?redirect=/donate/vps" class="btn-primary text-base px-8 py-3">
         <div class="w-5 h-5">${ICONS.rocket}</div> 我要投喂 VPS
       </a>
-      <a href="/admin" class="btn-secondary px-6 py-3">
-        <div class="w-4 h-4">${ICONS.shield}</div> 管理后台
-      </a>
     </div>
   </header>
 
@@ -932,18 +929,79 @@ const FLAG_MAP = {
   '中国':'🇨🇳','法国':'🇫🇷','荷兰':'🇳🇱','俄罗斯':'🇷🇺','加拿大':'🇨🇦','澳大利亚':'🇦🇺','巴西':'🇧🇷','印度':'🇮🇳',
   '土耳其':'🇹🇷','瑞典':'🇸🇪','芬兰':'🇫🇮','波兰':'🇵🇱','意大利':'🇮🇹','西班牙':'🇪🇸','瑞士':'🇨🇭','泰国':'🇹🇭','越南':'🇻🇳',
 };
+
+const CODE_MAP = {
+  'HK':'344','JP':'392','SG':'702','TW':'158','KR':'410','US':'840','USA':'840','DE':'276','GB':'826','UK':'826',
+  'CN':'156','IN':'356','TH':'764','VN':'704','MY':'458','PH':'608','ID':'360','FR':'250','NL':'528','RU':'643',
+  'SE':'752','FI':'246','PL':'616','IT':'380','ES':'724','CH':'756','AT':'040','CA':'124','BR':'076','AU':'036',
+  'NZ':'554','TR':'792','ZA':'710','AE':'784','IL':'376','MX':'484','AR':'032','NO':'578','DK':'208','IE':'372',
+  'Hong Kong':'344','Japan':'392','Singapore':'702','Taiwan':'158','Korea':'410',
+  '香港':'344','日本':'392','新加坡':'702','台湾':'158','韩国':'410','美国':'840','德国':'276','英国':'826',
+  '中国':'156','法国':'250','荷兰':'528','俄罗斯':'643','加拿大':'124','澳大利亚':'036','巴西':'076','印度':'356','土耳其':'792',
+};
+
 function getFlag(c) {
   if (!c) return '🌍';
   if (FLAG_MAP[c]) return FLAG_MAP[c];
   for (const [k,v] of Object.entries(FLAG_MAP)) { if (c.toLowerCase().includes(k.toLowerCase())) return v; }
   return '🌍';
 }
+function getISO3(c) {
+  if (!c) return null;
+  if (CODE_MAP[c]) return CODE_MAP[c];
+  for (const [k,v] of Object.entries(CODE_MAP)) { if (c.toLowerCase().includes(k.toLowerCase())) return v; }
+  return null;
+}
+
+let geoData = null;
+async function loadGeoJSON() {
+  try {
+    const r = await fetch('https://unpkg.com/world-atlas@2/countries-110m.json');
+    const topo = await r.json();
+    // Convert TopoJSON to GeoJSON
+    const countries = topo.objects.countries;
+    const arcs = topo.arcs;
+    function decodeArc(arcIdx) {
+      const reverse = arcIdx < 0;
+      const arc = arcs[reverse ? ~arcIdx : arcIdx];
+      const coords = [];
+      let x = 0, y = 0;
+      for (const [dx, dy] of arc) {
+        x += dx; y += dy;
+        coords.push([
+          x * topo.transform.scale[0] + topo.transform.translate[0],
+          y * topo.transform.scale[1] + topo.transform.translate[1]
+        ]);
+      }
+      if (reverse) coords.reverse();
+      return coords;
+    }
+    function decodeRing(arcIndices) {
+      let coords = [];
+      for (const idx of arcIndices) {
+        const decoded = decodeArc(idx);
+        coords = coords.concat(decoded);
+      }
+      return coords;
+    }
+    const features = countries.geometries.map(g => {
+      let coordinates;
+      if (g.type === 'Polygon') {
+        coordinates = g.arcs.map(ring => decodeRing(ring));
+      } else if (g.type === 'MultiPolygon') {
+        coordinates = g.arcs.map(polygon => polygon.map(ring => decodeRing(ring)));
+      }
+      return { type: 'Feature', id: g.id, properties: g.properties || {}, geometry: { type: g.type, coordinates } };
+    });
+    geoData = features;
+    return features;
+  } catch(err) { console.error('GeoJSON load error:', err); return []; }
+}
 
 function initGlobe(data) {
   if (typeof Globe === 'undefined') { document.getElementById('globe-container').innerHTML='<div class="flex items-center justify-center h-full text-slate-500">地球加载失败</div>'; return; }
   const container = document.getElementById('globe-container');
 
-  // Aggregate by country for flag markers
   const countryMap = new Map();
   data.forEach(d => d.servers.forEach(s => {
     const key = s.country || s.ipLocation || '未知';
@@ -957,7 +1015,6 @@ function initGlobe(data) {
   }));
   const countries = Array.from(countryMap.values());
 
-  // Country stats bar
   const statsBar = document.getElementById('country-stats-bar');
   if (statsBar) {
     statsBar.innerHTML = countries.sort((a,b) => b.count - a.count).map(c =>
@@ -965,7 +1022,6 @@ function initGlobe(data) {
     ).join('');
   }
 
-  // Build arcs between unique country pairs
   const arcs = [];
   for (let i = 0; i < countries.length; i++) {
     for (let j = i + 1; j < countries.length; j++) {
@@ -973,44 +1029,57 @@ function initGlobe(data) {
     }
   }
 
-  // HTML elements for flag markers
   const flagElements = countries.map(c => ({
     lat: c.lat, lng: c.lng, country: c.country, count: c.count, flag: getFlag(c.country)
   }));
 
-  try {
-    const globe = Globe()(container)
-      .width(container.clientWidth)
-      .height(container.clientHeight)
-      .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
-      .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
-      .backgroundColor('rgba(0,0,0,0)')
-      .atmosphereColor('rgba(99,102,241,0.3)')
-      .atmosphereAltitude(0.2)
-      .htmlElementsData(flagElements)
-      .htmlLat('lat').htmlLng('lng').htmlAltitude(0.01)
-      .htmlElement(d => {
-        const el = document.createElement('div');
-        el.style.cssText = 'display:flex;align-items:center;gap:3px;background:rgba(10,10,30,0.85);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:2px 6px;cursor:pointer;pointer-events:auto;white-space:nowrap;backdrop-filter:blur(4px);font-size:12px;';
-        el.innerHTML = '<span style="font-size:14px">' + d.flag + '</span>';
-        el.title = d.country + ': ' + d.count + ' 个节点';
-        return el;
-      })
-      .arcsData(arcs)
-      .arcStartLat(d => d.startLat).arcStartLng(d => d.startLng)
-      .arcEndLat(d => d.endLat).arcEndLng(d => d.endLng)
-      .arcColor(() => ['rgba(99,102,241,0.25)', 'rgba(139,92,246,0.25)'])
-      .arcStroke(0.35)
-      .arcDashLength(0.5)
-      .arcDashGap(0.4)
-      .arcDashAnimateTime(3000)
-      .arcDashInitialGap(() => Math.random());
-    globe.controls().autoRotate = true;
-    globe.controls().autoRotateSpeed = 0.4;
-    globe.controls().enableZoom = true;
-    globe.controls().enableRotate = true;
-    window.addEventListener('resize', () => { globe.width(container.clientWidth).height(container.clientHeight); });
-  } catch(err) { console.error('Globe error:', err); }
+  // Get ISO3 codes of active countries for polygon highlighting
+  const activeISO3 = new Set();
+  countries.forEach(c => { const iso = getISO3(c.country); if (iso) activeISO3.add(iso); });
+
+  loadGeoJSON().then(geo => {
+    const activePolygons = geo.filter(f => activeISO3.has(f.id));
+
+    try {
+      const globe = Globe()(container)
+        .width(container.clientWidth)
+        .height(container.clientHeight)
+        .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+        .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+        .backgroundColor('rgba(0,0,0,0)')
+        .atmosphereColor('rgba(99,102,241,0.25)')
+        .atmosphereAltitude(0.2)
+        .showGraticules(false)
+        .polygonsData(activePolygons)
+        .polygonCapColor(() => 'rgba(99,102,241,0.15)')
+        .polygonSideColor(() => 'rgba(99,102,241,0.08)')
+        .polygonStrokeColor(() => 'rgba(99,102,241,0.6)')
+        .polygonAltitude(0.008)
+        .htmlElementsData(flagElements)
+        .htmlLat('lat').htmlLng('lng').htmlAltitude(0.02)
+        .htmlElement(d => {
+          const el = document.createElement('div');
+          el.style.cssText = 'display:flex;align-items:center;gap:4px;background:rgba(10,10,30,0.9);border:1px solid rgba(99,102,241,0.4);border-radius:6px;padding:3px 8px;cursor:pointer;pointer-events:auto;white-space:nowrap;font-size:12px;box-shadow:0 0 12px rgba(99,102,241,0.3);';
+          el.innerHTML = '<span style="font-size:16px">' + d.flag + '</span><span style="color:#c4b5fd;font-weight:600">' + d.country + '</span>';
+          el.title = d.country + ': ' + d.count + ' 个节点';
+          return el;
+        })
+        .arcsData(arcs)
+        .arcStartLat(d => d.startLat).arcStartLng(d => d.startLng)
+        .arcEndLat(d => d.endLat).arcEndLng(d => d.endLng)
+        .arcColor(() => ['rgba(99,102,241,0.35)', 'rgba(139,92,246,0.35)'])
+        .arcStroke(0.5)
+        .arcDashLength(0.6)
+        .arcDashGap(0.3)
+        .arcDashAnimateTime(2500)
+        .arcDashInitialGap(() => Math.random());
+      globe.controls().autoRotate = true;
+      globe.controls().autoRotateSpeed = 0.4;
+      globe.controls().enableZoom = true;
+      globe.controls().enableRotate = true;
+      window.addEventListener('resize', () => { globe.width(container.clientWidth).height(container.clientHeight); });
+    } catch(err) { console.error('Globe error:', err); }
+  });
 }
 
 loadLeaderboard();
@@ -1475,48 +1544,39 @@ function showConfigModal(v) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.id = 'config-modal';
-  const maskPwd = (s) => s ? s.substring(0, 3) + '***' : '未设置';
-  overlay.innerHTML = '<div class="modal-content"><div class="p-6 border-b border-white/5 flex items-center justify-between"><h3 class="font-bold text-white">SSH 连接配置</h3><button onclick="document.getElementById(\'config-modal\').remove()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10"><div class="w-5 h-5 opacity-60">${ICONS.x}</div></button></div>' +
+  const maskPwd = (s) => s ? (s.length > 3 ? s.substring(0, 3) + '***' : '***') : '未设置';
+  const closeModal = () => { const m = document.getElementById('config-modal'); if(m) m.remove(); };
+  const isKey = v.authType !== 'password';
+  const secretValue = isKey ? (v.privateKey||'') : (v.password||'');
+  overlay.innerHTML = '<div class="modal-content"><div class="p-6 border-b border-white/5 flex items-center justify-between"><h3 class="font-bold text-white">SSH 连接配置</h3><button id="cfg-close-x" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10"><div class="w-5 h-5 opacity-60">${ICONS.x}</div></button></div>' +
     '<div class="p-6 space-y-4">' +
-    '<div class="alert-info text-sm">以下为该 VPS 的 SSH 连接信息，请谨慎保管</div>' +
+    '<div class="alert-info text-sm flex gap-2"><div class="w-4 h-4 flex-shrink-0 mt-0.5">${ICONS.info}</div>该 VPS 的 SSH 连接信息，请谨慎保管</div>' +
     '<div class="grid grid-cols-2 gap-4">' +
-    '<div><div class="text-xs text-slate-500 mb-1">IP 地址</div><div class="input-field !pl-3 text-sm bg-white/5">' + v.ip + '</div></div>' +
-    '<div><div class="text-xs text-slate-500 mb-1">端口</div><div class="input-field !pl-3 text-sm bg-white/5">' + v.port + '</div></div>' +
+    '<div><div class="text-xs text-slate-500 mb-1">IP</div><div class="p-2.5 rounded-lg bg-white/5 text-sm text-white font-mono">' + v.ip + '</div></div>' +
+    '<div><div class="text-xs text-slate-500 mb-1">端口</div><div class="p-2.5 rounded-lg bg-white/5 text-sm text-white font-mono">' + v.port + '</div></div>' +
     '</div>' +
-    '<div><div class="text-xs text-slate-500 mb-1">用户名</div><div class="input-field !pl-3 text-sm bg-white/5">' + (v.username || '-') + '</div></div>' +
-    '<div><div class="text-xs text-slate-500 mb-1">认证方式</div><div class="input-field !pl-3 text-sm bg-white/5">' + (v.authType === 'password' ? '密码认证' : '私钥认证') + '</div></div>' +
-    (v.authType === 'password' ?
-      '<div><div class="text-xs text-slate-500 mb-1 flex items-center justify-between">密码 <button id="toggle-pwd-btn" class="text-indigo-400 hover:underline text-xs cursor-pointer">显示</button></div><div id="pwd-display" class="input-field !pl-3 text-sm bg-white/5 font-mono break-all">' + maskPwd(v.password) + '</div><input type="hidden" id="pwd-raw" value="' + (v.password || '').replace(/"/g, '&quot;') + '" /></div>' :
-      '<div><div class="text-xs text-slate-500 mb-1 flex items-center justify-between">私钥 <button id="toggle-key-btn" class="text-indigo-400 hover:underline text-xs cursor-pointer">显示</button></div><pre id="key-display" class="textarea-field !pl-3 text-xs bg-white/5 font-mono max-h-48 overflow-auto">' + maskPwd(v.privateKey) + '</pre><input type="hidden" id="key-raw" value="' + (v.privateKey || '').replace(/"/g, '&quot;').replace(/</g, '&lt;') + '" /></div>'
-    ) +
-    '<div class="flex gap-2"><button onclick="copySSH()" class="btn-primary flex-1">复制 SSH 命令</button><button onclick="document.getElementById(\'config-modal\').remove()" class="btn-secondary flex-1">关闭</button></div>' +
+    '<div><div class="text-xs text-slate-500 mb-1">用户名</div><div class="p-2.5 rounded-lg bg-white/5 text-sm text-white font-mono">' + (v.username || 'root') + '</div></div>' +
+    '<div><div class="text-xs text-slate-500 mb-1">认证方式</div><div class="p-2.5 rounded-lg bg-white/5 text-sm text-white">' + (isKey ? '私钥认证' : '密码认证') + '</div></div>' +
+    '<div><div class="text-xs text-slate-500 mb-1 flex items-center justify-between">' + (isKey ? '私钥' : '密码') + ' <button id="toggle-secret" class="text-indigo-400 hover:underline text-xs cursor-pointer">显示</button></div>' +
+    (isKey ? '<pre id="secret-display" class="p-2.5 rounded-lg bg-white/5 text-xs text-white font-mono max-h-48 overflow-auto whitespace-pre-wrap">' + maskPwd(secretValue) + '</pre>' :
+            '<div id="secret-display" class="p-2.5 rounded-lg bg-white/5 text-sm text-white font-mono break-all">' + maskPwd(secretValue) + '</div>') +
+    '</div>' +
+    '<div class="flex gap-2"><button id="cfg-copy-ssh" class="btn-primary flex-1">复制 SSH 命令</button><button id="cfg-close-btn" class="btn-secondary flex-1">关闭</button></div>' +
     '</div></div>';
   document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-  // Toggle password visibility
-  const tpBtn = document.getElementById('toggle-pwd-btn');
-  if (tpBtn) {
-    let shown = false;
-    tpBtn.addEventListener('click', () => {
-      shown = !shown;
-      document.getElementById('pwd-display').textContent = shown ? document.getElementById('pwd-raw').value : maskPwd(document.getElementById('pwd-raw').value);
-      tpBtn.textContent = shown ? '隐藏' : '显示';
-    });
-  }
-  const tkBtn = document.getElementById('toggle-key-btn');
-  if (tkBtn) {
-    let shown = false;
-    tkBtn.addEventListener('click', () => {
-      shown = !shown;
-      document.getElementById('key-display').textContent = shown ? document.getElementById('key-raw').value : maskPwd(document.getElementById('key-raw').value);
-      tkBtn.textContent = shown ? '隐藏' : '显示';
-    });
-  }
-  // copySSH
-  window.copySSH = () => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+  document.getElementById('cfg-close-x').addEventListener('click', closeModal);
+  document.getElementById('cfg-close-btn').addEventListener('click', closeModal);
+  let secretShown = false;
+  document.getElementById('toggle-secret').addEventListener('click', () => {
+    secretShown = !secretShown;
+    document.getElementById('secret-display').textContent = secretShown ? secretValue : maskPwd(secretValue);
+    document.getElementById('toggle-secret').textContent = secretShown ? '隐藏' : '显示';
+  });
+  document.getElementById('cfg-copy-ssh').addEventListener('click', () => {
     const cmd = 'ssh ' + (v.username || 'root') + '@' + v.ip + ' -p ' + v.port;
-    navigator.clipboard.writeText(cmd).then(() => toast('SSH 命令已复制', 'success')).catch(() => toast('复制失败', 'error'));
-  };
+    navigator.clipboard.writeText(cmd).then(() => toast('SSH 命令已复制','success')).catch(() => toast('复制失败','error'));
+  });
 }
 
 async function verifyAll(){
