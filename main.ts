@@ -780,8 +780,6 @@ app.get('/donate', async (c: Context) => {
     <div class="glass-card p-5 text-center"><div class="text-3xl font-bold text-purple-400" id="stat-regions">-</div><div class="text-sm text-slate-400 mt-1">覆盖地区</div></div>
   </div>
 
-  <!-- Country Stats Bar -->
-  <div id="country-stats-bar" class="flex flex-wrap gap-2 mb-4 animate-slide-up" style="animation-delay:0.15s"></div>
 
   <!-- Globe -->
   <div class="glass-card mb-12 overflow-hidden animate-slide-up" style="animation-delay:0.2s">
@@ -1010,20 +1008,12 @@ function initGlobe(data) {
     const key = s.country || s.ipLocation || '未知';
     const coords = resolveLocation(s.ipLocation) || resolveLocation(s.country);
     if (coords) {
-      const rec = countryMap.get(key) || { country: key, lat: coords.lat, lng: coords.lng, count: 0, active: 0 };
+      const rec = countryMap.get(key) || { country: key, lat: coords.lat, lng: coords.lng, count: 0 };
       rec.count++;
-      if (s.status === 'active') rec.active++;
       countryMap.set(key, rec);
     }
   }));
   const countries = Array.from(countryMap.values());
-
-  const statsBar = document.getElementById('country-stats-bar');
-  if (statsBar) {
-    statsBar.innerHTML = countries.sort((a,b) => b.count - a.count).map(c =>
-      '<div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-sm"><span>' + getFlag(c.country) + '</span><span class="text-slate-300 font-medium">' + c.country + '</span><span class="text-indigo-400 font-bold">:' + c.count + '</span></div>'
-    ).join('');
-  }
 
   const arcs = [];
   for (let i = 0; i < countries.length; i++) {
@@ -1032,11 +1022,6 @@ function initGlobe(data) {
     }
   }
 
-  const flagElements = countries.map(c => ({
-    lat: c.lat, lng: c.lng, country: c.country, count: c.count, flag: getFlag(c.country)
-  }));
-
-  // Get ISO3 codes of active countries for polygon highlighting
   const activeISO3 = new Set();
   countries.forEach(c => { const iso = getISO3(c.country); if (iso) activeISO3.add(iso); });
 
@@ -1054,25 +1039,16 @@ function initGlobe(data) {
         .atmosphereAltitude(0.2)
         .showGraticules(false)
         .polygonsData(activePolygons)
-        .polygonCapColor(() => 'rgba(99,102,241,0.15)')
+        .polygonCapColor(() => 'rgba(99,102,241,0.2)')
         .polygonSideColor(() => 'rgba(99,102,241,0.08)')
         .polygonStrokeColor(() => 'rgba(99,102,241,0.6)')
-        .polygonAltitude(0.008)
-        .htmlElementsData(flagElements)
-        .htmlLat('lat').htmlLng('lng').htmlAltitude(0.02)
-        .htmlElement(d => {
-          const el = document.createElement('div');
-          el.style.cssText = 'display:flex;align-items:center;gap:4px;background:rgba(10,10,30,0.9);border:1px solid rgba(99,102,241,0.4);border-radius:6px;padding:3px 8px;cursor:pointer;pointer-events:auto;white-space:nowrap;font-size:12px;box-shadow:0 0 12px rgba(99,102,241,0.3);';
-          el.innerHTML = '<span style="font-size:16px">' + d.flag + '</span><span style="color:#c4b5fd;font-weight:600">' + d.country + '</span>';
-          el.title = d.country + ': ' + d.count + ' 个节点';
-          return el;
-        })
+        .polygonAltitude(0.006)
         .arcsData(arcs)
         .arcStartLat(d => d.startLat).arcStartLng(d => d.startLng)
         .arcEndLat(d => d.endLat).arcEndLng(d => d.endLng)
-        .arcColor(() => ['rgba(99,102,241,0.35)', 'rgba(139,92,246,0.35)'])
-        .arcStroke(0.5)
-        .arcDashLength(0.6)
+        .arcColor(() => ['rgba(99,102,241,0.3)', 'rgba(139,92,246,0.3)'])
+        .arcStroke(0.4)
+        .arcDashLength(0.5)
         .arcDashGap(0.3)
         .arcDashAnimateTime(2500)
         .arcDashInitialGap(() => Math.random());
