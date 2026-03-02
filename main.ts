@@ -780,6 +780,9 @@ app.get('/donate', async (c: Context) => {
     <div class="glass-card p-5 text-center"><div class="text-3xl font-bold text-purple-400" id="stat-regions">-</div><div class="text-sm text-slate-400 mt-1">覆盖地区</div></div>
   </div>
 
+  <!-- Country Stats Bar -->
+  <div id="country-stats-bar" class="flex flex-wrap gap-2 mb-4 animate-slide-up" style="animation-delay:0.15s"></div>
+
   <!-- Globe -->
   <div class="glass-card mb-12 overflow-hidden animate-slide-up" style="animation-delay:0.2s">
     <div id="globe-container" style="width:100%;height:500px;position:relative;"></div>
@@ -918,42 +921,86 @@ function resolveLocation(loc) {
   return null;
 }
 
+const FLAG_MAP = {
+  'HK':'🇭🇰','JP':'🇯🇵','SG':'🇸🇬','TW':'🇹🇼','KR':'🇰🇷','US':'🇺🇸','USA':'🇺🇸','DE':'🇩🇪','GB':'🇬🇧','UK':'🇬🇧',
+  'CN':'🇨🇳','IN':'🇮🇳','TH':'🇹🇭','VN':'🇻🇳','MY':'🇲🇾','PH':'🇵🇭','ID':'🇮🇩','FR':'🇫🇷','NL':'🇳🇱','RU':'🇷🇺',
+  'SE':'🇸🇪','FI':'🇫🇮','PL':'🇵🇱','IT':'🇮🇹','ES':'🇪🇸','CH':'🇨🇭','AT':'🇦🇹','CA':'🇨🇦','BR':'🇧🇷','AU':'🇦🇺',
+  'NZ':'🇳🇿','TR':'🇹🇷','ZA':'🇿🇦','AE':'🇦🇪','IL':'🇮🇱','MX':'🇲🇽','AR':'🇦🇷','NO':'🇳🇴','DK':'🇩🇰','IE':'🇮🇪',
+  'PT':'🇵🇹','BE':'🇧🇪','CZ':'🇨🇿','UA':'🇺🇦','RO':'🇷🇴','HU':'🇭🇺','EG':'🇪🇬','SA':'🇸🇦','CL':'🇨🇱','CO':'🇨🇴',
+  'Hong Kong':'🇭🇰','Japan':'🇯🇵','Singapore':'🇸🇬','Taiwan':'🇹🇼','Korea':'🇰🇷',
+  '香港':'🇭🇰','日本':'🇯🇵','新加坡':'🇸🇬','台湾':'🇹🇼','韩国':'🇰🇷','美国':'🇺🇸','德国':'🇩🇪','英国':'🇬🇧',
+  '中国':'🇨🇳','法国':'🇫🇷','荷兰':'🇳🇱','俄罗斯':'🇷🇺','加拿大':'🇨🇦','澳大利亚':'🇦🇺','巴西':'🇧🇷','印度':'🇮🇳',
+  '土耳其':'🇹🇷','瑞典':'🇸🇪','芬兰':'🇫🇮','波兰':'🇵🇱','意大利':'🇮🇹','西班牙':'🇪🇸','瑞士':'🇨🇭','泰国':'🇹🇭','越南':'🇻🇳',
+};
+function getFlag(c) {
+  if (!c) return '🌍';
+  if (FLAG_MAP[c]) return FLAG_MAP[c];
+  for (const [k,v] of Object.entries(FLAG_MAP)) { if (c.toLowerCase().includes(k.toLowerCase())) return v; }
+  return '🌍';
+}
+
 function initGlobe(data) {
   if (typeof Globe === 'undefined') { document.getElementById('globe-container').innerHTML='<div class="flex items-center justify-center h-full text-slate-500">地球加载失败</div>'; return; }
   const container = document.getElementById('globe-container');
-  const points = [];
-  data.forEach(d => d.servers.forEach((s, si) => {
+
+  // Aggregate by country for flag markers
+  const countryMap = new Map();
+  data.forEach(d => d.servers.forEach(s => {
+    const key = s.country || s.ipLocation || '未知';
     const coords = resolveLocation(s.ipLocation) || resolveLocation(s.country);
     if (coords) {
-      const jitter = 0.3;
-      points.push({ lat: coords.lat + (Math.sin(si*12.9898)*43758.5453%1-0.5)*jitter, lng: coords.lng + (Math.cos(si*7.2345)*23421.6312%1-0.5)*jitter, size: s.status==='active'?0.4:0.2, color: s.status==='active'?'#10b981':'#94a3b8', label: d.username + ' - ' + (s.ipLocation||s.country||'未知'), status: s.status, country: s.country });
+      const rec = countryMap.get(key) || { country: key, lat: coords.lat, lng: coords.lng, count: 0, active: 0 };
+      rec.count++;
+      if (s.status === 'active') rec.active++;
+      countryMap.set(key, rec);
     }
   }));
+  const countries = Array.from(countryMap.values());
 
-  // Build arc connections between servers
+  // Country stats bar
+  const statsBar = document.getElementById('country-stats-bar');
+  if (statsBar) {
+    statsBar.innerHTML = countries.sort((a,b) => b.count - a.count).map(c =>
+      '<div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-sm"><span>' + getFlag(c.country) + '</span><span class="text-slate-300 font-medium">' + c.country + '</span><span class="text-indigo-400 font-bold">:' + c.count + '</span></div>'
+    ).join('');
+  }
+
+  // Build arcs between unique country pairs
   const arcs = [];
-  for (let i = 0; i < points.length; i++) {
-    for (let j = i + 1; j < points.length && arcs.length < 80; j++) {
-      if (Math.random() < (points.length < 10 ? 0.5 : 0.15)) {
-        arcs.push({ startLat: points[i].lat, startLng: points[i].lng, endLat: points[j].lat, endLng: points[j].lng });
-      }
+  for (let i = 0; i < countries.length; i++) {
+    for (let j = i + 1; j < countries.length; j++) {
+      arcs.push({ startLat: countries[i].lat, startLng: countries[i].lng, endLat: countries[j].lat, endLng: countries[j].lng });
     }
   }
+
+  // HTML elements for flag markers
+  const flagElements = countries.map(c => ({
+    lat: c.lat, lng: c.lng, country: c.country, count: c.count, flag: getFlag(c.country)
+  }));
 
   try {
     const globe = Globe()(container)
       .width(container.clientWidth)
       .height(container.clientHeight)
-      .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+      .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
       .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
       .backgroundColor('rgba(0,0,0,0)')
-      .pointsData(points).pointLat('lat').pointLng('lng').pointColor('color').pointAltitude(0.018).pointRadius('size').pointResolution(16)
-      .pointLabel(d => '<div style="background:rgba(15,15,35,0.95);padding:8px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);color:#e2e8f0;font-size:13px;backdrop-filter:blur(8px)">'+(d.status==='active'?'<span style="color:#10b981">● </span>':'<span style="color:#94a3b8">● </span>')+d.label+'</div>')
+      .atmosphereColor('rgba(99,102,241,0.3)')
+      .atmosphereAltitude(0.2)
+      .htmlElementsData(flagElements)
+      .htmlLat('lat').htmlLng('lng').htmlAltitude(0.01)
+      .htmlElement(d => {
+        const el = document.createElement('div');
+        el.style.cssText = 'display:flex;align-items:center;gap:3px;background:rgba(10,10,30,0.85);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:2px 6px;cursor:pointer;pointer-events:auto;white-space:nowrap;backdrop-filter:blur(4px);font-size:12px;';
+        el.innerHTML = '<span style="font-size:14px">' + d.flag + '</span>';
+        el.title = d.country + ': ' + d.count + ' 个节点';
+        return el;
+      })
       .arcsData(arcs)
       .arcStartLat(d => d.startLat).arcStartLng(d => d.startLng)
       .arcEndLat(d => d.endLat).arcEndLng(d => d.endLng)
-      .arcColor(() => ['rgba(99,102,241,0.3)', 'rgba(139,92,246,0.3)'])
-      .arcStroke(0.4)
+      .arcColor(() => ['rgba(99,102,241,0.25)', 'rgba(139,92,246,0.25)'])
+      .arcStroke(0.35)
       .arcDashLength(0.5)
       .arcDashGap(0.4)
       .arcDashAnimateTime(3000)
@@ -962,7 +1009,6 @@ function initGlobe(data) {
     globe.controls().autoRotateSpeed = 0.4;
     globe.controls().enableZoom = true;
     globe.controls().enableRotate = true;
-    // Resize handler
     window.addEventListener('resize', () => { globe.width(container.clientWidth).height(container.clientHeight); });
   } catch(err) { console.error('Globe error:', err); }
 }
@@ -1411,17 +1457,66 @@ function renderVpsList(){
       '<div class="flex justify-between"><span>到期: '+(v.expiryDate||'-')+'</span><span>认证: '+(v.authType||'-')+'</span></div>'+
       (v.verifyErrorMsg?'<div class="text-red-400/70">'+v.verifyErrorMsg+'</div>':'')+
       (v.note?'<div class="text-slate-500 truncate">备注: '+v.note+'</div>':'')+
-      '</div><div class="flex gap-2 flex-wrap"><button class="btn-secondary btn-sm" data-act="verify">验证</button><button class="btn-secondary btn-sm" data-act="edit">编辑</button><button class="btn-danger btn-sm" data-act="delete">删除</button></div>';
+      '</div><div class="flex gap-2 flex-wrap"><button class="btn-secondary btn-sm" data-act="config">查看配置</button><button class="btn-secondary btn-sm" data-act="verify">验证</button><button class="btn-secondary btn-sm" data-act="edit">编辑</button><button class="btn-danger btn-sm" data-act="delete">删除</button></div>';
     card.querySelectorAll('button[data-act]').forEach(btn=>{
       btn.addEventListener('click',async()=>{
         const act=btn.dataset.act;
-        if(act==='delete'){if(!confirm('确定删除此VPS？'))return;try{const r=await fetch('/api/admin/vps/'+v.id,{method:'DELETE',credentials:'same-origin'});const j=await r.json();toast(j.message||'已删除',j.success?'success':'error');await loadVps();await loadStats();}catch{toast('删除异常','error');}}
+        if(act==='config'){showConfigModal(v);}
+        else if(act==='delete'){if(!confirm('确定删除此VPS？'))return;try{const r=await fetch('/api/admin/vps/'+v.id,{method:'DELETE',credentials:'same-origin'});const j=await r.json();toast(j.message||'已删除',j.success?'success':'error');await loadVps();await loadStats();}catch{toast('删除异常','error');}}
         else if(act==='verify'){try{const r=await fetch('/api/admin/vps/'+v.id+'/verify',{method:'POST',credentials:'same-origin'});const j=await r.json();toast(j.message||'已验证',j.success?'success':'error');await loadVps();await loadStats();}catch{toast('验证异常','error');}}
         else if(act==='edit'){openEditModal(v.id);}
       });
     });
     list.appendChild(card);
   });
+}
+
+function showConfigModal(v) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'config-modal';
+  const maskPwd = (s) => s ? s.substring(0, 3) + '***' : '未设置';
+  overlay.innerHTML = '<div class="modal-content"><div class="p-6 border-b border-white/5 flex items-center justify-between"><h3 class="font-bold text-white">SSH 连接配置</h3><button onclick="document.getElementById(\'config-modal\').remove()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10"><div class="w-5 h-5 opacity-60">${ICONS.x}</div></button></div>' +
+    '<div class="p-6 space-y-4">' +
+    '<div class="alert-info text-sm">以下为该 VPS 的 SSH 连接信息，请谨慎保管</div>' +
+    '<div class="grid grid-cols-2 gap-4">' +
+    '<div><div class="text-xs text-slate-500 mb-1">IP 地址</div><div class="input-field !pl-3 text-sm bg-white/5">' + v.ip + '</div></div>' +
+    '<div><div class="text-xs text-slate-500 mb-1">端口</div><div class="input-field !pl-3 text-sm bg-white/5">' + v.port + '</div></div>' +
+    '</div>' +
+    '<div><div class="text-xs text-slate-500 mb-1">用户名</div><div class="input-field !pl-3 text-sm bg-white/5">' + (v.username || '-') + '</div></div>' +
+    '<div><div class="text-xs text-slate-500 mb-1">认证方式</div><div class="input-field !pl-3 text-sm bg-white/5">' + (v.authType === 'password' ? '密码认证' : '私钥认证') + '</div></div>' +
+    (v.authType === 'password' ?
+      '<div><div class="text-xs text-slate-500 mb-1 flex items-center justify-between">密码 <button id="toggle-pwd-btn" class="text-indigo-400 hover:underline text-xs cursor-pointer">显示</button></div><div id="pwd-display" class="input-field !pl-3 text-sm bg-white/5 font-mono break-all">' + maskPwd(v.password) + '</div><input type="hidden" id="pwd-raw" value="' + (v.password || '').replace(/"/g, '&quot;') + '" /></div>' :
+      '<div><div class="text-xs text-slate-500 mb-1 flex items-center justify-between">私钥 <button id="toggle-key-btn" class="text-indigo-400 hover:underline text-xs cursor-pointer">显示</button></div><pre id="key-display" class="textarea-field !pl-3 text-xs bg-white/5 font-mono max-h-48 overflow-auto">' + maskPwd(v.privateKey) + '</pre><input type="hidden" id="key-raw" value="' + (v.privateKey || '').replace(/"/g, '&quot;').replace(/</g, '&lt;') + '" /></div>'
+    ) +
+    '<div class="flex gap-2"><button onclick="copySSH()" class="btn-primary flex-1">复制 SSH 命令</button><button onclick="document.getElementById(\'config-modal\').remove()" class="btn-secondary flex-1">关闭</button></div>' +
+    '</div></div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  // Toggle password visibility
+  const tpBtn = document.getElementById('toggle-pwd-btn');
+  if (tpBtn) {
+    let shown = false;
+    tpBtn.addEventListener('click', () => {
+      shown = !shown;
+      document.getElementById('pwd-display').textContent = shown ? document.getElementById('pwd-raw').value : maskPwd(document.getElementById('pwd-raw').value);
+      tpBtn.textContent = shown ? '隐藏' : '显示';
+    });
+  }
+  const tkBtn = document.getElementById('toggle-key-btn');
+  if (tkBtn) {
+    let shown = false;
+    tkBtn.addEventListener('click', () => {
+      shown = !shown;
+      document.getElementById('key-display').textContent = shown ? document.getElementById('key-raw').value : maskPwd(document.getElementById('key-raw').value);
+      tkBtn.textContent = shown ? '隐藏' : '显示';
+    });
+  }
+  // copySSH
+  window.copySSH = () => {
+    const cmd = 'ssh ' + (v.username || 'root') + '@' + v.ip + ' -p ' + v.port;
+    navigator.clipboard.writeText(cmd).then(() => toast('SSH 命令已复制', 'success')).catch(() => toast('复制失败', 'error'));
+  };
 }
 
 async function verifyAll(){
