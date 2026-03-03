@@ -524,7 +524,7 @@ tailwind.config = {
 <\/script>
 <style>
 :root {
-  --bg-primary: #1a1a1c;
+  --bg-primary: #0a0a0f;
   --bg-secondary: #1c1c1e;
   --bg-card: rgba(255,255,255,0.04);
   --bg-card-hover: rgba(255,255,255,0.07);
@@ -550,6 +550,12 @@ body {
   font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Inter', BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
   background: var(--bg-primary); color: var(--text-primary); min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(13,42,95,0.35) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 60% at 80% 20%, rgba(45,20,80,0.25) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 50% at 60% 80%, rgba(10,50,60,0.2) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 40% at 40% 60%, rgba(20,20,50,0.15) 0%, transparent 40%);
+  background-attachment: fixed;
   letter-spacing: -0.01em;
 }
 
