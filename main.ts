@@ -524,7 +524,7 @@ tailwind.config = {
 <\/script>
 <style>
 :root {
-  --bg-primary: #0d0d0f;
+  --bg-primary: #1a1a1c;
   --bg-secondary: #1c1c1e;
   --bg-card: rgba(255,255,255,0.04);
   --bg-card-hover: rgba(255,255,255,0.07);
@@ -1453,6 +1453,14 @@ app.get('/admin', (c: Context) => {
 <script>
 let allVpsList=[], statusFilter='all', searchFilter='', userFilter='';
 
+// Client-side flag emoji from country code
+function cFlag(code) {
+  if (!code || code.length < 2) return '';
+  const c = code.toUpperCase().replace(/[^A-Z]/g,'').substring(0,2);
+  if (c.length !== 2) return '';
+  return String.fromCodePoint(...[...c].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65));
+}
+
 async function doAdminLogin(){
   const pwd=document.getElementById('admin-pwd').value;
   if(!pwd){toast('请输入密码','warn');return;}
@@ -1534,7 +1542,7 @@ function renderVpsList(){
         const act=btn.dataset.act;
         if(act==='config'){showConfigModal(v);}
         else if(act==='delete'){if(!confirm('确定删除此VPS？'))return;try{const r=await fetch('/api/admin/vps/'+v.id,{method:'DELETE',credentials:'same-origin'});const j=await r.json();toast(j.message||'已删除',j.success?'success':'error');await loadVps();await loadStats();}catch{toast('删除异常','error');}}
-        else if(act==='verify'){try{const r=await fetch('/api/admin/vps/'+v.id+'/verify',{method:'POST',credentials:'same-origin'});const j=await r.json();toast(j.message||'已验证',j.success?'success':'error');await loadVps();await loadStats();}catch{toast('验证异常','error');}}
+        else if(act==='verify'){btn.textContent='验证中...';btn.disabled=true;try{const r=await fetch('/api/admin/vps/'+v.id+'/verify',{method:'POST',credentials:'same-origin'});const j=await r.json();toast(j.message||'已验证',j.success?'success':'error');const bdg=card.querySelector('.badge');if(bdg&&j.data){bdg.className='badge '+(j.data.status==='active'?'badge-ok':(j.data.status==='failed'?'badge-fail':'badge-idle'));bdg.textContent=j.data.status==='active'?'运行中':(j.data.status==='failed'?'失败':'未启用');}btn.textContent=j.success?'✅':'❌';setTimeout(()=>{btn.textContent='验证';btn.disabled=false;},1200);}catch{toast('验证异常','error');btn.textContent='验证';btn.disabled=false;}}
         else if(act==='edit'){openEditModal(v.id);}
       });
     });
@@ -1557,7 +1565,7 @@ function showConfigModal(v) {
     '<div class="flex items-center justify-between"><div class="flex items-center gap-3"><span class="text-lg font-mono font-bold text-white">' + v.ip + ':' + v.port + '</span><span class="badge ' + (v.status==='active'?'badge-ok':(v.status==='failed'?'badge-fail':'badge-idle')) + '">' + statusText + '</span></div></div>' +
     '<div class="grid grid-cols-2 gap-3 text-sm">' +
     '<div class="p-3 rounded-xl bg-white/[0.04] copy-field" data-copy="' + (v.donatedByUsername||'') + '"><div class="text-xs text-[#a1a1a6] mb-1">捐助人</div><a href="https://linux.do/u/' + encodeURIComponent(v.donatedByUsername||'') + '" target="_blank" class="text-[#0A84FF] hover:underline">' + (v.donatedByUsername||'-') + '</a></div>' +
-    '<div class="p-3 rounded-xl bg-white/[0.04] copy-field" data-copy="' + (v.country||'') + '"><div class="text-xs text-[#a1a1a6] mb-1">国家/地区</div><div class="text-white">' + getFlag(v.country) + ' ' + (v.country||'-') + (v.ipLocation ? ' / '+v.ipLocation : '') + '</div></div>' +
+    '<div class="p-3 rounded-xl bg-white/[0.04] copy-field" data-copy="' + (v.country||'') + '"><div class="text-xs text-[#a1a1a6] mb-1">国家/地区</div><div class="text-white">' + cFlag(v.country) + ' ' + (v.country||'-') + (v.ipLocation ? ' / '+v.ipLocation : '') + '</div></div>' +
     '<div class="p-3 rounded-xl bg-white/[0.04] copy-field" data-copy="' + v.ip + '"><div class="text-xs text-[#a1a1a6] mb-1">IP</div><div class="text-white font-mono">' + v.ip + '</div></div>' +
     '<div class="p-3 rounded-xl bg-white/[0.04] copy-field" data-copy="' + (v.specs||'') + '"><div class="text-xs text-[#a1a1a6] mb-1">配置</div><div class="text-white">' + (v.specs||'-') + '</div></div>' +
     '<div class="p-3 rounded-xl bg-white/[0.04] copy-field" data-copy="' + (v.traffic||'') + '"><div class="text-xs text-[#a1a1a6] mb-1">流量</div><div class="text-white">' + (v.traffic||'-') + '</div></div>' +
