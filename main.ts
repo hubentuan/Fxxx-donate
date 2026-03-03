@@ -491,16 +491,19 @@ app.post('/api/admin/vps/:id/verify', requireAdmin, async (c: Context) => {
 
 app.post('/api/admin/verify-all', requireAdmin, async (c: Context) => {
   const all = await getAllVPS();
-  let total = 0, success = 0, failed = 0;
-  for (const v of all) {
-    total++;
-    const ok = await portOK(v.ip, v.port);
-    v.lastVerifyAt = Date.now();
-    if (ok) { v.status = 'active'; v.verifyStatus = 'verified'; v.verifyErrorMsg = ''; success++; }
-    else { v.status = 'failed'; v.verifyStatus = 'failed'; v.verifyErrorMsg = '无法连接'; failed++; }
-    await kv.set(['vps', v.id], v);
+  let success = 0, failed = 0;
+  const BATCH = 20; // concurrent batch size
+  for (let i = 0; i < all.length; i += BATCH) {
+    const batch = all.slice(i, i + BATCH);
+    const results = await Promise.allSettled(batch.map(async v => {
+      const ok = await portOK(v.ip, v.port, 4000);
+      v.lastVerifyAt = Date.now();
+      if (ok) { v.status = 'active'; v.verifyStatus = 'verified'; v.verifyErrorMsg = ''; success++; }
+      else { v.status = 'failed'; v.verifyStatus = 'failed'; v.verifyErrorMsg = '无法连接'; failed++; }
+      await kv.set(['vps', v.id], v);
+    }));
   }
-  return c.json({ success: true, message: `验证完成: ${success} 成功 / ${failed} 失败 / ${total} 总计` });
+  return c.json({ success: true, message: `验证完成: ${success} 成功 / ${failed} 失败 / ${all.length} 总计` });
 });
 
 /* ==================== commonHead: CSS Design System ==================== */
@@ -551,10 +554,10 @@ body {
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
   background: var(--bg-primary); color: var(--text-primary); min-height: 100vh;
   background-image:
-    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(13,42,95,0.35) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 60% at 80% 20%, rgba(45,20,80,0.25) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 50% at 60% 80%, rgba(10,50,60,0.2) 0%, transparent 50%),
-    radial-gradient(ellipse 40% 40% at 40% 60%, rgba(20,20,50,0.15) 0%, transparent 40%);
+    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(20,60,140,0.45) 0%, transparent 60%),
+    radial-gradient(ellipse 65% 60% at 80% 15%, rgba(80,40,140,0.35) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 55% at 55% 85%, rgba(15,80,100,0.3) 0%, transparent 50%),
+    radial-gradient(ellipse 45% 45% at 40% 55%, rgba(30,30,80,0.2) 0%, transparent 45%);
   background-attachment: fixed;
   letter-spacing: -0.01em;
 }
@@ -1548,7 +1551,7 @@ function renderVpsList(){
         const act=btn.dataset.act;
         if(act==='config'){showConfigModal(v);}
         else if(act==='delete'){if(!confirm('确定删除此VPS？'))return;try{const r=await fetch('/api/admin/vps/'+v.id,{method:'DELETE',credentials:'same-origin'});const j=await r.json();toast(j.message||'已删除',j.success?'success':'error');await loadVps();await loadStats();}catch{toast('删除异常','error');}}
-        else if(act==='verify'){btn.textContent='验证中...';btn.disabled=true;try{const r=await fetch('/api/admin/vps/'+v.id+'/verify',{method:'POST',credentials:'same-origin'});const j=await r.json();toast(j.message||'已验证',j.success?'success':'error');const bdg=card.querySelector('.badge');if(bdg&&j.data){bdg.className='badge '+(j.data.status==='active'?'badge-ok':(j.data.status==='failed'?'badge-fail':'badge-idle'));bdg.textContent=j.data.status==='active'?'运行中':(j.data.status==='failed'?'失败':'未启用');}btn.textContent=j.success?'✅':'❌';setTimeout(()=>{btn.textContent='验证';btn.disabled=false;},1200);}catch{toast('验证异常','error');btn.textContent='验证';btn.disabled=false;}}
+        else if(act==='verify'){btn.textContent='验证中...';btn.disabled=true;try{const r=await fetch('/api/admin/vps/'+v.id+'/verify',{method:'POST',credentials:'same-origin'});const j=await r.json();toast(j.message||'已验证',j.success?'success':'error');const bdg=card.querySelector('.badge');if(bdg&&j.data){bdg.className='badge '+(j.data.status==='active'?'badge-ok':(j.data.status==='failed'?'badge-fail':'badge-idle'));bdg.textContent=j.data.status==='active'?'运行中':(j.data.status==='failed'?'失败':'未启用');}btn.textContent=j.success?'成功':'失败';btn.style.color=j.success?'var(--success)':'var(--error)';setTimeout(()=>{btn.textContent='验证';btn.style.color='';btn.disabled=false;},1200);}catch{toast('验证异常','error');btn.textContent='验证';btn.disabled=false;}}
         else if(act==='edit'){openEditModal(v.id);}
       });
     });
@@ -1660,8 +1663,11 @@ function showConfigModal(v) {
 }
 
 async function verifyAll(){
-  if(!allVpsList.length){toast('没有VPS可验证','warn');return;}if(!confirm('确定全部验证？可能需要较长时间'))return;
+  if(!allVpsList.length){toast('没有VPS可验证','warn');return;}
+  const vBtn=document.querySelector('[onclick="verifyAll()"]');
+  if(vBtn){vBtn.textContent='验证中('+allVpsList.length+')...';vBtn.disabled=true;}
   try{const r=await fetch('/api/admin/verify-all',{method:'POST',credentials:'same-origin'});const j=await r.json();toast(j.message||'完成',j.success?'success':'error');await loadVps();await loadStats();}catch{toast('验证异常','error');}
+  if(vBtn){vBtn.innerHTML='<div class="w-3.5 h-3.5">${ICONS.refresh}<\/div> 全部验证';vBtn.disabled=false;}
 }
 
 function openEditModal(id){
