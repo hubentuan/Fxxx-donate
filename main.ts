@@ -524,13 +524,13 @@ tailwind.config = {
 <\/script>
 <style>
 :root {
-  --bg-primary: #000000;
+  --bg-primary: #0d0d0f;
   --bg-secondary: #1c1c1e;
-  --bg-card: #2c2c2e;
-  --bg-card-hover: #3a3a3c;
-  --bg-elevated: #38383a;
-  --border-color: rgba(255,255,255,0.08);
-  --border-hover: rgba(255,255,255,0.16);
+  --bg-card: rgba(255,255,255,0.04);
+  --bg-card-hover: rgba(255,255,255,0.07);
+  --bg-elevated: rgba(255,255,255,0.06);
+  --border-color: rgba(255,255,255,0.06);
+  --border-hover: rgba(255,255,255,0.12);
   --text-primary: #f5f5f7;
   --text-secondary: #a1a1a6;
   --text-muted: #6e6e73;
@@ -558,13 +558,13 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   transition: all 0.25s cubic-bezier(0.25,0.1,0.25,1);
 }
 .glass-card:hover {
   border-color: var(--border-hover);
   background: var(--bg-card-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
 }
 
 /* Buttons */
