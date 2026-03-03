@@ -777,8 +777,8 @@ app.get('/donate', async (c: Context) => {
   const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
 <body>
 <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-  <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px]"></div>
-  <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[120px]"></div>
+  <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/5 rounded-full blur-[150px]"></div>
+  <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-600/5 rounded-full blur-[150px]"></div>
 </div>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-16">
   <!-- Header -->
@@ -799,7 +799,7 @@ app.get('/donate', async (c: Context) => {
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 animate-slide-up" style="animation-delay:0.1s">
     <div class="glass-card p-5 text-center"><div class="text-3xl font-bold text-white" id="stat-total">-</div><div class="text-sm text-slate-400 mt-1">总投喂数</div></div>
     <div class="glass-card p-5 text-center"><div class="text-3xl font-bold text-emerald-400" id="stat-active">-</div><div class="text-sm text-slate-400 mt-1">运行中</div></div>
-    <div class="glass-card p-5 text-center"><div class="text-3xl font-bold text-indigo-400" id="stat-donors">-</div><div class="text-sm text-slate-400 mt-1">赞助商</div></div>
+    <div class="glass-card p-5 text-center"><div class="text-3xl font-bold text-blue-400" id="stat-donors">-</div><div class="text-sm text-slate-400 mt-1">赞助商</div></div>
     <div class="glass-card p-5 text-center"><div class="text-3xl font-bold text-purple-400" id="stat-regions">-</div><div class="text-sm text-slate-400 mt-1">覆盖地区</div></div>
   </div>
 
@@ -885,9 +885,9 @@ async function loadLeaderboard() {
       }).join('');
       card.innerHTML = '<div class="flex items-center gap-4 mb-4">' +
         '<div class="flex-shrink-0">'+rankIconClient(i)+'</div>' +
-        '<div class="flex-1 min-w-0"><div class="flex items-center gap-3 flex-wrap"><a href="https://linux.do/u/'+encodeURIComponent(donor.username)+'" target="_blank" class="text-lg font-bold text-white hover:text-indigo-400 transition-colors">'+donor.username+'</a>'+renderBadge(badge)+'</div>' +
+        '<div class="flex-1 min-w-0"><div class="flex items-center gap-3 flex-wrap"><a href="https://linux.do/u/'+encodeURIComponent(donor.username)+'" target="_blank" class="text-lg font-bold text-white hover:text-blue-400 transition-colors">'+donor.username+'</a>'+renderBadge(badge)+'</div>' +
         '<div class="text-sm text-slate-400 mt-1">共投喂 '+donor.count+' 台服务器</div></div>' +
-        '<div class="text-2xl font-bold text-indigo-400">#'+(i+1)+'</div></div>' +
+        '<div class="text-2xl font-bold text-blue-400">#'+(i+1)+'</div></div>' +
         '<div class="space-y-0.5">'+serversHTML+'</div>';
       lb.appendChild(card);
     });
@@ -1098,14 +1098,14 @@ app.get('/donate/vps', (c: Context) => {
   const html = `<!doctype html><html lang="zh-CN"><head>${head}</head>
 <body>
 <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-  <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px]"></div>
-  <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[120px]"></div>
+  <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/5 rounded-full blur-[150px]"></div>
+  <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-600/5 rounded-full blur-[150px]"></div>
 </div>
 <div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-8 md:py-12">
   <header class="mb-10 animate-fade-in flex flex-col md:flex-row md:items-center justify-between gap-4">
     <div>
       <h1 class="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
-        <div class="w-8 h-8 text-indigo-400">${ICONS.rocket}</div> VPS 投喂中心
+        <div class="w-8 h-8 text-blue-400">${ICONS.rocket}</div> VPS 投喂中心
       </h1>
       <p class="text-slate-400 flex items-center gap-2"><div class="w-4 h-4 text-pink-500">${ICONS.heart}</div> 共建公益节点网络</p>
     </div>
@@ -1121,7 +1121,7 @@ app.get('/donate/vps', (c: Context) => {
     <section class="lg:col-span-7 animate-slide-up" style="animation-delay:0.1s">
       <div class="glass-card p-8">
         <div class="flex items-center gap-4 mb-6">
-          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white"><div class="w-6 h-6">${ICONS.server}</div></div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white"><div class="w-6 h-6">${ICONS.server}</div></div>
           <div><h2 class="text-xl font-bold text-white">提交新节点</h2><p class="text-slate-400 text-sm mt-0.5">请填写服务器连接信息</p></div>
         </div>
         <div class="alert-info flex gap-3 mb-6 text-sm"><div class="w-5 h-5 flex-shrink-0 mt-0.5">${ICONS.info}</div><span>请确保服务器是你有控制权的机器。禁止提交被黑/扫描到的机器。</span></div>
@@ -1287,7 +1287,7 @@ app.get('/donate/vps', (c: Context) => {
     <section class="lg:col-span-5 animate-slide-up" style="animation-delay:0.2s">
       <div class="glass-card p-6">
         <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3"><div class="w-6 h-6 text-indigo-400">${ICONS.server}</div><h3 class="text-lg font-bold text-white">我的投喂</h3></div>
+          <div class="flex items-center gap-3"><div class="w-6 h-6 text-blue-400">${ICONS.server}</div><h3 class="text-lg font-bold text-white">我的投喂</h3></div>
           <button onclick="exportDonations()" class="btn-secondary btn-sm"><div class="w-3.5 h-3.5">${ICONS.download}</div> 导出</button>
         </div>
         <div id="donations-list" class="space-y-3"></div>
@@ -1392,7 +1392,7 @@ app.get('/admin', (c: Context) => {
       <div class="relative mb-4"><div class="absolute left-3.5 top-3 w-5 h-5 text-slate-500">${ICONS.lock}</div>
         <input id="admin-pwd" type="password" placeholder="管理员密码" class="input-field" onkeydown="if(event.key==='Enter')doAdminLogin()" /></div>
       <button onclick="doAdminLogin()" class="btn-primary w-full py-3">登录</button>
-      <a href="/donate" class="block mt-4 text-sm text-slate-500 hover:text-indigo-400 transition-colors">返回首页</a>
+      <a href="/donate" class="block mt-4 text-sm text-slate-500 hover:text-blue-400 transition-colors">返回首页</a>
     </div>
   </div>
 
@@ -1400,7 +1400,7 @@ app.get('/admin', (c: Context) => {
   <div id="admin-dashboard" class="hidden">
     <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 text-indigo-400">${ICONS.shield}</div>
+        <div class="w-8 h-8 text-blue-400">${ICONS.shield}</div>
         <h1 class="text-2xl font-bold text-white">管理后台</h1>
       </div>
       <div class="flex gap-3">
@@ -1412,7 +1412,7 @@ app.get('/admin', (c: Context) => {
     <div class="grid md:grid-cols-2 gap-6 mb-8">
       <!-- OAuth Config -->
       <div class="glass-card p-6">
-        <div class="flex items-center gap-3 mb-4"><div class="w-5 h-5 text-indigo-400">${ICONS.link}</div><h2 class="font-bold text-white">OAuth 配置</h2></div>
+        <div class="flex items-center gap-3 mb-4"><div class="w-5 h-5 text-blue-400">${ICONS.link}</div><h2 class="font-bold text-white">OAuth 配置</h2></div>
         <div id="oauth-form" class="space-y-3">
           <input id="oauth-cid" placeholder="Client ID" class="input-field !pl-3 text-sm" />
           <input id="oauth-secret" placeholder="Client Secret" type="password" class="input-field !pl-3 text-sm" />
@@ -1422,7 +1422,7 @@ app.get('/admin', (c: Context) => {
       </div>
       <!-- Admin Password -->
       <div class="glass-card p-6">
-        <div class="flex items-center gap-3 mb-4"><div class="w-5 h-5 text-indigo-400">${ICONS.key}</div><h2 class="font-bold text-white">管理员密码</h2></div>
+        <div class="flex items-center gap-3 mb-4"><div class="w-5 h-5 text-blue-400">${ICONS.key}</div><h2 class="font-bold text-white">管理员密码</h2></div>
         <div class="space-y-3">
           <input id="new-pwd" type="password" placeholder="新密码（至少6位）" class="input-field !pl-3 text-sm" />
           <input id="new-pwd2" type="password" placeholder="确认密码" class="input-field !pl-3 text-sm" />
@@ -1434,7 +1434,7 @@ app.get('/admin', (c: Context) => {
     <!-- VPS List -->
     <div class="glass-card p-6 mb-6">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-        <div class="flex items-center gap-3"><div class="w-5 h-5 text-indigo-400">${ICONS.server}</div><h2 class="font-bold text-white">VPS 管理</h2></div>
+        <div class="flex items-center gap-3"><div class="w-5 h-5 text-blue-400">${ICONS.server}</div><h2 class="font-bold text-white">VPS 管理</h2></div>
         <div class="flex gap-2 flex-wrap">
           <button data-status="all" class="btn-secondary btn-sm" onclick="setFilter('all')">全部</button>
           <button data-status="active" class="btn-secondary btn-sm" onclick="setFilter('active')">运行中</button>
