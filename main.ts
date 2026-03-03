@@ -1552,7 +1552,22 @@ function showConfigModal(v) {
     (isKey ? '<pre id="secret-display" class="p-2.5 rounded-lg bg-white/5 text-xs text-white font-mono max-h-48 overflow-auto whitespace-pre-wrap">' + maskPwd(secretValue) + '</pre>' :
             '<div id="secret-display" class="p-2.5 rounded-lg bg-white/5 text-sm text-white font-mono break-all">' + maskPwd(secretValue) + '</div>') +
     '</div>' +
-    '<div class="flex gap-2"><button id="cfg-copy-ssh" class="btn-primary flex-1">复制 SSH 命令</button><button id="cfg-test-btn" class="btn-secondary flex-1">测试连接</button><button id="cfg-close-btn" class="btn-secondary flex-1">关闭</button></div>' +
+    '<div class="flex gap-2"><button id="cfg-copy-ssh" class="btn-primary flex-1">\u590d\u5236 SSH \u547d\u4ee4</button><button id="cfg-test-btn" class="btn-secondary flex-1">\u6d4b\u8bd5\u8fde\u63a5</button><button id="cfg-close-btn" class="btn-secondary flex-1">\u5173\u95ed</button></div>' +
+    '<hr class="border-white/5" />' +
+    '<div class="text-xs text-slate-500 font-medium mb-2">\u8282\u70b9\u90e8\u7f72 / \u5378\u8f7d</div>' +
+    '<div class="space-y-2">' +
+    '<div class="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">' +
+    '<div class="flex items-center justify-between mb-2"><span class="text-xs text-emerald-400 font-medium">\u90e8\u7f72\u8282\u70b9 (V2bX)</span><button id="cfg-copy-deploy" class="text-xs text-emerald-400 hover:text-emerald-300 cursor-pointer hover:underline">\u590d\u5236\u90e8\u7f72\u547d\u4ee4</button></div>' +
+    '<div class="text-xs text-slate-400">\u6b65\u9aa4 1\ufe0f\u20e3 \u590d\u5236\u4e0b\u65b9 SSH \u767b\u5f55\u547d\u4ee4\uff0c\u5728\u7ec8\u7aef\u767b\u5f55 VPS</div>' +
+    '<div id="deploy-ssh-cmd" class="mt-1 p-2 rounded bg-black/30 text-xs font-mono text-emerald-300 break-all cursor-pointer" title="\u70b9\u51fb\u590d\u5236">ssh ' + (v.username||'root') + '@' + v.ip + ' -p ' + v.port + '</div>' +
+    '<div class="text-xs text-slate-400 mt-2">\u6b65\u9aa4 2\ufe0f\u20e3 \u767b\u5f55\u540e\u6267\u884c\u4ee5\u4e0b\u5b89\u88c5\u547d\u4ee4</div>' +
+    '<div id="deploy-install-cmd" class="mt-1 p-2 rounded bg-black/30 text-xs font-mono text-emerald-300 break-all cursor-pointer" title="\u70b9\u51fb\u590d\u5236">bash \u003c(curl -sSL &quot;https://gist.githubusercontent.com/hubentuan/b0719300ba5a41f9e828bbde0dc64733/raw/V2bX%20%E5%AE%89%E8%A3%85%E8%84%9A%E6%9C%AC&quot;)</div>' +
+    '</div>' +
+    '<div class="p-3 rounded-lg bg-red-500/5 border border-red-500/10">' +
+    '<div class="flex items-center justify-between mb-2"><span class="text-xs text-red-400 font-medium">\u5378\u8f7d\u8282\u70b9 (V2bX)</span><button id="cfg-copy-uninstall" class="text-xs text-red-400 hover:text-red-300 cursor-pointer hover:underline">\u590d\u5236\u5378\u8f7d\u547d\u4ee4</button></div>' +
+    '<div class="text-xs text-slate-400">\u767b\u5f55 VPS \u540e\u6267\u884c\u4ee5\u4e0b\u547d\u4ee4\u5f3a\u5236\u5378\u8f7d</div>' +
+    '<div id="uninstall-cmd" class="mt-1 p-2 rounded bg-black/30 text-xs font-mono text-red-300 break-all cursor-pointer" title="\u70b9\u51fb\u590d\u5236">systemctl stop V2bX 2\u003e/dev/null; systemctl disable V2bX 2\u003e/dev/null; rm -f /etc/systemd/system/V2bX.service; systemctl daemon-reload; rm -rf /etc/V2bX; rm -f /usr/bin/v2bx; rm -f /usr/bin/V2bX; echo &quot;V2bX \u5df2\u5f7b\u5e95\u5378\u8f7d\u6e05\u7406\u5b8c\u6bd5&quot;</div>' +
+    '</div></div>' +
     '</div></div>';
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
@@ -1562,24 +1577,44 @@ function showConfigModal(v) {
   document.getElementById('toggle-secret').addEventListener('click', () => {
     secretShown = !secretShown;
     document.getElementById('secret-display').textContent = secretShown ? secretValue : maskPwd(secretValue);
-    document.getElementById('toggle-secret').textContent = secretShown ? '隐藏' : '显示';
+    document.getElementById('toggle-secret').textContent = secretShown ? '\u9690\u85cf' : '\u663e\u793a';
   });
   document.getElementById('cfg-copy-ssh').addEventListener('click', () => {
     const cmd = 'ssh ' + (v.username || 'root') + '@' + v.ip + ' -p ' + v.port;
-    navigator.clipboard.writeText(cmd).then(() => toast('SSH 命令已复制','success')).catch(() => toast('复制失败','error'));
+    navigator.clipboard.writeText(cmd).then(() => toast('SSH \u547d\u4ee4\u5df2\u590d\u5236','success')).catch(() => toast('\u590d\u5236\u5931\u8d25','error'));
   });
   document.getElementById('cfg-test-btn').addEventListener('click', async () => {
     const btn = document.getElementById('cfg-test-btn');
-    btn.textContent = '测试中...';
+    btn.textContent = '\u6d4b\u8bd5\u4e2d...';
     btn.disabled = true;
     try {
       const r = await fetch('/api/admin/vps/' + v.id + '/verify', { method: 'POST', credentials: 'same-origin' });
       const j = await r.json();
-      toast(j.message || '测试完成', j.success ? 'success' : 'error');
-      btn.textContent = j.success ? '✅ 连接正常' : '❌ 连接失败';
+      toast(j.message || '\u6d4b\u8bd5\u5b8c\u6210', j.success ? 'success' : 'error');
+      btn.textContent = j.success ? '\u2705 \u8fde\u63a5\u6b63\u5e38' : '\u274c \u8fde\u63a5\u5931\u8d25';
       await loadVps(); await loadStats();
-    } catch { toast('测试异常','error'); btn.textContent = '测试连接'; }
+    } catch { toast('\u6d4b\u8bd5\u5f02\u5e38','error'); btn.textContent = '\u6d4b\u8bd5\u8fde\u63a5'; }
     btn.disabled = false;
+  });
+  // Deploy command copy
+  const DEPLOY_SCRIPT = 'bash <(curl -sSL "https://gist.githubusercontent.com/hubentuan/b0719300ba5a41f9e828bbde0dc64733/raw/V2bX%20%E5%AE%89%E8%A3%85%E8%84%9A%E6%9C%AC")';
+  const UNINSTALL_CMD = 'systemctl stop V2bX 2>/dev/null; systemctl disable V2bX 2>/dev/null; rm -f /etc/systemd/system/V2bX.service; systemctl daemon-reload; rm -rf /etc/V2bX; rm -f /usr/bin/v2bx; rm -f /usr/bin/V2bX; echo "V2bX \u5df2\u5f7b\u5e95\u5378\u8f7d\u6e05\u7406\u5b8c\u6bd5"';
+  const sshLogin = 'ssh ' + (v.username || 'root') + '@' + v.ip + ' -p ' + v.port;
+  document.getElementById('cfg-copy-deploy').addEventListener('click', () => {
+    const full = sshLogin + '\\n' + DEPLOY_SCRIPT;
+    navigator.clipboard.writeText(sshLogin + '\\n# \u767b\u5f55\u540e\u6267\u884c:\\n' + DEPLOY_SCRIPT).then(() => toast('\u90e8\u7f72\u547d\u4ee4\u5df2\u590d\u5236\uff08\u5206\u4e24\u6b65\uff09','success')).catch(() => toast('\u590d\u5236\u5931\u8d25','error'));
+  });
+  document.getElementById('deploy-ssh-cmd').addEventListener('click', () => {
+    navigator.clipboard.writeText(sshLogin).then(() => toast('SSH \u767b\u5f55\u547d\u4ee4\u5df2\u590d\u5236','success')).catch(() => toast('\u590d\u5236\u5931\u8d25','error'));
+  });
+  document.getElementById('deploy-install-cmd').addEventListener('click', () => {
+    navigator.clipboard.writeText(DEPLOY_SCRIPT).then(() => toast('\u5b89\u88c5\u547d\u4ee4\u5df2\u590d\u5236','success')).catch(() => toast('\u590d\u5236\u5931\u8d25','error'));
+  });
+  document.getElementById('cfg-copy-uninstall').addEventListener('click', () => {
+    navigator.clipboard.writeText(UNINSTALL_CMD).then(() => toast('\u5378\u8f7d\u547d\u4ee4\u5df2\u590d\u5236','success')).catch(() => toast('\u590d\u5236\u5931\u8d25','error'));
+  });
+  document.getElementById('uninstall-cmd').addEventListener('click', () => {
+    navigator.clipboard.writeText(UNINSTALL_CMD).then(() => toast('\u5378\u8f7d\u547d\u4ee4\u5df2\u590d\u5236','success')).catch(() => toast('\u590d\u5236\u5931\u8d25','error'));
   });
 }
 
