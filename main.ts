@@ -745,6 +745,14 @@ function promptModal(title, fields, onSubmit) {
 `;
 }
 
+/* ==================== Helpers ==================== */
+function getFlag(code: string | undefined): string {
+  if (!code || code.length < 2) return '';
+  const c = code.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 2);
+  if (c.length !== 2) return '';
+  return String.fromCodePoint(...[...c].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65));
+}
+
 /* ==================== Page: /donate (Leaderboard) ==================== */
 function getBadge(count: number) {
   if (count >= 10) return { icon: ICONS.crown, name: '超级赞助商', color: '#FFD700' };
@@ -1548,24 +1556,25 @@ function showConfigModal(v) {
     '<div class="p-6 space-y-4">' +
     '<div class="flex items-center justify-between"><div class="flex items-center gap-3"><span class="text-lg font-mono font-bold text-white">' + v.ip + ':' + v.port + '</span><span class="badge ' + (v.status==='active'?'badge-ok':(v.status==='failed'?'badge-fail':'badge-idle')) + '">' + statusText + '</span></div></div>' +
     '<div class="grid grid-cols-2 gap-3 text-sm">' +
-    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">捐助人</div><a href="https://linux.do/u/' + encodeURIComponent(v.donatedByUsername||'') + '" target="_blank" class="text-indigo-400 hover:underline">' + (v.donatedByUsername||'-') + '</a></div>' +
-    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">国家/地区</div><div class="text-white">' + (v.country||'-') + (v.ipLocation ? ' / '+v.ipLocation : '') + '</div></div>' +
-    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">配置</div><div class="text-white">' + (v.specs||'-') + '</div></div>' +
-    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">流量</div><div class="text-white">' + (v.traffic||'-') + '</div></div>' +
-    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">到期日期</div><div class="text-white">' + (v.expiryDate||'-') + '</div></div>' +
-    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">捐助时间</div><div class="text-white">' + (v.donatedAt ? new Date(v.donatedAt).toLocaleDateString('zh-CN') : '-') + '</div></div>' +
+    '<div class="p-3 rounded-xl bg-white/[0.04] copy-field" data-copy="' + (v.donatedByUsername||'') + '"><div class="text-xs text-[#a1a1a6] mb-1">捐助人</div><a href="https://linux.do/u/' + encodeURIComponent(v.donatedByUsername||'') + '" target="_blank" class="text-[#0A84FF] hover:underline">' + (v.donatedByUsername||'-') + '</a></div>' +
+    '<div class="p-3 rounded-xl bg-white/[0.04] copy-field" data-copy="' + (v.country||'') + '"><div class="text-xs text-[#a1a1a6] mb-1">国家/地区</div><div class="text-white">' + getFlag(v.country) + ' ' + (v.country||'-') + (v.ipLocation ? ' / '+v.ipLocation : '') + '</div></div>' +
+    '<div class="p-3 rounded-xl bg-white/[0.04] copy-field" data-copy="' + v.ip + '"><div class="text-xs text-[#a1a1a6] mb-1">IP</div><div class="text-white font-mono">' + v.ip + '</div></div>' +
+    '<div class="p-3 rounded-xl bg-white/[0.04] copy-field" data-copy="' + (v.specs||'') + '"><div class="text-xs text-[#a1a1a6] mb-1">配置</div><div class="text-white">' + (v.specs||'-') + '</div></div>' +
+    '<div class="p-3 rounded-xl bg-white/[0.04] copy-field" data-copy="' + (v.traffic||'') + '"><div class="text-xs text-[#a1a1a6] mb-1">流量</div><div class="text-white">' + (v.traffic||'-') + '</div></div>' +
+    '<div class="p-3 rounded-xl bg-white/[0.04]"><div class="text-xs text-[#a1a1a6] mb-1">到期日期</div><div class="text-white">' + (v.expiryDate||'-') + '</div></div>' +
+    '<div class="p-3 rounded-xl bg-white/[0.04]"><div class="text-xs text-[#a1a1a6] mb-1">捐助时间</div><div class="text-white">' + (v.donatedAt ? new Date(v.donatedAt).toLocaleDateString('zh-CN') : '-') + '</div></div>' +
     '</div>' +
-    (v.note ? '<div class="p-3 rounded-lg bg-white/5 text-sm"><div class="text-xs text-slate-500 mb-1">备注</div><div class="text-white">' + v.note + '</div></div>' : '') +
+    (v.note ? '<div class="p-3 rounded-xl bg-white/[0.04] text-sm"><div class="text-xs text-[#a1a1a6] mb-1">备注</div><div class="text-white">' + v.note + '</div></div>' : '') +
     '<hr class="border-white/5" />' +
-    '<div class="text-xs text-slate-500 font-medium mb-2">SSH 连接信息</div>' +
+    '<div class="text-xs text-[#a1a1a6] font-medium mb-2">SSH 连接信息</div>' +
     '<div class="grid grid-cols-3 gap-3 text-sm">' +
-    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">用户名</div><div class="text-white font-mono">' + (v.username || 'root') + '</div></div>' +
-    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">端口</div><div class="text-white font-mono">' + v.port + '</div></div>' +
-    '<div class="p-3 rounded-lg bg-white/5"><div class="text-xs text-slate-500 mb-1">认证</div><div class="text-white">' + (isKey ? '私钥' : '密码') + '</div></div>' +
+    '<div class="p-3 rounded-xl bg-white/[0.04] copy-field" data-copy="' + (v.username || 'root') + '"><div class="text-xs text-[#a1a1a6] mb-1">用户名</div><div class="text-white font-mono">' + (v.username || 'root') + '</div></div>' +
+    '<div class="p-3 rounded-xl bg-white/[0.04] copy-field" data-copy="' + v.port + '"><div class="text-xs text-[#a1a1a6] mb-1">端口</div><div class="text-white font-mono">' + v.port + '</div></div>' +
+    '<div class="p-3 rounded-xl bg-white/[0.04]"><div class="text-xs text-[#a1a1a6] mb-1">认证</div><div class="text-white">' + (isKey ? '私钥' : '密码') + '</div></div>' +
     '</div>' +
-    '<div><div class="text-xs text-slate-500 mb-1 flex items-center justify-between">' + (isKey ? '私钥内容' : '密码') + ' <button id="toggle-secret" class="text-indigo-400 hover:underline text-xs cursor-pointer">显示</button></div>' +
-    (isKey ? '<pre id="secret-display" class="p-2.5 rounded-lg bg-white/5 text-xs text-white font-mono max-h-48 overflow-auto whitespace-pre-wrap">' + maskPwd(secretValue) + '</pre>' :
-            '<div id="secret-display" class="p-2.5 rounded-lg bg-white/5 text-sm text-white font-mono break-all">' + maskPwd(secretValue) + '</div>') +
+    '<div><div class="text-xs text-[#a1a1a6] mb-1 flex items-center justify-between">' + (isKey ? '私钥内容' : '密码') + ' <button id="toggle-secret" class="text-[#0A84FF] hover:underline text-xs cursor-pointer">显示</button></div>' +
+    (isKey ? '<pre id="secret-display" class="p-2.5 rounded-xl bg-white/[0.04] text-xs text-white font-mono max-h-48 overflow-auto whitespace-pre-wrap">' + maskPwd(secretValue) + '</pre>' :
+            '<div id="secret-display" class="p-2.5 rounded-xl bg-white/[0.04] text-sm text-white font-mono break-all">' + maskPwd(secretValue) + '</div>') +
     '</div>' +
     '<div class="flex gap-2"><button id="cfg-copy-ssh" class="btn-primary flex-1">\u590d\u5236 SSH \u547d\u4ee4</button><button id="cfg-copy-pwd" class="btn-secondary flex-1">\u590d\u5236\u5bc6\u7801</button><button id="cfg-test-btn" class="btn-secondary flex-1">\u6d4b\u8bd5\u8fde\u63a5</button><button id="cfg-close-btn" class="btn-secondary flex-1">\u5173\u95ed</button></div>' +
     '<hr class="border-white/5" />' +
@@ -1585,6 +1594,14 @@ function showConfigModal(v) {
     '</div></div>' +
     '</div></div>';
   document.body.appendChild(overlay);
+  // Copy-field click handler delegation
+  overlay.querySelectorAll('.copy-field').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A') return; // don't interfere with links
+      const val = el.dataset.copy;
+      if (val) navigator.clipboard.writeText(val).then(() => toast('\u5df2\u590d\u5236: ' + (val.length > 20 ? val.substring(0,20)+'...' : val), 'success')).catch(() => toast('\u590d\u5236\u5931\u8d25','error'));
+    });
+  });
   overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
   document.getElementById('cfg-close-x').addEventListener('click', closeModal);
   document.getElementById('cfg-close-btn').addEventListener('click', closeModal);
