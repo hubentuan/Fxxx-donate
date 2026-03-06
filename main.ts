@@ -1192,6 +1192,33 @@ app.get('/donate/vps', (c: Context) => {
           <div id="private-key-field" class="hidden"><label class="block mb-2 text-sm font-medium text-slate-400">私钥</label>
             <div class="relative"><div class="absolute left-3.5 top-3 w-5 h-5 text-slate-500">${ICONS.key}</div>
             <textarea name="privateKey" rows="4" placeholder="粘贴 SSH 私钥内容" class="textarea-field"></textarea></div></div>
+          <div class="glass-card p-4 !bg-white/[0.02] !border-dashed">
+            <label class="flex items-center gap-3 cursor-pointer select-none">
+              <input type="checkbox" name="isNat" id="nat-toggle" class="w-4 h-4 accent-blue-500 rounded" />
+              <span class="text-sm font-medium text-slate-300">这是 NAT 机</span>
+              <span class="text-xs text-slate-600">(共享公网IP，使用端口转发)</span>
+            </label>
+            <div id="nat-fields" class="hidden mt-4 space-y-4">
+              <div class="grid md:grid-cols-2 gap-4">
+                <div><label class="block mb-1.5 text-sm text-slate-400">公网IP <span class="text-red-400">*</span></label>
+                  <div class="relative"><div class="absolute left-3.5 top-3 w-5 h-5 text-slate-500">${ICONS.globe}</div>
+                  <input name="natIp" placeholder="103.x.x.x (用户实际连接的IP)" class="input-field" /></div></div>
+                <div>
+                  <label class="block mb-1.5 text-sm text-slate-400">可用端口范围 <span class="text-red-400">*</span></label>
+                  <div class="flex gap-2 items-center">
+                    <div class="relative flex-1"><div class="absolute left-3.5 top-3 w-5 h-5 text-slate-500">${ICONS.plug}</div>
+                    <input name="natPortStart" type="number" min="1" max="65535" placeholder="起始 如 20000" class="input-field" /></div>
+                    <span class="text-slate-500">~</span>
+                    <div class="relative flex-1"><div class="absolute left-3.5 top-3 w-5 h-5 text-slate-500">${ICONS.plug}</div>
+                    <input name="natPortEnd" type="number" min="1" max="65535" placeholder="结束 如 20100" class="input-field" /></div>
+                  </div>
+                </div>
+              </div>
+              <div class="alert-info text-xs !py-2">
+                💡 NAT机的IP填SSH连接用的IP（可能是内网IP），公网IP填用户实际访问的IP。端口范围内会自动选空闲端口。
+              </div>
+            </div>
+          </div>
           <div class="grid md:grid-cols-2 gap-5">
             <div><label class="block mb-2 text-sm font-medium text-slate-400">国家/地区 <span class="text-red-400">*</span></label>
               <div class="relative"><div class="absolute left-3.5 top-3 w-5 h-5 text-slate-500">${ICONS.globe}</div>
@@ -1359,13 +1386,19 @@ function bindAuthType(){
   if(sel&&pwd&&key){sel.addEventListener('change',()=>{if(sel.value==='password'){pwd.classList.remove('hidden');key.classList.add('hidden');}else{pwd.classList.add('hidden');key.classList.remove('hidden');}});}
 }
 
+function bindNatToggle(){
+  const cb=document.getElementById('nat-toggle'),fields=document.getElementById('nat-fields'),ipLabel=document.querySelector('label[for="ip-field"]')||document.querySelector('input[name="ip"]')?.closest('div')?.previousElementSibling;
+  if(cb&&fields){cb.addEventListener('change',()=>{if(cb.checked){fields.classList.remove('hidden');}else{fields.classList.add('hidden');}});}
+}
+
 async function submitDonate(e){
   e.preventDefault();
   const form=e.target,msg=document.getElementById('donate-message'),btn=document.getElementById('donate-submit-btn');
   msg.textContent='';msg.className='text-sm min-h-[1.25rem]';
   const fd=new FormData(form);
   const ip=clientCleanIP(fd.get('ip'));
-  const payload={ip,port:Number(fd.get('port')||''),username:fd.get('username')?.toString().trim(),authType:fd.get('authType')?.toString(),password:fd.get('password')?.toString(),privateKey:fd.get('privateKey')?.toString(),country:fd.get('country')?.toString().trim(),region:fd.get('region')?.toString().trim(),traffic:fd.get('traffic')?.toString().trim(),expiryDate:fd.get('expiryDate')?.toString().trim(),specs:fd.get('specs')?.toString().trim(),note:fd.get('note')?.toString().trim()};
+  const isNat=!!fd.get('isNat');
+  const payload={ip,port:Number(fd.get('port')||''),username:fd.get('username')?.toString().trim(),authType:fd.get('authType')?.toString(),password:fd.get('password')?.toString(),privateKey:fd.get('privateKey')?.toString(),country:fd.get('country')?.toString().trim(),region:fd.get('region')?.toString().trim(),traffic:fd.get('traffic')?.toString().trim(),expiryDate:fd.get('expiryDate')?.toString().trim(),specs:fd.get('specs')?.toString().trim(),note:fd.get('note')?.toString().trim(),isNat:isNat||undefined,natIp:isNat?clientCleanIP(fd.get('natIp')):undefined,natPorts:isNat?[Number(fd.get('natPortStart')),Number(fd.get('natPortEnd'))]:undefined};
   btn.disabled=true;const origHTML=btn.innerHTML;btn.innerHTML='<span>提交中...</span>';
   try{
     const r=await fetch('/api/donate',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -1406,7 +1439,7 @@ async function exportDonations(){
 const ipInput=document.querySelector('input[name="ip"]');
 if(ipInput){let t=null;ipInput.addEventListener('input',function(){const v=clientCleanIP(this.value);if(t)clearTimeout(t);if(!v){this.classList.remove('error','success');return;}t=setTimeout(()=>{if(isIPv4(v)||isIPv6(v)){this.classList.remove('error');this.classList.add('success');}else{this.classList.remove('success');this.classList.add('error');}},300);});ipInput.addEventListener('focus',function(){this.classList.remove('error','success');});}
 
-ensureLogin();bindAuthType();
+ensureLogin();bindAuthType();bindNatToggle();
 document.getElementById('donate-form').addEventListener('submit',submitDonate);
 loadDonations();
 <\/script>
