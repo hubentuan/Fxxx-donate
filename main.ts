@@ -18,6 +18,10 @@ interface VPSServer {
   verifyStatus: 'pending' | 'verified' | 'failed';
   verifyCode?: string; verifyFilePath?: string; sshFingerprint?: string;
   lastVerifyAt?: number; verifyErrorMsg?: string;
+  // NAT机专用字段
+  isNat?: boolean;              // 是否NAT机
+  natIp?: string;               // 公网IP (用户实际连接的IP)
+  natPorts?: [number, number];  // 可用转发端口范围 [起始, 结束]
 }
 interface User { linuxDoId: string; username: string; avatarUrl?: string; isAdmin: boolean; createdAt: number; }
 interface Session { id: string; userId: string; username: string; avatarUrl?: string; isAdmin: boolean; expiresAt: number; }
@@ -299,7 +303,8 @@ app.get('/api/user/donations', requireAuth, async (c: Context) => {
     id: d.id, ip: d.ip, port: d.port, username: d.username, authType: d.authType,
     donatedAt: d.donatedAt, status: d.status, note: d.note, country: d.country, region: d.region,
     traffic: d.traffic, expiryDate: d.expiryDate, specs: d.specs, ipLocation: d.ipLocation,
-    verifyStatus: d.verifyStatus, lastVerifyAt: d.lastVerifyAt, verifyErrorMsg: d.verifyErrorMsg, donatedByUsername: d.donatedByUsername
+    verifyStatus: d.verifyStatus, lastVerifyAt: d.lastVerifyAt, verifyErrorMsg: d.verifyErrorMsg, donatedByUsername: d.donatedByUsername,
+    isNat: d.isNat, natIp: d.natIp, natPorts: d.natPorts
   }));
   return c.json({ success: true, data: safe });
 });
@@ -337,28 +342,45 @@ app.get('/api/leaderboard', async (c: Context) => {
 app.post('/api/donate', requireAuth, async (c: Context) => {
   const s = c.get('session');
   const body = await c.req.json();
-  const { ip, port, username, authType, password, privateKey, country, region, traffic, expiryDate, specs, note } = body;
+  const { ip, port, username, authType, password, privateKey, country, region, traffic, expiryDate, specs, note, isNat, natIp, natPorts } = body;
   if (!ip || !port || !username || !authType) return c.json({ success: false, message: 'IP / 端口 / 用户名 / 认证方式 必填' }, 400);
   if (!country || !traffic || !expiryDate || !specs) return c.json({ success: false, message: '国家、流量、到期、配置 必填' }, 400);
   if (authType === 'password' && !password) return c.json({ success: false, message: '密码认证需要密码' }, 400);
   if (authType === 'key' && !privateKey) return c.json({ success: false, message: '密钥认证需要私钥' }, 400);
 
+  // NAT机验证
+  if (isNat) {
+    if (!natIp) return c.json({ success: false, message: 'NAT机需要填写公网IP' }, 400);
+    const natIpClean = cleanIPInput(natIp);
+    if (!isValidIP(natIpClean)) return c.json({ success: false, message: 'NAT公网IP格式不正确' }, 400);
+    if (!natPorts || !Array.isArray(natPorts) || natPorts.length !== 2) return c.json({ success: false, message: 'NAT端口范围格式错误，需要 [起始, 结束]' }, 400);
+    const [ps, pe] = natPorts.map(Number);
+    if (ps < 1 || pe > 65535 || ps >= pe) return c.json({ success: false, message: 'NAT端口范围无效' }, 400);
+  }
+
   const ipClean = cleanIPInput(ip);
   if (!isValidIP(ipClean)) return c.json({ success: false, message: 'IP 格式不正确' }, 400);
   const p = parseInt(String(port), 10);
   if (p < 1 || p > 65535) return c.json({ success: false, message: '端口范围 1 ~ 65535' }, 400);
-  if (await ipDup(ipClean, p)) return c.json({ success: false, message: '该 IP:端口 已被投喂' }, 400);
+
+  // NAT机: 同公网IP允许多节点(不同端口), 用SSH IP:port检查连通性
+  if (!isNat) {
+    if (await ipDup(ipClean, p)) return c.json({ success: false, message: '该 IP:端口 已被投喂' }, 400);
+  }
   if (!(await portOK(ipClean, p))) return c.json({ success: false, message: '无法连接到该服务器，请确认 IP / 端口 是否正确、且对外开放' }, 400);
 
-  const ipLoc = await getIPLocation(ipClean);
+  // NAT机用公网IP查地理位置
+  const locIp = isNat && natIp ? cleanIPInput(natIp) : ipClean;
+  const ipLoc = await getIPLocation(locIp);
   const now = Date.now();
   const v = await addVPS({
     ip: ipClean, port: p, username, authType, password, privateKey,
     country, region: region ? String(region).trim() : undefined, traffic, expiryDate, specs, note,
     donatedBy: s.userId, donatedByUsername: s.username, donatedAt: now,
-    status: 'active', ipLocation: ipLoc, verifyStatus: 'verified', lastVerifyAt: now, verifyErrorMsg: ''
+    status: 'active', ipLocation: ipLoc, verifyStatus: 'verified', lastVerifyAt: now, verifyErrorMsg: '',
+    ...(isNat ? { isNat: true, natIp: cleanIPInput(natIp), natPorts: natPorts.map(Number) as [number, number] } : {}),
   });
-  return c.json({ success: true, message: '投喂成功，已通过连通性验证，感谢支持！', data: { id: v.id, ipLocation: v.ipLocation } });
+  return c.json({ success: true, message: isNat ? '投喂成功！NAT机将自动分配转发端口。' : '投喂成功，已通过连通性验证，感谢支持！', data: { id: v.id, ipLocation: v.ipLocation, isNat: !!isNat } });
 });
 
 /* ---- Admin API ---- */
