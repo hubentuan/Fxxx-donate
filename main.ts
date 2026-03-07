@@ -1756,9 +1756,21 @@ function showConfigModal(v) {
 async function verifyAll(){
   if(!allVpsList.length){toast('没有VPS可验证','warn');return;}
   const vBtn=document.querySelector('[onclick="verifyAll()"]');
-  if(vBtn){vBtn.textContent='验证中('+allVpsList.length+')...';vBtn.disabled=true;}
-  try{const r=await fetch('/api/admin/verify-all',{method:'POST',credentials:'same-origin'});const j=await r.json();toast(j.message||'完成',j.success?'success':'error');await loadVps();await loadStats();}catch{toast('验证异常','error');}
-  if(vBtn){vBtn.innerHTML='<div class="w-3.5 h-3.5">${ICONS.refresh}<\/div> 全部验证';vBtn.disabled=false;}
+  const total=allVpsList.length;let done=0,ok=0,fail=0;
+  if(vBtn){vBtn.disabled=true;}
+  function upd(){if(vBtn)vBtn.textContent='验证中('+done+'/'+total+')...';}
+  upd();
+  const BATCH=10;const ids=allVpsList.map(v=>v.id);
+  for(let i=0;i<ids.length;i+=BATCH){
+    const batch=ids.slice(i,i+BATCH);
+    await Promise.allSettled(batch.map(async id=>{
+      try{const r=await fetch('/api/admin/vps/'+id+'/verify',{method:'POST',credentials:'same-origin'});const j=await r.json();if(j.success)ok++;else fail++;}catch{fail++;}
+      done++;upd();
+    }));
+  }
+  toast('验证完成: '+ok+' 成功 / '+fail+' 失败 / '+total+' 总计',ok>0?'success':'error');
+  await loadVps();await loadStats();
+  if(vBtn){vBtn.innerHTML='\u003cdiv class="w-3.5 h-3.5"\u003e${ICONS.refresh}\u003c\\/div\u003e 全部验证';vBtn.disabled=false;}
 }
 
 function openEditModal(id){
