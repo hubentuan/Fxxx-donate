@@ -784,6 +784,33 @@ body {
 .lb-toggle { cursor: pointer; user-select: none; }
 .lb-toggle:hover { color: var(--accent); }
 
+/* Scroll nav arrows */
+.lb-wrapper { position: relative; }
+.lb-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+  width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(10,10,15,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  color: rgba(255,255,255,0.7); font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.lb-arrow:hover { background: rgba(0,122,255,0.2); border-color: rgba(0,122,255,0.4); color: #fff; }
+.lb-arrow-l { left: -12px; }
+.lb-arrow-r { right: -12px; }
+.lb-scroll { cursor: grab; }
+.lb-scroll.dragging { cursor: grabbing; scroll-snap-type: none; }
+.lb-scroll.dragging * { pointer-events: none; }
+
+/* Card glow effects */
+.lb-card { position: relative; overflow: hidden; }
+.lb-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+}
+.lb-card.lb-1::after { content:''; position:absolute; top:-50%; right:-50%; width:100%; height:100%; background:radial-gradient(circle, rgba(255,215,0,0.06) 0%, transparent 70%); pointer-events:none; }
+.lb-card.lb-2::after { content:''; position:absolute; top:-50%; right:-50%; width:100%; height:100%; background:radial-gradient(circle, rgba(192,192,192,0.05) 0%, transparent 70%); pointer-events:none; }
+.lb-card.lb-3::after { content:''; position:absolute; top:-50%; right:-50%; width:100%; height:100%; background:radial-gradient(circle, rgba(205,127,50,0.05) 0%, transparent 70%); pointer-events:none; }
+
 /* Mobile responsive */
 @media (max-width: 640px) {
   .modal-content { margin: 0.5rem; max-height: 95vh; border-radius: var(--radius-sm); }
@@ -907,9 +934,9 @@ app.get('/donate', async (c: Context) => {
       <div class="w-8 h-8 text-blue-400">${ICONS.chart}</div>
       <h2 class="text-2xl font-bold text-white">排行榜</h2>
     </div>
-    <div id="leaderboard" class="lb-scroll">
+    <div class="lb-wrapper"><button class="lb-arrow lb-arrow-l" id="lb-left">&#8249;</button><button class="lb-arrow lb-arrow-r" id="lb-right">&#8250;</button><div id="leaderboard" class="lb-scroll">
       <div class="glass-card p-8 text-center"><div class="loading-spinner mx-auto mb-3"></div><div class="text-sm text-slate-400">加载中...</div></div>
-    </div>
+    </div></div>
   </section>
 
   <footer class="mt-20 pb-8 text-center">
@@ -1194,6 +1221,22 @@ function initGlobe(data) {
 }
 
 loadLeaderboard();
+
+// Drag-to-scroll
+(function(){
+  const lb=document.getElementById('leaderboard');if(!lb)return;
+  let down=false,startX,scrollL;
+  lb.addEventListener('mousedown',e=>{down=true;lb.classList.add('dragging');startX=e.pageX-lb.offsetLeft;scrollL=lb.scrollLeft;});
+  lb.addEventListener('mouseleave',()=>{down=false;lb.classList.remove('dragging');});
+  lb.addEventListener('mouseup',()=>{down=false;lb.classList.remove('dragging');});
+  lb.addEventListener('mousemove',e=>{if(!down)return;e.preventDefault();const x=e.pageX-lb.offsetLeft;lb.scrollLeft=scrollL-(x-startX);});
+  // Arrow buttons
+  const lBtn=document.getElementById('lb-left'),rBtn=document.getElementById('lb-right');
+  if(lBtn)lBtn.addEventListener('click',()=>{lb.scrollBy({left:-600,behavior:'smooth'});});
+  if(rBtn)rBtn.addEventListener('click',()=>{lb.scrollBy({left:600,behavior:'smooth'});});
+  // Wheel scroll horizontal
+  lb.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){e.preventDefault();lb.scrollBy({left:e.deltaY,behavior:'auto'});}},{passive:false});
+})();
 <\/script>
 </body></html>`;
   return c.html(html);
