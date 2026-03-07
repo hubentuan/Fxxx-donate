@@ -144,7 +144,7 @@ async function sshVerify(v: { ip: string; port: number; username: string; authTy
     const timer = setTimeout(() => { try { conn.end(); } catch { } resolve({ ok: false, error: 'SSH连接超时' }); }, timeoutMs);
     conn.on('ready', () => { clearTimeout(timer); try { conn.end(); } catch { } resolve({ ok: true, error: '' }); });
     conn.on('error', (err: any) => { clearTimeout(timer); resolve({ ok: false, error: err?.message || 'SSH连接失败' }); });
-    const cfg: any = { host: v.ip.replace(/^\[|\]$/g, ''), port: v.port, username: v.username, readyTimeout: timeoutMs };
+    const cfg: any = { host: v.ip.replace(/^\[|\]$/g, ''), port: v.port, username: v.username, readyTimeout: timeoutMs, algorithms: { cipher: ['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes256-cbc', 'aes192-cbc', 'aes128-cbc', '3des-cbc'] } };
     if (v.authType === 'key' && v.privateKey) cfg.privateKey = v.privateKey;
     else if (v.password) cfg.password = v.password;
     try { conn.connect(cfg); } catch (e: any) { clearTimeout(timer); resolve({ ok: false, error: e?.message || '连接异常' }); }
