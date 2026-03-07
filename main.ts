@@ -392,7 +392,8 @@ app.post('/api/donate', requireAuth, async (c: Context) => {
   if (!isNat) {
     if (await ipDup(ipClean, p)) return c.json({ success: false, message: '该 IP:端口 已被投喂' }, 400);
   }
-  if (!(await portOK(ipClean, p))) return c.json({ success: false, message: '无法连接到该服务器，请确认 IP / 端口 是否正确、且对外开放' }, 400);
+  const sshResult = await sshVerify({ ip: ipClean, port: p, username, authType, password, privateKey });
+  if (!sshResult.ok) return c.json({ success: false, message: 'SSH 登录失败: ' + (sshResult.error || '无法连接') }, 400);
 
   // NAT机用公网IP查地理位置
   const locIp = isNat && natIp ? cleanIPInput(natIp) : ipClean;
@@ -549,7 +550,7 @@ app.post('/api/admin/vps/:id/verify', requireAdmin, async (c: Context) => {
 app.post('/api/admin/verify-all', requireAdmin, async (c: Context) => {
   const all = await getAllVPS();
   let success = 0, failed = 0;
-  const BATCH = 5; // SSH连接比TCP重, 降低并发
+  const BATCH = 15; // SSH在webhook服务器执行, Deno端只是HTTP请求, 可以更高并发
   for (let i = 0; i < all.length; i += BATCH) {
     const batch = all.slice(i, i + BATCH);
     await Promise.allSettled(batch.map(async v => {
@@ -1641,7 +1642,7 @@ function renderVpsList(){
         const act=btn.dataset.act;
         if(act==='config'){showConfigModal(v);}
         else if(act==='delete'){if(!confirm('确定删除此VPS？'))return;try{const r=await fetch('/api/admin/vps/'+v.id,{method:'DELETE',credentials:'same-origin'});const j=await r.json();toast(j.message||'已删除',j.success?'success':'error');await loadVps();await loadStats();}catch{toast('删除异常','error');}}
-        else if(act==='verify'){btn.textContent='验证中...';btn.disabled=true;try{const r=await fetch('/api/admin/vps/'+v.id+'/verify',{method:'POST',credentials:'same-origin'});const j=await r.json();toast(j.message||'已验证',j.success?'success':'error');const bdg=card.querySelector('.badge');if(bdg&&j.data){bdg.className='badge '+(j.data.status==='active'?'badge-ok':(j.data.status==='failed'?'badge-fail':'badge-idle'));bdg.textContent=j.data.status==='active'?'运行中':(j.data.status==='failed'?'失败':'未启用');}btn.textContent=j.success?'成功':'失败';btn.style.color=j.success?'var(--success)':'var(--error)';setTimeout(()=>{btn.textContent='验证';btn.style.color='';btn.disabled=false;},1200);}catch{toast('验证异常','error');btn.textContent='验证';btn.disabled=false;}}
+        else if(act==='verify'){btn.textContent='验证中...';btn.disabled=true;try{const r=await fetch('/api/admin/vps/'+v.id+'/verify',{method:'POST',credentials:'same-origin'});const j=await r.json();toast(j.message||'已验证',j.success?'success':'error');await loadVps();await loadStats();}catch{toast('验证异常','error');}}
         else if(act==='edit'){openEditModal(v.id);}
       });
     });
