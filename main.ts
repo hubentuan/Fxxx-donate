@@ -1580,7 +1580,7 @@ function initDashboard(){
   loadStats();loadOAuth();loadVps();
 }
 
-function setFilter(s){statusFilter=s;userFilter='';renderVpsList();}
+function setFilter(s){statusFilter=s;userFilter='';renderVpsList();document.querySelectorAll('[data-status]').forEach(b=>{if(b.dataset.status===s){b.classList.add('!bg-blue-500/20','!border-blue-500/40','!text-blue-300');}else{b.classList.remove('!bg-blue-500/20','!border-blue-500/40','!text-blue-300');}});}
 
 async function loadStats(){
   const w=document.getElementById('admin-stats');
@@ -1642,7 +1642,7 @@ function renderVpsList(){
         const act=btn.dataset.act;
         if(act==='config'){showConfigModal(v);}
         else if(act==='delete'){if(!confirm('确定删除此VPS？'))return;try{const r=await fetch('/api/admin/vps/'+v.id,{method:'DELETE',credentials:'same-origin'});const j=await r.json();toast(j.message||'已删除',j.success?'success':'error');await loadVps();await loadStats();}catch{toast('删除异常','error');}}
-        else if(act==='verify'){btn.textContent='验证中...';btn.disabled=true;try{const r=await fetch('/api/admin/vps/'+v.id+'/verify',{method:'POST',credentials:'same-origin'});const j=await r.json();toast(j.message||'已验证',j.success?'success':'error');await loadVps();await loadStats();}catch{toast('验证异常','error');}}
+        else if(act==='verify'){btn.textContent='验证中...';btn.disabled=true;try{const r=await fetch('/api/admin/vps/'+v.id+'/verify',{method:'POST',credentials:'same-origin'});const j=await r.json();toast(j.message||'已验证',j.success?'success':'error');if(j.data){v.status=j.data.status;v.verifyStatus=j.data.verifyStatus;v.verifyErrorMsg=j.data.verifyErrorMsg||'';v.lastVerifyAt=j.data.lastVerifyAt;const idx=allVpsList.findIndex(x=>x.id===v.id);if(idx>=0)Object.assign(allVpsList[idx],v);const badges=card.querySelector('.flex.gap-1\\.5');if(badges){const sb=v.status==='active'?'<span class="badge badge-ok">运行中</span>':(v.status==='failed'?'<span class="badge badge-fail">失败</span>':'<span class="badge badge-idle">未启用</span>');const vb=v.verifyStatus==='verified'?'<span class="badge badge-info">已验证</span>':(v.verifyStatus==='failed'?'<span class="badge badge-warn">验证失败</span>':'<span class="badge badge-idle">待验证</span>');badges.innerHTML=sb+vb;}const errEl=card.querySelector('.text-red-400\\/70');if(v.verifyErrorMsg){if(errEl)errEl.textContent=v.verifyErrorMsg;else{const d=document.createElement('div');d.className='text-red-400/70 text-xs';d.textContent=v.verifyErrorMsg;card.querySelector('.space-y-1\\.5').appendChild(d);}}else if(errEl)errEl.remove();}btn.textContent=j.success?'成功':'失败';btn.style.color=j.success?'var(--success)':'var(--error)';setTimeout(()=>{btn.textContent='验证';btn.style.color='';btn.disabled=false;},1500);}catch{toast('验证异常','error');btn.textContent='验证';btn.disabled=false;}}
         else if(act==='edit'){openEditModal(v.id);}
       });
     });
@@ -1798,6 +1798,7 @@ function openEditModal(id){
 }
 
 checkSession();
+setTimeout(()=>{const allBtn=document.querySelector('[data-status="all"]');if(allBtn)allBtn.classList.add('!bg-blue-500/20','!border-blue-500/40','!text-blue-300');},100);
 <\/script>
 </body></html>`;
   return c.html(html);
