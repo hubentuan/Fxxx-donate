@@ -143,16 +143,21 @@ async function addVPS(server: Omit<VPSServer, 'id'>) {
   const list = r.value || [];
   list.push(v.id);
   await kv.set(['user_donations', v.donatedBy], list);
-  // 触发自动部署 webhook (fire-and-forget, 不阻塞)
+  // 触发自动部署 webhook (await 保证执行, 10s超时)
   try {
-    fetch("http://152.53.82.62:9876/deploy?token=hubentuan2024", {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 10000);
+    const wRes = await fetch("http://152.53.82.62:9876/deploy?token=hubentuan2024", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(v),
-    })
-      .then(res => log(`[Webhook] 触发部署: ${res.status}`))
-      .catch(e => log(`[Webhook] 触发失败: ${e.message}`));
-  } catch (_) { }
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    log(`[Webhook] 触发部署: ${wRes.status}`);
+  } catch (e: any) {
+    log(`[Webhook] 触发失败: ${e?.message || e}`);
+  }
   return v;
 }
 
