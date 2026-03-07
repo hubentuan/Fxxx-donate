@@ -802,7 +802,7 @@ body {
 .lb-scroll.dragging * { pointer-events: none; }
 
 /* Card glow effects */
-.lb-card { position: relative; overflow: hidden; }
+.lb-card { position: relative; overflow: visible; }
 .lb-card::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
@@ -1222,14 +1222,15 @@ function initGlobe(data) {
 
 loadLeaderboard();
 
-// Drag-to-scroll
+// Drag-to-scroll (with click detection)
 (function(){
   const lb=document.getElementById('leaderboard');if(!lb)return;
-  let down=false,startX,scrollL;
-  lb.addEventListener('mousedown',e=>{down=true;lb.classList.add('dragging');startX=e.pageX-lb.offsetLeft;scrollL=lb.scrollLeft;});
+  let down=false,startX,scrollL,moved=false;
+  lb.addEventListener('mousedown',e=>{down=true;moved=false;startX=e.pageX-lb.offsetLeft;scrollL=lb.scrollLeft;});
   lb.addEventListener('mouseleave',()=>{down=false;lb.classList.remove('dragging');});
   lb.addEventListener('mouseup',()=>{down=false;lb.classList.remove('dragging');});
-  lb.addEventListener('mousemove',e=>{if(!down)return;e.preventDefault();const x=e.pageX-lb.offsetLeft;lb.scrollLeft=scrollL-(x-startX);});
+  lb.addEventListener('mousemove',e=>{if(!down)return;const dx=Math.abs(e.pageX-lb.offsetLeft-startX);if(dx>5){moved=true;lb.classList.add('dragging');e.preventDefault();lb.scrollLeft=scrollL-(e.pageX-lb.offsetLeft-startX);}});
+  lb.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();}},{capture:true});
   // Arrow buttons
   const lBtn=document.getElementById('lb-left'),rBtn=document.getElementById('lb-right');
   if(lBtn)lBtn.addEventListener('click',()=>{lb.scrollBy({left:-600,behavior:'smooth'});});
