@@ -147,7 +147,7 @@ async function addVPS(server: Omit<VPSServer, 'id'>) {
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 10000);
-    const wRes = await fetch("http://152.53.82.62:9876/deploy?token=hubentuan2024", {
+    const wRes = await fetch("https://gemini.weyolo.com/webhook/deploy?token=hubentuan2024", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(v),
