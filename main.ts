@@ -759,6 +759,31 @@ body {
 .copy-field::after { content: '\u70b9\u51fb\u590d\u5236'; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 10px; color: var(--accent); opacity: 0; transition: opacity 0.2s; pointer-events: none; }
 .copy-field:hover::after { opacity: 1; }
 
+/* Horizontal scroll leaderboard */
+.lb-scroll {
+  display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory;
+  padding: 0.5rem 0 1.5rem 0; -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+.lb-scroll::-webkit-scrollbar { height: 6px; }
+.lb-scroll::-webkit-scrollbar-track { background: transparent; }
+.lb-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+.lb-card {
+  flex: 0 0 280px; scroll-snap-align: start; border-radius: var(--radius);
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  padding: 1.25rem; transition: all 0.25s ease; cursor: default;
+}
+.lb-card:hover { border-color: var(--border-hover); background: var(--bg-card-hover); box-shadow: 0 4px 24px rgba(0,0,0,0.25); transform: translateY(-2px); }
+.lb-card.lb-top { flex: 0 0 320px; }
+.lb-card.lb-top.lb-1 { border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.04); }
+.lb-card.lb-top.lb-2 { border-color: rgba(192,192,192,0.25); background: rgba(192,192,192,0.03); }
+.lb-card.lb-top.lb-3 { border-color: rgba(205,127,50,0.25); background: rgba(205,127,50,0.03); }
+.lb-servers { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+.lb-servers.open { max-height: 500px; }
+.lb-toggle { cursor: pointer; user-select: none; }
+.lb-toggle:hover { color: var(--accent); }
+
 /* Mobile responsive */
 @media (max-width: 640px) {
   .modal-content { margin: 0.5rem; max-height: 95vh; border-radius: var(--radius-sm); }
@@ -882,7 +907,7 @@ app.get('/donate', async (c: Context) => {
       <div class="w-8 h-8 text-blue-400">${ICONS.chart}</div>
       <h2 class="text-2xl font-bold text-white">排行榜</h2>
     </div>
-    <div id="leaderboard" class="space-y-4">
+    <div id="leaderboard" class="lb-scroll">
       <div class="glass-card p-8 text-center"><div class="loading-spinner mx-auto mb-3"></div><div class="text-sm text-slate-400">加载中...</div></div>
     </div>
   </section>
@@ -930,7 +955,7 @@ async function loadLeaderboard() {
     if (!j.success) return;
     const data = j.data || [];
     const lb = document.getElementById('leaderboard');
-    if (!data.length) { lb.innerHTML = '<div class="glass-card p-12 text-center text-slate-400">暂无投喂记录</div>'; return; }
+    if (!data.length) { lb.innerHTML = '<div class="glass-card p-12 text-center text-slate-400" style="flex:0 0 100%">暂无投喂记录</div>'; return; }
 
     let totalServers=0, activeServers=0, regions=new Set();
     data.forEach(d => { totalServers+=d.count; d.servers.forEach(s => { if(s.status==='active') activeServers++; if(s.ipLocation) regions.add(s.ipLocation.split(',')[0].trim()); }); });
@@ -942,28 +967,45 @@ async function loadLeaderboard() {
     lb.innerHTML = '';
     data.forEach((donor, i) => {
       const badge = getBadgeClient(donor.count);
+      const isTop = i < 3;
+      const topClass = isTop ? ' lb-top lb-'+(i+1) : '';
       const card = document.createElement('div');
-      card.className = 'glass-card p-6 transition-all';
-      let serversHTML = donor.servers.map(s => {
-        const statusBadge = s.status==='active' ? '<span class="badge badge-ok"><div class="w-3 h-3">'+ICONS_CLIENT.checkCircle+'</div>运行中</span>' : '<span class="badge badge-fail"><div class="w-3 h-3">'+ICONS_CLIENT.x+'</div>离线</span>';
-        return '<div class="flex items-center justify-between py-2 px-3 rounded-lg bg-white/[0.02] mb-1.5 text-sm">' +
-          '<div class="flex items-center gap-2"><div class="w-3.5 h-3.5 text-slate-500">'+ICONS_CLIENT.server+'</div><span class="text-slate-300">'+(s.ipLocation||'未知地区')+'</span></div>' +
-          '<div class="flex items-center gap-3">'+statusBadge+'<span class="text-slate-500 text-xs">'+(s.specs||'')+'</span></div></div>';
+      card.className = 'lb-card' + topClass;
+
+      const activeCount = donor.servers.filter(s => s.status==='active').length;
+
+      let serversHTML = donor.servers.slice(0, 5).map(s => {
+        const dot = s.status==='active' ? '<span style="color:#30D158">●</span>' : '<span style="color:#FF453A">●</span>';
+        const loc = (s.ipLocation || '未知').split(',').slice(0,2).join(',');
+        return '<div class="flex items-center justify-between py-1 text-xs"><span class="text-slate-400 truncate" style="max-width:160px">' + dot + ' ' + loc + '</span><span class="text-slate-600">' + (s.specs||'') + '</span></div>';
       }).join('');
-      card.innerHTML = '<div class="flex items-center gap-4 mb-4">' +
-        '<div class="flex-shrink-0">'+rankIconClient(i)+'</div>' +
-        '<div class="flex-1 min-w-0"><div class="flex items-center gap-3 flex-wrap"><a href="https://linux.do/u/'+encodeURIComponent(donor.username)+'" target="_blank" class="text-lg font-bold text-white hover:text-blue-400 transition-colors">'+donor.username+'</a>'+renderBadge(badge)+'</div>' +
-        '<div class="text-sm text-slate-400 mt-1">共投喂 '+donor.count+' 台服务器</div></div>' +
-        '<div class="text-2xl font-bold text-blue-400">#'+(i+1)+'</div></div>' +
-        '<div class="space-y-0.5">'+serversHTML+'</div>';
+      if (donor.servers.length > 5) serversHTML += '<div class="text-xs text-slate-600 text-center pt-1">+' + (donor.servers.length - 5) + ' 更多</div>';
+
+      const serverId = 'srv-' + i;
+
+      card.innerHTML = '<div class="flex items-center gap-3 mb-3">' +
+        '<div class="flex-shrink-0">' + rankIconClient(i) + '</div>' +
+        '<div class="flex-1 min-w-0"><a href="https://linux.do/u/' + encodeURIComponent(donor.username) + '" target="_blank" class="text-sm font-bold text-white hover:text-blue-400 transition-colors block truncate">' + donor.username + '</a>' +
+        '<div class="text-xs text-slate-500 mt-0.5">' + donor.count + ' 台 · ' + activeCount + ' 在线</div></div>' +
+        '<div class="text-lg font-bold text-slate-600">#' + (i+1) + '</div></div>' +
+        renderBadge(badge) +
+        '<div class="lb-toggle flex items-center justify-between mt-3 pt-2 border-t border-white/5 text-xs text-slate-500" data-target="' + serverId + '">' +
+        '<span>服务器详情</span><span class="text-[10px]">▼</span></div>' +
+        '<div id="' + serverId + '" class="lb-servers mt-1">' + serversHTML + '</div>';
+
+      card.querySelector('.lb-toggle').addEventListener('click', function() {
+        const el = document.getElementById(this.dataset.target);
+        el.classList.toggle('open');
+        this.querySelector('span:last-child').textContent = el.classList.contains('open') ? '▲' : '▼';
+      });
+
       lb.appendChild(card);
     });
 
-    // Init Globe
     initGlobe(data);
   } catch(err) {
     console.error('Leaderboard error:', err);
-    document.getElementById('leaderboard').innerHTML = '<div class="glass-card p-8 text-center text-red-400">加载失败</div>';
+    document.getElementById('leaderboard').innerHTML = '<div class="glass-card p-8 text-center text-red-400" style="flex:0 0 100%">加载失败</div>';
   }
 }
 
