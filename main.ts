@@ -1,5 +1,7 @@
 /// <reference lib="deno.unstable" />
 
+import { Client as SSHClient } from 'npm:ssh2';
+
 import { Hono, Context, Next } from 'https://deno.land/x/hono@v3.11.7/mod.ts';
 import { cors } from 'https://deno.land/x/hono@v3.11.7/middleware.ts';
 import { setCookie, getCookie } from 'https://deno.land/x/hono@v3.11.7/helper.ts';
@@ -134,6 +136,19 @@ async function portOK(ip: string, port: number, timeoutMs = 5000): Promise<boole
     try { conn.close(); } catch { }
     return true;
   } catch { return false; }
+}
+
+async function sshVerify(v: { ip: string; port: number; username: string; authType: string; password?: string; privateKey?: string }, timeoutMs = 15000): Promise<{ ok: boolean; error: string }> {
+  return new Promise((resolve) => {
+    const conn = new SSHClient();
+    const timer = setTimeout(() => { try { conn.end(); } catch { } resolve({ ok: false, error: 'SSH连接超时' }); }, timeoutMs);
+    conn.on('ready', () => { clearTimeout(timer); try { conn.end(); } catch { } resolve({ ok: true, error: '' }); });
+    conn.on('error', (err: any) => { clearTimeout(timer); resolve({ ok: false, error: err?.message || 'SSH连接失败' }); });
+    const cfg: any = { host: v.ip.replace(/^\[|\]$/g, ''), port: v.port, username: v.username, readyTimeout: timeoutMs };
+    if (v.authType === 'key' && v.privateKey) cfg.privateKey = v.privateKey;
+    else if (v.password) cfg.password = v.password;
+    try { conn.connect(cfg); } catch (e: any) { clearTimeout(timer); resolve({ ok: false, error: e?.message || '连接异常' }); }
+  });
 }
 
 async function addVPS(server: Omit<VPSServer, 'id'>) {
@@ -483,12 +498,12 @@ app.put('/api/admin/vps/:id/config', requireAdmin, async (c: Context) => {
   r.value.ip = ipClean; r.value.port = p; r.value.username = String(username).trim(); r.value.authType = authType;
   if (authType === 'password') { r.value.password = String(password); r.value.privateKey = undefined; }
   else { r.value.privateKey = String(privateKey); r.value.password = undefined; }
-  const isConn = await portOK(ipClean, p);
+  const result = await sshVerify({ ip: ipClean, port: p, username: String(username).trim(), authType, password, privateKey });
   r.value.lastVerifyAt = Date.now();
-  if (isConn) { r.value.status = 'active'; r.value.verifyStatus = 'verified'; r.value.verifyErrorMsg = ''; }
-  else { r.value.verifyStatus = 'failed'; r.value.verifyErrorMsg = '无法连接到该服务器'; }
+  if (result.ok) { r.value.status = 'active'; r.value.verifyStatus = 'verified'; r.value.verifyErrorMsg = ''; }
+  else { r.value.verifyStatus = 'failed'; r.value.verifyErrorMsg = result.error || 'SSH登录失败'; }
   await kv.set(['vps', id], r.value);
-  return c.json({ success: true, message: isConn ? '配置更新成功，连通性验证通过' : '配置已保存，但无法连接到服务器', data: { id: r.value.id, status: r.value.status, verifyStatus: r.value.verifyStatus, lastVerifyAt: r.value.lastVerifyAt, verifyErrorMsg: r.value.verifyErrorMsg } });
+  return c.json({ success: true, message: result.ok ? '配置更新成功，SSH 登录验证通过' : `配置已保存，但SSH登录失败: ${result.error}`, data: { id: r.value.id, status: r.value.status, verifyStatus: r.value.verifyStatus, lastVerifyAt: r.value.lastVerifyAt, verifyErrorMsg: r.value.verifyErrorMsg } });
 });
 
 app.get('/api/admin/stats', requireAdmin, async (c: Context) => {
@@ -518,25 +533,25 @@ app.post('/api/admin/vps/:id/verify', requireAdmin, async (c: Context) => {
   const r = await kv.get(['vps', id]);
   if (!r.value) return c.json({ success: false, message: '不存在' }, 404);
   const v = r.value;
-  const ok = await portOK(v.ip, v.port);
+  const result = await sshVerify(v);
   v.lastVerifyAt = Date.now();
-  if (ok) { v.status = 'active'; v.verifyStatus = 'verified'; v.verifyErrorMsg = ''; }
-  else { v.status = 'failed'; v.verifyStatus = 'failed'; v.verifyErrorMsg = '无法连接VPS'; }
+  if (result.ok) { v.status = 'active'; v.verifyStatus = 'verified'; v.verifyErrorMsg = ''; }
+  else { v.status = 'failed'; v.verifyStatus = 'failed'; v.verifyErrorMsg = result.error || 'SSH登录失败'; }
   await kv.set(['vps', id], v);
-  return c.json({ success: ok, message: ok ? '验证成功，VPS 连通正常' : '验证失败，无法连接VPS', data: { status: v.status, verifyStatus: v.verifyStatus, verifyErrorMsg: v.verifyErrorMsg, lastVerifyAt: v.lastVerifyAt } });
+  return c.json({ success: result.ok, message: result.ok ? '验证成功，SSH 登录正常' : `验证失败: ${result.error}`, data: { status: v.status, verifyStatus: v.verifyStatus, verifyErrorMsg: v.verifyErrorMsg, lastVerifyAt: v.lastVerifyAt } });
 });
 
 app.post('/api/admin/verify-all', requireAdmin, async (c: Context) => {
   const all = await getAllVPS();
   let success = 0, failed = 0;
-  const BATCH = 20; // concurrent batch size
+  const BATCH = 5; // SSH连接比TCP重, 降低并发
   for (let i = 0; i < all.length; i += BATCH) {
     const batch = all.slice(i, i + BATCH);
-    const results = await Promise.allSettled(batch.map(async v => {
-      const ok = await portOK(v.ip, v.port, 4000);
+    await Promise.allSettled(batch.map(async v => {
+      const result = await sshVerify(v);
       v.lastVerifyAt = Date.now();
-      if (ok) { v.status = 'active'; v.verifyStatus = 'verified'; v.verifyErrorMsg = ''; success++; }
-      else { v.status = 'failed'; v.verifyStatus = 'failed'; v.verifyErrorMsg = '无法连接'; failed++; }
+      if (result.ok) { v.status = 'active'; v.verifyStatus = 'verified'; v.verifyErrorMsg = ''; success++; }
+      else { v.status = 'failed'; v.verifyStatus = 'failed'; v.verifyErrorMsg = result.error || 'SSH登录失败'; failed++; }
       await kv.set(['vps', v.id], v);
     }));
   }
