@@ -1,7 +1,5 @@
 /// <reference lib="deno.unstable" />
 
-import { Client as SSHClient } from 'npm:ssh2';
-
 import { Hono, Context, Next } from 'https://deno.land/x/hono@v3.11.7/mod.ts';
 import { cors } from 'https://deno.land/x/hono@v3.11.7/middleware.ts';
 import { setCookie, getCookie } from 'https://deno.land/x/hono@v3.11.7/helper.ts';
@@ -138,17 +136,24 @@ async function portOK(ip: string, port: number, timeoutMs = 5000): Promise<boole
   } catch { return false; }
 }
 
-async function sshVerify(v: { ip: string; port: number; username: string; authType: string; password?: string; privateKey?: string }, timeoutMs = 15000): Promise<{ ok: boolean; error: string }> {
-  return new Promise((resolve) => {
-    const conn = new SSHClient();
-    const timer = setTimeout(() => { try { conn.end(); } catch { } resolve({ ok: false, error: 'SSH连接超时' }); }, timeoutMs);
-    conn.on('ready', () => { clearTimeout(timer); try { conn.end(); } catch { } resolve({ ok: true, error: '' }); });
-    conn.on('error', (err: any) => { clearTimeout(timer); resolve({ ok: false, error: err?.message || 'SSH连接失败' }); });
-    const cfg: any = { host: v.ip.replace(/^\[|\]$/g, ''), port: v.port, username: v.username, readyTimeout: timeoutMs, algorithms: { cipher: ['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'aes256-cbc', 'aes192-cbc', 'aes128-cbc', '3des-cbc'] } };
-    if (v.authType === 'key' && v.privateKey) cfg.privateKey = v.privateKey;
-    else if (v.password) cfg.password = v.password;
-    try { conn.connect(cfg); } catch (e: any) { clearTimeout(timer); resolve({ ok: false, error: e?.message || '连接异常' }); }
-  });
+const SSH_VERIFY_URL = 'https://gemini.weyolo.com/webhook/verify-ssh?token=hubentuan2024';
+
+async function sshVerify(v: { ip: string; port: number; username: string; authType: string; password?: string; privateKey?: string }): Promise<{ ok: boolean; error: string }> {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 20000);
+    const res = await fetch(SSH_VERIFY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ip: v.ip, port: v.port, username: v.username, authType: v.authType, password: v.password, privateKey: v.privateKey }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    const data = await res.json();
+    return { ok: !!data.ok, error: data.error || '' };
+  } catch (e: any) {
+    return { ok: false, error: e?.message || 'SSH验证服务连接失败' };
+  }
 }
 
 async function addVPS(server: Omit<VPSServer, 'id'>) {
